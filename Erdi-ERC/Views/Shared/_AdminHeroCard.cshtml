@@ -1,0 +1,17 @@
+@{
+    var kicker = ViewData["Kicker"] as string ?? string.Empty;
+    var heroTitle = ViewData["HeroTitle"] as string ?? string.Empty;
+    var heroSubtitle = ViewData["HeroSubtitle"] as string ?? string.Empty;
+}
+
+<div class="admin-page-hero-card">
+    @if (!string.IsNullOrWhiteSpace(kicker))
+    {
+        <div class="admin-page-kicker"><i class="bi bi-shield-lock"></i> @kicker</div>
+    }
+    <h1 class="admin-page-title">@heroTitle</h1>
+    @if (!string.IsNullOrWhiteSpace(heroSubtitle))
+    {
+        <p class="admin-page-subtitle">@heroSubtitle</p>
+    }
+</div>

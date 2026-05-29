@@ -1,0 +1,1053 @@
+﻿@{
+    ViewData["Title"]     = "Nachricht senden";
+    ViewData["HeroTitle"] = "Nachricht senden";
+    ViewData["Kicker"]    = "Discord · Webhook Editor";
+    var webhook = ViewBag.Webhook as <OWNER_HANDLE>_ERC.Models.DiscordWebhook;
+    var draft   = ViewBag.Draft as Dictionary<string, string?>;
+    var errorMsg = TempData["WebhookError"] as string;
+
+    // URL-Token maskieren, damit der Token nicht in Screen-Shares sichtbar wird.
+    string MaskSendUrl(string url)
+    {
+        var idx = url.IndexOf("/webhooks/", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return url;
+        var after = url[(idx + "/webhooks/".Length)..];
+        var slash = after.IndexOf('/');
+        if (slash < 0) return url;
+        return $"discord.com/api/webhooks/{after[..slash]}/••••••••";
+    }
+}
+
+@section Styles {
+<style>
+/* ── Shell ─────────────────────────────────────────────────────────── */
+.dce-shell {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 1.5rem;
+    align-items: start;
+}
+@@media(max-width:1100px) { .dce-shell { grid-template-columns: 1fr; } }
+
+/* ── Webhook info bar ──────────────────────────────────────────────── */
+.dce-infobar {
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+    background: var(--surface-1); border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3); padding: .65rem 1rem; margin-bottom: 1.25rem;
+    font-size: .8rem;
+}
+.dce-infobar__icon { font-size: 1.2rem; color: ***REMOVED***5865f2; }
+.dce-infobar__name { font-family: var(--ff-tech); font-weight: 700; color: var(--ink); font-size: .85rem; }
+.dce-infobar__sep  { color: var(--stroke-2); }
+.dce-infobar__cat  {
+    font-family: var(--ff-tech); font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: .1rem .5rem; border-radius: var(--r-pill);
+    background: rgba(88,101,242,.18); color: ***REMOVED***7289da; border: 1px solid rgba(88,101,242,.3);
+}
+.dce-infobar__desc { color: var(--ink-3); }
+.dce-infobar__spacer { flex: 1; }
+.dce-infobar__url {
+    font-family: var(--ff-mono); font-size: .6rem; color: var(--ink-4);
+    background: var(--surface-2); border: 1px solid var(--stroke-1); border-radius: var(--r-1);
+    padding: .15rem .5rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── Templates bar ─────────────────────────────────────────────────── */
+.dce-templates {
+    background: var(--surface-1); border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3); margin-bottom: 1.25rem; overflow: hidden;
+}
+.dce-templates__head {
+    padding: .55rem 1rem; border-bottom: 1px solid var(--stroke-1);
+    font-family: var(--ff-tech); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-3); display: flex; align-items: center; gap: .5rem;
+}
+.dce-templates__row { display: flex; gap: .5rem; flex-wrap: wrap; padding: .6rem 1rem; }
+.dce-tpl-btn {
+    display: flex; align-items: center; gap: .35rem;
+    background: var(--surface-2); border: 1px solid var(--stroke-1); color: var(--ink-3);
+    font-family: var(--ff-tech); font-size: .6rem; letter-spacing: .06em; text-transform: uppercase;
+    padding: .28rem .75rem; border-radius: var(--r-pill); cursor: pointer;
+    transition: all var(--t-fast);
+}
+.dce-tpl-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+/* ── Editor panel ──────────────────────────────────────────────────── */
+.dce-editor {
+    background: var(--surface-1); border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3); overflow: hidden;
+}
+
+/* Tabs */
+.dce-tabs { display: flex; border-bottom: 1px solid var(--stroke-1); background: var(--surface-2); overflow-x: auto; }
+.dce-tab {
+    display: flex; align-items: center; gap: .4rem; white-space: nowrap;
+    padding: .65rem 1rem; font-family: var(--ff-tech); font-size: .62rem;
+    letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3);
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all var(--t-fast);
+    border: none; background: transparent;
+}
+.dce-tab:hover { color: var(--ink-2); }
+.dce-tab.is-active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+.dce-tab__badge {
+    background: var(--accent); color: ***REMOVED***fff; font-size: .5rem; font-weight: 700;
+    min-width: 14px; height: 14px; border-radius: 7px; padding: 0 3px;
+    display: none; align-items: center; justify-content: center;
+}
+.dce-tab__badge.is-visible { display: flex; }
+
+.dce-tab-pane { display: none; padding: 1.2rem 1.4rem; flex-direction: column; gap: 1rem; }
+.dce-tab-pane.is-active { display: flex; }
+
+/* Form fields */
+.dce-field { display: flex; flex-direction: column; gap: .28rem; }
+.dce-label {
+    font-family: var(--ff-tech); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-3); display: flex; align-items: center; justify-content: space-between;
+}
+.dce-charcount { font-size: .57rem; color: var(--ink-4); }
+.dce-charcount.is-warn { color: var(--sig-amber); }
+.dce-charcount.is-err  { color: ***REMOVED***ff4757; }
+.dce-input, .dce-textarea {
+    background: var(--surface-2); border: 1px solid var(--stroke-1); color: var(--ink);
+    border-radius: var(--r-2); padding: .43rem .7rem; font-size: .81rem; width: 100%;
+    transition: border-color var(--t-fast); font-family: var(--ff-body);
+}
+.dce-input:focus, .dce-textarea:focus { outline: none; border-color: var(--accent); }
+.dce-textarea { resize: vertical; min-height: 86px; }
+.dce-hint { font-size: .66rem; color: var(--ink-4); line-height: 1.5; }
+.dce-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+@@media(max-width:520px) { .dce-grid-2 { grid-template-columns: 1fr; } }
+
+/* Markdown toolbar */
+.dce-md-toolbar {
+    display: flex; gap: .2rem; flex-wrap: wrap; padding: .3rem .45rem;
+    background: var(--surface-3); border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2) var(--r-2) 0 0; border-bottom: none;
+}
+.dce-md-toolbar + .dce-textarea { border-radius: 0 0 var(--r-2) var(--r-2); }
+.dce-md-btn {
+    background: transparent; border: 1px solid transparent; color: var(--ink-3);
+    border-radius: var(--r-1); padding: .12rem .38rem; cursor: pointer; font-size: .73rem;
+    transition: all var(--t-fast); line-height: 1.4;
+}
+.dce-md-btn:hover { background: var(--surface-1); border-color: var(--stroke-1); color: var(--ink); }
+.dce-md-sep { width: 1px; background: var(--stroke-1); margin: .1rem .05rem; align-self: stretch; }
+
+/* Embed toggle */
+.dce-toggle-row {
+    display: flex; align-items: center; gap: .7rem; padding: .55rem .85rem;
+    background: var(--surface-2); border: 1px solid var(--stroke-1); border-radius: var(--r-2);
+    cursor: pointer; user-select: none;
+}
+.dce-toggle-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.dce-toggle-label { font-size: .8rem; color: var(--ink-2); }
+
+.dce-embed-off { display: none; flex-direction: column; gap: .85rem; }
+.dce-embed-off.is-active { display: flex; }
+
+/* Color picker */
+.dce-color-row { display: flex; align-items: center; gap: .55rem; }
+.dce-color-swatch { width: 32px; height: 32px; border-radius: var(--r-2); border: 1px solid var(--stroke-1); cursor: pointer; flex-shrink: 0; }
+.dce-color-hex {
+    background: var(--surface-2); border: 1px solid var(--stroke-1); color: var(--ink);
+    border-radius: var(--r-2); padding: .32rem .6rem; font-family: var(--ff-mono); font-size: .78rem; width: 88px;
+}
+.dce-color-hex:focus { outline: none; border-color: var(--accent); }
+.dce-presets { display: flex; gap: .28rem; flex-wrap: wrap; margin-top: .3rem; }
+.dce-preset {
+    width: 22px; height: 22px; border-radius: var(--r-1); cursor: pointer;
+    border: 2px solid transparent; transition: all var(--t-fast); flex-shrink: 0;
+}
+.dce-preset:hover { transform: scale(1.18); border-color: rgba(255,255,255,.5); }
+.dce-preset.is-selected { border-color: ***REMOVED***fff; transform: scale(1.1); }
+
+/* Fields builder */
+.dce-fields-list { display: flex; flex-direction: column; gap: .45rem; }
+.dce-fi {
+    display: grid; grid-template-columns: 18px 1fr 1fr 64px 26px;
+    gap: .4rem; align-items: start;
+    background: var(--surface-2); border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2); padding: .48rem .6rem;
+    transition: border-color var(--t-fast), background var(--t-fast);
+}
+.dce-fi:hover { border-color: var(--stroke-2); }
+.dce-fi.drag-over { background: var(--surface-3); border-color: var(--accent); }
+.dce-fi__drag { color: var(--ink-4); cursor: grab; display: flex; align-items: center; padding-top: .35rem; font-size: .85rem; }
+.dce-fi__drag:active { cursor: grabbing; }
+.dce-fi__sub { display: flex; flex-direction: column; gap: .18rem; }
+.dce-fi__label { font-family: var(--ff-tech); font-size: .52rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); }
+.dce-fi__inp {
+    background: transparent; border: none; border-bottom: 1px solid var(--stroke-1);
+    color: var(--ink); font-size: .78rem; width: 100%; padding: .12rem 0;
+    transition: border-color var(--t-fast);
+}
+.dce-fi__inp:focus { outline: none; border-bottom-color: var(--accent); }
+.dce-fi__inp::placeholder { color: var(--ink-4); }
+.dce-fi__inline { display: flex; flex-direction: column; align-items: center; gap: .22rem; padding-top: .15rem; }
+.dce-fi__inline-lbl { font-family: var(--ff-tech); font-size: .5rem; color: var(--ink-4); letter-spacing: .08em; text-transform: uppercase; }
+.dce-fi__inline input { width: 13px; height: 13px; accent-color: var(--accent); cursor: pointer; }
+.dce-fi__del { background: transparent; border: none; color: var(--ink-4); cursor: pointer; font-size: .82rem; padding: .18rem; transition: color var(--t-fast); }
+.dce-fi__del:hover { color: ***REMOVED***ff4757; }
+.dce-add-field-btn {
+    display: flex; align-items: center; gap: .4rem; justify-content: center;
+    background: var(--surface-2); border: 1px dashed var(--stroke-1); color: var(--ink-3);
+    border-radius: var(--r-2); padding: .42rem; cursor: pointer; font-size: .74rem;
+    transition: all var(--t-fast);
+}
+.dce-add-field-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Submit bar */
+.dce-submit-row {
+    display: flex; gap: .7rem; align-items: center;
+    padding: .9rem 1.4rem; border-top: 1px solid var(--stroke-1);
+}
+.dce-btn-send {
+    background: var(--accent); color: ***REMOVED***fff; border: none; border-radius: var(--r-2);
+    font-family: var(--ff-tech); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: .58rem 1.35rem; cursor: pointer; transition: background var(--t-fast);
+    display: flex; align-items: center; gap: .45rem;
+}
+.dce-btn-send:hover { background: var(--accent-2); }
+.dce-btn-send:disabled { opacity: .5; cursor: not-allowed; }
+.dce-btn-secondary {
+    background: transparent; border: 1px solid var(--stroke-1); color: var(--ink-3);
+    border-radius: var(--r-2); font-size: .7rem; padding: .58rem 1rem;
+    text-decoration: none; transition: all var(--t-fast);
+    display: flex; align-items: center; gap: .4rem; cursor: pointer;
+}
+.dce-btn-secondary:hover { border-color: var(--stroke-2); color: var(--ink-2); }
+
+/* ── Preview panel ─────────────────────────────────────────────────── */
+.dce-preview-shell { position: sticky; top: 1.5rem; }
+.dce-preview-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: .65rem;
+}
+.dce-preview-label {
+    font-family: var(--ff-tech); font-size: .58rem; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--ink-3); display: flex; align-items: center; gap: .4rem;
+}
+.dce-preview-mode { display: flex; gap: .25rem; }
+.dce-mode-btn {
+    background: var(--surface-2); border: 1px solid var(--stroke-1); color: var(--ink-3);
+    font-family: var(--ff-tech); font-size: .53rem; letter-spacing: .06em; text-transform: uppercase;
+    padding: .18rem .52rem; border-radius: var(--r-1); cursor: pointer; transition: all var(--t-fast);
+}
+.dce-mode-btn.is-active { background: ***REMOVED***2b2d31; border-color: ***REMOVED***3c3f45; color: ***REMOVED***dcddde; }
+
+/* Discord mock */
+.dce-discord {
+    background: ***REMOVED***313338; border-radius: 8px; overflow: hidden;
+    font-family: 'gg sans','Noto Sans',Arial,sans-serif; font-size: 14px; color: ***REMOVED***dbdee1;
+}
+.dce-discord__bar {
+    background: ***REMOVED***2b2d31; padding: .4rem .85rem; display: flex; align-items: center; gap: .45rem;
+    border-bottom: 1px solid ***REMOVED***1e1f22; font-size: 12px; color: ***REMOVED***87898c;
+}
+.dce-discord__dot { width: 8px; height: 8px; border-radius: 50%; }
+.dce-discord__channel { font-weight: 600; color: ***REMOVED***c7ccd1; }
+.dce-discord__body { padding: .85rem 1rem 1.1rem; }
+.dce-discord__msg { display: flex; gap: .75rem; }
+.dce-discord__avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: ***REMOVED***5865f2;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    flex-shrink: 0; overflow: hidden;
+}
+.dce-discord__avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.dce-discord__right { flex: 1; min-width: 0; }
+.dce-discord__urow { display: flex; align-items: baseline; gap: .3rem; flex-wrap: wrap; margin-bottom: .1rem; }
+.dce-discord__username { font-weight: 600; font-size: 14px; color: ***REMOVED***fff; }
+.dce-discord__bot-tag {
+    display: inline-flex; align-items: center;
+    background: ***REMOVED***5865f2; color: ***REMOVED***fff; font-size: 9px; font-weight: 700;
+    padding: .05rem .28rem; border-radius: 3px; letter-spacing: .04em;
+}
+.dce-discord__ts { font-size: 11px; color: ***REMOVED***87898c; }
+.dce-discord__content { line-height: 1.375; word-break: break-word; }
+/* Markdown in preview */
+.dce-discord__content strong, .dce-embed-desc strong { font-weight: 700; color: ***REMOVED***fff; }
+.dce-discord__content em,     .dce-embed-desc em     { font-style: italic; }
+.dce-discord__content del,    .dce-embed-desc del    { text-decoration: line-through; color: ***REMOVED***72767d; }
+.dce-discord__content code,   .dce-embed-desc code   { background: ***REMOVED***2b2d31; border-radius: 3px; padding: .05rem .28rem; font-family: 'Consolas',monospace; font-size: 86%; }
+.dce-discord__content pre     { background: ***REMOVED***2b2d31; border-radius: 4px; padding: .45rem .7rem; margin: .3rem 0; font-family: 'Consolas',monospace; font-size: 86%; overflow-x: auto; white-space: pre; }
+.dce-discord__content blockquote { border-left: 3px solid ***REMOVED***4f545c; padding-left: .7rem; color: ***REMOVED***b9bbbe; margin: .22rem 0; }
+.dce-mention { background: rgba(88,101,242,.3); color: ***REMOVED***c9cdfb; border-radius: 3px; padding: .02rem .28rem; font-weight: 500; }
+.dce-spoiler { background: ***REMOVED***202225; border-radius: 3px; padding: .02rem .22rem; color: ***REMOVED***202225; cursor: pointer; transition: color .15s; }
+.dce-spoiler:hover { color: ***REMOVED***dcddde; }
+
+/* Embed */
+.dce-embed {
+    border-left: 4px solid ***REMOVED***5865f2; background: ***REMOVED***2b2d31;
+    border-radius: 4px; padding: .6rem .75rem .65rem 1rem; margin-top: .55rem;
+    max-width: 516px; overflow: hidden;
+}
+.dce-embed__author { display: flex; align-items: center; gap: .4rem; font-size: 12px; font-weight: 600; color: ***REMOVED***dbdee1; margin-bottom: .28rem; }
+.dce-embed__author-icon { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.dce-embed__row { display: flex; justify-content: space-between; gap: .5rem; }
+.dce-embed__body { flex: 1; min-width: 0; }
+.dce-embed__title { font-size: 14px; font-weight: 700; color: ***REMOVED***fff; margin-bottom: .18rem; line-height: 1.3; }
+.dce-embed__title a { color: ***REMOVED***00aff4; text-decoration: none; }
+.dce-embed__title a:hover { text-decoration: underline; }
+.dce-embed-desc { font-size: 13px; color: ***REMOVED***dbdee1; line-height: 1.5; margin-bottom: .32rem; word-break: break-word; }
+.dce-embed__fields { display: grid; gap: .3rem; margin-bottom: .3rem; }
+.dce-embed__field-name  { font-size: 12px; font-weight: 700; color: ***REMOVED***fff; margin-bottom: .08rem; }
+.dce-embed__field-value { font-size: 12px; color: ***REMOVED***dbdee1; }
+.dce-embed__thumbnail { flex-shrink: 0; margin-left: .7rem; }
+.dce-embed__thumbnail img { width: 80px; height: 80px; border-radius: 4px; object-fit: cover; display: block; }
+.dce-embed__image { margin-top: .55rem; }
+.dce-embed__image img { max-width: 100%; border-radius: 4px; max-height: 280px; object-fit: contain; display: block; }
+.dce-embed__footer { display: flex; align-items: center; gap: .4rem; font-size: 11px; color: ***REMOVED***87898c; margin-top: .45rem; }
+.dce-embed__footer-dot { width: 3px; height: 3px; border-radius: 50%; background: ***REMOVED***87898c; }
+.dce-preview-empty { text-align: center; padding: 2rem 1rem; color: ***REMOVED***87898c; font-size: 12px; }
+
+/* JSON */
+.dce-json-block {
+    background: ***REMOVED***1e1f22; border-radius: var(--r-2); padding: 1rem;
+    font-family: var(--ff-mono); font-size: .68rem; color: ***REMOVED***57f287;
+    white-space: pre-wrap; word-break: break-all; max-height: 520px; overflow-y: auto;
+}
+</style>
+}
+
+<div class="adm-page-head mb-0">
+    <div class="adm-page-head__text">
+        <div class="adm-page-head__kicker">Discord · Webhook Editor</div>
+        <h1 class="adm-page-head__title">Nachricht senden</h1>
+    </div>
+    <a class="dce-btn-secondary" asp-controller="AdminWebhooks" asp-action="Index">
+        <i class="bi bi-arrow-left"></i> Zurück
+    </a>
+</div>
+
+<div class="dce-infobar">
+    <i class="bi bi-discord dce-infobar__icon"></i>
+    <span class="dce-infobar__name">@webhook?.Name</span>
+    @if (!string.IsNullOrEmpty(webhook?.Category))
+    {
+        <span class="dce-infobar__sep">·</span>
+        <span class="dce-infobar__cat">@webhook.Category</span>
+    }
+    @if (!string.IsNullOrEmpty(webhook?.Description))
+    {
+        <span class="dce-infobar__sep">·</span>
+        <span class="dce-infobar__desc">@webhook.Description</span>
+    }
+    <span class="dce-infobar__spacer"></span>
+    <span class="dce-infobar__url" title="Token maskiert">@(webhook != null ? MaskSendUrl(webhook.Url) : "")</span>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMsg))
+{
+    <div class="adm-alert is-error mb-3"><i class="bi bi-exclamation-triangle me-2"></i>@errorMsg</div>
+}
+
+@* Templates *@
+<div class="dce-templates">
+    <div class="dce-templates__head"><i class="bi bi-lightning-charge"></i>Schnell-Templates</div>
+    <div class="dce-templates__row">
+        <button type="button" class="dce-tpl-btn" onclick="applyTemplate('race')"><i class="bi bi-trophy-fill"></i>Rennbericht</button>
+        <button type="button" class="dce-tpl-btn" onclick="applyTemplate('steward')"><i class="bi bi-shield-fill-exclamation"></i>Steward-Entscheidung</button>
+        <button type="button" class="dce-tpl-btn" onclick="applyTemplate('news')"><i class="bi bi-newspaper"></i>News</button>
+        <button type="button" class="dce-tpl-btn" onclick="applyTemplate('event')"><i class="bi bi-calendar-event"></i>Event</button>
+        <button type="button" class="dce-tpl-btn" onclick="applyTemplate('highlight')"><i class="bi bi-camera-video"></i>Highlight</button>
+        <button type="button" class="dce-tpl-btn" onclick="applyTemplate('announce')"><i class="bi bi-megaphone"></i>Ankündigung</button>
+        <button type="button" class="dce-tpl-btn" style="margin-left:auto;" onclick="clearAll()"><i class="bi bi-trash3"></i>Leeren</button>
+    </div>
+</div>
+
+<form method="post" asp-controller="AdminWebhooks" asp-action="Send" asp-route-id="@webhook?.Id" id="dceFrm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="fieldsJson" id="fieldsJsonInput" />
+
+    <div class="dce-shell">
+
+        @* ══ LEFT: Editor ══ *@
+        <div>
+            <div class="dce-editor">
+                <div class="dce-tabs" role="tablist">
+                    <button type="button" class="dce-tab is-active" data-tab="message" role="tab">
+                        <i class="bi bi-chat-text"></i> Nachricht
+                    </button>
+                    <button type="button" class="dce-tab" data-tab="embed" role="tab">
+                        <i class="bi bi-layout-text-sidebar"></i> Embed
+                        <span class="dce-tab__badge" id="embedBadge"></span>
+                    </button>
+                    <button type="button" class="dce-tab" data-tab="fields" role="tab">
+                        <i class="bi bi-list-columns"></i> Fields
+                        <span class="dce-tab__badge" id="fieldsBadge"></span>
+                    </button>
+                    <button type="button" class="dce-tab" data-tab="bot" role="tab">
+                        <i class="bi bi-robot"></i> Bot
+                    </button>
+                </div>
+
+                @* Tab: Message *@
+                <div class="dce-tab-pane is-active" id="tab-message">
+                    <div class="dce-field">
+                        <label class="dce-label">
+                            Nachrichtentext
+                            <span class="dce-charcount" id="cc-content">0 / 2000</span>
+                        </label>
+                        <div class="dce-md-toolbar" data-target="inContent">
+                            <button type="button" class="dce-md-btn" data-md="**{s}**" title="Fett"><b>B</b></button>
+                            <button type="button" class="dce-md-btn" data-md="*{s}*" title="Kursiv"><i>I</i></button>
+                            <button type="button" class="dce-md-btn" data-md="~~{s}~~" title="Durchgestrichen"><s>S</s></button>
+                            <div class="dce-md-sep"></div>
+                            <button type="button" class="dce-md-btn" data-md="`{s}`" title="Inline Code" style="font-family:monospace;">&lt;/&gt;</button>
+                            <button type="button" class="dce-md-btn" data-md="```&***REMOVED***10;{s}&***REMOVED***10;```" title="Code-Block" style="font-family:monospace;">```</button>
+                            <div class="dce-md-sep"></div>
+                            <button type="button" class="dce-md-btn" data-md="> {s}" title="Blockquote">&ldquo;</button>
+                            <button type="button" class="dce-md-btn" data-md="||{s}||" title="Spoiler">&***REMOVED***128065;</button>
+                            <div class="dce-md-sep"></div>
+                            <button type="button" class="dce-md-btn dce-ins-btn" data-ins="&***REMOVED***64;everyone" title="&***REMOVED***64;everyone" style="font-size:.62rem;font-family:var(--ff-mono);">&***REMOVED***64;everyone</button>
+                            <button type="button" class="dce-md-btn dce-ins-btn" data-ins="&***REMOVED***64;here" title="&***REMOVED***64;here" style="font-size:.62rem;font-family:var(--ff-mono);">&***REMOVED***64;here</button>
+                        </div>
+                        <textarea class="dce-textarea" name="content" id="inContent" rows="5" maxlength="2000"
+                            placeholder="Nachrichtentext&***REMOVED***x2026; Markdown und Mentions möglich."></textarea>
+                        <span class="dce-hint">Wird oberhalb des Embeds angezeigt. Unterstützt Discord-Markdown.</span>
+                    </div>
+                </div>
+
+                @* Tab: Embed *@
+                <div class="dce-tab-pane" id="tab-embed">
+                    <label class="dce-toggle-row" for="useEmbedChk">
+                        <input type="checkbox" id="useEmbedChk" name="useEmbed" value="true" />
+                        <div>
+                            <div class="dce-toggle-label">Embed aktivieren</div>
+                            <div class="dce-hint" style="margin-top:.1rem;">Rich-Card mit Farbe, Titel, Bild und Feldern</div>
+                        </div>
+                    </label>
+                    <div class="dce-embed-off" id="embedSection">
+                        <div class="dce-grid-2">
+                            <div class="dce-field">
+                                <label class="dce-label">Author-Name</label>
+                                <input class="dce-input" name="embedAuthorName" id="inAuthorName" placeholder="ERC Stewarding" />
+                            </div>
+                            <div class="dce-field">
+                                <label class="dce-label">Author-Icon URL</label>
+                                <input class="dce-input" name="embedAuthorIconUrl" id="inAuthorIcon" placeholder="https://i.imgur.com/..." type="url" />
+                            </div>
+                        </div>
+                        <div class="dce-field">
+                            <label class="dce-label">Titel <span class="dce-charcount" id="cc-title">0 / 256</span></label>
+                            <input class="dce-input" name="embedTitle" id="inEmbedTitle" placeholder="Steward-Entscheidung · Runde 5" maxlength="256" />
+                        </div>
+                        <div class="dce-field">
+                            <label class="dce-label">Titel-Link (optional)</label>
+                            <input class="dce-input" name="embedUrl" id="inEmbedUrl" placeholder="https://erdi-erc.de/Stewards" type="url" />
+                        </div>
+                        <div class="dce-field">
+                            <label class="dce-label">Beschreibung <span class="dce-charcount" id="cc-desc">0 / 4096</span></label>
+                            <div class="dce-md-toolbar" data-target="inEmbedDesc">
+                                <button type="button" class="dce-md-btn" data-md="**{s}**" title="Fett"><b>B</b></button>
+                                <button type="button" class="dce-md-btn" data-md="*{s}*" title="Kursiv"><i>I</i></button>
+                                <button type="button" class="dce-md-btn" data-md="~~{s}~~" title="Durchgestrichen"><s>S</s></button>
+                                <div class="dce-md-sep"></div>
+                                <button type="button" class="dce-md-btn" data-md="`{s}`" title="Inline Code" style="font-family:monospace;">&lt;/&gt;</button>
+                                <button type="button" class="dce-md-btn" data-md="```&***REMOVED***10;{s}&***REMOVED***10;```" title="Code-Block" style="font-family:monospace;">```</button>
+                                <div class="dce-md-sep"></div>
+                                <button type="button" class="dce-md-btn" data-md="> {s}" title="Blockquote">&ldquo;</button>
+                                <button type="button" class="dce-md-btn" data-md="||{s}||" title="Spoiler">&***REMOVED***128065;</button>
+                            </div>
+                            <textarea class="dce-textarea" name="embedDescription" id="inEmbedDesc" rows="5" maxlength="4096"
+                                placeholder="Beschreibungstext&***REMOVED***x2026; Markdown wird unterstützt."></textarea>
+                        </div>
+                        <div class="dce-field">
+                            <label class="dce-label">Akzentfarbe (linker Rand)</label>
+                            <div class="dce-color-row">
+                                <input type="color" class="dce-color-swatch" id="inEmbedColor" name="embedColor" value="***REMOVED***e10600" />
+                                <input type="text" class="dce-color-hex" id="inEmbedColorHex" value="***REMOVED***e10600" maxlength="7" spellcheck="false" placeholder="***REMOVED***e10600" />
+                                <span class="dce-hint">HEX oder Swatch wählen</span>
+                            </div>
+                            <div class="dce-presets" id="colorPresets">
+                                @foreach (var c in new[]{ ("***REMOVED***e10600","ERC Rot"),("***REMOVED***5865f2","Discord"),("***REMOVED***57f287","Grün"),("***REMOVED***fee75c","Gelb"),("***REMOVED***eb459e","Pink"),("***REMOVED***ed4245","Rot"),("***REMOVED***3ba55c","Dunkelgrün"),("***REMOVED***faa61a","Orange"),("***REMOVED***00aff4","Cyan"),("***REMOVED***9b59b6","Lila"),("***REMOVED***e67e22","Bernstein"),("***REMOVED***1abc9c","Türkis"),("***REMOVED***ffffff","Weiß"),("***REMOVED***b9bbbe","Grau") })
+                                {
+                                    <div class="dce-preset" style="background:@c.Item1;" data-hex="@c.Item1" title="@c.Item2" onclick="setColor('@c.Item1')"></div>
+                                }
+                            </div>
+                        </div>
+                        <div class="dce-grid-2">
+                            <div class="dce-field">
+                                <label class="dce-label">Thumbnail (klein, rechts)</label>
+                                <input class="dce-input" name="embedThumbnail" id="inThumbnail" placeholder="https://..." type="url" />
+                            </div>
+                            <div class="dce-field">
+                                <label class="dce-label">Bild (groß, unten)</label>
+                                <input class="dce-input" name="embedImage" id="inImage" placeholder="https://..." type="url" />
+                            </div>
+                        </div>
+                        <div class="dce-field">
+                            <label class="dce-label">Footer <span class="dce-charcount" id="cc-footer">0 / 2048</span></label>
+                            <input class="dce-input" name="embedFooter" id="inFooter" placeholder="<OWNER_HANDLE>'s Racing Community · erdi-erc.de" maxlength="2048" />
+                        </div>
+                    </div>
+                </div>
+
+                @* Tab: Fields *@
+                <div class="dce-tab-pane" id="tab-fields">
+                    <div class="dce-hint"><i class="bi bi-info-circle me-1"></i>Fields erscheinen nur wenn Embed aktiviert ist. Max. 25 Felder. Inline-Felder werden nebeneinander angezeigt (max. 3 pro Reihe). Per Drag &amp; Drop sortierbar.</div>
+                    <div class="dce-fields-list" id="fieldsList"></div>
+                    <button type="button" class="dce-add-field-btn" id="addFieldBtn" onclick="addField()">
+                        <i class="bi bi-plus-lg"></i> Field hinzufügen
+                    </button>
+                </div>
+
+                @* Tab: Bot *@
+                <div class="dce-tab-pane" id="tab-bot">
+                    <div class="dce-hint">Überschreibe den Standard-Bot-Namen und Avatar nur für diese Nachricht.</div>
+                    <div class="dce-grid-2">
+                        <div class="dce-field">
+                            <label class="dce-label">Bot-Name (override)</label>
+                            <input class="dce-input" name="username" id="inUsername" placeholder="ERC Bot" />
+                        </div>
+                        <div class="dce-field">
+                            <label class="dce-label">Bot-Avatar URL</label>
+                            <input class="dce-input" name="avatarUrl" id="inAvatarUrl" placeholder="https://..." type="url" />
+                        </div>
+                    </div>
+                    <div class="dce-hint"><i class="bi bi-info-circle me-1"></i>Discord erlaubt diese Overrides nur bei Webhook-Nachrichten.</div>
+                </div>
+
+                <div class="dce-submit-row">
+                    <button type="submit" class="dce-btn-send" id="sendBtn">
+                        <i class="bi bi-send-fill"></i> An Discord senden
+                    </button>
+                    <button type="button" class="dce-btn-secondary" onclick="clearAll()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
+                    </button>
+                    <a class="dce-btn-secondary ms-auto" asp-controller="AdminWebhooks" asp-action="Index">
+                        <i class="bi bi-x-lg"></i> Abbrechen
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @* ══ RIGHT: Preview ══ *@
+        <div class="dce-preview-shell">
+            <div class="dce-preview-header">
+                <div class="dce-preview-label"><i class="bi bi-eye"></i>Live-Vorschau</div>
+                <div class="dce-preview-mode">
+                    <button type="button" class="dce-mode-btn is-active" onclick="setMode('preview',this)">Vorschau</button>
+                    <button type="button" class="dce-mode-btn" onclick="setMode('json',this)">JSON</button>
+                </div>
+            </div>
+            <div id="modePreview">
+                <div class="dce-discord">
+                    <div class="dce-discord__bar">
+                        <div class="dce-discord__dot" style="background:***REMOVED***57f287;"></div>
+                        <span class="dce-discord__channel">***REMOVED*** @(webhook?.Category?.ToLower().Replace(" ","-") ?? "general")</span>
+                    </div>
+                    <div class="dce-discord__body">
+                        <div class="dce-discord__msg">
+                            <div class="dce-discord__avatar" id="pvAvatar">🤖</div>
+                            <div class="dce-discord__right">
+                                <div class="dce-discord__urow">
+                                    <span class="dce-discord__username" id="pvUsername">ERC Bot</span>
+                                    <span class="dce-discord__bot-tag">APP</span>
+                                    <span class="dce-discord__ts" id="pvTs"></span>
+                                </div>
+                                <div class="dce-discord__content" id="pvContent" style="display:none;"></div>
+                                <div class="dce-embed" id="pvEmbed" style="display:none;">
+                                    <div class="dce-embed__author" id="pvAuthor" style="display:none;">
+                                        <img class="dce-embed__author-icon" id="pvAuthorIcon" src="" alt="" style="display:none;" />
+                                        <span id="pvAuthorName"></span>
+                                    </div>
+                                    <div class="dce-embed__row">
+                                        <div class="dce-embed__body">
+                                            <div class="dce-embed__title" id="pvTitle" style="display:none;"></div>
+                                            <div class="dce-embed-desc" id="pvDesc" style="display:none;"></div>
+                                            <div class="dce-embed__fields" id="pvFields"></div>
+                                        </div>
+                                        <div class="dce-embed__thumbnail" id="pvThumbnailWrap" style="display:none;">
+                                            <img id="pvThumbnail" src="" alt="" />
+                                        </div>
+                                    </div>
+                                    <div class="dce-embed__image" id="pvImageWrap" style="display:none;">
+                                        <img id="pvImage" src="" alt="" />
+                                    </div>
+                                    <div class="dce-embed__footer" id="pvFooter" style="display:none;"></div>
+                                </div>
+                                <div class="dce-preview-empty" id="pvEmpty">
+                                    <i class="bi bi-chat-dots" style="font-size:1.4rem;display:block;margin-bottom:.35rem;"></i>
+                                    Noch nichts eingegeben&***REMOVED***x2026;
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size:.6rem;color:var(--ink-4);margin-top:.4rem;text-align:right;">
+                    Vereinfachte Darstellung &middot; Spoiler sichtbar nach Klick
+                </div>
+            </div>
+            <div id="modeJson" style="display:none;">
+                <pre class="dce-json-block" id="jsonBlock">{}</pre>
+                <div style="font-size:.6rem;color:var(--ink-4);margin-top:.4rem;">Dieser JSON wird exakt so an Discord gesendet.</div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+@section Scripts {
+@if (draft != null)
+{
+    <script>
+        // Server-Draft nach Fehler-POST: Editor mit ursprünglichen Eingaben rehydrieren,
+        // damit der User nichts neu tippen muss.
+        window.__webhookDraft = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(draft));
+    </script>
+}
+<script>
+(function(){
+'use strict';
+
+function g(id)   { return document.getElementById(id); }
+function qa(sel) { return document.querySelectorAll(sel); }
+function escH(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escQ(s) { return (s||'').replace(/"/g,'&quot;'); }
+
+// ── State (must be declared before any code that calls updatePreview) ──
+var fields  = [];
+var dragSrc = null;
+
+// Guard: if core elements are missing, bail gracefully
+if(!g('inContent')||!g('useEmbedChk')||!g('pvUsername')){
+    console.warn('[DCE] Required elements not found – editor not initialized');
+    return;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────
+qa('.dce-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+        qa('.dce-tab').forEach(function(b){ b.classList.remove('is-active'); });
+        qa('.dce-tab-pane').forEach(function(p){ p.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        g('tab-'+btn.dataset.tab).classList.add('is-active');
+    });
+});
+
+// ── Preview mode ──────────────────────────────────────────────────────
+window.setMode = function(m, btn){
+    qa('.dce-mode-btn').forEach(function(b){ b.classList.remove('is-active'); });
+    btn.classList.add('is-active');
+    g('modePreview').style.display = m==='preview' ? '' : 'none';
+    g('modeJson').style.display    = m==='json'    ? '' : 'none';
+    if(m==='json') refreshJson();
+};
+
+// ── Timestamp ─────────────────────────────────────────────────────────
+function nowTs(){
+    var d=new Date();
+    return 'Heute um '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+var _pvTs=g('pvTs'); if(_pvTs) _pvTs.textContent = nowTs();
+
+// ── Markdown renderer (Discord subset) ───────────────────────────────
+function md(text){
+    if(!text) return '';
+    var s = escH(text);
+    s = s.replace(/```([^`]*?)```/gs,'<pre>$1</pre>');
+    s = s.replace(/`([^`]+)`/g,'<code>$1</code>');
+    s = s.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+    s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    s = s.replace(/\*(.+?)\*/g,'<em>$1</em>');
+    s = s.replace(/_([^_\n]+)_/g,'<em>$1</em>');
+    s = s.replace(/~~(.+?)~~/g,'<del>$1</del>');
+    s = s.replace(/\|\|(.+?)\|\|/g,'<span class="dce-spoiler" onclick="this.style.color=\'***REMOVED***dcddde\'">$1</span>');
+    s = s.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+    s = s.replace(/\u0040everyone/g,'<span class="dce-mention">\u0040everyone</span>');
+    s = s.replace(/\u0040here/g,'<span class="dce-mention">\u0040here</span>');
+    s = s.replace(/\n/g,'<br>');
+    return s;
+}
+
+// ── Char counters ────────────────────────────────────────────────────
+function wireCC(inputId, ccId, max){
+    var el=g(inputId); if(!el) return;
+    function upd(){
+        var n=el.value.length, cc=g(ccId); if(!cc) return;
+        cc.textContent=n+' / '+max;
+        cc.className='dce-charcount'+(n>=max?' is-err':n>max*.88?' is-warn':'');
+    }
+    el.addEventListener('input',function(){ upd(); updatePreview(); });
+    upd();
+}
+wireCC('inContent',  'cc-content', 2000);
+wireCC('inEmbedTitle','cc-title',   256);
+wireCC('inEmbedDesc', 'cc-desc',   4096);
+wireCC('inFooter',    'cc-footer', 2048);
+
+// ── Embed toggle ──────────────────────────────────────────────────────
+g('useEmbedChk').addEventListener('change',function(){
+    g('embedSection').classList.toggle('is-active',this.checked);
+    updateBadges(); updatePreview();
+});
+
+function updateBadges(){
+    var hasE = g('useEmbedChk').checked &&
+        (g('inEmbedTitle').value||g('inEmbedDesc').value||g('inAuthorName').value);
+    var eb = g('embedBadge');
+    eb.textContent=''; eb.classList.toggle('is-visible',!!hasE);
+    var fc = fields.filter(function(f){return f.name||f.value;}).length;
+    var fb = g('fieldsBadge');
+    fb.textContent = fc||''; fb.classList.toggle('is-visible',fc>0);
+    g('addFieldBtn').disabled = fields.length>=25;
+}
+
+// ── Color picker ──────────────────────────────────────────────────────
+window.setColor = function(hex){
+    g('inEmbedColor').value    = hex;
+    g('inEmbedColorHex').value = hex;
+    qa('.dce-preset').forEach(function(p){
+        p.classList.toggle('is-selected', p.dataset.hex.toLowerCase()===hex.toLowerCase());
+    });
+    updatePreview();
+};
+g('inEmbedColor').addEventListener('input',function(){
+    g('inEmbedColorHex').value = this.value;
+    qa('.dce-preset').forEach(function(p){ p.classList.remove('is-selected'); });
+    updatePreview();
+});
+g('inEmbedColorHex').addEventListener('input',function(){
+    if(/^***REMOVED***[0-9a-fA-F]{6}$/.test(this.value)){
+        g('inEmbedColor').value = this.value;
+        qa('.dce-preset').forEach(function(p){
+            p.classList.toggle('is-selected', p.dataset.hex.toLowerCase()===g('inEmbedColorHex').value.toLowerCase());
+        });
+        updatePreview();
+    }
+});
+setColor('***REMOVED***e10600');
+
+// ── Markdown toolbar ──────────────────────────────────────────────────
+qa('.dce-md-btn[data-md]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+        var tgt = g(btn.closest('.dce-md-toolbar').dataset.target);
+        if(!tgt) return;
+        var s=tgt.selectionStart, e=tgt.selectionEnd;
+        var sel=tgt.value.substring(s,e)||'Text';
+        var result=btn.dataset.md.replace('{s}',sel);
+        tgt.focus();
+        document.execCommand('insertText',false,result);
+        updatePreview();
+    });
+});
+qa('.dce-md-btn.dce-ins-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+        var tgt=g('inContent'); tgt.focus();
+        document.execCommand('insertText',false,btn.dataset.ins);
+        updatePreview();
+    });
+});
+
+// ── Fields builder ────────────────────────────────────────────────────
+window.addField=function(){
+    if(fields.length>=25) return;
+    fields.push({name:'',value:'',inline:false});
+    renderFields();
+};
+window.removeField=function(i){
+    fields.splice(i,1); renderFields();
+};
+window.updField=function(i,k,v){
+    fields[i][k]=v; serF(); updateBadges(); updatePreview();
+};
+
+function renderFields(){
+    var fl=g('fieldsList'); fl.innerHTML='';
+    fields.forEach(function(f,i){
+        var row=document.createElement('div');
+        row.className='dce-fi'; row.draggable=true; row.dataset.idx=i;
+        row.innerHTML=
+            '<div class="dce-fi__drag" title="Verschieben"><i class="bi bi-grip-vertical"></i></div>'+
+            '<div class="dce-fi__sub"><div class="dce-fi__label">Name</div>'+
+              '<input class="dce-fi__inp" placeholder="Fahrer" value="'+escQ(f.name)+'" oninput="updField('+i+',\'name\',this.value)" /></div>'+
+            '<div class="dce-fi__sub"><div class="dce-fi__label">Wert</div>'+
+              '<input class="dce-fi__inp" placeholder="Max Verstappen" value="'+escQ(f.value)+'" oninput="updField('+i+',\'value\',this.value)" /></div>'+
+            '<div class="dce-fi__inline"><div class="dce-fi__inline-lbl">Inline</div>'+
+              '<input type="checkbox"'+(f.inline?' checked':'')+' onchange="updField('+i+',\'inline\',this.checked)" /></div>'+
+            '<button type="button" class="dce-fi__del" onclick="removeField('+i+')" title="Entfernen"><i class="bi bi-x-lg"></i></button>';
+        row.addEventListener('dragstart',function(e){
+            dragSrc=i; e.dataTransfer.effectAllowed='move';
+            setTimeout(function(){ row.style.opacity='.35'; },0);
+        });
+        row.addEventListener('dragend',function(){ row.style.opacity=''; dragSrc=null; });
+        row.addEventListener('dragover',function(e){ e.preventDefault(); row.classList.add('drag-over'); });
+        row.addEventListener('dragleave',function(){ row.classList.remove('drag-over'); });
+        row.addEventListener('drop',function(e){
+            e.preventDefault(); row.classList.remove('drag-over');
+            if(dragSrc===null||dragSrc===i) return;
+            var moved=fields.splice(dragSrc,1)[0];
+            fields.splice(i,0,moved);
+            renderFields();
+        });
+        fl.appendChild(row);
+    });
+    serF(); updateBadges(); updatePreview();
+}
+
+function serF(){
+    g('fieldsJsonInput').value=JSON.stringify(fields.map(function(f){
+        return {name:f.name,value:f.value,inline:f.inline};
+    }));
+}
+
+// ── Templates ────────────────────────────────────────────────────────
+var TPLS={
+    race:{
+        content:'', useEmbed:true,
+        embedAuthorName:'ERC Race Control', embedAuthorIconUrl:'',
+        embedTitle:'🏁 Rennbericht · Runde {N}', embedUrl:'https://erdi-erc.de',
+        embedDescription:'**Das Rennen in {STRECKE} ist beendet!**\n\nDie wichtigsten Ergebnisse auf einen Blick.',
+        embedColor:'***REMOVED***e10600', embedFooter:"<OWNER_HANDLE>'s Racing Community · erdi-erc.de",
+        embedThumbnail:'', embedImage:'',
+        fields:[
+            {name:'🥇 1. Platz',value:'Fahrer A',inline:true},
+            {name:'🥈 2. Platz',value:'Fahrer B',inline:true},
+            {name:'🥉 3. Platz',value:'Fahrer C',inline:true},
+            {name:'💨 Schnellste Runde',value:'Fahrer X · 1:23.456',inline:false},
+        ]},
+    steward:{
+        content:'', useEmbed:true,
+        embedAuthorName:'ERC Stewards', embedAuthorIconUrl:'',
+        embedTitle:'⚖️ Steward-Entscheidung', embedUrl:'https://erdi-erc.de/Stewards',
+        embedDescription:'Die Stewards haben folgende Entscheidung getroffen:',
+        embedColor:'***REMOVED***ed4245', embedFooter:"<OWNER_HANDLE>'s Racing Community · Stewards",
+        embedThumbnail:'', embedImage:'',
+        fields:[
+            {name:'Fahrer',value:'Name des Fahrers',inline:true},
+            {name:'Strafe',value:'Zeitstrafe / DSQ',inline:true},
+            {name:'Vergehen',value:'Beschreibung des Vorfalls',inline:false},
+            {name:'Begründung',value:'Offizielle Begründung',inline:false},
+        ]},
+    news:{
+        content:'', useEmbed:true,
+        embedAuthorName:"<OWNER_HANDLE>'s Racing Community", embedAuthorIconUrl:'',
+        embedTitle:'📰 Community News', embedUrl:'https://erdi-erc.de',
+        embedDescription:"Neuigkeiten aus der <OWNER_HANDLE>'s Racing Community.",
+        embedColor:'***REMOVED***5865f2', embedFooter:"<OWNER_HANDLE>'s Racing Community",
+        embedThumbnail:'', embedImage:'', fields:[]},
+    event:{
+        content:'\u0040here', useEmbed:true,
+        embedAuthorName:"<OWNER_HANDLE>'s Racing Community", embedAuthorIconUrl:'',
+        embedTitle:'🎮 Event-Ankündigung', embedUrl:'https://erdi-erc.de',
+        embedDescription:'Seid dabei! Alle Infos zum nächsten Event:',
+        embedColor:'***REMOVED***faa61a', embedFooter:"<OWNER_HANDLE>'s Racing Community",
+        embedThumbnail:'', embedImage:'',
+        fields:[
+            {name:'📅 Datum',value:'TT.MM.JJJJ',inline:true},
+            {name:'🕐 Uhrzeit',value:'HH:MM Uhr',inline:true},
+            {name:'🏟️ Strecke',value:'Streckenname',inline:true},
+        ]},
+    highlight:{
+        content:'', useEmbed:true,
+        embedAuthorName:"<OWNER_HANDLE>'s Racing Community", embedAuthorIconUrl:'',
+        embedTitle:'🎬 Highlight · Runde {N}', embedUrl:'https://erdi-erc.de',
+        embedDescription:'Der beste Moment des Rennens – jetzt auf YouTube!',
+        embedColor:'***REMOVED***eb459e', embedFooter:"<OWNER_HANDLE>'s Racing Community",
+        embedThumbnail:'', embedImage:'',
+        fields:[{name:'▶️ Video',value:'[Auf YouTube ansehen](https://youtube.com)',inline:false}]},
+    announce:{
+        content:'\u0040everyone', useEmbed:true,
+        embedAuthorName:"<OWNER_HANDLE>'s Racing Community", embedAuthorIconUrl:'',
+        embedTitle:'📢 Wichtige Ankündigung', embedUrl:'https://erdi-erc.de',
+        embedDescription:'Text der Ankündigung…',
+        embedColor:'***REMOVED***57f287', embedFooter:"<OWNER_HANDLE>'s Racing Community",
+        embedThumbnail:'', embedImage:'', fields:[]}
+};
+
+window.applyTemplate=function(key){
+    var t=TPLS[key]; if(!t) return;
+    var m={inContent:t.content||'',inAuthorName:t.embedAuthorName||'',inAuthorIcon:t.embedAuthorIconUrl||'',
+           inEmbedTitle:t.embedTitle||'',inEmbedUrl:t.embedUrl||'',inEmbedDesc:t.embedDescription||'',
+           inThumbnail:t.embedThumbnail||'',inImage:t.embedImage||'',inFooter:t.embedFooter||''};
+    Object.keys(m).forEach(function(k){ var el=g(k); if(el) el.value=m[k]; });
+    setColor(t.embedColor||'***REMOVED***5865f2');
+    g('useEmbedChk').checked=t.useEmbed;
+    g('embedSection').classList.toggle('is-active',t.useEmbed);
+    fields=(t.fields||[]).map(function(f){ return Object.assign({},f); });
+    renderFields();
+    // Switch to message tab
+    qa('.dce-tab').forEach(function(b){ b.classList.remove('is-active'); });
+    qa('.dce-tab-pane').forEach(function(p){ p.classList.remove('is-active'); });
+    document.querySelector('[data-tab="message"]').classList.add('is-active');
+    g('tab-message').classList.add('is-active');
+    updateBadges(); updatePreview();
+};
+
+window.clearAll=function(){
+    ['inContent','inUsername','inAvatarUrl','inAuthorName','inAuthorIcon',
+     'inEmbedTitle','inEmbedUrl','inEmbedDesc','inThumbnail','inImage','inFooter'
+    ].forEach(function(id){ var el=g(id); if(el) el.value=''; });
+    g('useEmbedChk').checked=false;
+    g('embedSection').classList.remove('is-active');
+    fields=[]; renderFields(); setColor('***REMOVED***e10600'); updatePreview();
+};
+
+// ── Live Preview ──────────────────────────────────────────────────────
+function tv(el,show){ el.style.display=show?'':'none'; }
+
+function updatePreview(){
+    var uname   = (g('inUsername').value||'').trim()||'ERC Bot';
+    var avatar  = (g('inAvatarUrl').value||'').trim();
+    var content = g('inContent').value;
+
+    g('pvUsername').textContent = uname;
+    var av=g('pvAvatar');
+    if(avatar){ av.innerHTML='<img src="'+escH(avatar)+'" alt="" onerror="this.parentNode.textContent=\'🤖\'" />'; }
+    else { av.textContent='🤖'; }
+
+    var hasContent=!!content.trim();
+    tv(g('pvContent'),hasContent);
+    g('pvContent').innerHTML = hasContent ? md(content) : '';
+
+    var showEmbed=g('useEmbedChk').checked;
+    tv(g('pvEmbed'),showEmbed);
+
+    if(showEmbed){
+        var color=g('inEmbedColor').value||'***REMOVED***5865f2';
+        g('pvEmbed').style.borderLeftColor=color;
+
+        var aName=g('inAuthorName').value.trim();
+        var aIcon=g('inAuthorIcon').value.trim();
+        tv(g('pvAuthor'),!!aName);
+        g('pvAuthorName').textContent=aName;
+        if(aIcon){ g('pvAuthorIcon').src=aIcon; tv(g('pvAuthorIcon'),true); }
+        else { tv(g('pvAuthorIcon'),false); }
+
+        var thumb=g('inThumbnail').value.trim();
+        tv(g('pvThumbnailWrap'),!!thumb);
+        if(thumb) g('pvThumbnail').src=thumb;
+
+        var title=g('inEmbedTitle').value.trim();
+        var tUrl=g('inEmbedUrl').value.trim();
+        tv(g('pvTitle'),!!title);
+        if(title){
+            g('pvTitle').innerHTML=tUrl
+                ?'<a href="'+escH(tUrl)+'" target="_blank">'+escH(title)+'</a>'
+                :escH(title);
+        }
+
+        var desc=g('inEmbedDesc').value;
+        tv(g('pvDesc'),!!desc.trim());
+        g('pvDesc').innerHTML=desc.trim()?md(desc):'';
+
+        // Fields
+        var pf=g('pvFields'); pf.innerHTML='';
+        var af=fields.filter(function(f){ return f.name||f.value; });
+        if(af.length){
+            var inlines=af.filter(function(f){ return f.inline; }).length;
+            var cols=inlines>0?Math.min(3,inlines):1;
+            pf.style.gridTemplateColumns='repeat('+cols+',1fr)';
+            af.forEach(function(f){
+                var fd=document.createElement('div');
+                fd.className='dce-embed__field';
+                if(!f.inline) fd.style.gridColumn='1/-1';
+                fd.innerHTML='<div class="dce-embed__field-name">'+md(f.name)+'</div>'+
+                             '<div class="dce-embed__field-value">'+md(f.value)+'</div>';
+                pf.appendChild(fd);
+            });
+        }
+
+        var img=g('inImage').value.trim();
+        tv(g('pvImageWrap'),!!img);
+        if(img) g('pvImage').src=img;
+
+        var footer=g('inFooter').value.trim();
+        tv(g('pvFooter'),!!footer);
+        if(footer){
+            var dt=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'short',year:'numeric'});
+            g('pvFooter').innerHTML='<span>'+escH(footer)+'</span>'+
+                '<span class="dce-embed__footer-dot"></span><span>'+escH(dt)+'</span>';
+        }
+    }
+
+    tv(g('pvEmpty'),!hasContent&&!showEmbed);
+    updateBadges();
+    if(g('modeJson').style.display!=='none') refreshJson();
+}
+
+function buildPayload(){
+    var p={};
+    var c=g('inContent').value, u=(g('inUsername').value||'').trim(), av=(g('inAvatarUrl').value||'').trim();
+    if(c.trim()) p.content=c;
+    if(u) p.username=u;
+    if(av) p.avatar_url=av;
+    if(g('useEmbedChk').checked){
+        var e={};
+        var t=g('inEmbedTitle').value.trim(), tu=g('inEmbedUrl').value.trim(),
+            d=g('inEmbedDesc').value.trim(), col=g('inEmbedColor').value,
+            th=g('inThumbnail').value.trim(), im=g('inImage').value.trim(),
+            ft=g('inFooter').value.trim(), an=g('inAuthorName').value.trim(),
+            ai=g('inAuthorIcon').value.trim();
+        if(t)   e.title=t;
+        if(tu)  e.url=tu;
+        if(d)   e.description=d;
+        if(col&&/^***REMOVED***[0-9a-fA-F]{6}$/.test(col)) e.color=parseInt(col.slice(1),16);
+        if(th)  e.thumbnail={url:th};
+        if(im)  e.image={url:im};
+        if(ft)  e.footer={text:ft};
+        if(an)  e.author=ai?{name:an,icon_url:ai}:{name:an};
+        var af=fields.filter(function(f){ return f.name||f.value; });
+        if(af.length) e.fields=af.map(function(f){ return {name:f.name,value:f.value,inline:f.inline}; });
+        e.timestamp=new Date().toISOString();
+        p.embeds=[e];
+    }
+    return p;
+}
+
+function refreshJson(){
+    g('jsonBlock').textContent=JSON.stringify(buildPayload(),null,2);
+}
+
+// Wire inputs
+['inUsername','inAvatarUrl','inAuthorName','inAuthorIcon',
+ 'inEmbedTitle','inEmbedUrl','inEmbedDesc','inThumbnail','inImage','inFooter'
+].forEach(function(id){
+    var el=g(id); if(el) el.addEventListener('input',updatePreview);
+});
+
+// Submit
+g('dceFrm').addEventListener('submit',function(){
+    serF();
+    g('sendBtn').disabled=true;
+    g('sendBtn').innerHTML='<i class="bi bi-hourglass-split"></i> Wird gesendet&***REMOVED***x2026;';
+});
+
+// ── Draft restore (nach Fehler-POST) ─────────────────────────────────
+function restoreDraft(){
+    var d = window.__webhookDraft;
+    if(!d) return;
+    var map = {
+        content:'inContent', username:'inUsername', avatarUrl:'inAvatarUrl',
+        embedTitle:'inEmbedTitle', embedDescription:'inEmbedDesc', embedUrl:'inEmbedUrl',
+        embedThumbnail:'inThumbnail', embedImage:'inImage', embedFooter:'inFooter',
+        embedAuthorName:'inAuthorName', embedAuthorIconUrl:'inAuthorIcon'
+    };
+    Object.keys(map).forEach(function(k){
+        var v = d[k]; if(v == null) return;
+        var el = g(map[k]); if(el) el.value = v;
+    });
+    if(d.useEmbed === 'true'){
+        g('useEmbedChk').checked = true;
+        g('embedSection').classList.add('is-active');
+    }
+    if(d.embedColor && /^***REMOVED***[0-9a-fA-F]{6}$/.test(d.embedColor)){
+        setColor(d.embedColor);
+    }
+    if(d.fieldsJson){
+        try{
+            var parsed = JSON.parse(d.fieldsJson);
+            if(Array.isArray(parsed)){
+                fields = parsed.map(function(f){ return {name:f.name||'',value:f.value||'',inline:!!f.inline}; });
+                renderFields();
+            }
+        } catch(e){ /* malformed draft - ignore */ }
+    }
+}
+restoreDraft();
+
+updatePreview();
+})();
+</script>
+}

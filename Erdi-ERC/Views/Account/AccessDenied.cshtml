@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Zugriff verweigert";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Black Flag · Access Denied",
+    Title     = "Kein Zutritt zur",
+    Highlight = "Boxengasse",
+    Lead      = "Dein Discord-Konto ist nicht als <strong class=\"text-accent\">Admin</strong> hinterlegt. Wende dich an <OWNER_HANDLE>10, um Adminrechte zu beantragen.",
+    GhostText = "DENIED",
+    Actions   = new List<F1ButtonVm> {
+        new() { Label = "Zur Startseite", Href = "/",                        Variant = "primary",  IconLucide = "home"          },
+        new() { Label = "<OWNER_HANDLE>10 auf Twitch", Href = "https://twitch.tv/erdi10", Variant = "ghost", IconLucide = "external-link", Target = "_blank" }
+    }
+})" />
+
+<section class="f1-section reveal">
+    <div class="empty-state">
+        <div class="icon-chip icon-chip-xl is-amber mb-3">
+            <i class="bi bi-shield-exclamation"></i>
+        </div>
+        <h3 class="empty-state__title">Du bist eingeloggt &ndash; aber ohne Adminrolle.</h3>
+        <p class="empty-state__lead">
+            Diese Seite ist Teil des internen Liga-Bereichs. Wenn du Stewart, Reporter oder Ligaleitung bist,
+            melde dich bitte direkt bei <strong><OWNER_HANDLE>10</strong>, damit dein Account hinzugefügt werden kann.
+        </p>
+    </div>
+</section>

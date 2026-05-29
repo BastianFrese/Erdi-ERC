@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace><OWNER_HANDLE>_ERC</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.41.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="10.0.0" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
+  </ItemGroup>
+
+  <!-- Production-Konfiguration immer mit deployen (ueberschreibt appsettings.json zur Laufzeit) -->
+  <ItemGroup>
+    <Content Update="appsettings.Production.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
+  <!-- Upload-Ordner: .gitkeep stellt sicher dass der Ordner beim Publish existiert -->
+  <!-- Hochgeladene Bilder werden dadurch nicht geloescht (PreserveNewest) -->
+  <ItemGroup>
+    <None Include="wwwroot\uploads\events\.gitkeep">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Background Music: Songs ins Publish-Verzeichnis kopieren -->
+  <ItemGroup>
+    <Content Include="backgroundmusic\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Tests\" />
+  </ItemGroup>
+
+  <!--
+    CSS-Bundling: konkateniert alle Partials aus /wwwroot/css/site/ + site.track-setups.css + site.community.css
+    zu /wwwroot/css/site.bundled.css. Ergebnis: 1 HTTP-Request statt 13 @import-Roundtrips (render-blocking).
+    Inputs/Outputs sorgen für incrementell — läuft nur wenn Partials neuer sind als das Bundle.
+  -->
+  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/06b-applications.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site/12-tokens-f1.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css" Outputs="wwwroot/css/site.bundled.css">
+    <ItemGroup>
+      <_CssBundle Include="wwwroot/css/site/01-tokens.css" />
+      <_CssBundle Include="wwwroot/css/site/02-base.css" />
+      <_CssBundle Include="wwwroot/css/site/03-layout.css" />
+      <_CssBundle Include="wwwroot/css/site/04-components.css" />
+      <_CssBundle Include="wwwroot/css/site/05-f1-modules.css" />
+      <_CssBundle Include="wwwroot/css/site/06-pages-and-admin.css" />
+      <_CssBundle Include="wwwroot/css/site/06b-applications.css" />
+      <_CssBundle Include="wwwroot/css/site/07-utilities.css" />
+      <_CssBundle Include="wwwroot/css/site/08-animations.css" />
+      <_CssBundle Include="wwwroot/css/site/09-responsive.css" />
+      <_CssBundle Include="wwwroot/css/site/10-f1-quickwins.css" />
+      <_CssBundle Include="wwwroot/css/site/11-unique-addons.css" />
+      <_CssBundle Include="wwwroot/css/site/12-tokens-f1.css" />
+      <_CssBundle Include="wwwroot/css/site.track-setups.css" />
+      <_CssBundle Include="wwwroot/css/site.community.css" />
+    </ItemGroup>
+    <ReadLinesFromFile File="%(_CssBundle.Identity)">
+      <Output TaskParameter="Lines" ItemName="_CssBundleLines" />
+    </ReadLinesFromFile>
+    <WriteLinesToFile File="wwwroot/css/site.bundled.css" Lines="@(_CssBundleLines)" Overwrite="true" />
+    <Message Importance="high" Text="CSS-Bundle erzeugt: wwwroot/css/site.bundled.css" />
+  </Target>
+
+</Project>

@@ -1,0 +1,99 @@
+@model List<<OWNER_HANDLE>_ERC.Models.BackgroundMusicFileViewModel>
+@{
+    ViewData["Title"] = "Hintergrundmusik";
+    ViewData["Kicker"] = "System";
+    ViewData["HeroTitle"] = "Hintergrundmusik";
+    var totalBytes = Model.Sum(x => x.Size);
+    var totalMb = totalBytes / 1024.0 / 1024.0;
+}
+
+<div class="adm-dashboard">
+
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-music-note-list"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Songs</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***66d18f;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-hdd-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@totalMb.ToString("F1") MB</div>
+                <div class="adm-kpi-card__label">Speicher</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-file-earmark-music"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">MP3 · WAV · OGG</div>
+                <div class="adm-kpi-card__label">Unterstützte Formate</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-upload me-2" style="color:***REMOVED***5b8cff;"></i>Song hochladen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-action="UploadBackgroundMusic" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+                @Html.AntiForgeryToken()
+                <input class="form-control form-control-sm" type="file" name="musicFile" accept=".mp3,.wav,.ogg" required style="max-width:360px;" />
+                <button class="btn btn-sm btn-primary" type="submit">
+                    <i class="bi bi-upload me-1"></i>Hochladen
+                </button>
+            </form>
+            <p class="mt-2 mb-0 small" style="color:var(--ink-3);">Unterstützte Formate: MP3, WAV, OGG · Maximale Größe: 50 MB · Songs stehen sofort im Frontend zur Verfügung.</p>
+        </div>
+    </div>
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-collection-play-fill me-2" style="color:var(--accent);"></i>Vorhandene Songs
+            </span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-music-note adm-empty__icon"></i>
+                    <span>Noch keine Songs hochgeladen.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-file-list">
+                @foreach (var file in Model)
+                {
+                    var sizeKB = file.Size / 1024.0;
+                    var sizeMB = file.Size / 1024.0 / 1024.0;
+                    var sizeDisplay = sizeMB >= 1 ? $"{sizeMB:F2} MB" : $"{sizeKB:F0} KB";
+                    <div class="adm-file-row">
+                        <i class="bi bi-music-note-beamed adm-file-row__icon"></i>
+                        <div class="adm-file-row__info">
+                            <span class="adm-file-row__name">@file.Name</span>
+                            <span class="adm-file-row__meta">@sizeDisplay · Hochgeladen @file.UploadedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                        </div>
+                        <form asp-action="DeleteBackgroundMusic" method="post" class="ms-auto flex-shrink-0"
+                              onsubmit="return confirm('Song &quot;@file.Name&quot; wirklich löschen?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="fileName" value="@file.Name" />
+                            <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

@@ -1,0 +1,95 @@
+/* =====================================================================
+   PAGE · RACE DETAIL
+   F1-Broadcast-styled race result page.
+   Erweitert pages/home-index.css + pages/results.css.
+   ===================================================================== */
+
+/* =====================================================================
+   PODIUM CARDS
+   ===================================================================== */
+.f1-podium-card {
+    position: relative;
+    background:
+        linear-gradient(160deg, rgba(255,255,255,.035) 0%, transparent 50%),
+        var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-top: 3px solid var(--podium-color, var(--stroke-2));
+    border-radius: var(--r-3);
+    padding: 1.25rem;
+    height: 100%;
+    box-shadow: var(--sh-2);
+    overflow: hidden;
+    transition: box-shadow var(--t-fast);
+}
+.f1-podium-card:hover { box-shadow: var(--sh-3, var(--sh-2)); }
+
+.f1-podium-card--p1 {
+    --podium-color: var(--gold, ***REMOVED***ffd24a);
+    box-shadow: var(--sh-2), 0 0 28px rgba(255,210,74,.1);
+}
+.f1-podium-card--p2 { --podium-color: var(--silver, ***REMOVED***d4d8e0); }
+.f1-podium-card--p3 { --podium-color: var(--bronze, ***REMOVED***d68a4a); }
+
+.f1-podium-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: .9rem;
+}
+.f1-podium-card__icon {
+    font-size: 1.9rem;
+    color: var(--podium-color, var(--ink-3));
+    line-height: 1;
+}
+.f1-podium-card--p1 .f1-podium-card__icon { filter: drop-shadow(0 0 10px rgba(255,210,74,.6)); }
+.f1-podium-card--p2 .f1-podium-card__icon { filter: drop-shadow(0 0  8px rgba(212,216,224,.4)); }
+.f1-podium-card--p3 .f1-podium-card__icon { filter: drop-shadow(0 0  8px rgba(214,138,74,.5)); }
+
+.f1-podium-card__driver {
+    display: block;
+    font: 700 1.35rem/1.15 var(--ff-tech);
+    letter-spacing: -.01em;
+    color: var(--ink);
+    text-decoration: none;
+    margin-bottom: .3rem;
+    transition: color var(--t-fast);
+}
+.f1-podium-card__driver:hover { color: var(--accent-2); }
+
+.f1-podium-card__team {
+    font: 600 .82rem/1.3 var(--ff-body);
+    margin-bottom: .9rem;
+}
+
+.f1-podium-card__footer {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--stroke-1);
+}
+.f1-podium-card__time {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    font: 500 .8rem/1 var(--ff-body);
+    color: var(--ink-3);
+}
+.f1-podium-card__time .f1-icon { width: 12px; height: 12px; color: var(--ink-4); }
+.f1-podium-card__pts {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    font: 800 .88rem/1 var(--ff-tech);
+    color: var(--text-amber, ***REMOVED***f59e0b);
+}
+.f1-podium-card__pts .f1-icon { width: 12px; height: 12px; }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 767.98px) {
+    .f1-podium-card__driver { font-size: 1.1rem; }
+    .f1-podium-card__icon   { font-size: 1.5rem; }
+}

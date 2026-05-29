@@ -1,0 +1,97 @@
+@model <OWNER_HANDLE>_ERC.Models.HighlightsPageViewModel
+@{
+    ViewData["Title"] = "Highlights";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "ERC Media",
+    Title     = "Clips &",
+    Highlight = "Highlights",
+    Lead      = "Twitch Clips, YouTube Shorts und Community-Highlights rund um Rennen, Events und besondere Momente.",
+    GhostText = "MEDIA"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "film",
+        Label      = "Highlights gesamt",
+        Value      = Model.Highlights.Count.ToString(),
+        Sub        = "Clips und Shorts in der Sammlung"
+    })" />
+</div>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip  = "Einreichen",
+            Title = "Highlight einreichen"
+        })" />
+
+        <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.25rem;box-shadow:var(--sh-2);">
+            <form asp-action="SubmitHighlight" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-4"><input class="form-control" name="title"      maxlength="160" placeholder="Titel"                    required /></div>
+                <div class="col-md-4"><input class="form-control" name="url"        maxlength="512" placeholder="Twitch Clip / YouTube URL" required /></div>
+                <div class="col-md-2"><input class="form-control" name="category"   maxlength="96"  placeholder="Kategorie" /></div>
+                <div class="col-md-2"><input class="form-control" name="raceLabel"  maxlength="160" placeholder="Race / Event" /></div>
+                <div class="col-12">
+                    <button class="f1-btn f1-btn--primary w-100" type="submit">
+                        <i class="f1-icon" data-lucide="upload"></i> Highlight posten
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+}
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Sammlung",
+        Title   = "Alle Highlights",
+        SubText = $"{Model.Highlights.Count} Einträge"
+    })" />
+
+    @if (!Model.Highlights.Any())
+    {
+        <div class="empty-state community-empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-play-btn"></i></span>
+            <div class="empty-state__title">Noch keine Highlights</div>
+            <p class="empty-state__lead">Die ersten Clips und Shorts erscheinen hier.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var clip in Model.Highlights)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <article class="community-card h-100">
+                        <div class="community-card__body d-flex flex-column gap-2">
+                            <div class="community-card__meta">
+                                <span class="badge bg-secondary">@clip.Category</span>
+                                <span class="text-mute small">@clip.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                            </div>
+                            <div class="community-card__title">@clip.Title</div>
+                            @if (!string.IsNullOrWhiteSpace(clip.RaceLabel))
+                            {
+                                <div class="text-mute small">@clip.RaceLabel</div>
+                            }
+                            <div class="community-card__text text-mute small mt-auto">Von @clip.SubmittedByName</div>
+                            <a class="f1-btn f1-btn--ghost" href="@clip.Url" target="_blank" rel="noopener">
+                                Clip öffnen
+                                <i class="f1-icon" data-lucide="external-link" style="width:13px;height:13px;"></i>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</section>

@@ -1,0 +1,344 @@
+@model <OWNER_HANDLE>_ERC.Models.League
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = $"Rennen eintragen - {Model.Name}";
+    ViewData["Kicker"] = "Rennen";
+    ViewData["HeroTitle"] = Model.Name;
+    ViewData["HeroSubtitle"] = "Erfasse ein neues Renn-Ergebnis inklusive Zeiten, Reserve-Zuordnungen und DNF-Markierungen in einem Durchgang.";
+    int[] pointsMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0 };
+    var drivers = Model.Standings.Select(s => s.Driver).OrderBy(d => d).ToList();
+    var reserveToMain = Model.Standings
+        .Where(s => s.IsReserveDriver
+                    && !string.IsNullOrWhiteSpace(s.Driver)
+                    && !string.IsNullOrWhiteSpace(s.ReserveForDriver))
+        .GroupBy(s => s.Driver.Trim(), StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(g => g.Key, g => g.First().ReserveForDriver!.Trim(), StringComparer.OrdinalIgnoreCase);
+    var reserveDrivers = Model.Standings
+        .Where(s => s.IsReserveDriver && !string.IsNullOrWhiteSpace(s.Driver))
+        .Select(s => s.Driver.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(x => x)
+        .ToList();
+    var mainDrivers = Model.Standings
+        .Where(s => !s.IsReserveDriver && !string.IsNullOrWhiteSpace(s.Driver))
+        .Select(s => s.Driver.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(x => x)
+        .ToList();
+}
+
+<div class="adm-dashboard">
+
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@drivers.Count</div>
+                <div class="adm-kpi-card__label">Fahrer in dieser Liga</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ff8a4c;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-arrow-repeat"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@reserveDrivers.Count</div>
+                <div class="adm-kpi-card__label">Reservefahrer</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">22</div>
+                <div class="adm-kpi-card__label">Positions-Slots</div>
+            </div>
+        </div>
+    </section>
+
+    @if (TempData["RaceError"] is string raceError)
+    {
+        <div class="adm-alert" style="border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08);color:***REMOVED***ffc0c0;">
+            <i class="bi bi-exclamation-triangle-fill"></i> @raceError
+        </div>
+    }
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,***REMOVED***ffb800);"></i>Neues Renn-Ergebnis · @Model.Name
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-action="SaveEnteredRace" method="post" id="enterRaceForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="leagueId" value="@Model.Id" />
+                <input type="hidden" name="fastestLapDriver" value="" />
+
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <label class="form-label">Datum & Uhrzeit</label>
+                        <input class="form-control" type="datetime-local" name="date" required value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">Strecke</label>
+                        <input class="form-control" type="text" name="track" required placeholder="z. B. Australien" />
+                    </div>
+                </div>
+
+                @if (reserveDrivers.Count > 0)
+                {
+                    <div class="border rounded p-3 mb-4 bg-dark-subtle">
+                        <h5 class="mb-2">Reserve-Zuordnung für dieses Rennen (optional)</h5>
+                        <p class="text-muted small mb-3">Hier kannst du bei Bedarf die Zuordnung nur für dieses Rennen überschreiben. Wenn leer, gilt die Standard-Zuordnung aus der Fahrerverwaltung.</p>
+                        <div class="row g-2">
+                            @foreach (var reserveDriver in reserveDrivers)
+                            {
+                                <input type="hidden" name="reserveDrivers" value="@reserveDriver" />
+                                <div class="col-md-6">
+                                    <label class="form-label small">@reserveDriver fährt für</label>
+                                    <select class="form-select form-select-sm reserve-main-select" name="reserveMainDrivers" data-reserve-driver="@reserveDriver">
+                                        <option value="">-- keine Zuordnung für dieses Rennen --</option>
+                                        @foreach (var mainDriver in mainDrivers)
+                                        {
+                                            <option value="@mainDriver" selected="@(reserveToMain.TryGetValue(reserveDriver, out var mapped) && string.Equals(mapped, mainDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <hr />
+                <h5 class="mb-3">Startaufstellung / Zieleinlauf</h5>
+                <p class="text-muted small">Wähle den Fahrer für die jeweilige Position. Optional kannst du die Zeit als m:ss.fff eintragen (z. B. 1:35.228). <strong>Neue Option:</strong> Trage Strafzeit in Sekunden ein (z. B. 5 oder 10), die werden automatisch zur Zeit addiert und die Positionen neu berechnet.</p>
+
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-8">
+                        <div class="row g-3">
+                            @for(int i = 0; i < 22; i++)
+                            {
+                                <div class="col-12 mb-3">
+                                    <label class="form-label fw-bold">Position @(i+1) (@pointsMap[i] Pkt.)</label>
+                                    <div class="row g-2">
+                                        <div class="col-md-5">
+                                            <select class="form-select race-position-select" name="positions">
+                                                <option value="">-- Leer --</option>
+                                                @foreach(var driver in drivers)
+                                                {
+                                                    <option value="@driver">@driver</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input class="form-control" name="raceTimes" placeholder="Zeit (z. B. 1:35.228)" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input class="form-control" name="penaltySeconds" type="number" min="0" step="1" placeholder="Strafe (Sek.)" />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="border rounded p-3 mb-3">
+                            <h5 class="mb-2">⚠️ Strafen-System</h5>
+                            <p class="text-muted small mb-0">
+                                <strong>Neu:</strong> Strafzeit in Sekunden wird automatisch zur Rennzeit addiert. Die finalen Positionen werden nach Gesamtzeit (Zeit + Strafe) neu berechnet und gespeichert.
+                            </p>
+                        </div>
+                        <div class="border rounded p-3">
+                            <h5 class="mb-2">DNF</h5>
+                            <p class="text-muted small mb-3">Markiere Fahrer, die ausgefallen sind.</p>
+                            <div class="row g-2">
+                                @foreach (var driver in drivers)
+                                {
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" />
+                                            <label class="form-check-label" for="dnf-@driver.GetHashCode()">@driver</label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-floppy-fill me-1"></i> Ergebnis speichern &amp; Punkte berechnen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('enterRaceForm');
+            const selects = Array.from(document.querySelectorAll('.race-position-select'));
+            const dnfChecks = Array.from(document.querySelectorAll('.dnf-driver-check'));
+            const reserveMainSelects = Array.from(document.querySelectorAll('.reserve-main-select'));
+            const defaultReserveToMain = @Html.Raw(JsonSerializer.Serialize(reserveToMain));
+
+            if (!form || selects.length === 0) return;
+
+            const getEffectiveReserveToMain = () => {
+                const map = new Map(Object.entries(defaultReserveToMain || {}));
+                for (const select of reserveMainSelects) {
+                    const reserve = (select.getAttribute('data-reserve-driver') || '').trim();
+                    if (!reserve) continue;
+
+                    const main = (select.value || '').trim();
+                    if (!main) {
+                        map.delete(reserve);
+                    } else {
+                        map.set(reserve, main);
+                    }
+                }
+                return map;
+            };
+
+            const getSelectedCounts = () => {
+                const counts = new Map();
+                for (const select of selects) {
+                    const value = (select.value || '').trim();
+                    if (!value) continue;
+                    counts.set(value, (counts.get(value) || 0) + 1);
+                }
+                return counts;
+            };
+
+            const getDfnSelected = () => {
+                const dnf = new Set();
+                for (const check of dnfChecks) {
+                    if (check.checked) dnf.add(check.value);
+                }
+                return dnf;
+            };
+
+            const hasReserveMainConflict = () => {
+                const selected = new Set();
+                for (const select of selects) {
+                    const value = (select.value || '').trim();
+                    if (value) selected.add(value);
+                }
+                for (const check of dnfChecks) {
+                    if (check.checked) selected.add(check.value);
+                }
+
+                const mapping = getEffectiveReserveToMain();
+                for (const [reserve, main] of mapping.entries()) {
+                    if (selected.has(reserve) && selected.has(main)) {
+                        return { reserve, main };
+                    }
+                }
+
+                return null;
+            };
+
+            const buildReserveConflictBlockedSet = () => {
+                const selected = new Set();
+                for (const select of selects) {
+                    const value = (select.value || '').trim();
+                    if (value) selected.add(value);
+                }
+                for (const check of dnfChecks) {
+                    if (check.checked) selected.add(check.value);
+                }
+
+                const blocked = new Set();
+                const mapping = getEffectiveReserveToMain();
+                for (const [reserve, main] of mapping.entries()) {
+                    if (selected.has(reserve)) blocked.add(main);
+                    if (selected.has(main)) blocked.add(reserve);
+                }
+                return blocked;
+            };
+
+            const syncDisabledOptions = () => {
+                const dnfSelected = getDfnSelected();
+
+                for (const select of selects) {
+                    const currentValue = (select.value || '').trim();
+                    if (currentValue && dnfSelected.has(currentValue)) {
+                        select.value = '';
+                    }
+                }
+
+                const counts = getSelectedCounts();
+                const reserveBlocked = buildReserveConflictBlockedSet();
+
+                for (const select of selects) {
+                    const currentValue = (select.value || '').trim();
+                    for (const option of select.options) {
+                        if (!option.value) {
+                            option.disabled = false;
+                            option.hidden = false;
+                            continue;
+                        }
+
+                        const isBlocked = counts.has(option.value) || dnfSelected.has(option.value) || reserveBlocked.has(option.value);
+                        const shouldHide = option.value !== currentValue && isBlocked;
+
+                        option.disabled = shouldHide;
+                        option.hidden = shouldHide;
+                    }
+                }
+
+                for (const check of dnfChecks) {
+                    check.disabled = counts.has(check.value) || reserveBlocked.has(check.value);
+                    if (check.disabled) check.checked = false;
+                }
+            };
+
+            const hasDuplicateSelection = () => {
+                const counts = getSelectedCounts();
+                for (const count of counts.values()) {
+                    if (count > 1) return true;
+                }
+                return false;
+            };
+
+            for (const select of selects) {
+                select.addEventListener('change', syncDisabledOptions);
+            }
+
+            for (const check of dnfChecks) {
+                check.addEventListener('change', syncDisabledOptions);
+            }
+
+            for (const select of reserveMainSelects) {
+                select.addEventListener('change', syncDisabledOptions);
+            }
+
+            form.addEventListener('submit', (event) => {
+                if (hasDuplicateSelection()) {
+                    event.preventDefault();
+                    alert('Jeder Fahrer darf nur einmal in den Positionen ausgewählt werden.');
+                    syncDisabledOptions();
+                    return;
+                }
+
+                const conflict = hasReserveMainConflict();
+                if (conflict) {
+                    event.preventDefault();
+                    alert(`Reservefahrer '${conflict.reserve}' und Hauptfahrer '${conflict.main}' dürfen nicht gleichzeitig im selben Rennen eingetragen sein.`);
+                    syncDisabledOptions();
+                }
+            });
+
+            syncDisabledOptions();
+        })();
+    </script>
+}
+
+
+

@@ -1,0 +1,55 @@
+/* =====================================================================
+   12 · F1 / SIM-RACING DESIGN-EXTENSION (additiv)
+   Erweitert 01-tokens.css um Broadcast-, Telemetrie- und Liverie-Tokens.
+   Bestehende Variablen werden NICHT ueberschrieben.
+   ===================================================================== */
+:root {
+    /* Broadcast / Asphalt-Backdrops */
+    --asphalt-0:***REMOVED***04050a;
+    --asphalt-1:***REMOVED***080a12;
+    --asphalt-2:***REMOVED***0d111c;
+    --carbon-fine:repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 1px, transparent 1px 4px);
+    --carbon-coarse:repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 8px);
+    --grid-fine:repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px),
+                repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px);
+    --scanline:repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 3px);
+
+    /* Sektor-Farben (iRacing/F1-TV-Stil) */
+    --sector-purple:***REMOVED***b95cff;
+    --sector-green:***REMOVED***39ff14;
+    --sector-yellow:***REMOVED***ffcc00;
+    --sector-red:***REMOVED***ff3357;
+
+    /* Brake-Glow / Speed-Lines */
+    --brake-glow:0 0 24px var(--accent-glow), 0 0 6px rgba(255,255,255,.18);
+    --speed-line:linear-gradient(90deg, transparent 0%, var(--accent-2) 40%, var(--accent) 65%, transparent 100%);
+
+    /* Telemetrie-Farbverlauf (Cyan -> Akzent -> Magenta) */
+    --telemetry-stripe:linear-gradient(90deg, var(--sig-cyan) 0%, var(--accent-2) 50%, var(--sig-magenta) 100%);
+    --telemetry-stripe-soft:linear-gradient(90deg, rgba(0,229,255,.25) 0%, var(--accent-soft) 50%, rgba(185,92,255,.25) 100%);
+
+    /* Motion-Easings (F1-Vokabular) */
+    --ease-launch:cubic-bezier(.16,.84,.34,1);
+    --ease-overtake:cubic-bezier(.7,0,.2,1);
+    --ease-brake:cubic-bezier(.42,0,1,1);
+    --t-launch:520ms var(--ease-launch);
+    --t-overtake:340ms var(--ease-overtake);
+
+    /* Z-Layer */
+    --z-bg:0;
+    --z-content:10;
+    --z-sticky:50;
+    --z-overlay:90;
+    --z-modal:100;
+
+    /* Chamfer / Clip-Paths fuer angeschnittene Ecken (Broadcast-Look) */
+    --clip-chamfer:polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    --clip-chamfer-sm:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    --clip-chamfer-lg:polygon(22px 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%, 0 22px);
+
+    /* Type-Scale-Erweiterung */
+    --fs-display:clamp(2.6rem, 6vw, 5.2rem);
+    --fs-display-xl:clamp(3.4rem, 8vw, 7rem);
+    --fs-eyebrow:.72rem;
+    --letter-track:.28em;
+}

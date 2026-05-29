@@ -1,0 +1,48 @@
+@model <OWNER_HANDLE>_ERC.Models.UiComponents.F1LeagueCardVm
+@*
+    F1 LeagueCard — Liga-Übersichts-Card mit Liverie-Stripe und Next-Event-Block.
+    CSS: pages/home-index.css (.f1-leaguecard*)
+*@
+<a class="text-decoration-none" href="@Model.Href">
+    <div class="f1-leaguecard">
+        <div class="f1-leaguecard__head">
+            <div>
+                <h3 class="f1-leaguecard__name">@Model.Name</h3>
+                @if (!string.IsNullOrWhiteSpace(Model.SubLabel))
+                {
+                    <div class="f1-leaguecard__sub">@Model.SubLabel</div>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Chip))
+            {
+                <span class="f1-leaguecard__chip">@Model.Chip</span>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="f1-leaguecard__desc">@Model.Description</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.NextEventTrack) || !string.IsNullOrWhiteSpace(Model.NextEventDate))
+        {
+            <div class="f1-leaguecard__event">
+                @if (!string.IsNullOrWhiteSpace(Model.NextEventLabel))
+                {
+                    <div class="f1-leaguecard__event-label">@Model.NextEventLabel</div>
+                }
+                <div class="f1-leaguecard__event-row">
+                    <span class="f1-leaguecard__event-track">@Model.NextEventTrack</span>
+                    @if (!string.IsNullOrWhiteSpace(Model.NextEventDate))
+                    {
+                        <span class="f1-leaguecard__event-date">@Model.NextEventDate</span>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.NextEventFormat))
+                {
+                    <div class="f1-leaguecard__event-format">@Model.NextEventFormat</div>
+                }
+            </div>
+        }
+    </div>
+</a>

@@ -1,0 +1,192 @@
+@model <OWNER_HANDLE>_ERC.Controllers.ApplicationListViewModel
+
+@{
+    ViewData["Title"] = "Offene Bewerbungen";
+    ViewData["Kicker"] = "Admin · Bewerbungen";
+    ViewData["HeroTitle"] = "Offene Bewerbungen";
+    ViewData["HeroSubtitle"] = "Bewerbungen, die noch bearbeitet werden müssen";
+}
+
+@section Styles {
+    <style>
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            background: var(--surface-1);
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-2);
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--sig-cyan); }
+        .stat-label { font-size: 0.875rem; color: var(--ink-secondary); margin-top: 0.5rem; }
+
+        .app-card {
+            background: var(--surface-1);
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-2);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+        .app-card-info h3 { margin: 0; color: var(--ink); font-size: 1.1rem; }
+        .app-card-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--ink-secondary);
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge--main { background: rgba(0, 188, 212, 0.1); color: ***REMOVED***00bcd4; }
+        .badge--second { background: rgba(255, 152, 0, 0.1); color: ***REMOVED***ff9800; }
+        .badge--rookie { background: rgba(76, 175, 80, 0.1); color: ***REMOVED***4caf50; }
+        .badge--community { background: rgba(156, 39, 176, 0.1); color: ***REMOVED***9c27b0; }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-direction: column;
+        }
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: var(--r-1);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-sm--primary { background: rgba(76, 175, 80, 0.9); color: white; }
+        .btn-sm--primary:hover { background: rgba(76, 175, 80, 1); }
+        .btn-sm--secondary { background: var(--surface-2); color: var(--ink); }
+        .btn-sm--secondary:hover { background: var(--surface-3); }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--ink-secondary);
+        }
+        .empty-state-icon { font-size: 3rem; opacity: 0.3; margin-bottom: 1rem; }
+
+        .pagination { display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: center; }
+        .pagination a, .pagination span {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-1);
+            background: var(--surface-1);
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .pagination a:hover { background: var(--surface-2); }
+        .pagination .active { background: var(--sig-cyan); color: white; }
+    </style>
+}
+
+<div class="container-fluid py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Offene Bewerbungen</h1>
+            <p class="text-mute">@Model.Statistics.OpenApplications Bewerbungen warten auf Bearbeitung</p>
+        </div>
+        <div class="col-auto">
+            <a href="@Url.Action("Dashboard", "AdminApplications")" class="btn btn-sm btn-sm--secondary">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-box">
+            <div class="stat-value">@Model.Statistics.OpenApplications</div>
+            <div class="stat-label">Offene</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">@(Model.Statistics.ApplicationsByDivision.Count)</div>
+            <div class="stat-label">Divisionen</div>
+        </div>
+    </div>
+
+    <!-- Applications List -->
+    @if (Model.Applications.Count > 0)
+    {
+        @foreach (var app in Model.Applications)
+        {
+            var badgeClass = app.Division switch
+            {
+                "Main Division 1" => "badge--main",
+                "Second Crossplay Division 2" => "badge--second",
+                "Rookie Crossplay Division 3" => "badge--rookie",
+                "Community Crossplay Event" => "badge--community",
+                _ => "badge--main"
+            };
+
+            <div class="app-card">
+                <div class="app-card-info">
+                    <h3>@app.DiscordName</h3>
+                    <div class="app-card-meta">
+                        <span class="badge @badgeClass">@app.Division</span>
+                        <span>@app.Role</span>
+                        <span>@app.GamingName <span class="text-mute small">(@app.Platform)</span></span>
+                        <span>eingereicht vor @((DateTime.UtcNow - app.SubmittedAt).TotalHours.ToString("0")) Std.</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="@Url.Action("Detail", "AdminApplications", new { id = app.Id })" class="btn-sm btn-sm--secondary">
+                        <i class="bi bi-eye"></i> Ansehen
+                    </a>
+                    <form method="post" action="@Url.Action("Accept", "AdminApplications", new { id = app.Id })" style="margin: 0;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-sm btn-sm--primary" style="width: 100%;">
+                            <i class="bi bi-check"></i> Akzeptieren
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Pagination -->
+        @if (Model.CurrentPage > 1 || Model.Applications.Count >= 50)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@Url.Action("Open", "AdminApplications", new { page = Model.CurrentPage - 1 })">
+                        <i class="bi bi-chevron-left"></i> Zurück
+                    </a>
+                }
+                <span class="active">Seite @Model.CurrentPage</span>
+                @if (Model.Applications.Count >= 50)
+                {
+                    <a href="@Url.Action("Open", "AdminApplications", new { page = Model.CurrentPage + 1 })">
+                        Weiter <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3>Keine offenen Bewerbungen</h3>
+            <p>Alle Bewerbungen wurden bereits bearbeitet!</p>
+        </div>
+    }
+</div>

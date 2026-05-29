@@ -1,0 +1,104 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore <OWNER_HANDLE>-ERC/<OWNER_HANDLE>-ERC.csproj
+
+      - name: Publish (linux-x64, self-contained=false)
+        run: |
+          dotnet publish <OWNER_HANDLE>-ERC/<OWNER_HANDLE>-ERC.csproj \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained false \
+            --output ./publish-output \
+            /p:UseAppHost=false
+
+      - name: Package artifact
+        run: |
+          cd publish-output
+          tar -czf ../erdi-erc-${{ github.ref_name }}.tar.gz .
+          cd ..
+          ls -la erdi-erc-*.tar.gz
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: erdi-erc-${{ github.ref_name }}
+          path: erdi-erc-${{ github.ref_name }}.tar.gz
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: erdi-erc-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+
+  deploy:
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: erdi-erc-${{ github.ref_name }}
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H -p ${{ secrets.DEPLOY_SSH_PORT || '22' }} ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload artifact to server
+        run: |
+          scp -P ${{ secrets.DEPLOY_SSH_PORT || '22' }} \
+            erdi-erc-${{ github.ref_name }}.tar.gz \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/
+
+      - name: Deploy on server
+        run: |
+          ssh -p ${{ secrets.DEPLOY_SSH_PORT || '22' }} \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "set -e; \
+             APP_DIR=${{ secrets.DEPLOY_APP_DIR }}; \
+             SERVICE=${{ secrets.DEPLOY_SERVICE }}; \
+             TS=\$(date +%Y%m%d-%H%M%S); \
+             sudo mkdir -p \$APP_DIR/releases/\$TS; \
+             sudo tar -xzf /tmp/erdi-erc-${{ github.ref_name }}.tar.gz -C \$APP_DIR/releases/\$TS; \
+             sudo ln -sfn \$APP_DIR/releases/\$TS \$APP_DIR/current; \
+             sudo systemctl restart \$SERVICE; \
+             sleep 5; \
+             sudo systemctl is-active --quiet \$SERVICE && echo 'Service running' || (echo 'Service FAILED' && exit 1); \
+             rm /tmp/erdi-erc-${{ github.ref_name }}.tar.gz; \
+             cd \$APP_DIR/releases && ls -1t | tail -n +6 | xargs -r sudo rm -rf"
+
+      - name: Smoke test (health endpoint)
+        run: |
+          sleep 5
+          curl -fsSL --max-time 15 https://${{ secrets.DEPLOY_PUBLIC_URL }}/health/live || (echo 'Health check failed' && exit 1)
+

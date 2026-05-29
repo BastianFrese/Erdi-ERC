@@ -1,0 +1,122 @@
+@model <OWNER_HANDLE>_ERC.Models.RealLifeEvent
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "_Layout";
+
+    var allImages = new List<string>();
+    if (!string.IsNullOrEmpty(Model.ImageFileName)) allImages.Add(Model.ImageFileName);
+    allImages.AddRange(Model.Images.Select(i => i.FileName));
+
+    string? embedUrl = null;
+    if (!string.IsNullOrWhiteSpace(Model.YouTubeUrl) && Uri.TryCreate(Model.YouTubeUrl, UriKind.Absolute, out var uri))
+    {
+        if (uri.Host.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
+        {
+            var v = uri.AbsolutePath.Trim('/');
+            embedUrl = string.IsNullOrWhiteSpace(v) ? null : $"https://www.youtube.com/embed/{v}";
+        }
+        else if (uri.Host.Contains("youtube.com", StringComparison.OrdinalIgnoreCase))
+        {
+            if (uri.AbsolutePath.StartsWith("/embed/", StringComparison.OrdinalIgnoreCase)) embedUrl = Model.YouTubeUrl;
+            else
+            {
+                var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+                if (q.TryGetValue("v", out var v) && !string.IsNullOrWhiteSpace(v)) embedUrl = $"https://www.youtube.com/embed/{v.ToString()}";
+            }
+        }
+    }
+
+    var dateFmt  = Model.Date.ToString("dd. MMMM yyyy", new System.Globalization.CultureInfo("de-DE"));
+    var eventLead = $"<i class=\"bi bi-calendar3\" style=\"margin-right:.35rem;\"></i>{dateFmt}";
+    if (!string.IsNullOrWhiteSpace(Model.Location))
+        eventLead += $" &nbsp;·&nbsp; <i class=\"bi bi-geo-alt-fill\" style=\"color:var(--sig-cyan);margin-right:.2rem;\"></i>{Model.Location}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = Model.IsUpcoming ? "Upcoming · Real-Life Event" : "Recap · Real-Life Event",
+    LiveDot   = Model.IsUpcoming,
+    Title     = Model.Title,
+    Lead      = eventLead,
+    GhostText = "EVENT",
+    Actions   = new() {
+        new F1ButtonVm { Label="Alle Events", Variant="ghost", IconLucide="arrow-left", Href=Url.Action("Events","Home")! }
+    }
+})" />
+
+@if (allImages.Count > 0)
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Galerie",
+            Title   = "Fotos",
+            SubText = $"{allImages.Count} Bild{(allImages.Count != 1 ? "er" : "")}"
+        })" />
+
+        <div class="event-detail-gallery-card" style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);">
+            <div class="event-detail-gallery-hero-wrap">
+                <img id="galleryHero"
+                     src="/uploads/events/@allImages[0]"
+                     alt="@Model.Title"
+                     class="event-detail-gallery-hero" />
+            </div>
+            @if (allImages.Count > 1)
+            {
+                <div class="event-detail-gallery-thumbs-wrap" style="padding:1rem;">
+                    <div class="d-flex gap-2 flex-wrap" id="galleryThumbs">
+                        @for (int i = 0; i < allImages.Count; i++)
+                        {
+                            <button type="button"
+                                    class="btn btn-ghost p-0 gallery-thumb event-detail-gallery-thumb @(i == 0 ? "is-active" : "")"
+                                    data-src="/uploads/events/@allImages[i]"
+                                    aria-label="Bild @(i + 1)">
+                                <img src="/uploads/events/@allImages[i]"
+                                     alt="Bild @(i + 1)"
+                                     loading="lazy"
+                                     class="event-detail-gallery-thumb-image" />
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip  = "Rückblick",
+        Title = "Bericht"
+    })" />
+
+    <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;box-shadow:var(--sh-2);">
+        <p style="color:var(--ink-2);line-height:1.7;margin-bottom:0;">@Model.Description</p>
+        @if (!string.IsNullOrWhiteSpace(embedUrl))
+        {
+            <div class="ratio ratio-16x9 mt-4" style="max-width:720px;margin-left:auto;margin-right:auto;">
+                <iframe src="@embedUrl" title="YouTube Video zu @Model.Title" allowfullscreen loading="lazy"></iframe>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var hero = document.getElementById('galleryHero');
+            var thumbs = document.querySelectorAll('.gallery-thumb');
+            thumbs.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    if (hero) hero.src = this.dataset.src;
+                    thumbs.forEach(function (t) { t.classList.remove('is-active'); });
+                    this.classList.add('is-active');
+                });
+            });
+        })();
+    </script>
+}

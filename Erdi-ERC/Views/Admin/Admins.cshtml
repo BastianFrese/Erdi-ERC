@@ -1,0 +1,271 @@
+@model List<<OWNER_HANDLE>_ERC.Models.AdminUser>
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "Admins & Berechtigungen";
+    ViewData["Kicker"] = "System";
+    ViewData["HeroTitle"] = "Admins & Berechtigungen";
+    var groups = AdminPermissions.Groups;
+    var allPerms = AdminPermissions.All;
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-shield-lock-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Admins gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ffb800;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-star-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count(x => x.IsSuperAdmin)</div>
+                <div class="adm-kpi-card__label">Superadmins</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-key-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count(x => !x.IsSuperAdmin)</div>
+                <div class="adm-kpi-card__label">Mit Einzelrechten</div>
+            </div>
+        </div>
+    </section>
+
+    @* Neuen Admin hinzufügen *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title"><i class="bi bi-person-plus-fill me-2" style="color:***REMOVED***5b8cff;"></i>Neuen Admin hinzufügen</span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-action="AddAdmin" method="post" class="adm-add-admin-form">
+                @Html.AntiForgeryToken()
+                <div class="adm-form-field">
+                    <label class="adm-form-label">Discord User-ID (Snowflake)</label>
+                    <input class="form-control form-control-sm" name="discordId" placeholder="z. B. 123456789012345678" required pattern="\d+" />
+                </div>
+                <div class="adm-form-field">
+                    <label class="adm-form-label">Anzeigename</label>
+                    <input class="form-control form-control-sm" name="displayName" placeholder="Optional" />
+                </div>
+                <div class="adm-form-field adm-form-field--check">
+                    <label class="adm-check-label">
+                        <input type="checkbox" name="isSuperAdmin" value="true" class="adm-checkbox" />
+                        <span class="adm-check-text">
+                            <i class="bi bi-star-fill me-1" style="color:***REMOVED***ffb800;"></i>
+                            Superadmin <small class="adm-check-hint">(voller Zugriff auf alle Bereiche)</small>
+                        </span>
+                    </label>
+                </div>
+                <button class="btn btn-sm btn-primary" type="submit">
+                    <i class="bi bi-plus-lg me-1"></i>Hinzufügen
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @* Admin-Liste *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title"><i class="bi bi-people-fill me-2" style="color:var(--accent);"></i>Aktuelle Admins</span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-exclamation-triangle-fill adm-empty__icon" style="color:***REMOVED***ffb800;opacity:1;"></i>
+                    <span>Noch keine Admins hinterlegt. Trage mindestens deine eigene Discord-ID ein!</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-admin-list">
+                @foreach (var admin in Model)
+                {
+                    var currentPerms = admin.Permissions.Select(p => p.Permission).ToHashSet();
+                    <div class="adm-admin-row" id="admin-@admin.DiscordId">
+                        @* Header *@
+                        <div class="adm-admin-row__head">
+                            <div class="adm-admin-row__identity">
+                                <span class="adm-admin-row__name">
+                                    @(string.IsNullOrEmpty(admin.DisplayName) ? "(unbenannt)" : admin.DisplayName)
+                                </span>
+                                @if (admin.IsSuperAdmin)
+                                {
+                                    <span class="adm-role-badge adm-role-badge--super">
+                                        <i class="bi bi-star-fill me-1"></i>Superadmin
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="adm-role-badge adm-role-badge--limited">
+                                        <i class="bi bi-key me-1"></i>Eingeschränkt
+                                    </span>
+                                }
+                                <code class="adm-admin-row__id">@admin.DiscordId</code>
+                                <span class="adm-admin-row__since">seit @admin.AddedAt.ToString("dd.MM.yyyy")</span>
+                            </div>
+                            <div class="adm-admin-row__actions">
+                                <button class="btn btn-xs btn-outline-secondary"
+                                        type="button"
+                                        data-toggle-edit="@admin.DiscordId"
+                                        title="Bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <form asp-action="RemoveAdmin" method="post" class="d-inline"
+                                      onsubmit="return confirm('Admin @(admin.DisplayName ?? admin.DiscordId) wirklich entfernen?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="discordId" value="@admin.DiscordId" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Entfernen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        @* Berechtigungsübersicht (nur für eingeschränkte Admins) *@
+                        @if (!admin.IsSuperAdmin)
+                        {
+                            <div class="adm-admin-row__perms-preview">
+                                @foreach (var grp in groups)
+                                {
+                                    var anyGranted = grp.Permissions.Any(p => currentPerms.Contains(p.Key));
+                                    var allGranted = grp.Permissions.All(p => currentPerms.Contains(p.Key));
+                                    <span class="adm-perm-chip @(allGranted ? "adm-perm-chip--active" : anyGranted ? "adm-perm-chip--partial" : "adm-perm-chip--inactive")"
+                                          title="@string.Join(", ", grp.Permissions.Where(p => currentPerms.Contains(p.Key)).Select(p => p.Label))">
+                                        <i class="bi @grp.Icon"></i>
+                                        @grp.Label
+                                        @if (anyGranted && !allGranted)
+                                        {
+                                            <small>(@grp.Permissions.Count(p => currentPerms.Contains(p.Key))/@grp.Permissions.Count)</small>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="adm-admin-row__perms-preview">
+                                <span class="adm-perm-chip adm-perm-chip--super">
+                                    <i class="bi bi-infinity me-1"></i>Alle Bereiche freigeschaltet
+                                </span>
+                            </div>
+                        }
+
+                        @* Edit-Panel (versteckt) *@
+                        <div class="adm-admin-edit-panel" id="edit-@admin.DiscordId" style="display:none;">
+                            <div class="adm-admin-edit-panel__inner">
+
+                                @* Allgemein *@
+                                <form asp-action="UpdateAdmin" method="post" class="adm-edit-section">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="discordId" value="@admin.DiscordId" />
+                                    <div class="adm-edit-section__title"><i class="bi bi-person me-1"></i>Allgemein</div>
+                                    <div class="adm-edit-row">
+                                        <div class="adm-form-field">
+                                            <label class="adm-form-label">Anzeigename</label>
+                                            <input class="form-control form-control-sm" name="displayName" value="@admin.DisplayName" placeholder="Optional" />
+                                        </div>
+                                        <div class="adm-form-field adm-form-field--check">
+                                            <label class="adm-check-label">
+                                                <input type="checkbox" name="isSuperAdmin" value="true" class="adm-checkbox" @(admin.IsSuperAdmin ? "checked" : "") />
+                                                <span class="adm-check-text">
+                                                    <i class="bi bi-star-fill me-1" style="color:***REMOVED***ffb800;"></i>
+                                                    Superadmin
+                                                </span>
+                                            </label>
+                                        </div>
+                                        <button class="btn btn-sm btn-primary" type="submit">
+                                            <i class="bi bi-check-lg me-1"></i>Speichern
+                                        </button>
+                                    </div>
+                                </form>
+
+                                @* Berechtigungen *@
+                                @if (!admin.IsSuperAdmin)
+                                {
+                                    <form asp-action="SetPermissions" method="post" class="adm-edit-section">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="discordId" value="@admin.DiscordId" />
+                                        <div class="adm-edit-section__title"><i class="bi bi-key me-1"></i>Granulare Seitenberechtigungen</div>
+
+                                        @foreach (var grp in groups)
+                                        {
+                                            var grpHasAny = grp.Permissions.Any(p => currentPerms.Contains(p.Key));
+                                            <div class="adm-perm-group mb-3">
+                                                <div class="adm-perm-group__head" style="--grp-color:@grp.Color;">
+                                                    <i class="bi @grp.Icon me-1"></i>@grp.Label
+                                                    <button type="button" class="adm-perm-group__selectall btn btn-xs btn-outline-secondary ms-auto"
+                                                            data-group="@(admin.DiscordId)-@grp.Label"
+                                                            title="Alle in Gruppe umschalten">
+                                                        <i class="bi bi-check2-all"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="adm-perm-grid adm-perm-grid--grouped" data-group-id="@(admin.DiscordId)-@grp.Label">
+                                                    @foreach (var perm in grp.Permissions)
+                                                    {
+                                                        var hasIt = currentPerms.Contains(perm.Key);
+                                                        <label class="adm-perm-toggle @(hasIt ? "adm-perm-toggle--on" : "")">
+                                                            <input type="checkbox" name="permissions" value="@perm.Key" @(hasIt ? "checked" : "")
+                                                                   onchange="this.closest('.adm-perm-toggle').classList.toggle('adm-perm-toggle--on', this.checked)" />
+                                                            <span class="adm-perm-toggle__icon"><i class="bi @perm.Icon"></i></span>
+                                                            <span class="adm-perm-toggle__label">@perm.Label</span>
+                                                            <span class="adm-perm-toggle__check"><i class="bi bi-check2"></i></span>
+                                                        </label>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-success" type="submit">
+                                                <i class="bi bi-shield-check me-1"></i>Berechtigungen speichern
+                                            </button>
+                                        </div>
+                                    </form>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id = btn.dataset.toggleEdit;
+            var panel = document.getElementById('edit-' + id);
+            if (!panel) return;
+            var isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            btn.querySelector('i').className = isOpen ? 'bi bi-pencil-square' : 'bi bi-x-lg';
+        });
+    });
+
+    document.querySelectorAll('.adm-perm-group__selectall').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var groupId = btn.dataset.group;
+            var grid = document.querySelector('[data-group-id="' + groupId + '"]');
+            if (!grid) return;
+            var boxes = grid.querySelectorAll('input[type=checkbox]');
+            var allChecked = Array.from(boxes).every(function (b) { return b.checked; });
+            boxes.forEach(function (b) {
+                b.checked = !allChecked;
+                b.closest('.adm-perm-toggle').classList.toggle('adm-perm-toggle--on', !allChecked);
+            });
+        });
+    });
+</script>
+}

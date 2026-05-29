@@ -1,0 +1,328 @@
+@using System.Text.Json
+@using <OWNER_HANDLE>_ERC.Models
+@model <OWNER_HANDLE>_ERC.Models.TrackSetup
+@{
+    ViewData["Title"] = $"Setup Sandbox · {Model.Track}";
+    Layout = "_Layout";
+
+    var editorConfig = SetupGameSpec.GetEditorConfig();
+    var configJson   = JsonSerializer.Serialize(editorConfig, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+    // Basis-Payload aus dem echten Setup laden (schreibgeschützte Referenz)
+    var basePayload = Model.SetupText ?? "{}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+        .sandbox-banner {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .65rem 1rem;
+            background: rgba(255,184,0,.08);
+            border: 1px solid rgba(255,184,0,.25);
+            border-radius: var(--r-2);
+            margin-bottom: 1.5rem;
+            font-size: .8rem; color: var(--sig-amber);
+        }
+        .sandbox-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @@media(max-width: 768px) { .sandbox-grid { grid-template-columns: 1fr; } }
+        .cat-nav { position: sticky; top: 80px; }
+        .cat-nav__item {
+            display: flex; align-items: center; gap: .5rem;
+            padding: .5rem .85rem;
+            border-radius: var(--r-2);
+            font-size: .82rem; color: var(--ink-3);
+            cursor: pointer; transition: all var(--t-fast);
+            border: 1px solid transparent;
+        }
+        .cat-nav__item.is-active, .cat-nav__item:hover {
+            background: var(--surface-2);
+            border-color: var(--stroke-1);
+            color: var(--ink);
+        }
+        .cat-nav__item.is-active { border-left: 3px solid var(--accent); }
+
+        .setup-cat-block { display: none; }
+        .setup-cat-block.is-active { display: block; }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 120px 56px;
+            align-items: center;
+            gap: .75rem;
+            padding: .65rem 0;
+            border-bottom: 1px solid var(--stroke-1);
+        }
+        .field-row:last-child { border-bottom: none; }
+        .field-label { font-size: .8rem; color: var(--ink-2); }
+        .field-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+            background: var(--stroke-2); border-radius: 2px; outline: none; }
+        .field-range::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--accent); cursor: pointer;
+            box-shadow: 0 0 6px var(--accent-soft);
+        }
+        .field-num { width: 60px; background: var(--surface-2); border: 1px solid var(--stroke-1);
+            border-radius: var(--r-1); color: var(--ink); font-size: .8rem;
+            padding: .25rem .4rem; text-align: right; }
+        .field-reset-btn { background: none; border: none; color: var(--ink-4);
+            cursor: pointer; font-size: .75rem; padding: .2rem .4rem;
+            border-radius: var(--r-1); transition: color var(--t-fast); }
+        .field-reset-btn:hover { color: var(--accent); }
+
+        .metrics-panel {
+            background: var(--surface-2); border: 1px solid var(--stroke-1);
+            border-radius: var(--r-3); padding: 1rem 1.2rem; margin-top: 1.5rem;
+        }
+        .metric-row { display: flex; justify-content: space-between; align-items: center;
+            padding: .4rem 0; border-bottom: 1px solid var(--stroke-1); font-size: .8rem; }
+        .metric-row:last-child { border: none; }
+        .metric-bar { height: 4px; border-radius: 2px; background: var(--accent);
+            transition: width .3s; margin-top: .2rem; }
+
+        .action-bar { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Setup Sandbox",
+    Title     = Model.Track,
+    Highlight = "Experimentier-Bereich",
+    Lead      = "Hier kannst du Setup-Werte verändern und testen. Änderungen werden <strong>nicht</strong> in der Datenbank gespeichert.",
+    GhostText = "SANDBOX"
+})" />
+
+<section class="f1-section">
+    <div class="sandbox-banner">
+        <i class="bi bi-flask-fill fs-5"></i>
+        <span><strong>Sandbox-Modus:</strong> Alle Änderungen sind nur lokal in deinem Browser gespeichert und gehen beim Schließen verloren.</span>
+    </div>
+
+    <div class="sandbox-grid">
+
+        @* ── Kategorie-Navigation ──────────────────────────────────────────── *@
+        <div class="cat-nav adm-card p-2" id="catNav">
+            <div class="adm-card__head mb-2" style="padding:.5rem .85rem;font-size:.7rem;">
+                <i class="bi bi-list-ul"></i> Kategorien
+            </div>
+            @foreach (var cat in editorConfig.Categories)
+            {
+                <div class="cat-nav__item @(cat == editorConfig.Categories[0] ? "is-active" : "")"
+                     data-cat="@cat.Key" onclick="switchCat('@cat.Key')">
+                    <span>@cat.Icon</span> @cat.Label
+                </div>
+            }
+            <hr style="border-color:var(--stroke-1);margin:.5rem 0;" />
+            <div class="cat-nav__item" onclick="resetAll()" style="color:var(--sig-amber);">
+                <i class="bi bi-arrow-counterclockwise"></i> Alles zurücksetzen
+            </div>
+        </div>
+
+        @* ── Felder ────────────────────────────────────────────────────────── *@
+        <div>
+            @foreach (var cat in editorConfig.Categories)
+            {
+                <div class="adm-card setup-cat-block @(cat == editorConfig.Categories[0] ? "is-active" : "")" id="cat-@cat.Key">
+                    <div class="adm-card__head">
+                        <span>@cat.Icon</span> @cat.Label
+                    </div>
+                    <div class="adm-card__body">
+                        @foreach (var field in cat.Fields)
+                        {
+                            <div class="field-row" data-cat="@cat.Key" data-field="@field.Key">
+                                <div class="field-label">@field.Label</div>
+                                <input type="range"
+                                       class="field-range"
+                                       id="range_@(cat.Key)_@(field.Key)"
+                                       min="@field.Min.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       max="@field.Max.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       step="@field.Step.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       value="@field.DefaultValue.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       oninput="syncField('@cat.Key','@field.Key',this.value)" />
+                                <input type="number"
+                                       class="field-num"
+                                       id="num_@(cat.Key)_@(field.Key)"
+                                       min="@field.Min.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       max="@field.Max.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       step="@field.Step.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       value="@field.DefaultValue.ToString("G", System.Globalization.CultureInfo.InvariantCulture)"
+                                       oninput="syncField('@cat.Key','@field.Key',this.value)" />
+                                <button class="field-reset-btn" title="Zurücksetzen"
+                                        onclick="resetField('@cat.Key','@field.Key',@field.DefaultValue.ToString("G", System.Globalization.CultureInfo.InvariantCulture))">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @* ── Metriken ────────────────────────────────────────────────────── *@
+            <div class="metrics-panel" id="metricsPanel">
+                <div class="fw-600 mb-2" style="font-size:.82rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;">
+                    <i class="bi bi-speedometer2 me-1"></i> Fahrzeug-Metriken (Schätzung)
+                </div>
+                <div id="metricsContent"></div>
+            </div>
+
+            @* ── Action Bar ──────────────────────────────────────────────────── *@
+            <div class="action-bar">
+                <button class="btn btn-sm btn-outline-secondary" onclick="exportSandbox()">
+                    <i class="bi bi-download me-1"></i> Als JSON exportieren
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="resetAll()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Alles zurücksetzen
+                </button>
+                <a asp-action="TrackSetups" asp-route-track="@Model.Track" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-arrow-left me-1"></i> Zurück zu Setups
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+(function () {
+    const CONFIG    = @Html.Raw(configJson);
+    const BASE_RAW  = @Html.Raw(basePayload == "{}" ? "'{}'" : $"'{basePayload.Replace("'", "\\'").Replace("\n","").Replace("\r","")}'");
+    const STORE_KEY = 'sandbox_@Model.Id';
+
+    // ── State: { [catKey]: { [fieldKey]: value } }
+    let state = {};
+
+    // Initialise from base payload → then from localStorage
+    function initState() {
+        // Start with defaults from config
+        CONFIG.categories.forEach(cat => {
+            state[cat.key] = {};
+            cat.fields.forEach(f => { state[cat.key][f.key] = f.defaultValue; });
+        });
+
+        // Override with real setup values if available
+        try {
+            const base = JSON.parse(BASE_RAW);
+            if (base.categories) {
+                Object.entries(base.categories).forEach(([catKey, fields]) => {
+                    if (!state[catKey]) state[catKey] = {};
+                    Object.entries(fields).forEach(([fk, fv]) => { state[catKey][fk] = parseFloat(fv) || 0; });
+                });
+            }
+        } catch(_) {}
+
+        // Override with sandbox session (localStorage)
+        try {
+            const saved = localStorage.getItem(STORE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                Object.entries(parsed).forEach(([ck, fields]) => {
+                    if (!state[ck]) state[ck] = {};
+                    Object.entries(fields).forEach(([fk, fv]) => { state[ck][fk] = fv; });
+                });
+            }
+        } catch(_) {}
+    }
+
+    function persistState() {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+
+    function applyStateToDOM() {
+        CONFIG.categories.forEach(cat => {
+            cat.fields.forEach(f => {
+                const v = state[cat.key]?.[f.key] ?? f.defaultValue;
+                const range = document.getElementById(`range_${cat.key}_${f.key}`);
+                const num   = document.getElementById(`num_${cat.key}_${f.key}`);
+                if (range) range.value = v;
+                if (num)   num.value   = v;
+            });
+        });
+        renderMetrics();
+    }
+
+    window.syncField = function(catKey, fieldKey, rawValue) {
+        const v = parseFloat(rawValue);
+        if (isNaN(v)) return;
+        if (!state[catKey]) state[catKey] = {};
+        state[catKey][fieldKey] = v;
+        // Sync partner input
+        const range = document.getElementById(`range_${catKey}_${fieldKey}`);
+        const num   = document.getElementById(`num_${catKey}_${fieldKey}`);
+        if (range && range.value != v) range.value = v;
+        if (num   && num.value   != v) num.value   = v;
+        persistState();
+        renderMetrics();
+    };
+
+    window.resetField = function(catKey, fieldKey, defaultVal) {
+        window.syncField(catKey, fieldKey, defaultVal);
+    };
+
+    window.resetAll = function() {
+        if (!confirm('Alle Sandbox-Werte auf Standard zurücksetzen?')) return;
+        localStorage.removeItem(STORE_KEY);
+        CONFIG.categories.forEach(cat => {
+            state[cat.key] = {};
+            cat.fields.forEach(f => { state[cat.key][f.key] = f.defaultValue; });
+        });
+        applyStateToDOM();
+    };
+
+    window.switchCat = function(catKey) {
+        document.querySelectorAll('.cat-nav__item[data-cat]').forEach(el => {
+            el.classList.toggle('is-active', el.dataset.cat === catKey);
+        });
+        document.querySelectorAll('.setup-cat-block').forEach(el => {
+            el.classList.toggle('is-active', el.id === `cat-${catKey}`);
+        });
+    };
+
+    window.exportSandbox = function() {
+        const payload = { categories: state, exportedAt: new Date().toISOString(), track: '@Model.Track', sandbox: true };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `sandbox_@(Model.Track.Replace(" ", "_")).json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    function renderMetrics() {
+        const container = document.getElementById('metricsContent');
+        if (!container || !CONFIG.metricConfig?.length) {
+            if (container) container.innerHTML = '<span class="text-ink-4 small">Keine Metriken konfiguriert.</span>';
+            return;
+        }
+        let html = '';
+        CONFIG.metricConfig.forEach(metric => {
+            let score = metric.baseValue;
+            metric.terms.forEach(term => {
+                const v = state[term.category]?.[term.field] ?? 0;
+                score += v * term.coefficient;
+            });
+            const pct = Math.min(100, Math.max(0, Math.round(score)));
+            html += `<div class="metric-row">
+                <div>
+                    <span class="text-ink">${metric.label}</span>
+                    <div class="metric-bar" style="width:${pct}%"></div>
+                </div>
+                <span class="text-ink-2 fw-600">${pct}</span>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // Boot
+    initState();
+    applyStateToDOM();
+})();
+</script>
+}

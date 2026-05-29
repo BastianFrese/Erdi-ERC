@@ -1,0 +1,285 @@
+@{
+    ViewData["Title"] = "Community Hub";
+    ViewData["Kicker"] = "Community";
+    ViewData["HeroTitle"] = "Community Hub";
+    var recentVotes      = (ViewBag.RecentVotes      as List<<OWNER_HANDLE>_ERC.Models.CommunityVotePoll>)   ?? new();
+    var recentHighlights = (ViewBag.RecentHighlights as List<<OWNER_HANDLE>_ERC.Models.RaceHighlightClip>)  ?? new();
+    var recentNews       = (ViewBag.RecentNews       as List<<OWNER_HANDLE>_ERC.Models.CommunityNewsPost>)   ?? new();
+    var penalties        = (ViewBag.PublicPenalties  as List<<OWNER_HANDLE>_ERC.Models.LeaguePenalty>)       ?? new();
+}
+
+<div class="adm-dashboard">
+
+    @* ---- News anlegen ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-megaphone-fill me-2" style="color:***REMOVED***5b8cff;"></i>Community-News anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminCommunity" asp-action="SaveNewsPost" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-5">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="title" maxlength="160" placeholder="Titel" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Kategorie</label>
+                    <input class="form-control form-control-sm" name="category" maxlength="96" placeholder="Kategorie" value="News" />
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Autor</label>
+                    <input class="form-control form-control-sm" name="authorName" maxlength="128" placeholder="Autor" value="Admin" />
+                </div>
+                <div class="col-md-8">
+                    <label class="adm-form-label">Kurzbeschreibung</label>
+                    <input class="form-control form-control-sm" name="summary" maxlength="480" placeholder="Kurzbeschreibung" />
+                </div>
+                <div class="col-12">
+                    <label class="adm-form-label">Inhalt *</label>
+                    <textarea class="form-control form-control-sm" name="content" rows="4" placeholder="Inhalt" required></textarea>
+                </div>
+                <div class="col-12 d-flex gap-3 flex-wrap align-items-center">
+                    <div class="adm-check-label">
+                        <input class="adm-checkbox" type="checkbox" name="isPinned" value="true" id="newsPinned" />
+                        <label class="adm-check-text" for="newsPinned">Anpinnen</label>
+                    </div>
+                    <div class="adm-check-label">
+                        <input class="adm-checkbox" type="checkbox" name="isPublished" value="true" id="newsPublished" checked />
+                        <label class="adm-check-text" for="newsPublished">Veröffentlicht</label>
+                    </div>
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-save me-1"></i>News speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Voting anlegen ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-bar-chart-fill me-2" style="color:***REMOVED***39ff14;"></i>Voting anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminCommunity" asp-action="SaveVotePoll" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-5">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="title" maxlength="160" placeholder="Titel" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Kategorie</label>
+                    <input class="form-control form-control-sm" name="category" maxlength="96" placeholder="Kategorie" value="Fahrer des Tages" />
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Beschreibung</label>
+                    <input class="form-control form-control-sm" name="description" maxlength="480" placeholder="Beschreibung" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Option 1 *</label>
+                    <input class="form-control form-control-sm" name="option1" maxlength="160" placeholder="Option 1" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Option 2 *</label>
+                    <input class="form-control form-control-sm" name="option2" maxlength="160" placeholder="Option 2" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Option 3</label>
+                    <input class="form-control form-control-sm" name="option3" maxlength="160" placeholder="Option 3" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Option 4</label>
+                    <input class="form-control form-control-sm" name="option4" maxlength="160" placeholder="Option 4" />
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-save me-1"></i>Voting speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Highlight anlegen ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-camera-reels-fill me-2" style="color:***REMOVED***ff8a4c;"></i>Highlight anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminCommunity" asp-action="SaveHighlightClip" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-3">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="title" maxlength="160" placeholder="Titel" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Clip-URL *</label>
+                    <input class="form-control form-control-sm" name="url" maxlength="512" placeholder="https://…" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Kategorie</label>
+                    <input class="form-control form-control-sm" name="category" maxlength="96" placeholder="Highlight" value="Highlight" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Race / Event</label>
+                    <input class="form-control form-control-sm" name="raceLabel" maxlength="160" placeholder="Race ***REMOVED***12" />
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-save me-1"></i>Highlight speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Öffentlicher Strafenbereich ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-shield-fill-exclamation me-2" style="color:***REMOVED***ff6b6b;"></i>Öffentlicher Strafenbereich
+            </span>
+            <span class="adm-badge">@penalties.Count</span>
+        </div>
+
+        @if (!penalties.Any())
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-shield-check adm-empty__icon"></i>
+                    <span>Keine öffentlichen Strafen vorhanden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" style="font-size:.83rem;">
+                    <thead style="background:var(--bg-3);color:var(--ink-3);font-family:var(--ff-tech);text-transform:uppercase;letter-spacing:.06em;font-size:.68rem;">
+                        <tr>
+                            <th class="px-3 py-2">Datum</th>
+                            <th class="py-2">Liga</th>
+                            <th class="py-2">Fahrer</th>
+                            <th class="py-2">Punkte</th>
+                            <th class="py-2 pe-3">Grund</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var penalty in penalties)
+                        {
+                            <tr style="border-top:1px solid var(--stroke-1);">
+                                <td class="px-3" style="color:var(--ink-3);">@penalty.Date.ToString("dd.MM.yyyy")</td>
+                                <td><code style="font-size:.78rem;color:var(--sig-cyan);">@penalty.LeagueId</code></td>
+                                <td style="font-weight:600;">@penalty.Driver</td>
+                                <td><span style="color:***REMOVED***ff6b6b;font-weight:700;">@penalty.Points</span></td>
+                                <td class="pe-3" style="color:var(--ink-3);">@penalty.Reason</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    @* ---- Recent Items Row ---- *@
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;">
+
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-newspaper me-2" style="color:***REMOVED***5b8cff;"></i>Letzte News
+                </span>
+                <span class="adm-badge">@recentNews.Count</span>
+            </div>
+            @if (recentNews.Count == 0)
+            {
+                <div class="adm-panel__body">
+                    <div class="adm-empty" style="padding:.75rem;"><span style="font-size:.82rem;">Keine News vorhanden.</span></div>
+                </div>
+            }
+            else
+            {
+                <div class="adm-log-list">
+                    @foreach (var post in recentNews)
+                    {
+                        <div class="adm-log-item">
+                            <div class="adm-log-item__body">
+                                <span class="adm-log-item__id">@post.Title</span>
+                                <span class="adm-log-item__detail">@post.Category</span>
+                            </div>
+                            <span class="adm-log-item__time">@post.PublishedAt.ToLocalTime().ToString("dd.MM. HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-bar-chart me-2" style="color:***REMOVED***39ff14;"></i>Aktive Votings
+                </span>
+                <span class="adm-badge">@recentVotes.Count</span>
+            </div>
+            @if (recentVotes.Count == 0)
+            {
+                <div class="adm-panel__body">
+                    <div class="adm-empty" style="padding:.75rem;"><span style="font-size:.82rem;">Keine Votings vorhanden.</span></div>
+                </div>
+            }
+            else
+            {
+                <div class="adm-log-list">
+                    @foreach (var poll in recentVotes)
+                    {
+                        <div class="adm-log-item">
+                            <div class="adm-log-item__body">
+                                <span class="adm-log-item__id">@poll.Title</span>
+                                <span class="adm-log-item__detail">@poll.Category</span>
+                            </div>
+                            <span class="adm-log-item__time">@poll.CreatedAt.ToLocalTime().ToString("dd.MM. HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-camera-reels me-2" style="color:***REMOVED***ff8a4c;"></i>Letzte Highlights
+                </span>
+                <span class="adm-badge">@recentHighlights.Count</span>
+            </div>
+            @if (recentHighlights.Count == 0)
+            {
+                <div class="adm-panel__body">
+                    <div class="adm-empty" style="padding:.75rem;"><span style="font-size:.82rem;">Keine Highlights vorhanden.</span></div>
+                </div>
+            }
+            else
+            {
+                <div class="adm-log-list">
+                    @foreach (var highlight in recentHighlights)
+                    {
+                        <div class="adm-log-item">
+                            <div class="adm-log-item__body">
+                                <span class="adm-log-item__id">@highlight.Title</span>
+                                <span class="adm-log-item__detail">@highlight.Category</span>
+                            </div>
+                            <span class="adm-log-item__time">@highlight.CreatedAt.ToLocalTime().ToString("dd.MM. HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+
+</div>

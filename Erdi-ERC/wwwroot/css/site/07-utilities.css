@@ -1,0 +1,20 @@
+/* =====================================================================
+   07 · UTILITIES
+   ===================================================================== */
+.text-accent { color:var(--accent)!important; }
+.text-cyan   { color:var(--sig-cyan)!important; }
+.text-amber  { color:var(--sig-amber)!important; }
+.text-green  { color:var(--sig-green)!important; }
+.text-mute   { color:var(--ink-3)!important; }
+.text-mono   { font-family:var(--ff-mono)!important; }
+.text-tech   { font-family:var(--ff-tech)!important; letter-spacing:.05em; }
+
+.surface-glass { background:var(--surface-1); border:1px solid var(--stroke-1); border-radius:var(--r-3); backdrop-filter:var(--glass-blur-sm); -webkit-backdrop-filter:var(--glass-blur-sm); }
+.glow-accent { box-shadow:0 0 24px -6px var(--accent-glow); }
+
+.gap-tight > * + * { margin-top:.4rem; }
+.gap-loose > * + * { margin-top:1.2rem; }
+
+.divider { height:1px; background:var(--stroke-1); margin:1rem 0; }
+
+:focus-visible { outline:none; box-shadow:0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); border-radius:8px; }

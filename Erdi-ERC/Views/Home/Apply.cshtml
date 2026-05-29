@@ -1,0 +1,218 @@
+@model <OWNER_HANDLE>_ERC.Models.ApplicationForm
+@{
+    ViewData["Title"] = "Anmeldung ERC League Racing";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Liga Bewerbung",
+    Title     = "Liga-Anmeldung",
+    Highlight = "ERC",
+    Lead      = "Fülle das Formular aus, um dich für unsere Liga zu bewerben. Pflichtfelder sind mit * markiert.",
+    GhostText = "APPLY",
+    Actions   = new() {
+        new F1ButtonVm { Label="FAQ",       Variant="ghost", IconLucide="help-circle",  Href=Url.Action("Faq","Home")! },
+        new F1ButtonVm { Label="Regelwerk", Variant="ghost", IconLucide="shield-check", Href=Url.Action("Regelwerk","Home")! }
+    }
+})" />
+
+<div class="row g-4 reveal">
+    <!-- ═══════════════════════════════════ SIDEBAR -->
+    <div class="col-lg-4">
+        <div class="mb-3" style="background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.28);border-radius:var(--r-3);padding:1.1rem;">
+            <div style="font:700 .88rem/1.2 var(--ff-body);color:var(--ink);margin-bottom:.6rem;">
+                <i class="f1-icon" data-lucide="info" style="width:14px;height:14px;color:var(--sig-cyan);margin-right:.35rem;"></i>
+                Wichtige Infos zum Bewerbungsprozess
+            </div>
+            <p class="mb-0" style="font-size:.83rem;color:var(--ink-3);line-height:1.65;">
+                Sobald <OWNER_HANDLE> persönlich deine Anmeldung bearbeitet hat, wirst du von ihm über Discord benachrichtigt.
+                Es kommt dann zu einem kleinen Bewerbungsgespräch (ca. 20–30 Minuten).
+                Sollten wir uns auch nach längerer Zeit nicht bei dir melden, schreib einen unserer Admins auf Discord an.
+                Die Liga startet ca. 4–8 Wochen nachdem F1 26 offiziell erschienen ist.
+            </p>
+        </div>
+
+        <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1rem;display:flex;flex-direction:column;gap:.6rem;">
+            <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.25rem;">
+                <span class="icon-chip is-cyan"><i class="bi bi-discord"></i></span>
+                <span style="font:700 .9rem/1 var(--ff-body);color:var(--ink);">Discord Server</span>
+            </div>
+            <a class="f1-btn f1-btn--ghost" href="https://discord.gg/VyhjtDXYYV" target="_blank" rel="noopener">
+                <i class="bi bi-people"></i> Community
+            </a>
+            <a class="f1-btn f1-btn--ghost" href="https://discord.gg/fRqH8DA95d" target="_blank" rel="noopener">
+                <i class="bi bi-flag"></i> Liga
+            </a>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ FORM -->
+    <div class="col-lg-8">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mb-3">@TempData["SuccessMessage"]</div>
+        }
+        @if (ViewBag.DiscordWarning != null)
+        {
+            <div class="alert alert-warning mb-3">@ViewBag.DiscordWarning</div>
+        }
+
+        <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;box-shadow:var(--sh-2);">
+            <form asp-action="Apply" method="post" class="d-flex flex-column gap-4">
+                @Html.AntiForgeryToken()
+
+                @* === Persönliche Daten === *@
+                <fieldset class="d-flex flex-column gap-3">
+                    <legend class="eyebrow mb-0"><i class="bi bi-person-fill"></i> Persönliche Daten</legend>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="Age">Wie alt bist du? <span class="text-accent">*</span></label>
+                            <input type="number" class="form-control" id="Age" name="Age" required min="13" max="99" value="@(Model?.Age > 0 ? Model.Age.ToString() : "")" placeholder="z.B. 18" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="DiscordName">Discord Name <span class="text-mute small">(automatisch übernommen)</span></label>
+                            <input type="text" class="form-control" id="DiscordName" name="DiscordName" required maxlength="128" value="@Model?.DiscordName" readonly />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <hr class="m-0" style="border-color:var(--stroke-1);" />
+
+                @* === Rolle === *@
+                <fieldset class="d-flex flex-column gap-3">
+                    <legend class="eyebrow mb-0"><i class="bi bi-bullseye"></i> Rolle in der Liga</legend>
+                    <div class="form-label">Möchtest du Stamm- oder Ersatzfahrer sein? <span class="text-accent">*</span></div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="surface-glass d-flex align-items-center gap-2 p-3" style="cursor:pointer;">
+                                <input class="form-check-input m-0" type="radio" name="Role" value="Stammfahrer" required @(Model?.Role == "Stammfahrer" ? "checked" : "")>
+                                <span class="fw-semibold">Stammfahrer</span>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="surface-glass d-flex align-items-center gap-2 p-3" style="cursor:pointer;">
+                                <input class="form-check-input m-0" type="radio" name="Role" value="Ersatzfahrer" required @(Model?.Role == "Ersatzfahrer" ? "checked" : "")>
+                                <span class="fw-semibold">Ersatzfahrer</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <hr class="m-0" style="border-color:var(--stroke-1);" />
+
+                @* === Discord === *@
+                <fieldset class="d-flex flex-column gap-3">
+                    <legend class="eyebrow mb-0"><i class="bi bi-discord"></i> Discord Verifizierung</legend>
+                    <div class="form-label">Bist du schon auf BEIDEN Discord gejoint?</div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="surface-glass d-flex align-items-center gap-2 p-3" style="cursor:not-allowed;">
+                                <input class="form-check-input m-0" type="checkbox" name="JoinedCommunityDiscord" value="true" @(Model?.JoinedCommunityDiscord == true ? "checked" : "") onclick="return false;" />
+                                <span class="small">Community → <a href="https://discord.gg/VyhjtDXYYV" target="_blank" rel="noopener" class="text-accent">Beitreten</a></span>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="surface-glass d-flex align-items-center gap-2 p-3" style="cursor:not-allowed;">
+                                <input class="form-check-input m-0" type="checkbox" name="JoinedLeagueDiscord" value="true" @(Model?.JoinedLeagueDiscord == true ? "checked" : "") onclick="return false;" />
+                                <span class="small">Liga → <a href="https://discord.gg/fRqH8DA95d" target="_blank" rel="noopener" class="text-accent">Beitreten</a></span>
+                            </label>
+                        </div>
+                    </div>
+                    @if (Model?.JoinedLeagueDiscord != true)
+                    {
+                        <div class="alert alert-warning mb-0">
+                            <strong>Wichtig:</strong> Du musst beiden Discord-Servern beigetreten sein, bevor du dich bewerben kannst.
+                        </div>
+                    }
+                </fieldset>
+
+                <hr class="m-0" style="border-color:var(--stroke-1);" />
+
+                @* === Gaming === *@
+                <fieldset class="d-flex flex-column gap-3">
+                    <legend class="eyebrow mb-0"><i class="bi bi-controller"></i> Gaming Profil</legend>
+                    <div class="form-label">Auf welcher Plattform spielst du? <span class="text-accent">*</span></div>
+                    <div class="row g-2">
+                        @foreach (var (val, label, ico) in new[] {
+                            ("Steam", "Steam (PC)", "steam"),
+                            ("EA", "EA (PC)", "joystick"),
+                            ("Xbox", "Xbox", "xbox"),
+                            ("Playstation", "Playstation", "playstation")
+                        })
+                        {
+                            <div class="col-md-6 col-lg-3">
+                                <label class="surface-glass d-flex align-items-center gap-2 p-3" style="cursor:pointer;">
+                                    <input class="form-check-input m-0 platform-radio" type="radio" name="Platform" value="@val" required @(Model?.Platform == val ? "checked" : "") data-platform-label="@label" />
+                                    <i class="bi bi-@ico"></i>
+                                    <span class="fw-semibold small">@label</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="GamingName">Dein EA Name <span class="text-accent">*</span></label>
+                        <input type="text" class="form-control" id="GamingName" name="GamingName" maxlength="128" required value="@Model?.GamingName" placeholder="Exakt wie in EA angezeigt" />
+                        <div class="form-text">Wichtig: Bitte deinen exakten EA Namen eintragen. Die Plattform-Auswahl bleibt separat für die Liga-Zuordnung.</div>
+                    </div>
+                </fieldset>
+
+                <hr class="m-0" style="border-color:var(--stroke-1);" />
+
+                @* === Skill === *@
+                <fieldset class="d-flex flex-column gap-3">
+                    <legend class="eyebrow mb-0"><i class="bi bi-speedometer2"></i> Skill-Level &amp; Division</legend>
+                    <div>
+                        <label class="form-label" for="AiLevel">Auf welcher KI Stufe fährst du? <span class="text-accent">*</span></label>
+                        <input type="text" class="form-control" id="AiLevel" name="AiLevel" required maxlength="64" value="@Model?.AiLevel" placeholder="z.B. 95" />
+                    </div>
+
+                    <div class="form-label">In welcher Division möchtest du fahren? Alle 50% <span class="text-accent">*</span></div>
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var (val, title, sub) in new[] {
+                            ("Main Division 1",                   "Main Division 1",                "PC only · Freitags 20:00 · KI bis 105"),
+                            ("Second Crossplay Division 2",       "Second Crossplay Division 2",    "Mittwochs 20:00 Uhr · KI 80–95"),
+                            ("Rookie Crossplay Division 3",       "Rookie Crossplay Division 3",    "Montags 19:00 Uhr · KI 0–80"),
+                            ("Community Crossplay Event",         "Community Crossplay Event",      "Dienstags / Donnerstags · KI all")
+                        })
+                        {
+                            <label class="surface-glass d-flex align-items-start gap-3 p-3" style="cursor:pointer;">
+                                <input class="form-check-input m-0 mt-1" type="radio" name="Division" value="@val" required @(Model?.Division == val ? "checked" : "")>
+                                <div>
+                                    <div class="fw-semibold">@title</div>
+                                    <div class="text-mute text-mono small">@sub</div>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+
+                <button type="submit" class="f1-btn f1-btn--primary" style="font-size:1rem;padding:.75rem 2rem;">
+                    <i class="bi bi-rocket-takeoff-fill"></i> Jetzt anmelden
+                </button>
+
+                <div class="text-mute small">
+                    Mit dem Absenden akzeptierst du unsere
+                    <a class="text-accent" asp-controller="Home" asp-action="Privacy">Datenschutzerklärung</a>
+                    und nimmst unser
+                    <a class="text-accent" asp-controller="Home" asp-action="Impressum">Impressum</a>
+                    zur Kenntnis.
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const radios = document.querySelectorAll('.platform-radio');
+            radios.forEach(r => r.addEventListener('change', () => { }));
+        })();
+    </script>
+}

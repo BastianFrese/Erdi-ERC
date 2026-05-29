@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Impressum / Kontakt";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
+        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .doc-card__body { padding:1.25rem;line-height:1.75; }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Legal · Impressum",
+    Title     = "Impressum &amp;",
+    Highlight = "Kontakt",
+    Lead      = "Anbieterkennzeichnung und schnelle Kontaktwege zur <OWNER_HANDLE>'s Racing Community.",
+    GhostText = "LEGAL"
+})" />
+
+<section class="f1-section reveal">
+    <div class="row g-4">
+
+        <div class="col-lg-7">
+            <div class="doc-card h-100">
+                <div class="doc-card__head">
+                    <i class="bi bi-shield-fill" style="color:var(--sig-cyan);"></i> Verantwortlicher
+                </div>
+                <div class="doc-card__body">
+                    <p class="mb-4">
+                        Sollten Fragen zum Gewerbe, private Anfragen oder mögliche Kooperationen aufkommen,
+                        wende dich bitte an folgende E-Mail-Adresse:
+                        <br />
+                        <a class="text-mono" style="color:var(--sig-cyan);" href="mailto:cristiano_ronaldo@gmx.de">cristiano_ronaldo@gmx.de</a>
+                    </p>
+
+                    <div class="surface-glass p-3" style="border-left:3px solid var(--accent);">
+                        <div class="text-tech text-mute mb-2">Anschrift (Privatperson)</div>
+                        <div>c/o Grosch Postflex ***REMOVED***1567</div>
+                        <div>Emsdettener Str. 10</div>
+                        <div>48268 Greven</div>
+                        <div class="text-mute small mt-2">
+                            <i class="bi bi-info-circle"></i> Anschrift nur auf Anfrage.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="doc-card h-100">
+                <div class="doc-card__head">
+                    <i class="bi bi-link-45deg" style="color:var(--accent);"></i> Schnelle Kontaktwege
+                </div>
+                <div class="doc-card__body d-flex flex-column gap-2">
+                    <a class="f1-btn f1-btn--primary" href="mailto:cristiano_ronaldo@gmx.de">
+                        <i class="bi bi-envelope-fill"></i> E-Mail schreiben
+                    </a>
+                    <a class="f1-btn f1-btn--ghost" href="https://twitch.tv/erdi10" target="_blank" rel="noopener">
+                        <i class="bi bi-twitch"></i> Twitch · erdi10
+                    </a>
+                    <a class="f1-btn f1-btn--ghost" href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener">
+                        <i class="bi bi-instagram"></i> Instagram · @@erdi10f1
+                    </a>
+                    <a class="f1-btn f1-btn--ghost" asp-controller="Home" asp-action="Privacy">
+                        <i class="bi bi-shield-lock"></i> Datenschutzerklärung
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>

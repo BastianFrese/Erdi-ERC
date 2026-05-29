@@ -1,0 +1,316 @@
+@model <OWNER_HANDLE>_ERC.Models.LeagueResultsViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+
+@{
+    ViewData["Title"] = $"{Model.League.Name} · Rennen";
+
+    string ResolveTeamForRaceDriver(<OWNER_HANDLE>_ERC.Models.RaceResult race, string? driver)
+    {
+        if (string.IsNullOrWhiteSpace(driver)) return "Ohne Team";
+        var normalizedDriver = driver.Trim();
+
+        var raceMain = race.ReserveAssignments
+            .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
+                                 && a.ReserveDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase))?.MainDriver;
+
+        if (!string.IsNullOrWhiteSpace(raceMain))
+        {
+            var mainTeam = Model.League.Standings.FirstOrDefault(s =>
+                !string.IsNullOrWhiteSpace(s.Driver)
+                && s.Driver.Trim().Equals(raceMain.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+            if (!string.IsNullOrWhiteSpace(mainTeam)) return mainTeam.Trim();
+        }
+
+        var standing = Model.League.Standings.FirstOrDefault(s =>
+            !string.IsNullOrWhiteSpace(s.Driver)
+            && s.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(standing?.Team)) return standing.Team.Trim();
+
+        if (standing?.IsReserveDriver == true && !string.IsNullOrWhiteSpace(standing.ReserveForDriver))
+        {
+            var fallbackTeam = Model.League.Standings.FirstOrDefault(s =>
+                !string.IsNullOrWhiteSpace(s.Driver)
+                && s.Driver.Trim().Equals(standing.ReserveForDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+            if (!string.IsNullOrWhiteSpace(fallbackTeam)) return fallbackTeam.Trim();
+        }
+
+        return "Ohne Team";
+    }
+
+    var allTeamNames = Model.League.Standings
+        .Select(s => string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var raceIdsByTeam = new Dictionary<string, HashSet<int>>(StringComparer.OrdinalIgnoreCase);
+    var finishStatsByTeam = new Dictionary<string, List<<OWNER_HANDLE>_ERC.Models.RaceFinish>>(StringComparer.OrdinalIgnoreCase);
+
+    foreach (var team in allTeamNames)
+    {
+        raceIdsByTeam[team] = new HashSet<int>();
+        finishStatsByTeam[team] = new List<<OWNER_HANDLE>_ERC.Models.RaceFinish>();
+    }
+
+    foreach (var race in Model.Races)
+    {
+        foreach (var fin in race.Finishes)
+        {
+            if (string.IsNullOrWhiteSpace(fin.Driver)) continue;
+            var teamName = ResolveTeamForRaceDriver(race, fin.Driver);
+            if (!raceIdsByTeam.ContainsKey(teamName)) raceIdsByTeam[teamName] = new HashSet<int>();
+            if (!finishStatsByTeam.ContainsKey(teamName)) finishStatsByTeam[teamName] = new List<<OWNER_HANDLE>_ERC.Models.RaceFinish>();
+            raceIdsByTeam[teamName].Add(race.RowId);
+            finishStatsByTeam[teamName].Add(fin);
+        }
+    }
+
+    int[] pointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+
+    var constructors = allTeamNames
+        .Select(team =>
+        {
+            var finishes = finishStatsByTeam.TryGetValue(team, out var fs) ? fs : new List<<OWNER_HANDLE>_ERC.Models.RaceFinish>();
+            var validFinishes = finishes.Where(f => f.Position > 0).ToList();
+            var points = Model.Races.Sum(r => r.Finishes
+                .Where(f => f.Position > 0 && ResolveTeamForRaceDriver(r, f.Driver).Equals(team, StringComparison.OrdinalIgnoreCase))
+                .Sum(f => f.Position >= 1 && f.Position <= pointMap.Length ? pointMap[f.Position - 1] : 0));
+
+            return new
+            {
+                Team = team,
+                Drivers = Model.League.Standings
+                    .Where(s => string.Equals((s.Team ?? string.Empty).Trim(), team, StringComparison.OrdinalIgnoreCase))
+                    .Select(s => s.Driver)
+                    .Where(d => !string.IsNullOrWhiteSpace(d))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(d => d)
+                    .ToList(),
+                Points = points,
+                P1 = validFinishes.Count(f => f.Position == 1),
+                P2 = validFinishes.Count(f => f.Position == 2),
+                P3 = validFinishes.Count(f => f.Position == 3),
+                Top5 = validFinishes.Count(f => f.Position <= 5),
+                Top10 = validFinishes.Count(f => f.Position <= 10),
+                Best = validFinishes.Any() ? validFinishes.Min(f => f.Position) : (int?)null,
+                Pole = validFinishes.Count(f => f.Position >= 1 && f.Position <= 3),
+                Dnf = finishes.Count(f => f.Position <= 0),
+                Events = raceIdsByTeam.TryGetValue(team, out var races) ? races.Count : 0
+            };
+        })
+        .OrderByDescending(x => x.Points)
+        .ThenByDescending(x => x.P1)
+        .ThenByDescending(x => x.P2)
+        .ThenByDescending(x => x.P3)
+        .ThenBy(x => x.Team)
+        .ToList();
+
+    var leaderPoints = constructors.FirstOrDefault()?.Points ?? 0;
+    var orderedRaces  = Model.Races.OrderBy(r => r.Date).ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/league-results.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = $"{Model.League.Name} · Liga",
+    Title     = Model.League.Name,
+    Lead      = "Alle Rennen und Constructors' Championship",
+    GhostText = "LEAGUE",
+    Actions   = new() {
+        new F1ButtonVm { Label="Zu Results", Variant="primary", IconLucide="arrow-left", Href=Url.Action("Results","Home")! },
+        new F1ButtonVm { Label="Racing Hub", Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10","Home")! }
+    }
+})" />
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4 reveal">
+    <span class="race-lights-pill" data-state="green">
+        <span class="race-lights-pill__strip" aria-hidden="true">
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+        </span>
+        Season · Live
+    </span>
+    <div class="lap-counter" title="Rennen in dieser Liga">
+        <span class="lap-counter__label">Races</span>
+        <span class="lap-counter__value">@Model.Races.Count.ToString("00")</span>
+    </div>
+    <div class="lap-counter" title="Fahrer im Standing">
+        <span class="lap-counter__label">Drivers</span>
+        <span class="lap-counter__value">@Model.League.Standings.Count.ToString("00")</span>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ RACE CALENDAR -->
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Kalender",
+        Title   = "Race Calendar",
+        SubText = $"{Model.Races.Count} Rennen"
+    })" />
+
+    @if (!orderedRaces.Any())
+    {
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-calendar-x"></i></span>
+            <div class="empty-state__title">Noch keine Rennen</div>
+            <p class="empty-state__lead">Sobald Rennen abgeschlossen sind, erscheinen sie hier.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @for (int ri = 0; ri < orderedRaces.Count; ri++)
+            {
+                var race      = orderedRaces[ri];
+                var raceNum   = ri + 1;
+                var teamKey   = F1TeamsHelper.GetCssKeyForDriver(race.Winner);
+                var teamInfo  = teamKey != null ? F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == teamKey) : null;
+                var bar       = teamInfo?.PrimaryColor ?? "var(--accent)";
+                var detailUrl = Url.Action("RaceDetail", "Home", new { leagueId = Model.League.Id, raceId = race.RowId });
+                <div class="col-md-6 col-xl-4">
+                    <div class="f1-race-card" style="--race-color: @bar;"
+                         onclick="if(event.target.closest('a')) return; window.location.href='@detailUrl'">
+                        <div class="f1-race-card__header">
+                            <div class="f1-race-card__round">
+                                <span class="f1-race-card__round-label">Round</span>
+                                <span class="f1-race-card__round-num">@raceNum.ToString("00")</span>
+                            </div>
+                            <span class="f1-race-card__date">@race.Date.ToString("dd.MM.yy")</span>
+                        </div>
+                        <div class="f1-race-card__track">@race.Track</div>
+                        @if (!string.IsNullOrWhiteSpace(race.Winner))
+                        {
+                            <div class="f1-race-card__winner">
+                                <i class="f1-icon f1-race-card__winner-icon" data-lucide="trophy"></i>
+                                <a class="f1-race-card__winner-name"
+                                   asp-controller="Profile" asp-action="ByDriverName"
+                                   asp-route-driverName="@race.Winner">@race.Winner</a>
+                                @if (race.FastestLap is { } fl && !string.IsNullOrWhiteSpace(fl))
+                                {
+                                    <span class="sector sector--purple ms-auto" title="Fastest Lap">
+                                        <i class="bi bi-lightning-charge-fill"></i> FL
+                                    </span>
+                                }
+                            </div>
+                        }
+                        <div class="f1-race-card__footer">
+                            <span class="f1-race-card__time">@race.Date.ToString("HH:mm")</span>
+                            <a class="f1-race-card__link" href="@detailUrl">
+                                Details
+                                <i class="f1-icon" data-lucide="arrow-right" style="width:12px;height:12px;"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<!-- ═════════════════════════════════════ CONSTRUCTORS' CHAMPIONSHIP -->
+@if (constructors.Any())
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Konstrukteure",
+            Title   = "Constructors' Championship",
+            SubText = $"{constructors.Count} Teams"
+        })" />
+
+        <div class="f1-results-card">
+            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+            <div class="f1-results-card__corner"    aria-hidden="true"></div>
+            <div class="table-responsive">
+                <table class="f1-results-table">
+                    <colgroup>
+                        <col style="width:56px" />
+                        <col style="min-width:180px" />
+                        <col style="width:72px" />
+                        <col style="width:72px" />
+                        <col style="width:52px" />
+                        <col style="width:52px" />
+                        <col style="width:52px" />
+                        <col style="width:60px" />
+                        <col style="width:60px" />
+                        <col style="width:60px" />
+                        <col style="width:70px" />
+                        <col style="width:52px" />
+                        <col style="width:72px" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="is-center">Pos</th>
+                            <th>Team</th>
+                            <th class="is-center">PTS</th>
+                            <th class="is-center">GAP</th>
+                            <th class="is-center">P1</th>
+                            <th class="is-center">P2</th>
+                            <th class="is-center">P3</th>
+                            <th class="is-center">Top 5</th>
+                            <th class="is-center">Top 10</th>
+                            <th class="is-center">Best</th>
+                            <th class="is-center">Podium</th>
+                            <th class="is-center">DNF</th>
+                            <th class="is-center">Events</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < constructors.Count; i++)
+                        {
+                            var row       = constructors[i];
+                            var cTeamInfo = F1TeamsHelper.GetTeamByName(row.Team);
+                            var teamColor = cTeamInfo?.PrimaryColor ?? "var(--ink-3)";
+                            var posClass  = i == 0 ? "is-1" : i == 1 ? "is-2" : i == 2 ? "is-3" : "";
+                            <tr>
+                                <td class="is-center">
+                                    <span class="driver-tile__pos @posClass">@(i + 1)</span>
+                                </td>
+                                <td style="border-left: 3px solid @teamColor; padding-left: .7rem;">
+                                    <div class="fw-semibold" style="color: @teamColor;">@(cTeamInfo?.Name ?? row.Team)</div>
+                                    @if (row.Drivers.Any())
+                                    {
+                                        <div class="text-mono" style="font-size:.72rem; color: var(--ink-4);">
+                                            @for (int di = 0; di < row.Drivers.Count; di++)
+                                            {
+                                                var drv = row.Drivers[di];
+                                                <a class="text-decoration-none" style="color:inherit;"
+                                                   asp-controller="Profile" asp-action="ByDriverName"
+                                                   asp-route-driverName="@drv">@drv</a>
+                                                @if (di < row.Drivers.Count - 1)
+                                                {
+                                                    <text> · </text>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-tech fw-bold is-center">@row.Points</td>
+                                <td class="text-mono is-center" style="font-size:.8rem; color: var(--ink-4);">
+                                    @(i == 0 ? "—" : $"+{leaderPoints - row.Points}")
+                                </td>
+                                <td class="text-tech is-center">@row.P1</td>
+                                <td class="text-tech is-center">@row.P2</td>
+                                <td class="text-tech is-center">@row.P3</td>
+                                <td class="text-tech is-center" style="color: var(--ink-3);">@row.Top5</td>
+                                <td class="text-tech is-center" style="color: var(--ink-3);">@row.Top10</td>
+                                <td class="text-tech is-center">@(row.Best.HasValue ? $"P{row.Best.Value}" : "—")</td>
+                                <td class="text-tech is-center">@row.Pole</td>
+                                <td class="text-tech is-center" style="color: var(--ink-3);">@row.Dnf</td>
+                                <td class="text-tech is-center">@row.Events</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}

@@ -1,0 +1,518 @@
+@model <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = $"{Model.Driver} · {Model.LeagueName}";
+
+    static string FormatRaceTime(int? ms)
+    {
+        if (!ms.HasValue) return "—";
+        var t = TimeSpan.FromMilliseconds(ms.Value);
+        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+    }
+
+    static string FormatGap(int? ms)
+    {
+        if (!ms.HasValue) return "—";
+        if (ms.Value <= 0) return "+0.000";
+        var t = TimeSpan.FromMilliseconds(ms.Value);
+        return $"+{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+    }
+
+    var teamInfo        = F1TeamsHelper.GetTeamByName(Model.Team);
+    var accent          = teamInfo?.PrimaryColor ?? "var(--accent)";
+    var featured        = DriverAchievementsHelper.GetFeatured(Model.Achievements);
+    var unlockedCount   = Model.Achievements.Count(a => a.IsUnlocked);
+    var totalCount      = Model.Achievements.Count;
+    var totalRaces      = Model.Races.Count;
+    var finishedRaces   = Model.Races.Count(r => r.Position > 0);
+    var dnfRaces        = Model.Races.Count(r => r.Position <= 0);
+    var top10Races      = Model.Races.Count(r => r.Position is >= 1 and <= 10);
+    var winRate         = finishedRaces > 0 ? (int)Math.Round(100.0 * Model.Wins / finishedRaces) : 0;
+    var top10Rate       = finishedRaces > 0 ? (int)Math.Round(100.0 * top10Races / finishedRaces) : 0;
+    var reliability     = totalRaces > 0 ? (int)Math.Round(100.0 * finishedRaces / totalRaces) : 0;
+    var recentRaces     = Model.Races.OrderByDescending(r => r.Date).Take(8).ToList();
+    var driverLastName  = Model.Driver?.Split(' ').LastOrDefault()?.ToUpper() ?? "DRIVER";
+    var driverKey       = $"{Model.LeagueId}::{Model.Driver}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/driver-detail.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ DRIVER HERO -->
+<div class="f1-driver-hero reveal" style="--driver-accent: @accent;">
+    <div class="f1-driver-hero__telemetry" aria-hidden="true"></div>
+    <div class="f1-driver-hero__chequer"   aria-hidden="true"></div>
+    <div class="f1-driver-hero__accent-bar" aria-hidden="true"></div>
+
+    <div class="f1-driver-hero__body">
+        <span class="f1-driver-hero__eyebrow">
+            <i class="f1-icon" data-lucide="user-check"></i> Fahrerprofil · @Model.LeagueName
+        </span>
+
+        <h1 class="f1-driver-hero__name">
+            @Model.Driver
+            @if (featured != null)
+            {
+                <span class="featured-achievement achievement-chip--@featured.Tier"
+                      title="@featured.Title – @featured.Description">
+                    <i class="bi @featured.Icon"></i>
+                    <span class="featured-achievement__title">@featured.Title</span>
+                    <span class="achievement-chip__tier">@featured.Tier</span>
+                </span>
+            }
+        </h1>
+
+        <p class="f1-driver-hero__team">
+            <span style="color: var(--driver-accent);">@(string.IsNullOrWhiteSpace(teamInfo?.Name) ? Model.Team : teamInfo!.Name)</span>
+            @if (Model.IsReserveDriver)
+            {
+                <span class="f1-reserve-badge">Ersatzfahrer</span>
+            }
+        </p>
+
+        @if (totalRaces > 0)
+        {
+            <div class="f1-driver-hero__strip">
+                <span class="race-lights-pill" data-state="green">
+                    <span class="race-lights-pill__strip" aria-hidden="true">
+                        <span class="race-lights-pill__lamp"></span>
+                        <span class="race-lights-pill__lamp"></span>
+                        <span class="race-lights-pill__lamp"></span>
+                        <span class="race-lights-pill__lamp"></span>
+                        <span class="race-lights-pill__lamp"></span>
+                    </span>
+                    Driver · Live Stats
+                </span>
+                <div class="lap-counter" title="Gefahrene Rennen">
+                    <span class="lap-counter__label">Races</span>
+                    <span class="lap-counter__value">@totalRaces.ToString("00")</span>
+                </div>
+                <div class="lap-counter" title="Top-10 Quote">
+                    <span class="lap-counter__label">Top 10</span>
+                    <span class="lap-counter__value">@top10Rate%</span>
+                </div>
+            </div>
+        }
+
+        <div class="f1-driver-hero__actions">
+            <a class="btn f1-btn f1-btn--primary" asp-action="Results">
+                <i class="f1-icon" data-lucide="flag"></i> Results
+            </a>
+            <a class="btn f1-btn f1-btn--ghost" asp-action="LeagueResults" asp-route-leagueId="@Model.LeagueId">
+                <i class="f1-icon" data-lucide="list"></i> Liga
+            </a>
+        </div>
+    </div>
+
+    <span class="f1-driver-hero__ghost" aria-hidden="true">@driverLastName</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ STAT TILES -->
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "star",
+        Label      = "Punkte",
+        Value      = Model.TotalPoints.ToString(),
+        Sub        = $"Gesamt · {Model.Races.Count} Rennen"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "trophy",
+        Label      = "Siege",
+        Value      = Model.Wins.ToString(),
+        Sub        = $"P1 · {winRate}% Win-Rate"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "award",
+        Label      = "Podien",
+        Value      = Model.Podiums.ToString(),
+        Sub        = "Top-3 Ergebnisse"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "gauge",
+        Label      = "Ø Finish",
+        Value      = Model.AverageFinish?.ToString("0.0") ?? "—",
+        Sub        = $"Best: {(Model.BestFinish.HasValue ? $"P{Model.BestFinish.Value}" : "—")} · FL: {Model.FastestLaps}"
+    })" />
+</div>
+
+<!-- ═══════════════════════════════════════════════════ FORM + RELIABILITY -->
+@if (totalRaces > 0)
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Season",
+            Title   = "Formkurve",
+            SubText = $"Letzte {recentRaces.Count} Rennen · neueste zuerst"
+        })" />
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="f1-driver-card">
+                    <div class="f1-driver-card__header">
+                        <div class="f1-driver-card__title">
+                            <i class="f1-icon" data-lucide="activity"></i> Formkurve
+                        </div>
+                        <span class="f1-driver-card__sub">Neueste zuerst</span>
+                    </div>
+                    <div class="f1-driver-card__body">
+                        <div class="f1-form-chips">
+                            @foreach (var rr in recentRaces)
+                            {
+                                var chipCls = rr.Position == 1 ? "f1-form-chip--p1"    :
+                                              rr.Position == 2 ? "f1-form-chip--p2"    :
+                                              rr.Position == 3 ? "f1-form-chip--p3"    :
+                                              rr.Position is >= 4 and <= 10 ? "f1-form-chip--top10" :
+                                              rr.Position > 10 ? "f1-form-chip--mid"   : "f1-form-chip--dnf";
+                                var pulseCls = rr.Position == 1 ? " js-form-chip--p1" : "";
+                                var label    = rr.Position > 0 ? $"P{rr.Position}" : "DNF";
+                                <span class="f1-form-chip @chipCls js-form-chip@pulseCls"
+                                      title="@rr.Track · @rr.Date.ToString("dd.MM.yyyy")">@label</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="f1-driver-card">
+                    <div class="f1-driver-card__header">
+                        <div class="f1-driver-card__title">
+                            <i class="f1-icon" data-lucide="shield-check"></i> Konstanz
+                        </div>
+                    </div>
+                    <div class="f1-driver-card__body">
+                        <div class="f1-reliability-label">Reliability</div>
+                        <div class="f1-reliability-bar">
+                            <div class="f1-reliability-bar__fill js-reliability-bar"
+                                 style="--bar-color: @accent;"
+                                 data-target-width="@reliability"
+                                 aria-valuenow="@reliability" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="f1-reliability-stats">
+                            @finishedRaces Finishes · @dnfRaces DNF/DNS · @reliability%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ════════════════════════════════════════════════════════ ACHIEVEMENTS -->
+@if (Model.Achievements.Any())
+{
+    <section class="f1-section reveal achievements" data-driver-key="@driverKey">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Achievements",
+            Title   = "Achievements",
+            SubText = $"{unlockedCount} / {totalCount} freigeschaltet"
+        })" />
+
+        <div class="achievements__filters" role="tablist" aria-label="Achievement-Filter">
+            <button type="button" class="ach-filter is-active" data-filter="all">Alle</button>
+            <button type="button" class="ach-filter" data-filter="unlocked">Freigeschaltet</button>
+            <button type="button" class="ach-filter" data-filter="locked">Gesperrt</button>
+            <button type="button" class="ach-filter" data-filter="platinum">Platin</button>
+            <button type="button" class="ach-filter" data-filter="gold">Gold</button>
+            <button type="button" class="ach-filter" data-filter="silver">Silber</button>
+            <button type="button" class="ach-filter" data-filter="bronze">Bronze</button>
+        </div>
+
+        @foreach (var group in Model.Achievements.GroupBy(a => a.Category).OrderBy(g => g.Key))
+        {
+            var groupUnlocked = group.Count(a => a.IsUnlocked);
+            <div class="achievements__group" data-category="@group.Key">
+                <div class="achievements__group-head">
+                    <span class="achievements__group-title">@group.Key</span>
+                    <span class="achievements__group-count">@groupUnlocked / @group.Count()</span>
+                </div>
+                <div class="achievements__grid">
+                    @foreach (var a in group)
+                    {
+                        var pct = a.Target > 0 ? (int)System.Math.Round(100.0 * a.Current / a.Target) : 0;
+                        var stateClass = a.IsUnlocked ? "is-unlocked" : "is-locked";
+                        var aria = $"{a.Title} – {a.Tier} – {(a.IsUnlocked ? "freigeschaltet" : $"Fortschritt {a.Current} von {a.Target}")}";
+                        <div class="achievement-chip achievement-chip--@a.Tone achievement-chip--@a.Tier @stateClass"
+                             data-key="@a.Key"
+                             data-tier="@a.Tier"
+                             data-unlocked="@(a.IsUnlocked ? "1" : "0")"
+                             data-unlocked-at="@(a.UnlockedAt?.ToString("yyyy-MM-dd"))"
+                             tabindex="0" role="img"
+                             aria-label="@aria"
+                             title="@a.Description">
+                            <i class="bi @a.Icon"></i>
+                            <span class="achievement-chip__title">@a.Title</span>
+                            <span class="achievement-chip__tier">@a.Tier</span>
+                            <span class="achievement-chip__new" hidden>NEU</span>
+                            <span class="achievement-chip__progress" aria-hidden="true">
+                                <span class="achievement-chip__progress-fill" style="width:@(pct)%;"></span>
+                            </span>
+                            <span class="achievement-chip__meta">
+                                @if (a.IsUnlocked)
+                                {
+                                    <span><i class="bi bi-check2-circle"></i> @(a.UnlockedAt?.ToString("dd.MM.yyyy") ?? "freigeschaltet")</span>
+                                }
+                                else
+                                {
+                                    <span><i class="bi bi-hourglass-split"></i> @a.Current / @a.Target</span>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+}
+
+<!-- ════════════════════════════════════════════════════════ RIVALITÄTEN -->
+@if (Model.Rivalries.Any())
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Duelle",
+            Title   = "Rivalitäten",
+            SubText = $"Direktduelle in {Model.LeagueName}"
+        })" />
+
+        <div class="row g-3">
+            @foreach (var r in Model.Rivalries)
+            {
+                var rivalTeam  = F1TeamsHelper.GetTeamByName(r.RivalTeam);
+                var rivalColor = rivalTeam?.PrimaryColor ?? "var(--stroke-3)";
+                var total      = r.Wins + r.Losses;
+                var pct        = total > 0 ? (int)System.Math.Round(100.0 * r.Wins / total) : 50;
+                <div class="col-md-6 col-xl-4">
+                    <div class="f1-rival-card rivalry-card" style="--rival-color: @rivalColor;">
+                        <div class="f1-rival-card__header">
+                            <a class="f1-rival-card__name"
+                               asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@r.Rival">
+                                @r.Rival
+                            </a>
+                            <span class="f1-rival-card__team">@(rivalTeam?.Name ?? r.RivalTeam)</span>
+                        </div>
+                        <div class="f1-rival-card__record">
+                            <span class="f1-rival-card__w">@r.Wins W</span>
+                            <span class="f1-rival-card__d">@r.Draws D</span>
+                            <span class="f1-rival-card__l">@r.Losses L</span>
+                            <span class="f1-rival-card__races">@r.RacesTogether Rennen</span>
+                        </div>
+                        <div class="rivalry-bar" aria-label="Win-Quote @pct%">
+                            <span class="rivalry-bar__fill" style="width:@(pct)%;"></span>
+                        </div>
+                        @if (r.Recent != null && r.Recent.Count > 0)
+                        {
+                            <div class="rivalry-spark mt-2" aria-label="Letzte Duelle">
+                                @foreach (var o in r.Recent)
+                                {
+                                    var cls = o == "W" ? "is-w" : (o == "L" ? "is-l" : "is-d");
+                                    <span class="rivalry-spark__dot @cls" title="@o"></span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- ══════════════════════════════════════════════════════ RENNVERLAUF -->
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Archiv",
+        Title   = "Rennverlauf",
+        SubText = $"{Model.Races.Count} Einträge"
+    })" />
+
+    @if (!Model.Races.Any())
+    {
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-graph-down"></i></span>
+            <div class="empty-state__title">Keine Renndaten</div>
+            <p class="empty-state__lead">Für diesen Fahrer sind in der Liga noch keine Renneinträge vorhanden.</p>
+        </div>
+    }
+    else
+    {
+        <div class="f1-results-card">
+            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+            <div class="f1-results-card__corner"    aria-hidden="true"></div>
+            <div class="table-responsive">
+                <table class="f1-results-table">
+                    <colgroup>
+                        <col style="width:120px" />
+                        <col />
+                        <col style="width:80px" />
+                        <col style="width:72px" />
+                        <col style="width:130px" />
+                        <col style="width:130px" />
+                        <col style="width:160px" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Strecke</th>
+                            <th class="is-center">Pos</th>
+                            <th class="is-center">PTS</th>
+                            <th>Zeit</th>
+                            <th>Gap</th>
+                            <th>Rolle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var race in Model.Races)
+                        {
+                            var raceTeam  = F1TeamsHelper.GetTeamByName(race.Team);
+                            var raceColor = raceTeam?.PrimaryColor ?? accent;
+                            <tr>
+                                <td class="text-mono" style="font-size:.8rem;">@race.Date.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    <a class="text-decoration-none"
+                                       asp-action="RaceDetail"
+                                       asp-route-leagueId="@Model.LeagueId"
+                                       asp-route-raceId="@race.RaceId">
+                                        <span class="fw-semibold">@race.Track</span>
+                                    </a>
+                                    <div class="text-mono" style="font-size:.75rem; color:@raceColor;">@(raceTeam?.Name ?? race.Team)</div>
+                                </td>
+                                <td class="is-center">
+                                    @if (race.Position > 0)
+                                    {
+                                        var posCls = race.Position == 1 ? "is-1" : race.Position == 2 ? "is-2" : race.Position == 3 ? "is-3" : "";
+                                        <span class="driver-tile__pos @posCls">@($"P{race.Position}")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger" style="font-size:.65rem;">DNF</span>
+                                    }
+                                </td>
+                                <td class="text-tech fw-bold is-center">@race.Points</td>
+                                <td class="text-mono" style="font-size:.8rem;">@FormatRaceTime(race.RaceTimeMs)</td>
+                                <td class="text-mono text-mute" style="font-size:.8rem;">@FormatGap(race.GapToLeaderMs)</td>
+                                <td>
+                                    @if (race.WasReserve)
+                                    {
+                                        <span class="badge bg-info">
+                                            Ersatz@(string.IsNullOrWhiteSpace(race.ReserveForDriver) ? "" : " für ")
+                                            @if (!string.IsNullOrWhiteSpace(race.ReserveForDriver))
+                                            {
+                                                <a class="text-decoration-none text-reset"
+                                                   asp-controller="Profile" asp-action="ByDriverName"
+                                                   asp-route-driverName="@race.ReserveForDriver">@race.ReserveForDriver</a>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-mute" style="font-size:.78rem;">Stammfahrer</span>
+                                    }
+                                    @if (race.FastestLap)
+                                    {
+                                        <span class="badge bg-info ms-1"><i class="bi bi-lightning-charge-fill"></i> FL</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Achievement filter + new-badge detection
+            const achRoot = document.querySelector('.achievements');
+            if (achRoot) {
+                const achBtns = achRoot.querySelectorAll('.ach-filter');
+                const chips   = achRoot.querySelectorAll('.achievement-chip');
+
+                achBtns.forEach(b => b.addEventListener('click', () => {
+                    achBtns.forEach(x => x.classList.remove('is-active'));
+                    b.classList.add('is-active');
+                    const f = b.dataset.filter;
+                    chips.forEach(c => {
+                        const unlocked = c.dataset.unlocked === '1';
+                        const tier = c.dataset.tier;
+                        let show = true;
+                        if (f === 'unlocked') show = unlocked;
+                        else if (f === 'locked') show = !unlocked;
+                        else if (['bronze', 'silver', 'gold', 'platinum'].includes(f)) show = tier === f;
+                        c.style.display = show ? '' : 'none';
+                    });
+                    achRoot.querySelectorAll('.achievements__group').forEach(g => {
+                        const visible = [...g.querySelectorAll('.achievement-chip')].some(c => c.style.display !== 'none');
+                        g.style.display = visible ? '' : 'none';
+                    });
+                }));
+
+                try {
+                    const storeKey = 'erc_seen_ach::' + (achRoot.dataset.driverKey || 'driver');
+                    const seen = new Set(JSON.parse(localStorage.getItem(storeKey) || '[]'));
+                    const fresh = [];
+                    chips.forEach(c => {
+                        if (c.dataset.unlocked === '1' && !seen.has(c.dataset.key)) {
+                            const tag = c.querySelector('.achievement-chip__new');
+                            if (tag) tag.hidden = false;
+                            c.classList.add('is-new');
+                            fresh.push(c.dataset.key);
+                        }
+                    });
+                    fresh.forEach(k => seen.add(k));
+                    if (fresh.length) localStorage.setItem(storeKey, JSON.stringify([...seen]));
+                } catch (e) { }
+            }
+
+            // Form chip entrance animation
+            const formChips = Array.from(document.querySelectorAll('.js-form-chip'));
+            formChips.forEach((chip, i) => {
+                chip.style.opacity = '0';
+                chip.style.transform = 'translateY(6px) scale(.98)';
+                chip.style.transition = 'opacity .28s ease, transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s ease';
+                setTimeout(() => {
+                    chip.style.opacity = '1';
+                    chip.style.transform = 'translateY(0) scale(1)';
+                }, 80 + (i * 55));
+            });
+
+            const p1Chips = Array.from(document.querySelectorAll('.js-form-chip--p1'));
+            if (p1Chips.length > 0) {
+                setTimeout(() => {
+                    p1Chips.forEach((chip, i) => {
+                        setTimeout(() => {
+                            chip.animate([
+                                { transform: 'translateY(0) scale(1)',    boxShadow: '0 0 0 rgba(255,193,7,0)' },
+                                { transform: 'translateY(-1px) scale(1.04)', boxShadow: '0 0 14px rgba(255,193,7,.55)' },
+                                { transform: 'translateY(0) scale(1)',    boxShadow: '0 0 0 rgba(255,193,7,0)' }
+                            ], { duration: 1350, easing: 'cubic-bezier(.22,.61,.36,1)', iterations: 2, delay: i * 120 });
+                        }, i * 70);
+                    });
+                }, 520);
+            }
+
+            // Reliability bar IntersectionObserver animation
+            const bar = document.querySelector('.js-reliability-bar');
+            if (bar) {
+                const target = parseInt(bar.getAttribute('data-target-width') || '0', 10);
+                const animate = () => requestAnimationFrame(() => {
+                    bar.style.width = Math.max(0, Math.min(100, target)) + '%';
+                });
+                if ('IntersectionObserver' in window) {
+                    const io = new IntersectionObserver((entries, obs) => {
+                        entries.forEach(e => { if (e.isIntersecting) { animate(); obs.disconnect(); } });
+                    }, { threshold: .35 });
+                    io.observe(bar);
+                } else {
+                    animate();
+                }
+            }
+        })();
+    </script>
+}

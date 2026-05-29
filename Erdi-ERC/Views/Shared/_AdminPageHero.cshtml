@@ -1,0 +1,21 @@
+@{
+    var kicker = ViewData["Kicker"] as string ?? string.Empty;
+    var heroTitle = ViewData["HeroTitle"] as string ?? string.Empty;
+    var heroSubtitle = ViewData["HeroSubtitle"] as string ?? string.Empty;
+    var heroActionText = ViewData["HeroActionText"] as string;
+    var heroAction = ViewData["HeroAction"] as string;
+    var heroActionRouteId = ViewData["HeroActionRouteId"]?.ToString();
+}
+
+<section class="admin-page-hero">
+    <partial name="_AdminHeroCard" />
+
+    @if (!string.IsNullOrWhiteSpace(heroActionText) && !string.IsNullOrWhiteSpace(heroAction))
+    {
+        <div class="admin-hero-side">
+            <a class="btn btn-outline-secondary" asp-action="@heroAction" asp-route-id="@heroActionRouteId">
+                <i class="bi bi-arrow-left"></i> @heroActionText
+            </a>
+        </div>
+    }
+</section>

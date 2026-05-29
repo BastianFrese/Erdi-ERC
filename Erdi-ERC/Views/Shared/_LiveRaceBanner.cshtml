@@ -1,0 +1,16 @@
+@{
+    var stream = ViewData["ActiveStream"] as <OWNER_HANDLE>_ERC.Models.StreamSchedule;
+}
+@if (stream != null)
+{
+    var url = string.IsNullOrWhiteSpace(stream.Url) ? "https://twitch.tv/erdi10" : stream.Url;
+    <a href="@url" target="_blank" rel="noopener" class="live-race-banner reveal">
+        <span class="live-race-banner__pulse" aria-hidden="true"></span>
+        <span class="live-race-banner__label">Live jetzt</span>
+        <span class="live-race-banner__title">@stream.Title</span>
+        <span class="live-race-banner__cta">
+            <i class="bi bi-box-arrow-up-right"></i>
+            Zum Stream
+        </span>
+    </a>
+}

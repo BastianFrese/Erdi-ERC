@@ -1,0 +1,314 @@
+/* =====================================================================
+   PAGE · ERDI10 HUB
+   F1-Broadcast-styled Racing Hub.
+   Erweitert pages/home-index.css + pages/results.css.
+   ===================================================================== */
+
+/* =====================================================================
+   HUB STRIP · Race-lights + next-race info strip below hero
+   ===================================================================== */
+.f1-hub-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1.75rem;
+}
+.f1-hub-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .28rem .65rem;
+    background: rgba(255,255,255,.05);
+    color: var(--ink-3);
+    border: 1px solid var(--stroke-1);
+    border-radius: 2px;
+    font: 700 .63rem/1 var(--ff-tech);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+.f1-hub-tag--red { color: var(--sig-red, ***REMOVED***e10600); border-color: rgba(225,6,0,.4); background: rgba(225,6,0,.1); }
+
+/* =====================================================================
+   WINNER CARD · Latest race winner spotlight
+   ===================================================================== */
+.f1-winner-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(255,255,255,.03) 0%, transparent 55%), var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-left: 5px solid var(--winner-color, var(--accent));
+    border-radius: var(--r-3);
+    box-shadow: var(--sh-2), 0 0 40px -15px var(--winner-color, transparent);
+    overflow: hidden;
+}
+.f1-winner-card__trophy {
+    flex-shrink: 0;
+    width: 56px; height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    font-size: 1.8rem;
+    color: var(--winner-color, var(--accent));
+    filter: drop-shadow(0 0 10px var(--winner-color, var(--accent)));
+}
+.f1-winner-card__info { flex: 1; min-width: 0; }
+.f1-winner-card__eyebrow {
+    font: 700 .67rem/1 var(--ff-tech);
+    letter-spacing: var(--letter-track);
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: .3rem;
+}
+.f1-winner-card__name {
+    font: 800 2rem/1.1 var(--ff-tech);
+    letter-spacing: -.01em;
+    color: var(--ink);
+    margin-bottom: .25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.f1-winner-card__team {
+    font: 600 .85rem/1.3 var(--ff-body);
+}
+.f1-winner-card__race {
+    flex-shrink: 0;
+    padding: .75rem 1rem;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    text-align: right;
+}
+.f1-winner-card__race-label {
+    font: 700 .62rem/1 var(--ff-tech);
+    letter-spacing: var(--letter-track);
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: .3rem;
+}
+.f1-winner-card__race-track {
+    font: 600 .9rem/1.3 var(--ff-body);
+    color: var(--ink);
+    white-space: nowrap;
+}
+.f1-winner-card__race-date {
+    font: 400 .75rem/1 var(--ff-body);
+    color: var(--ink-3);
+}
+
+/* =====================================================================
+   SOCIAL BAR
+   ===================================================================== */
+.f1-social-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .85rem 1rem;
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+}
+.f1-social-bar__label {
+    font: 700 .67rem/1 var(--ff-tech);
+    letter-spacing: var(--letter-track);
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-right: .75rem;
+    border-right: 1px solid var(--stroke-1);
+}
+.f1-social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .38rem .8rem;
+    background: rgba(255,255,255,.04);
+    color: var(--ink-2);
+    border: 1px solid var(--stroke-2);
+    border-radius: var(--r-2);
+    font: 600 .78rem/1 var(--ff-body);
+    text-decoration: none;
+    transition: all var(--t-fast);
+    white-space: nowrap;
+}
+.f1-social-link:hover {
+    background: rgba(255,255,255,.09);
+    color: var(--ink);
+    border-color: var(--stroke-3);
+    transform: translateY(-1px);
+}
+
+/* =====================================================================
+   HUB CARD · Left-column container (league tabs + content)
+   ===================================================================== */
+.f1-hub-card {
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+    box-shadow: var(--sh-2);
+    height: 100%;
+}
+.f1-hub-card__tabs-bar {
+    padding: .65rem .85rem .0rem;
+    border-bottom: 1px solid var(--stroke-1);
+    background: linear-gradient(180deg, rgba(255,255,255,.025), transparent);
+}
+.f1-hub-card__body { padding: 1rem; }
+
+/* =====================================================================
+   HUB TABS · League selector (outer tabs)
+   ===================================================================== */
+.f1-hub-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    padding-bottom: .65rem;
+}
+.f1-hub-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    padding: .42rem .9rem;
+    background: rgba(255,255,255,.03);
+    color: var(--ink-3);
+    border: 1px solid var(--stroke-1);
+    border-bottom: none;
+    border-radius: var(--r-2) var(--r-2) 0 0;
+    font: 700 .7rem/1 var(--ff-tech);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--t-fast);
+    white-space: nowrap;
+}
+.f1-hub-tabs__tab:hover {
+    background: rgba(255,255,255,.07);
+    color: var(--ink);
+}
+.f1-hub-tabs__tab.is-active {
+    background: var(--surface-1);
+    color: var(--sig-cyan);
+    border-color: rgba(0,229,255,.4);
+    border-bottom-color: var(--surface-1);
+    box-shadow: 0 0 10px rgba(0,229,255,.1);
+    margin-bottom: -1px;
+}
+
+/* =====================================================================
+   SUB TABS · Rennen / Events (inner pills)
+   ===================================================================== */
+.f1-sub-tabs {
+    display: flex;
+    gap: .3rem;
+    margin-bottom: .85rem;
+}
+.f1-sub-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .35rem .75rem;
+    background: rgba(255,255,255,.03);
+    color: var(--ink-3);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    font: 700 .68rem/1 var(--ff-tech);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+.f1-sub-tabs__tab:hover {
+    background: rgba(255,255,255,.07);
+    color: var(--ink);
+}
+.f1-sub-tabs__tab.is-active {
+    background: rgba(0,229,255,.1);
+    color: var(--sig-cyan);
+    border-color: rgba(0,229,255,.35);
+}
+
+/* =====================================================================
+   RACE ROWS · Clickable rows in hub race table
+   ===================================================================== */
+.f1-hub-race-row {
+    cursor: pointer;
+    transition: background var(--t-fast);
+}
+
+/* =====================================================================
+   LEAGUE DESCRIPTION
+   ===================================================================== */
+.f1-league-desc {
+    font: 400 .82rem/1.55 var(--ff-body);
+    color: var(--ink-3);
+    margin-bottom: .85rem;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid var(--stroke-1);
+}
+
+/* =====================================================================
+   TWITCH CARD
+   ===================================================================== */
+.f1-twitch-card {
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+    background: var(--surface-1);
+    box-shadow: var(--sh-2);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.f1-twitch-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--stroke-1);
+    background: linear-gradient(180deg, rgba(255,255,255,.025), transparent);
+    flex-shrink: 0;
+}
+.f1-twitch-card__title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font: 700 .82rem/1 var(--ff-body);
+    color: var(--ink);
+}
+.f1-twitch-card__link {
+    font: 400 .72rem/1 var(--ff-body);
+    color: var(--ink-4);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    transition: color var(--t-fast);
+}
+.f1-twitch-card__link:hover { color: var(--ink-2); }
+.f1-twitch-card__footer {
+    padding: .6rem 1rem;
+    border-top: 1px solid var(--stroke-1);
+    font: 400 .72rem/1.4 var(--ff-body);
+    color: var(--ink-4);
+    flex-shrink: 0;
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 991.98px) {
+    .f1-winner-card { flex-wrap: wrap; }
+    .f1-winner-card__race { text-align: left; width: 100%; }
+    .f1-winner-card__name { font-size: 1.5rem; }
+}
+@media (max-width: 767.98px) {
+    .f1-hub-tabs__tab { font-size: .63rem; padding: .38rem .7rem; }
+    .f1-winner-card { gap: 1rem; padding: 1rem; }
+    .f1-winner-card__trophy { width: 44px; height: 44px; font-size: 1.4rem; }
+}

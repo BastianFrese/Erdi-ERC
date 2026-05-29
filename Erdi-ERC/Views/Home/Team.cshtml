@@ -1,0 +1,105 @@
+@model <OWNER_HANDLE>_ERC.Models.TeamDetailPageViewModel
+@{
+    ViewData["Title"] = Model.TeamName;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Teamprofil · ERC",
+    Title     = Model.TeamName,
+    Lead      = "Fahrer, Historie, Punkte und Erfolge des Teams im ERC-Kosmos.",
+    GhostText = "TEAM",
+    Actions   = new() {
+        new F1ButtonVm { Label="Alle Teams", Variant="ghost", IconLucide="arrow-left", Href=Url.Action("Teams","Home")! }
+    }
+})" />
+
+<div class="reveal mb-4" style="height:4px;background:@Model.PrimaryColor;box-shadow:0 0 24px -6px @Model.PrimaryColor;border-radius:var(--r-1);"></div>
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "coins",
+        Label      = "Punkte",
+        Value      = Model.TotalPoints.ToString(),
+        Sub        = "Gesamtpunkte des Teams"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "trophy",
+        Label      = "Siege",
+        Value      = Model.TotalWins.ToString(),
+        Sub        = "Rennsiege im Datensatz"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "award",
+        Label      = "Podien",
+        Value      = Model.TotalPodiums.ToString(),
+        Sub        = "Podestplätze über alle Rennen"
+    })" />
+</div>
+
+<div class="row g-4 reveal">
+    <div class="col-lg-6">
+        <div class="community-card h-100">
+            <div class="community-card__body">
+                <h5 class="mb-3" style="color:var(--ink);font-family:var(--ff-tech);">
+                    <i class="bi bi-person-badge me-2" style="color:@Model.PrimaryColor;"></i>Fahrer
+                </h5>
+                <div class="community-feed">
+                    @foreach (var driver in Model.Drivers)
+                    {
+                        <div class="community-feed__item d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                            <div>
+                                <div class="fw-semibold">
+                                    @if (!string.IsNullOrWhiteSpace(driver.DiscordId))
+                                    {
+                                        <a class="community-link-title text-decoration-none text-reset"
+                                           asp-controller="Profile" asp-action="Index"
+                                           asp-route-discordId="@driver.DiscordId">@driver.Driver</a>
+                                    }
+                                    else
+                                    {
+                                        @driver.Driver
+                                    }
+                                </div>
+                                <div class="text-mute small">@(driver.IsReserveDriver ? $"Reserve für {driver.ReserveForDriver}" : "Stammfahrer")</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">@driver.Points Pkt.</div>
+                                <div class="text-mute small">@driver.Wins Siege</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="community-card h-100">
+            <div class="community-card__body">
+                <h5 class="mb-3" style="color:var(--ink);font-family:var(--ff-tech);">
+                    <i class="bi bi-clock-history me-2" style="color:@Model.PrimaryColor;"></i>Letzte Team-Rennen
+                </h5>
+                <div class="community-feed">
+                    @foreach (var race in Model.RecentRaces)
+                    {
+                        <div class="community-feed__item d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                            <div>
+                                <div class="fw-semibold">@race.Track</div>
+                                <div class="text-mute small">@race.Date.ToString("dd.MM.yyyy") · Liga @race.LeagueId</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">Top 10: @race.TeamFinishesInTop10</div>
+                                <div class="text-mute small">Sieger: @race.Winner</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

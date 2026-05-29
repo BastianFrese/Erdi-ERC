@@ -1,0 +1,378 @@
+@model <OWNER_HANDLE>_ERC.Models.<OWNER_HANDLE>10ViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = "Race Results · Season Progress";
+
+    var leagues = Model.Leagues
+        .Where(l => l.Standings.Any())
+        .ToList();
+
+    var totalRacesAll = leagues.Sum(l => l.Races.Count);
+    var totalDriversAll = leagues.Sum(l => l.Standings.Count(s => !s.IsReserveDriver));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+@await Html.PartialAsync("_LiveRaceBanner")
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow = "<OWNER_HANDLE>10 · Championship",
+    LiveDot = true,
+    Title = "Race",
+    Highlight = "Results",
+    Lead = "Aktueller Stand der Meisterschaften – <strong>Punkte, Sieger und Saisonverlauf</strong> aller Ligen.",
+    GhostText = "STANDINGS",
+    Actions = new() {
+        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10","Home")! },
+        new F1ButtonVm { Label = "Alle Rennen", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("AllRaces","Home")! }
+    }
+})" />
+
+@if (leagues.Any())
+{
+    <div class="f1-stat-grid reveal mb-4">
+        <partial name="_F1StatTile" model="@(new F1StatTileVm {
+            IconLucide = "flag",
+            Pos = $"S{DateTime.UtcNow.Year % 100:00}",
+            Label = "Races",
+            Value = totalRacesAll.ToString("00"),
+            Sub = "Gesamt diese Saison"
+        })" />
+        <partial name="_F1StatTile" model="@(new F1StatTileVm {
+            IconLucide = "trophy",
+            Label = "Leagues",
+            Value = leagues.Count.ToString("00"),
+            Sub = "Aktive Meisterschaften"
+        })" />
+        <partial name="_F1StatTile" model="@(new F1StatTileVm {
+            IconLucide = "users",
+            Label = "Drivers",
+            Value = totalDriversAll.ToString(),
+            Sub = "Im Standing"
+        })" />
+    </div>
+}
+else
+{
+    <div class="empty-state reveal">
+        <span class="icon-chip is-cyan"><i class="bi bi-bar-chart"></i></span>
+        <div class="empty-state__title">Keine Standings verfügbar</div>
+        <p class="empty-state__lead">Sobald die Ligen Daten haben, erscheinen hier die Bestenlisten.</p>
+    </div>
+}
+
+@foreach (var league in leagues)
+{
+    var races   = league.Races.OrderBy(r => r.Date).ToList();
+    var drivers = league.Standings.OrderBy(s => s.Position).ToList();
+    var teams = drivers
+        .Select(s => s.Team)
+        .Where(t => !string.IsNullOrWhiteSpace(t))
+        .Select(t => t!.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(t => t)
+        .ToList();
+    var reserveDrivers = league.Standings
+        .Where(s => s.IsReserveDriver && !string.IsNullOrWhiteSpace(s.Driver))
+        .GroupBy(s => s.Driver.Trim(), StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+    var finishMap = races.ToDictionary(
+        r => r.RowId,
+        r => r.Finishes.ToDictionary(f => f.Driver, f => f, StringComparer.OrdinalIgnoreCase));
+
+    <section id="league-@league.Id" class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip = "Standings",
+            Title = league.Name,
+            SubLink = Url.Action("LeagueResults", "Home", new { leagueId = league.Id }),
+            SubText = races.Any() ? $"Round {races.Count} of {races.Count}" : "Saison startet bald"
+        })" />
+
+        <div class="f1-filter-bar">
+            <span class="f1-filter-bar__label">
+                <i class="f1-icon" data-lucide="filter"></i>Filter
+            </span>
+            <input class="f1-filter-bar__input js-results-filter-driver"
+                   type="search"
+                   placeholder="Fahrer suchen..."
+                   data-target-table="results-table-@league.Id" />
+            <select class="f1-filter-bar__select js-results-filter-team"
+                    data-target-table="results-table-@league.Id">
+                <option value="">Alle Teams</option>
+                @foreach (var teamName in teams)
+                {
+                    <option value="@teamName">@teamName</option>
+                }
+            </select>
+            <button type="button"
+                    class="f1-filter-bar__reset js-results-filter-reset"
+                    data-target-table="results-table-@league.Id">
+                <i class="f1-icon" data-lucide="rotate-ccw"></i>Reset
+            </button>
+        </div>
+
+        <div class="f1-results-card">
+            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+            <div class="f1-results-card__corner" aria-hidden="true"></div>
+            <div class="table-responsive">
+                <table class="f1-results-table" id="results-table-@league.Id">
+                    <colgroup>
+                        <col style="width:48px" />
+                        <col style="min-width:180px" />
+                        <col style="min-width:140px" />
+                        <col style="width:60px" />
+                        <col style="width:70px" />
+                        @for (int ri = 0; ri < races.Count; ri++)
+                        {
+                            <col style="width:54px" />
+                        }
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>***REMOVED***</th>
+                            <th>Fahrer</th>
+                            <th>Team</th>
+                            <th class="is-center" title="Siege">W</th>
+                            <th class="is-center">PTS</th>
+                            @foreach (var r in races)
+                            {
+                                var flagCode = TrackFlagUrl(r.Track);
+                                var raceAssignments = r.ReserveAssignments
+                                    .Where(a => !string.IsNullOrWhiteSpace(a.ReserveDriver) && !string.IsNullOrWhiteSpace(a.MainDriver))
+                                    .OrderBy(a => a.ReserveDriver)
+                                    .Select(a => $"{a.ReserveDriver} → {a.MainDriver}")
+                                    .ToList();
+                                var raceHover = raceAssignments.Count > 0
+                                    ? $"{r.Track} · {r.Date:dd.MM.yy} · Ersatz: {string.Join(", ", raceAssignments)}"
+                                    : $"{r.Track} · {r.Date:dd.MM.yy}";
+                                <th class="is-center" title="@raceHover" style="padding:.5rem .35rem;">
+                                    @if (!string.IsNullOrEmpty(flagCode))
+                                    {
+                                        <img src="https://flagcdn.com/w40/@(flagCode).png" alt="@r.Track" style="width:18px;height:13px;object-fit:cover;border-radius:2px;display:block;margin:0 auto 4px;" loading="lazy" />
+                                    }
+                                    <div class="text-tech" style="font-size:.6rem;letter-spacing:.1em;color:var(--ink-2);">@TrackAbbr(r.Track)</div>
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in drivers)
+                        {
+                            var isErsatzfahrer = reserveDrivers.TryGetValue((s.Driver ?? string.Empty).Trim(), out var reserveStanding);
+                            var teamKey = !isErsatzfahrer
+                                ? F1TeamsHelper.GetCssKeyForDriver(s.Driver) ?? F1TeamsHelper.GetTeamByName(s.Team)?.CssKey
+                                : null;
+                            var teamInfo = teamKey != null ? F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == teamKey) : null;
+                            var teamColor = teamInfo?.PrimaryColor ?? "var(--stroke-3)";
+                            var posClass = s.Position == 1 ? "is-1" : s.Position == 2 ? "is-2" : s.Position == 3 ? "is-3" : "";
+                            var teamFilterValue = isErsatzfahrer ? "Ersatzfahrer" : (teamInfo?.Name ?? (string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team));
+                            <tr data-driver="@((s.Driver ?? string.Empty).Trim().ToLower())" data-team="@teamFilterValue.Trim().ToLower()">
+                                <td class="text-tech fw-bold driver-tile__pos @posClass" style="font-size:1rem;padding-left:.6rem;">@s.Position</td>
+                                <td style="border-left:3px solid @teamColor;padding-left:.7rem;">
+                                    <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@s.Driver">
+                                        <span class="fw-semibold">@s.Driver</span>
+                                    </a>
+                                    @if (isErsatzfahrer)
+                                    {
+                                        <span class="badge bg-info ms-1" title="Ersatzfahrer@(string.IsNullOrWhiteSpace(reserveStanding!.ReserveForDriver) ? "" : $" für {reserveStanding.ReserveForDriver}")">Ersatz</span>
+                                    }
+                                </td>
+                                <td title="@(isErsatzfahrer ? "Ersatzfahrer" : (string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team))">
+                                    @if (isErsatzfahrer)
+                                    {
+                                        <span class="text-mute fw-semibold">Ersatzfahrer</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-mono small fw-semibold" style="color:@teamColor;">@(teamInfo?.Name ?? (string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team))</span>
+                                    }
+                                </td>
+                                <td class="text-tech text-center">@s.Wins</td>
+                                <td class="text-tech fw-bold text-center">@s.Points</td>
+                                @foreach (var r in races)
+                                {
+                                    var driverKey = s.Driver ?? string.Empty;
+                                    RaceFinish? fin = finishMap[r.RowId].TryGetValue(driverKey, out var f) ? f : null;
+                                    var raceMainForDriver = r.ReserveAssignments.FirstOrDefault(a =>
+                                        !string.IsNullOrWhiteSpace(a.ReserveDriver)
+                                        && a.ReserveDriver.Trim().Equals(driverKey.Trim(), StringComparison.OrdinalIgnoreCase))?.MainDriver;
+
+                                    string cellStyle, cellColor = "var(--ink-3)";
+                                    if (fin == null)
+                                    {
+                                        cellStyle = "background:transparent;";
+                                        cellColor = "var(--ink-4)";
+                                    }
+                                    else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "***REMOVED***ffd24a"; }
+                                    else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "***REMOVED***d4d8e0"; }
+                                    else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "***REMOVED***d68a4a"; }
+                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);"; cellColor = "***REMOVED***aef3ff"; }
+                                    else { cellStyle = "background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; }
+
+                                    var cellText = fin == null ? "–" : fin.Position.ToString();
+                                    var cellHover = !string.IsNullOrWhiteSpace(raceMainForDriver)
+                                        ? $"{r.Track} · {r.Date:dd.MM.yy} · Ersatz für {raceMainForDriver}"
+                                        : $"{r.Track} · {r.Date:dd.MM.yy}";
+                                    string? sectorCls = fin?.Position switch
+                                    {
+                                        1 => "sector sector--purple",
+                                        2 => "sector sector--green",
+                                        3 => "sector sector--yellow",
+                                        _ => null
+                                    };
+                                    <td class="text-center text-tech fw-bold" title="@cellHover" style="padding:.35rem;">
+                                        @if (sectorCls != null)
+                                        {
+                                            <span class="@sectorCls" style="position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;">
+                                                @cellText
+                                                @if (fin?.FastestLap == true)
+                                                {
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:***REMOVED***fff;filter:drop-shadow(0 0 4px rgba(185,92,255,.9));" title="Schnellste Runde"></i>
+                                                }
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span style="@cellStyle color:@cellColor;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;border-radius:6px;font-size:.78rem;position:relative;">
+                                                @cellText
+                                                @if (fin?.FastestLap == true)
+                                                {
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-4px;right:-4px;font-size:.55rem;color:var(--sig-magenta);filter:drop-shadow(0 0 4px rgba(185,92,255,.7));" title="Schnellste Runde"></i>
+                                                }
+                                            </span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const applyFilter = (tableId) => {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
+                const driverInput = document.querySelector(`.js-results-filter-driver[data-target-table='${tableId}']`);
+                const teamSelect = document.querySelector(`.js-results-filter-team[data-target-table='${tableId}']`);
+
+                const driverValue = (driverInput?.value || '').trim().toLowerCase();
+                const teamValue = (teamSelect?.value || '').trim().toLowerCase();
+
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    const driver = (row.getAttribute('data-driver') || '').toLowerCase();
+                    const team = (row.getAttribute('data-team') || '').toLowerCase();
+
+                    const matchDriver = !driverValue || driver.includes(driverValue);
+                    const matchTeam = !teamValue || team === teamValue;
+
+                    row.style.display = (matchDriver && matchTeam) ? '' : 'none';
+                });
+            };
+
+            document.querySelectorAll('.js-results-filter-driver, .js-results-filter-team').forEach(el => {
+                el.addEventListener('input', () => {
+                    const tableId = el.getAttribute('data-target-table');
+                    if (tableId) applyFilter(tableId);
+                });
+                el.addEventListener('change', () => {
+                    const tableId = el.getAttribute('data-target-table');
+                    if (tableId) applyFilter(tableId);
+                });
+            });
+
+            document.querySelectorAll('.js-results-filter-reset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tableId = btn.getAttribute('data-target-table');
+                    if (!tableId) return;
+
+                    const driverInput = document.querySelector(`.js-results-filter-driver[data-target-table='${tableId}']`);
+                    const teamSelect = document.querySelector(`.js-results-filter-team[data-target-table='${tableId}']`);
+                    if (driverInput) driverInput.value = '';
+                    if (teamSelect) teamSelect.value = '';
+                    applyFilter(tableId);
+                });
+            });
+        })();
+    </script>
+}
+
+@functions {
+    static string TrackFlagUrl(string? track)
+    {
+        if (string.IsNullOrWhiteSpace(track)) return "";
+        return track.ToLower() switch
+        {
+            var t when t.Contains("australi") => "au",
+            var t when t.Contains("bahrain") || t.Contains("bhr") => "bh",
+            var t when t.Contains("saudi") || t.Contains("jeddah") || t.Contains("ksa") => "sa",
+            var t when t.Contains("japan") || t.Contains("suzuka") || t.Contains("jpn") => "jp",
+            var t when t.Contains("china") || t.Contains("shanghai") => "cn",
+            var t when t.Contains("miami") => "us",
+            var t when t.Contains("imola") || t.Contains("emilia") => "it",
+            var t when t.Contains("monaco") => "mc",
+            var t when t.Contains("kanada") || t.Contains("canada") || t.Contains("can") => "ca",
+            var t when t.Contains("spanien") || t.Contains("spain") || t.Contains("barcelona") => "es",
+            var t when t.Contains("österreich") || t.Contains("oesterreich") || t.Contains("osterreich") || t.Contains("üst") || t.Contains("austria") || t.Contains("aut") || t.Contains("red bull ring") => "at",
+            var t when t.Contains("silverstone") || t.Contains("großbritannien") || t.Contains("ukm") || t.Contains("britain") => "gb",
+            var t when t.Contains("ungarn") || t.Contains("hungary") || t.Contains("budapest") => "hu",
+            var t when t.Contains("belgien") || t.Contains("belgium") || t.Contains("spa") || t.Contains("bel") => "be",
+            var t when t.Contains("niederland") || t.Contains("netherlands") || t.Contains("zandvoort") || t.Contains("ned") => "nl",
+            var t when t.Contains("italien") || t.Contains("italy") || t.Contains("monza") || t.Contains("ita") => "it",
+            var t when t.Contains("aserbaidschan") || t.Contains("azerbaijan") || t.Contains("baku") => "az",
+            var t when t.Contains("singapur") || t.Contains("singapore") => "sg",
+            var t when t.Contains("austin") || t.Contains("cota") || t.Contains("usa") => "us",
+            var t when t.Contains("mexiko") || t.Contains("mexico") || t.Contains("mex") => "mx",
+            var t when t.Contains("brasili") || t.Contains("brazil") || t.Contains("sao paulo") || t.Contains("interlagos") => "br",
+            var t when t.Contains("las vegas") => "us",
+            var t when t.Contains("katar") || t.Contains("qatar") || t.Contains("losail") => "qa",
+            var t when t.Contains("abu dhabi") || t.Contains("yas marina") => "ae",
+            _ => ""
+        };
+    }
+
+    static string TrackAbbr(string? track)
+    {
+        if (string.IsNullOrWhiteSpace(track)) return "";
+        return track.ToLower() switch
+        {
+            var t when t.Contains("australi") => "AUS",
+            var t when t.Contains("bahrain") || t.Contains("bhr") => "BHR",
+            var t when t.Contains("saudi") || t.Contains("jeddah") || t.Contains("ksa") => "KSA",
+            var t when t.Contains("japan") || t.Contains("suzuka") || t.Contains("jpn") => "JPN",
+            var t when t.Contains("china") || t.Contains("shanghai") => "CHN",
+            var t when t.Contains("miami") => "MIA",
+            var t when t.Contains("imola") || t.Contains("emilia") => "ITA",
+            var t when t.Contains("monaco") => "MON",
+            var t when t.Contains("kanada") || t.Contains("canada") || t.Contains("can") => "CAN",
+            var t when t.Contains("spanien") || t.Contains("spain") || t.Contains("barcelona") => "ESP",
+            var t when t.Contains("österreich") || t.Contains("oesterreich") || t.Contains("osterreich") || t.Contains("üst") || t.Contains("austria") || t.Contains("aut") || t.Contains("red bull ring") => "AUT",
+            var t when t.Contains("silverstone") || t.Contains("großbritannien") || t.Contains("ukm") || t.Contains("britain") => "GBR",
+            var t when t.Contains("ungarn") || t.Contains("hungary") || t.Contains("budapest") => "HUN",
+            var t when t.Contains("belgien") || t.Contains("belgium") || t.Contains("spa") || t.Contains("bel") => "BEL",
+            var t when t.Contains("niederland") || t.Contains("netherlands") || t.Contains("zandvoort") || t.Contains("ned") => "NED",
+            var t when t.Contains("italien") || t.Contains("italy") || t.Contains("monza") || t.Contains("ita") => "ITA",
+            var t when t.Contains("aserbaidschan") || t.Contains("azerbaijan") || t.Contains("baku") => "AZE",
+            var t when t.Contains("singapur") || t.Contains("singapore") => "SGP",
+            var t when t.Contains("austin") || t.Contains("cota") || t.Contains("usa") => "USA",
+            var t when t.Contains("mexiko") || t.Contains("mexico") || t.Contains("mex") => "MEX",
+            var t when t.Contains("brasili") || t.Contains("brazil") || t.Contains("sao paulo") || t.Contains("interlagos") => "BRA",
+            var t when t.Contains("las vegas") => "LVG",
+            var t when t.Contains("katar") || t.Contains("qatar") || t.Contains("losail") => "QAT",
+            var t when t.Contains("abu dhabi") || t.Contains("yas marina") => "ABU",
+            _ => track.Length >= 3 ? track[..3].ToUpper() : track.ToUpper()
+        };
+    }
+}

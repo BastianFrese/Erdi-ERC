@@ -1,0 +1,89 @@
+@model <OWNER_HANDLE>_ERC.Models.TeamListPageViewModel
+@{
+    ViewData["Title"] = "Teams";
+    var topTeam = Model.Teams.OrderByDescending(x => x.Points).FirstOrDefault();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "ERC Teams",
+    Title     = "Team",
+    Highlight = "seiten",
+    Lead      = "Eigene Teamprofile mit Fahrern, Punkten, Erfolgen und schneller Übersicht.",
+    GhostText = "TEAMS"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "shield",
+        Label      = "Teams gesamt",
+        Value      = Model.Teams.Count.ToString(),
+        Sub        = "Gelistete ERC-Teams"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "trophy",
+        Label      = "Top Team",
+        Value      = topTeam?.TeamName ?? "—",
+        Sub        = topTeam != null ? $"{topTeam.Points} Punkte" : "Noch keine Daten"
+    })" />
+</div>
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Teams",
+        Title   = "Alle Teams",
+        SubText = $"{Model.Teams.Count} Teams"
+    })" />
+
+    @if (!Model.Teams.Any())
+    {
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-shield"></i></span>
+            <div class="empty-state__title">Noch keine Teams</div>
+            <p class="empty-state__lead">Sobald Teams angelegt sind, erscheinen sie hier.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var team in Model.Teams)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <a class="text-decoration-none" asp-controller="Home" asp-action="Team" asp-route-name="@team.TeamName">
+                        <article class="community-card h-100" style="border-top: 3px solid @team.PrimaryColor;">
+                            <div class="community-card__body">
+                                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                    <div class="community-card__title mb-0" style="color: @team.PrimaryColor;">@team.TeamName</div>
+                                    <span class="badge bg-secondary">@team.Drivers Fahrer</span>
+                                </div>
+                                <div class="community-stat-grid">
+                                    <div class="community-stat-tile">
+                                        <div class="community-stat-tile__label">Punkte</div>
+                                        <div class="community-stat-tile__value">@team.Points</div>
+                                    </div>
+                                    <div class="community-stat-tile">
+                                        <div class="community-stat-tile__label">Siege</div>
+                                        <div class="community-stat-tile__value">@team.Wins</div>
+                                    </div>
+                                    <div class="community-stat-tile">
+                                        <div class="community-stat-tile__label">Podien</div>
+                                        <div class="community-stat-tile__value">@team.Podiums</div>
+                                    </div>
+                                    <div class="community-stat-tile">
+                                        <div class="community-stat-tile__label">Fahrer</div>
+                                        <div class="community-stat-tile__value">@team.Drivers</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</section>

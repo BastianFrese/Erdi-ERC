@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Login erforderlich";
+    Layout = "_Layout";
+    var returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("Apply", "Home");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Account · Discord OAuth",
+    Title     = "Login",
+    Highlight = "erforderlich",
+    Lead      = "Um eine Bewerbung abzusenden, musst du dich zuerst mit deinem <strong>Discord-Account</strong> anmelden.",
+    GhostText = "AUTH"
+})" />
+
+<section class="f1-section reveal">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:2rem;text-align:center;box-shadow:var(--sh-2);">
+                <div class="icon-chip icon-chip-xl is-accent mx-auto mb-3">
+                    <i class="bi bi-discord"></i>
+                </div>
+                <h2 class="mb-2" style="font:700 1.25rem/1.2 var(--ff-heading);color:var(--ink);">Mit Discord anmelden</h2>
+                <p class="text-mute mb-4" style="font-size:.9rem;">
+                    Anschließend prüfen wir automatisch, ob du auf den richtigen Discord-Servern bist.
+                </p>
+                <a class="f1-btn f1-btn--primary w-100 mb-3" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">
+                    <i class="bi bi-discord me-2"></i> Mit Discord anmelden
+                </a>
+                <div class="text-mute" style="font-size:.78rem;">
+                    Noch kein Konto auf den Servern? Tritt zuerst dem Community- und Liga-Discord bei.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

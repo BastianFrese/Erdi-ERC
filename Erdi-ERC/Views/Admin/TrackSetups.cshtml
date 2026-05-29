@@ -1,0 +1,825 @@
+@model List<<OWNER_HANDLE>_ERC.Models.TrackSetup>
+@using System.Text.Json
+@using System.Globalization
+@using <OWNER_HANDLE>_ERC.Models
+@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.ApplicationOptions> _adminAppOpts
+@{
+    ViewData["Title"] = "Track Setups";
+    var _f1Year = _adminAppOpts.Value.F1GameYear;
+    var roleMappings = (ViewBag.RoleMappings as List<<OWNER_HANDLE>_ERC.Models.SetupAccessRoleMapping>) ?? new List<<OWNER_HANDLE>_ERC.Models.SetupAccessRoleMapping>();
+    var guildId = ViewBag.SetupAccessGuildId as string;
+    var guildConfigured = ViewBag.SetupAccessGuildConfigured is bool gc && gc;
+    var mappingsReady = ViewBag.SetupAccessMappingsReady is bool mr && mr;
+    var mappingsCount = ViewBag.SetupAccessMappingsCount is int mc ? mc : roleMappings.Count;
+    var editorConfig = ViewBag.SetupEditorConfig as SetupEditorConfig ?? SetupGameSpec.GetEditorConfig();
+    var metricConfig = ViewBag.SetupMetricConfig as IReadOnlyList<SetupMetricConfig> ?? SetupGameSpec.GetMetricConfig();
+    var f1Tracks = ViewBag.F1Tracks as IReadOnlyList<F1Track> ?? F1RaceCatalog.Tracks;
+    var f1Lengths = ViewBag.F1RaceLengths as IReadOnlyList<F1RaceLength> ?? F1RaceCatalog.Lengths;
+
+    string TierLabel(int tier, string? role) => tier switch
+    {
+        0 => "Öffentlich",
+        // Legacy: Tier 2 ist deprecated – wird wie Tier 1 (Login + Community-Guild) behandelt.
+        1 or 2 => "Login + Community-Guild",
+        3 => string.IsNullOrWhiteSpace(role) ? "Twitch Sub Tier 1" : role,
+        4 => string.IsNullOrWhiteSpace(role) ? "Twitch Sub Tier 2" : role,
+        5 => string.IsNullOrWhiteSpace(role) ? "Twitch Sub Tier 3" : role,
+        _ => "Unbekannt"
+    };
+
+    string Num(object value) => Convert.ToString(value, CultureInfo.InvariantCulture) ?? "0";
+    int PayloadVersion(string? raw) => SetupGameSpec.ReadPayloadVersion(raw);
+}
+
+<div class="setup-admin-page">
+    <div class="setup-admin-head">
+        <div>
+            <a class="btn btn-link ps-0" asp-action="Index">&larr; Zur&uuml;ck zum Dashboard</a>
+            <h2 class="mb-0">Track Setups Control</h2>
+            <p class="text-muted mb-0">Setup-Management im F1-Style mit Access-Tiers und Live-Status</p>
+        </div>
+    </div>
+
+
+    <div class="setup-admin-status-grid">
+        <div class="setup-admin-status-card">
+            <div class="setup-admin-status-label">Guild Konfiguration</div>
+            @if (guildConfigured)
+            {
+                <div class="setup-admin-status-value text-success">Aktiv</div>
+                <div class="small text-muted"><code>@guildId</code></div>
+            }
+            else
+            {
+                <div class="setup-admin-status-value text-warning">Fehlt</div>
+                <div class="small text-muted">Bitte Discord:SetupAccess:GuildId setzen.</div>
+            }
+        </div>
+
+        <div class="setup-admin-status-card">
+            <div class="setup-admin-status-label">Rollen-Mappings</div>
+            @if (mappingsReady)
+            {
+                <div class="setup-admin-status-value text-success">@mappingsCount aktiv</div>
+                <div class="small text-muted">Rollenfreigabe ist konfiguriert.</div>
+            }
+            else
+            {
+                <div class="setup-admin-status-value text-warning">Keine vorhanden</div>
+                <div class="small text-muted">Mindestens ein Mapping für Tier 3-5 eintragen.</div>
+            }
+        </div>
+
+        <div class="setup-admin-status-card">
+            <div class="setup-admin-status-label">Gesamtstatus</div>
+            @if (guildConfigured && mappingsReady)
+            {
+                <div class="setup-admin-status-value text-success">Bereit</div>
+                <div class="small text-muted">Discord Rollen können Track-Setups freischalten.</div>
+            }
+            else
+            {
+                <div class="setup-admin-status-value text-warning">Unvollständig</div>
+                <div class="small text-muted">Guild und Rollen-Mappings prüfen.</div>
+            }
+        </div>
+    </div>
+
+    <div class="setup-admin-layout-grid">
+        <section class="setup-admin-surface">
+            <div class="setup-admin-surface__head">Discord Rollen-Mapping (Tier 3-5)</div>
+            <div class="setup-admin-surface__body">
+                <p class="text-muted mb-3">Hier hinterlegst du Role IDs aus dem konfigurierten Guild-Server (für Twitch-Sub-Tiers). Höhere Tier-Rolle schaltet automatisch niedrigere Tier-Setups frei.</p>
+
+                <form asp-controller="Admin" asp-action="SaveSetupAccessRoleMapping" method="post" class="row g-2 mb-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-2">
+                        <input class="form-control" name="id" type="number" placeholder="ID (optional)" />
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="tier" required>
+                            <option value="3">Tier 3 (Sub T1)</option>
+                            <option value="4">Tier 4 (Sub T2)</option>
+                            <option value="5">Tier 5 (Sub T3)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input class="form-control" name="roleId" placeholder="Discord Role ID" required />
+                    </div>
+                    <div class="col-md-3">
+                        <input class="form-control" name="label" placeholder="Label (z.B. Twitch Sub Tier 2)" />
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button class="btn btn-primary" type="submit">Save</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:70px">ID</th>
+                                <th style="width:90px">Tier</th>
+                                <th>Role ID</th>
+                                <th>Label</th>
+                                <th style="width:150px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!roleMappings.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-muted">Keine Rollen-Mappings vorhanden.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var map in roleMappings)
+                                {
+                                    <tr>
+                                        <td>@map.Id</td>
+                                        <td>@map.Tier</td>
+                                        <td><code>@map.RoleId</code></td>
+                                        <td>@(string.IsNullOrWhiteSpace(map.Label) ? TierLabel(map.Tier, null) : map.Label)</td>
+                                        <td>
+                                            <form asp-controller="Admin" asp-action="DeleteSetupAccessRoleMapping" method="post" class="d-inline" onsubmit="return confirm('Mapping wirklich löschen?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@map.Id" />
+                                                <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="setup-admin-surface setup-admin-surface--editor">
+            <div class="setup-admin-surface__head">Setup Edit Screen</div>
+            <div class="setup-admin-surface__body">
+                <div class="alert alert-secondary mb-3 setup-editor-hint">
+                    Die Auswahl im Zugriff-Feld ist direkt mit dem Rollen-Mapping oben verknüpft.
+                    Für Tier 3-5 muss mindestens ein Mapping im Bereich „Discord Rollen-Mapping“ existieren.
+                    <br/><strong>Login</strong> setzt voraus, dass der User eingeloggt <em>und</em> auf dem Community-Discord ist.
+                </div>
+                <div class="small text-muted mb-2 setup-editor-state" id="setupEditState">Neues Setup erstellen.</div>
+                <form asp-controller="Admin" asp-action="SaveTrackSetup" method="post" class="row g-2 setup-editor-form" id="setupEditorForm">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-2">
+                        <input class="form-control" id="setupIdInput" name="id" type="number" placeholder="ID (optional)" />
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="setupTrackInput" name="track" required>
+                            <option value="">– Strecke wählen –</option>
+                            @foreach (var t in f1Tracks)
+                            {
+                                <option value="@t.Name" data-key="@t.Key">@t.Name (@t.Country)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input class="form-control" id="setupTitleInput" name="title" placeholder="Titel" required />
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="setupTierInput" name="requiredAccessTier">
+                            <option value="0">Öffentlich</option>
+                            <option value="1">Login + Community-Guild</option>
+                            <option value="3">Twitch Sub Tier 1 (Tier 3)</option>
+                            <option value="4">Twitch Sub Tier 2 (Tier 4)</option>
+                            <option value="5">Twitch Sub Tier 3 (Tier 5)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input class="form-control" id="setupRoleLabelInput" name="requiredRoleLabel" placeholder="Optionales Anzeige-Label (leer = Mapping Label)" />
+                    </div>
+                    <div class="col-md-8">
+                        <input class="form-control" id="setupInfoInput" name="setupInfo" placeholder="Info zum Setup (wofür es gut ist, Fahrstil, Bedingungen …)" maxlength="1024" />
+                    </div>
+
+                    <div class="col-12">
+                        <div class="setup-ingame-editor" id="setupIngameEditor">
+                            <aside class="setup-ingame-editor__menu">
+                                @for (var i = 0; i < editorConfig.Categories.Count; i++)
+                                {
+                                    var category = editorConfig.Categories[i];
+                                    <button type="button" class="setup-ingame-tab @(i == 0 ? "is-active" : "")" data-target="@category.Key">@category.Icon @category.Label</button>
+                                }
+                            </aside>
+                            <div class="setup-ingame-editor__content">
+                                @for (var i = 0; i < editorConfig.Categories.Count; i++)
+                                {
+                                    var category = editorConfig.Categories[i];
+                                    <div class="setup-ingame-panel @(i == 0 ? "is-active" : "")" data-panel="@category.Key">
+                                        @foreach (var field in category.Fields)
+                                        {
+                                            <div class="setup-ingame-row is-f1" data-key="@field.Key" data-min="@Num(field.Min)" data-max="@Num(field.Max)" data-step="@Num(field.Step)">
+                                                <label>@field.Label</label>
+                                                <span class="setup-ingame-steppers">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-step-dir="-1" aria-label="Verringern">‹</button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-step-dir="1" aria-label="Erhöhen">›</button>
+                                                </span>
+                                                <input type="range" min="@Num(field.Min)" max="@Num(field.Max)" step="@Num(field.Step)" value="@Num(field.DefaultValue)" />
+                                                <input type="number" min="@Num(field.Min)" max="@Num(field.Max)" step="@Num(field.Step)" value="@Num(field.DefaultValue)" class="form-control form-control-sm" />
+                                                <span class="setup-ingame-value">@Num(field.DefaultValue)</span>
+                                                <span class="setup-ingame-hint">@Num(field.Min) - @Num(field.Max)</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 d-none">
+                        <label class="form-label">Setup Payload (automatisch aus den Reglern)</label>
+                        <textarea class="form-control setup-admin-textarea" id="setupPayloadPreview" rows="6" readonly></textarea>
+                        <textarea class="d-none" id="setupPayloadInput" name="setupText" required></textarea>
+                    </div>
+
+                    <div class="setup-ingame-metrics mt-3" id="setupIngameMetrics">
+                        <div class="setup-ingame-metrics__title">Live Performance Analyse</div>
+                        <div class="setup-metric" data-metric="topSpeed">
+                            <div class="setup-metric__label">Top Speed</div>
+                            <div class="setup-metric__bar"><i></i></div>
+                            <div class="setup-metric__value">0</div>
+                        </div>
+                        <div class="setup-metric" data-metric="traction">
+                            <div class="setup-metric__label">Traktion</div>
+                            <div class="setup-metric__bar"><i></i></div>
+                            <div class="setup-metric__value">0</div>
+                        </div>
+                        <div class="setup-metric" data-metric="rotation">
+                            <div class="setup-metric__label">Einlenken</div>
+                            <div class="setup-metric__bar"><i></i></div>
+                            <div class="setup-metric__value">0</div>
+                        </div>
+                        <div class="setup-metric" data-metric="stability">
+                            <div class="setup-metric__label">Stabilität</div>
+                            <div class="setup-metric__bar"><i></i></div>
+                            <div class="setup-metric__value">0</div>
+                        </div>
+                        <div class="setup-metric" data-metric="tyreWear">
+                            <div class="setup-metric__label">Reifenschonung</div>
+                            <div class="setup-metric__bar"><i></i></div>
+                            <div class="setup-metric__value">0</div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="setup-strategy-planner card bg-dark text-light border-warning mt-3">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <strong class="text-warning"><i class="bi bi-flag-fill me-1"></i> Renn-Strategie Planer (@_f1Year)</strong>
+                                    <span class="small text-muted">Strecke + Distanz wählen → automatischer Vorschlag, beliebig editierbar.</span>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="form-label small mb-1">@_f1Year Strecke</label>
+                                        <select class="form-select form-select-sm" id="setupF1TrackSelect" name="trackKey">
+                                            <option value="">– Strecke wählen –</option>
+                                            @foreach (var t in f1Tracks)
+                                            {
+                                                <option value="@t.Key" data-laps="@t.FullRaceLaps" data-wear="@t.TyreWear" data-pit="@t.PitLossSeconds.ToString("0.0", CultureInfo.InvariantCulture)" data-compounds="@t.PreferredCompounds">@t.Name (@t.Country, @t.FullRaceLaps L)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-1">Renn-Länge</label>
+                                        <select class="form-select form-select-sm" id="setupF1LengthSelect" name="lengthKey">
+                                            <option value="">– Distanz wählen –</option>
+                                            @foreach (var l in f1Lengths)
+                                            {
+                                                <option value="@l.Key">@l.Icon @l.Label</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end gap-2">
+                                        <button type="button" class="btn btn-warning btn-sm flex-grow-1" id="setupF1StrategyGenerate">Strategie vorschlagen</button>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small mb-1">Strategie-Plan (editierbar – sichtbar für User)</label>
+                                        <textarea class="form-control form-control-sm setup-admin-textarea" id="setupF1StrategyPlan" name="strategyPlan" rows="5" maxlength="4000" placeholder="Wähle Strecke + Distanz und klicke auf 'Strategie vorschlagen' – oder schreibe eigene Anweisungen."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="small text-muted" id="setupF1StrategyMeta">Noch keine Strategie generiert.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2 setup-editor-actions">
+                        <div class="setup-ingame-presets d-flex flex-column gap-2 align-items-start">
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <span class="small text-muted me-1">Preset:</span>
+                                <button class="btn btn-outline-info btn-sm" type="button" data-preset="quali">Quali</button>
+                                <button class="btn btn-outline-info btn-sm" type="button" data-preset="race">Race</button>
+                                <button class="btn btn-outline-info btn-sm" type="button" data-preset="wet">Wet</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-center" id="setupStrategyBar">
+                                <span class="small text-muted me-1">F1 26 Distanz:</span>
+                                @foreach (var strategy in editorConfig.RaceStrategies)
+                                {
+                                    <button class="btn btn-outline-warning btn-sm js-setup-strategy"
+                                            type="button"
+                                            data-preset="@strategy.Key"
+                                            data-strategy="@strategy.Key"
+                                            title="@strategy.Description">
+                                        @strategy.Icon @strategy.Label <span class="badge text-bg-dark ms-1">@strategy.Distance</span>
+                                    </button>
+                                }
+                            </div>
+                            <input type="hidden" id="setupStrategyInput" name="strategy" value="" />
+                        </div>
+                        <div class="d-flex gap-2 setup-editor-actions__right">
+                            <button class="btn btn-outline-secondary" type="button" id="setupEditorReset">Standardwerte laden</button>
+                            <button class="btn btn-outline-warning" type="button" id="setupEditorCancelEdit">Bearbeitung beenden</button>
+                            <button class="btn btn-primary" type="submit">Speichern</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <section class="setup-admin-surface">
+        <div class="setup-admin-surface__head">Vorhandene Setups</div>
+        <div class="setup-admin-surface__body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-sm align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:70px">ID</th>
+                            <th>Strecke</th>
+                            <th>Titel</th>
+                            <th style="width:110px">Version</th>
+                            <th>Zugriff</th>
+                            <th style="width:170px">Aktualisiert</th>
+                            <th style="width:220px">Info</th>
+                            <th style="width:150px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-muted">Keine Setups vorhanden.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var setup in Model)
+                            {
+                                var version = PayloadVersion(setup.SetupText);
+                                <tr>
+                                    <td>@setup.Id</td>
+                                    <td>@setup.Track</td>
+                                    <td>@setup.Title</td>
+                                    <td><span class="badge text-bg-primary">v@(version)</span></td>
+                                    <td>@TierLabel(setup.RequiredAccessTier, setup.RequiredRoleLabel)</td>
+                                    <td>@setup.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(setup.SetupInfo) ? "-" : setup.SetupInfo)</td>
+                                    <td>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary js-setup-edit"
+                                                data-id="@setup.Id"
+                                                data-track="@setup.Track"
+                                                data-title="@setup.Title"
+                                                data-tier="@setup.RequiredAccessTier"
+                                                data-role-label="@setup.RequiredRoleLabel"
+                                                data-setup-text="@setup.SetupText"
+                                                data-setup-info="@setup.SetupInfo">
+                                            Bearbeiten
+                                        </button>
+                                        <form asp-controller="Admin" asp-action="DeleteTrackSetup" method="post" class="d-inline" onsubmit="return confirm('Setup wirklich löschen?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@setup.Id" />
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const editorConfig = @Html.Raw(JsonSerializer.Serialize(editorConfig));
+            const metricConfig = @Html.Raw(JsonSerializer.Serialize(metricConfig));
+            const root = document.getElementById('setupIngameEditor');
+            const metricsRoot = document.getElementById('setupIngameMetrics');
+            const payloadInput = document.getElementById('setupPayloadInput');
+            const payloadPreview = document.getElementById('setupPayloadPreview');
+            const resetBtn = document.getElementById('setupEditorReset');
+            const cancelEditBtn = document.getElementById('setupEditorCancelEdit');
+            const editState = document.getElementById('setupEditState');
+            const form = document.getElementById('setupEditorForm');
+            const idInput = document.getElementById('setupIdInput');
+            const trackInput = document.getElementById('setupTrackInput');
+            const titleInput = document.getElementById('setupTitleInput');
+            const tierInput = document.getElementById('setupTierInput');
+            const roleLabelInput = document.getElementById('setupRoleLabelInput');
+            const setupInfoInput = document.getElementById('setupInfoInput');
+            const editButtons = Array.from(document.querySelectorAll('.js-setup-edit'));
+            const strategyInput = document.getElementById('setupStrategyInput');
+            const strategyButtons = Array.from(document.querySelectorAll('.js-setup-strategy'));
+            const f1TrackSelect = document.getElementById('setupF1TrackSelect');
+            const f1LengthSelect = document.getElementById('setupF1LengthSelect');
+            const f1PlanText = document.getElementById('setupF1StrategyPlan');
+            const f1PlanMeta = document.getElementById('setupF1StrategyMeta');
+            const f1GenerateBtn = document.getElementById('setupF1StrategyGenerate');
+            const strategyEndpoint = '@Url.Action("TrackSetupStrategy", "Admin")';
+            if (!root || !form) return;
+
+            const setActiveStrategy = (key) => {
+                const value = key || '';
+                if (strategyInput) strategyInput.value = value;
+                strategyButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.strategy === value);
+                });
+            };
+
+            const setF1Meta = (text) => {
+                if (f1PlanMeta) f1PlanMeta.textContent = text || '';
+            };
+
+            const requestStrategy = async () => {
+                const trackKey = f1TrackSelect?.value || '';
+                const lengthKey = f1LengthSelect?.value || '';
+                if (!trackKey || !lengthKey) {
+                    setF1Meta('Bitte Strecke und Renn-Länge wählen.');
+                    return;
+                }
+                try {
+                    const url = `${strategyEndpoint}?trackKey=${encodeURIComponent(trackKey)}&lengthKey=${encodeURIComponent(lengthKey)}`;
+                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) {
+                        setF1Meta('Strategie konnte nicht geladen werden.');
+                        return;
+                    }
+                    const data = await res.json();
+                    if (f1PlanText) f1PlanText.value = data.text || '';
+                    setF1Meta(`${data.trackName} · ${data.lengthLabel} · ${data.totalLaps} Runden · ${data.stops} Stop(s)`);
+                } catch (err) {
+                    setF1Meta('Fehler beim Abruf der Strategie.');
+                }
+            };
+
+            f1GenerateBtn?.addEventListener('click', requestStrategy);
+
+            // Sync: main track dropdown <-> strategy planner track dropdown (by track key)
+            const syncFromMainTrack = () => {
+                if (!trackInput || !f1TrackSelect) return;
+                const opt = trackInput.options[trackInput.selectedIndex];
+                const key = opt?.dataset?.key || '';
+                if (key && f1TrackSelect.value !== key) {
+                    f1TrackSelect.value = key;
+                }
+            };
+            const syncFromPlannerTrack = () => {
+                if (!trackInput || !f1TrackSelect) return;
+                const key = f1TrackSelect.value || '';
+                if (!key) return;
+                const match = Array.from(trackInput.options).find(o => (o.dataset?.key || '') === key);
+                if (match && trackInput.value !== match.value) {
+                    trackInput.value = match.value;
+                }
+            };
+            trackInput?.addEventListener('change', syncFromMainTrack);
+            f1TrackSelect?.addEventListener('change', syncFromPlannerTrack);
+
+            const tabs = Array.from(root.querySelectorAll('.setup-ingame-tab'));
+            const panels = Array.from(root.querySelectorAll('.setup-ingame-panel'));
+            const rows = Array.from(root.querySelectorAll('.setup-ingame-row'));
+            const presetButtons = Array.from(form.querySelectorAll('[data-preset]'));
+            const metricRows = Array.from(metricsRoot?.querySelectorAll('[data-metric]') ?? []);
+
+            const stepDecimals = (step) => {
+                const text = String(step ?? '1');
+                const idx = text.indexOf('.');
+                return idx < 0 ? 0 : text.length - idx - 1;
+            };
+
+            const snapToStep = (value, min, max, step) => {
+                const safeStep = Number.isFinite(step) && step > 0 ? step : 1;
+                const clamped = Math.min(max, Math.max(min, value));
+                const steps = Math.round((clamped - min) / safeStep);
+                const snapped = min + (steps * safeStep);
+                const decimals = stepDecimals(safeStep);
+                const rounded = Number(snapped.toFixed(decimals));
+                return Math.min(max, Math.max(min, rounded));
+            };
+
+            const defaults = rows.map(row => {
+                const range = row.querySelector('input[type="range"]');
+                return {
+                    key: row.dataset.key,
+                    value: range ? range.value : '0'
+                };
+            });
+
+            const getRowByKey = (key) => rows.find(r => r.dataset.key === key);
+
+            const setValue = (key, value) => {
+                const row = getRowByKey(key);
+                if (!row) return;
+                const range = row.querySelector('input[type="range"]');
+                const number = row.querySelector('input[type="number"]');
+                if (!range || !number) return;
+
+                const min = Number(range.min || 0);
+                const max = Number(range.max || 0);
+                const step = Number(range.step || 1);
+                const safe = snapToStep(Number(value), min, max, step);
+                const decimals = stepDecimals(step);
+                range.value = String(safe);
+                number.value = safe.toFixed(decimals);
+                const span = max - min;
+                const pct = span > 0 ? Math.max(0, Math.min(100, ((safe - min) / span) * 100)) : 0;
+                range.style.setProperty('--range-fill', pct + '%');
+                const valueChip = row.querySelector('.setup-ingame-value');
+                if (valueChip) valueChip.textContent = number.value;
+            };
+
+            const syncRow = (row, source) => {
+                const range = row.querySelector('input[type="range"]');
+                const number = row.querySelector('input[type="number"]');
+                if (!range || !number) return;
+
+                const min = Number(range.min || 0);
+                const max = Number(range.max || 0);
+                const step = Number(range.step || 1);
+                const incoming = source === range ? Number(range.value) : Number(number.value);
+                if (!Number.isFinite(incoming)) return;
+
+                const safe = snapToStep(incoming, min, max, step);
+                const decimals = stepDecimals(step);
+                range.value = String(safe);
+                number.value = safe.toFixed(decimals);
+                const span = max - min;
+                const pct = span > 0 ? Math.max(0, Math.min(100, ((safe - min) / span) * 100)) : 0;
+                range.style.setProperty('--range-fill', pct + '%');
+                const valueChip = row.querySelector('.setup-ingame-value');
+                if (valueChip) valueChip.textContent = number.value;
+            };
+
+            const getValue = (key, fallback = 0) => {
+                const row = getRowByKey(key);
+                const number = row?.querySelector('input[type="number"]');
+                const parsed = Number(number?.value ?? fallback);
+                return Number.isFinite(parsed) ? parsed : fallback;
+            };
+
+            const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, value));
+
+            const updateMetrics = () => {
+                const categories = {};
+                panels.forEach(panel => {
+                    const categoryKey = panel.dataset.panel;
+                    if (!categoryKey) return;
+
+                    const categoryData = {};
+                    panel.querySelectorAll('.setup-ingame-row').forEach(row => {
+                        const key = row.dataset.key;
+                        if (!key) return;
+                        categoryData[key] = getValue(key);
+                    });
+                    categories[categoryKey] = categoryData;
+                });
+
+                const scores = {};
+                (Array.isArray(metricConfig) ? metricConfig : []).forEach(metric => {
+                    if (!metric?.Key) return;
+                    let value = Number(metric.BaseValue) || 0;
+                    (Array.isArray(metric.Terms) ? metric.Terms : []).forEach(term => {
+                        const cat = term?.Category;
+                        const field = term?.Field;
+                        const coefficient = Number(term?.Coefficient) || 0;
+                        if (!cat || !field) return;
+                        const fieldValue = Number(categories?.[cat]?.[field] ?? 0);
+                        value += fieldValue * coefficient;
+                    });
+                    scores[metric.Key] = clamp(value);
+                });
+
+                metricRows.forEach(metric => {
+                    const key = metric.dataset.metric;
+                    if (!key || !(key in scores)) return;
+                    const score = Math.round(scores[key]);
+                    const bar = metric.querySelector('.setup-metric__bar > i, .setup-metric__bar > i');
+                    const text = metric.querySelector('strong, .setup-metric__value');
+                    if (bar) bar.style.width = `${score}%`;
+                    if (text) text.textContent = String(score);
+                });
+            };
+
+            const updatePayload = () => {
+                const payload = {
+                    version: Number(editorConfig?.PayloadVersion) || 2,
+                    source: editorConfig?.PayloadSource || 'f1-ingame-style-editor-v2',
+                    strategy: strategyInput?.value || null,
+                    categories: {}
+                };
+
+                panels.forEach(panel => {
+                    const categoryKey = panel.dataset.panel;
+                    if (!categoryKey) return;
+
+                    const categoryData = {};
+                    panel.querySelectorAll('.setup-ingame-row').forEach(row => {
+                        const key = row.dataset.key;
+                        const number = row.querySelector('input[type="number"]');
+                        if (!key || !number) return;
+                        categoryData[key] = Number(number.value);
+                    });
+
+                    payload.categories[categoryKey] = categoryData;
+                });
+
+                const payloadJson = JSON.stringify(payload);
+                if (payloadInput) {
+                    payloadInput.value = payloadJson;
+                }
+                if (payloadPreview) {
+                    payloadPreview.value = JSON.stringify(payload, null, 2);
+                }
+                updateMetrics();
+            };
+
+            const applyPayloadToEditor = (payload) => {
+                const categories = payload?.categories;
+                if (!categories || typeof categories !== 'object') return false;
+
+                Object.keys(categories).forEach(categoryKey => {
+                    const values = categories[categoryKey];
+                    if (!values || typeof values !== 'object') return;
+
+                    Object.keys(values).forEach(key => {
+                        setValue(key, values[key]);
+                    });
+                });
+
+                setActiveStrategy(typeof payload?.strategy === 'string' ? payload.strategy : '');
+                if (f1TrackSelect) f1TrackSelect.value = typeof payload?.trackKey === 'string' ? payload.trackKey : '';
+                if (trackInput && f1TrackSelect?.value && !trackInput.value) {
+                    const k = f1TrackSelect.value;
+                    const match = Array.from(trackInput.options).find(o => (o.dataset?.key || '') === k);
+                    if (match) trackInput.value = match.value;
+                }
+                if (f1LengthSelect) f1LengthSelect.value = typeof payload?.lengthKey === 'string' ? payload.lengthKey : '';
+                if (f1PlanText) f1PlanText.value = typeof payload?.strategyPlan === 'string' ? payload.strategyPlan : '';
+                setF1Meta(payload?.trackKey && payload?.lengthKey ? 'Gespeicherte Strategie geladen.' : 'Noch keine Strategie generiert.');
+                updatePayload();
+                return true;
+            };
+
+            const setEditState = (text) => {
+                if (editState) editState.textContent = text;
+            };
+
+            const clearEditMode = () => {
+                if (idInput) idInput.value = '';
+                if (trackInput) trackInput.value = '';
+                if (titleInput) titleInput.value = '';
+                if (tierInput) tierInput.value = '0';
+                if (roleLabelInput) roleLabelInput.value = '';
+                if (setupInfoInput) setupInfoInput.value = '';
+                defaults.forEach(def => setValue(def.key, def.value));
+                setActiveStrategy('');
+                if (f1TrackSelect) f1TrackSelect.value = '';
+                if (f1LengthSelect) f1LengthSelect.value = '';
+                if (f1PlanText) f1PlanText.value = '';
+                setF1Meta('Noch keine Strategie generiert.');
+                setEditState('Neues Setup erstellen.');
+                updatePayload();
+            };
+
+            const presetValues = editorConfig?.Presets ?? {};
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.target;
+                    tabs.forEach(t => t.classList.toggle('is-active', t === tab));
+                    panels.forEach(p => p.classList.toggle('is-active', p.dataset.panel === target));
+                });
+            });
+
+            rows.forEach(row => {
+                const range = row.querySelector('input[type="range"]');
+                const number = row.querySelector('input[type="number"]');
+                if (!range || !number) return;
+
+                range.addEventListener('input', () => {
+                    syncRow(row, range);
+                    updatePayload();
+                });
+
+                number.addEventListener('input', () => {
+                    syncRow(row, number);
+                    updatePayload();
+                });
+
+                number.addEventListener('blur', () => {
+                    syncRow(row, number);
+                    updatePayload();
+                });
+
+                row.querySelectorAll('.setup-ingame-steppers button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const dir = Number(btn.dataset.stepDir) || 0;
+                        const step = Number(range.step || 1);
+                        const next = Number(range.value) + dir * step;
+                        setValue(row.dataset.key, next);
+                        updatePayload();
+                    });
+                });
+            });
+
+            presetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const presetKey = button.dataset.preset;
+                    const preset = presetKey ? presetValues[presetKey] : null;
+                    if (!preset) return;
+
+                    Object.keys(preset).forEach(key => setValue(key, preset[key]));
+                    if (button.dataset.strategy) {
+                        setActiveStrategy(button.dataset.strategy);
+                    }
+                    updatePayload();
+                });
+            });
+
+            editButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const setupId = button.getAttribute('data-id') || '';
+                    const setupTrack = button.getAttribute('data-track') || '';
+                    const setupTitle = button.getAttribute('data-title') || '';
+                    const setupTier = button.getAttribute('data-tier') || '0';
+                    const setupRoleLabel = button.getAttribute('data-role-label') || '';
+                    const setupInfo = button.getAttribute('data-setup-info') || '';
+                    const setupText = button.getAttribute('data-setup-text') || '';
+
+                    if (idInput) idInput.value = setupId;
+                    if (trackInput) {
+                        const match = Array.from(trackInput.options).find(o => o.value === setupTrack || o.value.toLowerCase() === setupTrack.toLowerCase());
+                        trackInput.value = match ? match.value : '';
+                    }
+                    if (titleInput) titleInput.value = setupTitle;
+                    if (tierInput) tierInput.value = setupTier;
+                    if (roleLabelInput) roleLabelInput.value = setupRoleLabel;
+                    if (setupInfoInput) setupInfoInput.value = setupInfo;
+
+                    const payload = (() => {
+                        try {
+                            return JSON.parse(setupText);
+                        } catch {
+                            return null;
+                        }
+                    })();
+
+                    if (!applyPayloadToEditor(payload)) {
+                        defaults.forEach(def => setValue(def.key, def.value));
+                        if (payloadInput) payloadInput.value = setupText;
+                        if (payloadPreview) payloadPreview.value = setupText;
+                        updateMetrics();
+                    }
+
+                    setEditState(`Bearbeite Setup ***REMOVED***${setupId}: ${setupTrack} · ${setupTitle}`);
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            resetBtn?.addEventListener('click', () => {
+                defaults.forEach(def => {
+                    const row = rows.find(r => r.dataset.key === def.key);
+                    if (!row) return;
+                    const range = row.querySelector('input[type="range"]');
+                    const number = row.querySelector('input[type="number"]');
+                    if (range) range.value = def.value;
+                    if (number) number.value = def.value;
+                });
+                updatePayload();
+            });
+
+            cancelEditBtn?.addEventListener('click', () => {
+                clearEditMode();
+            });
+
+            form.addEventListener('submit', () => {
+                updatePayload();
+            });
+
+            rows.forEach(row => syncRow(row, row.querySelector('input[type="range"]')));
+            updatePayload();
+        })();
+    </script>
+}

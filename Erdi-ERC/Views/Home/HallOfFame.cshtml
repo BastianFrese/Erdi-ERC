@@ -1,0 +1,62 @@
+@model <OWNER_HANDLE>_ERC.Models.HallOfFamePageViewModel
+@{
+    ViewData["Title"] = "Hall of Fame";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "ERC Rekorde",
+    Title     = "Hall of",
+    Highlight = "Fame",
+    Lead      = "Rekorde, Serien und die stärksten Namen der Community auf einen Blick.",
+    GhostText = "HOF"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "trophy",
+        Label      = "Rekorde",
+        Value      = Model.Records.Count.ToString(),
+        Sub        = "Hall-of-Fame-Kategorien"
+    })" />
+</div>
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Rekorde",
+        Title   = "Hall of Fame",
+        SubText = $"{Model.Records.Count} Einträge"
+    })" />
+
+    @if (!Model.Records.Any())
+    {
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-trophy"></i></span>
+            <div class="empty-state__title">Noch keine Rekorde</div>
+            <p class="empty-state__lead">Rekorde werden automatisch aus den Renndaten berechnet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var record in Model.Records)
+            {
+                <div class="col-md-6 col-xl-3">
+                    <div class="community-card h-100">
+                        <div class="community-card__body text-center">
+                            <div class="text-mute small mb-2">@record.Title</div>
+                            <div class="h4 mb-1" style="color:var(--ink);">@record.Driver</div>
+                            <div class="display-6 fw-bold text-accent">@record.Value</div>
+                            <div class="text-mute small mt-2">@record.Subtitle</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

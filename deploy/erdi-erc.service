@@ -1,0 +1,24 @@
+***REMOVED*** <OWNER_HANDLE>-ERC.service
+***REMOVED*** /etc/systemd/system/erdi-erc.service
+[Unit]
+Description=<OWNER_HANDLE>-ERC Razor App
+After=network.target
+
+[Service]
+WorkingDirectory=/var/www/app
+ExecStart=/usr/bin/dotnet /var/www/app/<OWNER_HANDLE>-ERC.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=erdi-erc
+User=erdi
+Group=erdi
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+***REMOVED*** Secrets: sudo mkdir -p /etc/erdi-erc && sudo cp deploy/secrets.env.example /etc/erdi-erc/secrets.env
+***REMOVED*** Dann die Werte in /etc/erdi-erc/secrets.env ausfüllen und: sudo chmod 600 /etc/erdi-erc/secrets.env
+EnvironmentFile=/etc/erdi-erc/secrets.env
+
+[Install]
+WantedBy=multi-user.target

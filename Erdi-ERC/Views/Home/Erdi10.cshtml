@@ -1,0 +1,362 @@
+@model <OWNER_HANDLE>_ERC.Models.<OWNER_HANDLE>10ViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "<OWNER_HANDLE>10 · F1 26 Racing Hub";
+    var host = Context.Request.Host.Host;
+    var upcomingLegsByLeague = (ViewBag.UpcomingLegsByLeague as Dictionary<string, List<RaceWeekendLeg>>)
+                                ?? new Dictionary<string, List<RaceWeekendLeg>>();
+
+    static string FormatRaceTime(int? ms)
+    {
+        if (!ms.HasValue) return "–";
+        var t = TimeSpan.FromMilliseconds(ms.Value);
+        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+    }
+
+    var latestRace   = Model.Leagues.SelectMany(l => l.Races).OrderByDescending(r => r.Date).FirstOrDefault();
+    var latestWinner = latestRace?.Winner;
+    var latestTrack  = latestRace?.Track;
+    var latestDate   = latestRace?.Date;
+
+    var winnerTeamKey = F1TeamsHelper.GetCssKeyForDriver(latestWinner);
+    if (winnerTeamKey == null && latestWinner != null)
+    {
+        var standingTeam = Model.Leagues
+            .SelectMany(l => l.Standings)
+            .FirstOrDefault(s => s.Driver.Trim().Equals(latestWinner.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+        winnerTeamKey = F1TeamsHelper.GetTeamByName(standingTeam)?.CssKey;
+    }
+    var winnerF1Team = winnerTeamKey != null ? F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == winnerTeamKey) : null;
+    var winnerColor  = winnerF1Team?.PrimaryColor ?? "var(--accent)";
+
+    var nextRace = Model.Leagues
+        .SelectMany(l => l.Races)
+        .Where(r => r.Date > DateTime.Now)
+        .OrderBy(r => r.Date)
+        .FirstOrDefault();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/erdi10.css" asp-append-version="true" />
+}
+
+@await Html.PartialAsync("_LiveRaceBanner")
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "F1 26 · Racing Hub",
+    LiveDot   = true,
+    Title     = "<OWNER_HANDLE>10",
+    Highlight = "Racing Hub",
+    Lead      = $"Offizielle Fan-Page des Twitch-Streamers <a href=\"https://twitch.tv/{Model.TwitchChannel}\" style=\"color:var(--accent);\" target=\"_blank\" rel=\"noopener\">@{Model.TwitchChannel}</a>. Bestenlisten, vergangene Rennen und kommende Events der ERC-Ligen.",
+    GhostText = "",
+    Actions   = new() {
+        new F1ButtonVm { Label="Auf Twitch",  Variant="primary", IconLucide="external-link", Href=$"https://twitch.tv/{Model.TwitchChannel}", Target="_blank" },
+        new F1ButtonVm { Label="Standings",   Variant="ghost",   IconLucide="trophy",        Href=Url.Action("Results","Home")! },
+        new F1ButtonVm { Label="Alle Rennen", Variant="ghost",   IconLucide="flag",           Href=Url.Action("AllRaces","Home")! }
+    }
+})" />
+
+<!-- ════════════════════════════════════════════════ HUB STRIP (lights) -->
+<div class="f1-hub-strip reveal">
+    @if (nextRace != null)
+    {
+        <span class="race-lights-pill" data-state="ready"
+              data-race-state-target="@nextRace.Date.ToString("O")"
+              title="Status zum nächsten Rennen">
+            <span class="race-lights-pill__strip" aria-hidden="true">
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+            </span>
+            <span class="race-lights-pill__text">Next Race</span>
+        </span>
+        <div class="lap-counter" title="Nächstes Rennen">
+            <span class="lap-counter__label">Next</span>
+            <span class="lap-counter__value">@nextRace.Track</span>
+        </div>
+    }
+    else if (latestRace != null)
+    {
+        <span class="race-lights-pill" data-state="green">
+            <span class="race-lights-pill__strip" aria-hidden="true">
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+                <span class="race-lights-pill__lamp"></span>
+            </span>
+            <span class="race-lights-pill__text">Saison · Final</span>
+        </span>
+    }
+    <span class="f1-hub-tag f1-hub-tag--red"><i class="bi bi-controller"></i> F1 26</span>
+    <span class="f1-hub-tag">Sim Racing</span>
+    <span class="f1-hub-tag">ERC-Liga</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ SOCIALS -->
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm { Chip="Connect", Title="Socials" })" />
+    <div class="f1-social-bar">
+        <span class="f1-social-bar__label"><OWNER_HANDLE>10</span>
+        <a class="f1-social-link" href="https://open.spotify.com/intl-de/artist/4VaOsXeYI0DNmfkPhP40L9?si=4b7e0baf47c444b6" target="_blank" rel="noopener"><i class="bi bi-spotify"></i> Spotify</a>
+        <a class="f1-social-link" href="https://www.youtube.com/@@PzudemK" target="_blank" rel="noopener"><i class="bi bi-youtube"></i> YouTube</a>
+        <a class="f1-social-link" href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> Instagram</a>
+        <a class="f1-social-link" href="https://www.youtube.com/@@ERC_LeagueRacing/videos" target="_blank" rel="noopener"><i class="bi bi-collection-play"></i> Liga Rennen</a>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ LAST RACE WINNER -->
+@if (latestRace != null)
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm { Chip="Last Race", Title="Letzter Rennsieger" })" />
+        <div class="f1-winner-card" style="--winner-color: @winnerColor;">
+            <div class="f1-winner-card__trophy">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <div class="f1-winner-card__info">
+                <div class="f1-winner-card__eyebrow">Rennsieger</div>
+                <div class="f1-winner-card__name">@latestWinner</div>
+                <div class="f1-winner-card__team" style="color: var(--winner-color);">@(winnerF1Team?.Name ?? "Unbekanntes Team")</div>
+            </div>
+            <div class="f1-winner-card__race">
+                <div class="f1-winner-card__race-label">Strecke</div>
+                <div class="f1-winner-card__race-track">@latestTrack</div>
+                <div class="f1-winner-card__race-date text-mono">@latestDate?.ToString("dd.MM.yyyy")</div>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ═════════════════════════════════════ LEAGUES + TWITCH (main grid) -->
+<section class="f1-section reveal" id="standings">
+    <div class="row g-4">
+
+        <!-- League Hub Card (col-lg-8) -->
+        <div class="col-lg-8">
+            <div class="f1-hub-card">
+                <div class="f1-hub-card__tabs-bar">
+                    <div class="f1-hub-tabs" id="leagueTabs" role="tablist">
+                        @for (int i = 0; i < Model.Leagues.Count; i++)
+                        {
+                            var league = Model.Leagues[i];
+                            <button class="f1-hub-tabs__tab @(i == 0 ? "is-active" : "")"
+                                    id="tab-@league.Id"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="***REMOVED***pane-@league.Id"
+                                    type="button" role="tab"
+                                    aria-controls="pane-@league.Id"
+                                    aria-selected="@(i == 0 ? "true" : "false")">
+                                @league.Name
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="f1-hub-card__body">
+                    <div class="tab-content" id="leagueTabsContent">
+                        @for (int i = 0; i < Model.Leagues.Count; i++)
+                        {
+                            var league = Model.Leagues[i];
+                            var active = i == 0 ? "show active" : "";
+
+                            <div class="tab-pane fade @active" id="pane-@league.Id" role="tabpanel" aria-labelledby="tab-@league.Id">
+                                @if (!string.IsNullOrWhiteSpace(league.Description))
+                                {
+                                    <p class="f1-league-desc">@league.Description</p>
+                                }
+
+                                <div class="f1-sub-tabs" role="tablist">
+                                    <button class="f1-sub-tabs__tab is-active"
+                                            data-bs-toggle="pill"
+                                            data-bs-target="***REMOVED***races-@league.Id"
+                                            type="button">
+                                        <i class="bi bi-flag-checkered"></i> Rennen
+                                    </button>
+                                    <button class="f1-sub-tabs__tab"
+                                            data-bs-toggle="pill"
+                                            data-bs-target="***REMOVED***events-@league.Id"
+                                            type="button">
+                                        <i class="bi bi-calendar-event"></i> Anstehende Events
+                                    </button>
+                                </div>
+
+                                <div class="tab-content">
+                                    <!-- Rennen -->
+                                    <div class="tab-pane fade show active" id="races-@league.Id">
+                                        <div class="f1-results-card">
+                                            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+                                            <div class="f1-results-card__corner" aria-hidden="true"></div>
+                                            <div class="table-responsive">
+                                                <table class="f1-results-table">
+                                                    <colgroup>
+                                                        <col style="width:110px" />
+                                                        <col />
+                                                        <col style="min-width:160px" />
+                                                        <col style="width:140px" />
+                                                    </colgroup>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Datum</th>
+                                                            <th>Strecke</th>
+                                                            <th>Sieger</th>
+                                                            <th>Siegerzeit</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var r in league.Races)
+                                                        {
+                                                            var raceMainForWinner = !string.IsNullOrWhiteSpace(r.Winner)
+                                                                ? r.ReserveAssignments.FirstOrDefault(a =>
+                                                                    !string.IsNullOrWhiteSpace(a.ReserveDriver)
+                                                                    && a.ReserveDriver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase))?.MainDriver
+                                                                : null;
+                                                            var raceTeamKey = F1TeamsHelper.GetCssKeyForDriver(r.Winner)
+                                                                ?? F1TeamsHelper.GetTeamByName(
+                                                                    league.Standings.FirstOrDefault(s =>
+                                                                        s.Driver.Trim().Equals((raceMainForWinner ?? r.Winner)?.Trim(), StringComparison.OrdinalIgnoreCase))?.Team)?.CssKey;
+                                                            var teamInfo       = raceTeamKey != null ? F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == raceTeamKey) : null;
+                                                            var rowColor       = teamInfo?.PrimaryColor ?? "transparent";
+                                                            var winnerStanding = !string.IsNullOrWhiteSpace(r.Winner)
+                                                                ? league.Standings.FirstOrDefault(s => s.Driver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase))
+                                                                : null;
+                                                            var reserveForDisplay = raceMainForWinner ?? winnerStanding?.ReserveForDriver;
+                                                            var isReserveWinner   = !string.IsNullOrWhiteSpace(raceMainForWinner) || winnerStanding?.IsReserveDriver == true;
+                                                            var winnerFinish      = !string.IsNullOrWhiteSpace(r.Winner)
+                                                                ? r.Finishes.FirstOrDefault(f => f.Driver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase))
+                                                                : null;
+                                                            var raceDetailUrl = Url.Action("RaceDetail", "Home", new { leagueId = league.Id, raceId = r.RowId });
+                                                            <tr class="f1-hub-race-row"
+                                                                style="box-shadow: inset 3px 0 0 @rowColor;"
+                                                                onclick="window.location.href='@raceDetailUrl'">
+                                                                <td class="text-mono" style="font-size:.8rem;">@r.Date.ToString("dd.MM.yyyy")</td>
+                                                                <td class="fw-semibold">@r.Track</td>
+                                                                <td>
+                                                                    <i class="bi bi-trophy-fill text-amber"></i>
+                                                                    <a class="text-decoration-none"
+                                                                       asp-controller="Profile" asp-action="ByDriverName"
+                                                                       asp-route-driverName="@r.Winner">@r.Winner</a>
+                                                                    @if (isReserveWinner)
+                                                                    {
+                                                                        <span class="badge bg-info ms-1"
+                                                                              title="Ersatzfahrer@(string.IsNullOrWhiteSpace(reserveForDisplay) ? "" : $" für {reserveForDisplay}")">Ersatz</span>
+                                                                        @if (!string.IsNullOrWhiteSpace(reserveForDisplay))
+                                                                        {
+                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@reserveForDisplay">@reserveForDisplay</a></span>
+                                                                        }
+                                                                    }
+                                                                </td>
+                                                                <td class="text-mono" style="font-size:.8rem;">
+                                                                    <i class="bi bi-stopwatch"></i> @FormatRaceTime(winnerFinish?.RaceTimeMs)
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Anstehende Events -->
+                                    <div class="tab-pane fade" id="events-@league.Id">
+                                        @{ var leagueLegs = upcomingLegsByLeague.TryGetValue(league.Id, out var ll) ? ll : new List<RaceWeekendLeg>(); }
+                                        @if (leagueLegs.Any())
+                                        {
+                                            <div class="d-flex flex-column gap-2">
+                                                @foreach (var leg in leagueLegs)
+                                                {
+                                                    var track    = leg.Weekend?.Track ?? "";
+                                                    var distance = leg.Weekend?.DistancePercent ?? 100;
+                                                    <div class="event-card">
+                                                        <div class="event-card__date">
+                                                            <div class="event-card__day">@leg.Date.ToString("dd")</div>
+                                                            <div class="event-card__month">@leg.Date.ToString("MMM")</div>
+                                                        </div>
+                                                        <div class="event-card__body">
+                                                            <div class="event-card__title">@track</div>
+                                                            <div class="event-card__meta">
+                                                                <span><i class="bi bi-clock"></i> @leg.Date.ToString("HH:mm")</span>
+                                                                <span><i class="bi bi-collection"></i> @distance% Race</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="empty-state">
+                                                <span class="icon-chip is-cyan"><i class="bi bi-calendar-x"></i></span>
+                                                <div class="empty-state__title">Keine Events geplant</div>
+                                                <p class="empty-state__lead">Sobald ein neues Rennen ansteht, taucht es hier auf.</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Twitch Card (col-lg-4) -->
+        <div class="col-lg-4">
+            <div class="f1-twitch-card">
+                <div class="f1-twitch-card__header">
+                    <div class="f1-twitch-card__title">
+                        <span class="status-pill is-live">Live</span>
+                        <span>Twitch</span>
+                    </div>
+                    <a class="f1-twitch-card__link"
+                       href="https://twitch.tv/@Model.TwitchChannel"
+                       target="_blank" rel="noopener">
+                        Kanal <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://player.twitch.tv/?channel=@Model.TwitchChannel&parent=@host&parent=localhost&muted=true"
+                            allowfullscreen
+                            title="Twitch Live Stream von @Model.TwitchChannel"></iframe>
+                </div>
+                <div style="height:clamp(340px,45vh,520px); border-top:1px solid var(--stroke-1);">
+                    <iframe src="https://www.twitch.tv/embed/@Model.TwitchChannel/chat?parent=@host&parent=localhost&darkpopout"
+                            title="Twitch Chat von @Model.TwitchChannel"
+                            style="width:100%;height:100%;border:0;"></iframe>
+                </div>
+                <div class="f1-twitch-card__footer">
+                    Wenn @@@Model.TwitchChannel offline ist, zeigt der Player einen Offline-Screen.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Sync is-active on league tabs (outer)
+            document.querySelectorAll('.f1-hub-tabs__tab').forEach(btn => {
+                btn.addEventListener('shown.bs.tab', () => {
+                    btn.closest('.f1-hub-tabs').querySelectorAll('.f1-hub-tabs__tab').forEach(b => b.classList.remove('is-active'));
+                    btn.classList.add('is-active');
+                });
+            });
+
+            // Sync is-active on sub-tabs (inner: Rennen / Events)
+            document.querySelectorAll('.f1-sub-tabs__tab').forEach(btn => {
+                btn.addEventListener('shown.bs.tab', () => {
+                    btn.closest('.f1-sub-tabs').querySelectorAll('.f1-sub-tabs__tab').forEach(b => b.classList.remove('is-active'));
+                    btn.classList.add('is-active');
+                });
+            });
+        })();
+    </script>
+}

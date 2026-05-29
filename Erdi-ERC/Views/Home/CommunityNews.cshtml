@@ -1,0 +1,78 @@
+@model <OWNER_HANDLE>_ERC.Models.CommunityNewsViewModel
+@{
+    ViewData["Title"] = "Community News";
+    var pinnedCount = Model.Posts.Count(x => x.IsPinned);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "<OWNER_HANDLE>'s Racing Community",
+    Title     = "Community",
+    Highlight = "News",
+    Lead      = "Liga-News, Fahrerwechsel, Event-Ankündigungen und wichtige Updates aus der Community.",
+    GhostText = "NEWS"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "newspaper",
+        Label      = "News gesamt",
+        Value      = Model.Posts.Count.ToString(),
+        Sub        = "Veröffentlichte Posts"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "pin",
+        Label      = "Pinned",
+        Value      = pinnedCount.ToString(),
+        Sub        = "Hervorgehobene Beiträge"
+    })" />
+</div>
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip  = "Feed",
+        Title = "Neueste Beiträge"
+    })" />
+
+    @if (!Model.Posts.Any())
+    {
+        <div class="empty-state community-empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-newspaper"></i></span>
+            <div class="empty-state__title">Noch keine Community-News</div>
+            <p class="empty-state__lead">Neue News und Ankündigungen erscheinen hier.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var post in Model.Posts)
+            {
+                <article class="community-card">
+                    <div class="community-card__body">
+                        <div class="community-card__meta">
+                            <div class="community-badge-row">
+                                <span class="badge @(post.IsPinned ? "bg-warning text-dark" : "bg-secondary")">@post.Category</span>
+                                @if (post.IsPinned)
+                                {
+                                    <span class="badge bg-danger">Pinned</span>
+                                }
+                            </div>
+                            <div class="text-mute small">@post.PublishedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") · @post.AuthorName</div>
+                        </div>
+                        <div class="community-card__title">@post.Title</div>
+                        @if (!string.IsNullOrWhiteSpace(post.Summary))
+                        {
+                            <p class="community-card__text mb-2">@post.Summary</p>
+                        }
+                        <div class="community-card__text" style="white-space:pre-wrap;">@post.Content</div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>

@@ -1,0 +1,287 @@
+/* =====================================================================
+   PAGE · DRIVER DETAIL
+   F1-Broadcast-styled driver profile.
+   Erweitert pages/home-index.css + pages/results.css.
+   ===================================================================== */
+
+/* =====================================================================
+   DRIVER HERO
+   ===================================================================== */
+.f1-driver-hero {
+    position: relative;
+    padding: 2.5rem 1.5rem 2.5rem calc(1.5rem + 5px);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.025) 0%, transparent 55%),
+        var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    box-shadow: var(--sh-2);
+}
+.f1-driver-hero__telemetry {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--driver-accent, var(--accent));
+    z-index: 2;
+    pointer-events: none;
+}
+.f1-driver-hero__chequer {
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 3px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.7) 0 6px, transparent 6px 12px);
+    pointer-events: none;
+    z-index: 3;
+}
+.f1-driver-hero__accent-bar {
+    position: absolute;
+    top: 3px; left: 0; bottom: 0;
+    width: 5px;
+    background: var(--driver-accent, var(--accent));
+    pointer-events: none;
+}
+.f1-driver-hero__ghost {
+    position: absolute;
+    right: -.05em; bottom: -.2em;
+    font: 900 9rem/1 var(--ff-tech);
+    letter-spacing: -.04em;
+    color: rgba(255,255,255,.025);
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+    z-index: 0;
+}
+.f1-driver-hero__body {
+    position: relative;
+    z-index: 1;
+}
+.f1-driver-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--ink-3);
+    font: 700 .7rem/1 var(--ff-tech);
+    letter-spacing: var(--letter-track);
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+}
+.f1-driver-hero__eyebrow .f1-icon {
+    width: 13px; height: 13px;
+    color: var(--sig-cyan);
+}
+.f1-driver-hero__name {
+    font: 800 3rem/1.05 var(--ff-tech);
+    letter-spacing: -.02em;
+    color: var(--ink);
+    margin: 0 0 .65rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .65rem;
+}
+.f1-driver-hero__team {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin-bottom: 1.1rem;
+    font: 600 .95rem/1.3 var(--ff-body);
+    color: var(--ink-2);
+}
+.f1-driver-hero__strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1.3rem;
+}
+.f1-driver-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+}
+
+/* Reserve badge — inline version for the hero */
+.f1-reserve-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .22rem .5rem;
+    background: rgba(0,229,255,.1);
+    color: var(--sig-cyan);
+    border: 1px solid rgba(0,229,255,.3);
+    border-radius: 2px;
+    font: 700 .6rem/1 var(--ff-tech);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+/* =====================================================================
+   DRIVER CARD · Generic content panel
+   ===================================================================== */
+.f1-driver-card {
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+    box-shadow: var(--sh-1);
+    height: 100%;
+}
+.f1-driver-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--stroke-1);
+    background: linear-gradient(180deg, rgba(255,255,255,.025), transparent);
+}
+.f1-driver-card__title {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font: 700 .73rem/1 var(--ff-tech);
+    letter-spacing: var(--letter-track);
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+.f1-driver-card__title .f1-icon {
+    width: 14px; height: 14px;
+    color: var(--sig-cyan);
+}
+.f1-driver-card__sub {
+    font: 400 .72rem/1 var(--ff-body);
+    color: var(--ink-4);
+    white-space: nowrap;
+}
+.f1-driver-card__body { padding: 1rem; }
+
+/* =====================================================================
+   FORM CHIPS · Race result mini-badges
+   ===================================================================== */
+.f1-form-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    align-items: center;
+}
+.f1-form-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 32px;
+    padding: 0 .5rem;
+    border-radius: var(--r-1);
+    font: 800 .72rem/1 var(--ff-tech);
+    letter-spacing: .06em;
+    border: 1px solid transparent;
+    cursor: default;
+    transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+.f1-form-chip:hover { transform: translateY(-1px); }
+.f1-form-chip--p1   { background: rgba(255,210,74,.18);   color: ***REMOVED***ffd24a; border-color: rgba(255,210,74,.45); }
+.f1-form-chip--p1:hover { box-shadow: 0 0 10px rgba(255,210,74,.35); }
+.f1-form-chip--p2   { background: rgba(212,216,224,.12);  color: ***REMOVED***d4d8e0; border-color: rgba(212,216,224,.35); }
+.f1-form-chip--p3   { background: rgba(214,138,74,.15);   color: ***REMOVED***d68a4a; border-color: rgba(214,138,74,.4); }
+.f1-form-chip--top10 { background: rgba(0,229,255,.08);   color: var(--sig-cyan); border-color: rgba(0,229,255,.25); }
+.f1-form-chip--mid  { background: rgba(255,255,255,.04);  color: var(--ink-2); border-color: var(--stroke-1); }
+.f1-form-chip--dnf  { background: rgba(225,6,0,.12);      color: ***REMOVED***ff5555; border-color: rgba(225,6,0,.3); }
+
+/* =====================================================================
+   RELIABILITY BAR
+   ===================================================================== */
+.f1-reliability-label {
+    font: 700 .68rem/1 var(--ff-tech);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: .5rem;
+}
+.f1-reliability-bar {
+    height: 8px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--stroke-1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: .6rem;
+}
+.f1-reliability-bar__fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--bar-color, var(--accent));
+    box-shadow: 0 0 8px var(--bar-color, rgba(0,229,255,.5));
+    transition: width .9s cubic-bezier(.22,.61,.36,1);
+    width: 0;
+}
+.f1-reliability-stats {
+    font: 500 .78rem/1.4 var(--ff-body);
+    color: var(--ink-3);
+}
+
+/* =====================================================================
+   RIVAL CARD
+   ===================================================================== */
+.f1-rival-card {
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-left: 3px solid var(--rival-color, var(--stroke-2));
+    border-radius: var(--r-3);
+    padding: 1rem;
+    height: 100%;
+    box-shadow: var(--sh-1);
+    transition: box-shadow var(--t-fast);
+}
+.f1-rival-card:hover { box-shadow: var(--sh-2); }
+.f1-rival-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .65rem;
+}
+.f1-rival-card__name {
+    font: 600 .92rem/1.2 var(--ff-body);
+    color: var(--ink);
+    text-decoration: none;
+    transition: color var(--t-fast);
+}
+.f1-rival-card__name:hover { color: var(--accent-2); }
+.f1-rival-card__team {
+    display: inline-flex;
+    align-items: center;
+    padding: .22rem .5rem;
+    border-radius: 2px;
+    font: 700 .58rem/1 var(--ff-tech);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    background: var(--rival-color, var(--stroke-2));
+    color: ***REMOVED***000;
+    white-space: nowrap;
+}
+.f1-rival-card__record {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .6rem;
+    font: 700 .72rem/1 var(--ff-tech);
+    letter-spacing: .08em;
+}
+.f1-rival-card__w     { color: ***REMOVED***4ade80; }
+.f1-rival-card__d     { color: var(--ink-3); }
+.f1-rival-card__l     { color: ***REMOVED***f87171; }
+.f1-rival-card__races { color: var(--ink-4); font-weight: 400; font-family: var(--ff-body); font-size: .7rem; }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 991.98px) {
+    .f1-driver-hero__name  { font-size: 2rem; }
+    .f1-driver-hero__ghost { font-size: 6rem; }
+}
+@media (max-width: 767.98px) {
+    .f1-driver-hero { padding: 2rem 1rem 2rem calc(1rem + 5px); }
+    .f1-driver-hero__name  { font-size: 1.6rem; }
+    .f1-driver-hero__ghost { font-size: 4.5rem; }
+    .f1-driver-card__sub   { display: none; }
+}

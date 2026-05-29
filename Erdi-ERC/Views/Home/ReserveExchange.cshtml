@@ -1,0 +1,114 @@
+@model <OWNER_HANDLE>_ERC.Models.ReserveExchangePageViewModel
+@{
+    ViewData["Title"] = "Reservefahrer-Börse";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "<OWNER_HANDLE>'s Racing Community",
+    Title     = "Reservefahrer",
+    Highlight = "Börse",
+    Lead      = "Finde spontan verfügbare Reservefahrer – mit Filtern nach Division, Plattform und Pace.",
+    GhostText = "RESERVE"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "users",
+        Label      = "Einträge",
+        Value      = Model.Entries.Count.ToString(),
+        Sub        = "Nach aktuellem Filter sichtbar"
+    })" />
+</div>
+
+<section class="f1-section reveal">
+    <form method="get" asp-action="ReserveExchange" class="d-flex gap-2 align-items-end flex-wrap mb-4">
+        <div>
+            <label class="form-label mb-1">Division</label>
+            <select class="form-select" name="leagueId">
+                <option value="">Alle</option>
+                @foreach (var leagueId in Model.LeagueIds)
+                {
+                    <option value="@leagueId" selected="@(leagueId == Model.SelectedLeagueId)">@leagueId</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1">Plattform</label>
+            <select class="form-select" name="platform">
+                <option value="">Alle</option>
+                @foreach (var platform in Model.Platforms)
+                {
+                    <option value="@platform" selected="@(platform == Model.SelectedPlatform)">@platform</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label mb-1">Pace</label>
+            <select class="form-select" name="pace">
+                <option value="">Alle</option>
+                <option value="Schnell"      selected="@(Model.SelectedPace == "Schnell")">Schnell</option>
+                <option value="Mittel"       selected="@(Model.SelectedPace == "Mittel")">Mittel</option>
+                <option value="Entwicklung"  selected="@(Model.SelectedPace == "Entwicklung")">Entwicklung</option>
+            </select>
+        </div>
+        <button class="f1-btn f1-btn--primary" type="submit">
+            <i class="f1-icon" data-lucide="filter"></i> Filtern
+        </button>
+    </form>
+
+    @if (!Model.Entries.Any())
+    {
+        <div class="empty-state community-empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-person-x"></i></span>
+            <div class="empty-state__title">Keine Reservefahrer gefunden</div>
+            <p class="empty-state__lead">Passe die Filter an oder warte auf neue Einträge.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var entry in Model.Entries)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="community-card h-100">
+                        <div class="community-card__body d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                <h5 class="mb-0">
+                                    @if (!string.IsNullOrWhiteSpace(entry.ProfileDiscordId))
+                                    {
+                                        <a class="community-link-title text-decoration-none text-reset"
+                                           asp-controller="Profile" asp-action="Index"
+                                           asp-route-discordId="@entry.ProfileDiscordId">@entry.Driver</a>
+                                    }
+                                    else
+                                    {
+                                        @entry.Driver
+                                    }
+                                </h5>
+                                <span class="badge bg-secondary">@entry.PaceBucket</span>
+                            </div>
+                            <div class="text-mute small">@entry.LeagueId · @entry.Team</div>
+                            <div class="small">Reserve für: @entry.ReserveForDriver</div>
+                            <div class="small">Plattform: @entry.Platform · Input: @entry.InputDevice</div>
+                            <div class="small">Lieblingsstrecke: @entry.FavoriteTrack</div>
+                            @if (!string.IsNullOrWhiteSpace(entry.Bio))
+                            {
+                                <div class="text-mute small">@entry.Bio</div>
+                            }
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <span>@entry.Points Pkt.</span>
+                                <span class="text-mute small">@entry.Wins Siege</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

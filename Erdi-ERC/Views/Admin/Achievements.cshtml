@@ -1,0 +1,234 @@
+@model List<<OWNER_HANDLE>_ERC.Models.CustomAchievement>
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "Achievements";
+    ViewData["Kicker"] = "Fahrer";
+    ViewData["HeroTitle"] = "Achievement Verwaltung";
+    var leagues      = ViewBag.Leagues as List<League> ?? new();
+    var knownDrivers = ViewBag.KnownDrivers as List<string> ?? new();
+    var edit         = ViewBag.EditItem as CustomAchievement;
+
+    var tiers      = new[] { "bronze", "silver", "gold", "platinum" };
+    var tones      = new[] { "amber", "cyan", "violet", "green", "red" };
+    var categories = new[] { "Spezial", "Siege", "Podien", "Pace", "Konstanz", "Karriere", "Community", "Saison" };
+    var icons      = new[]
+    {
+        "bi-award-fill","bi-trophy-fill","bi-stars","bi-gem","bi-crown-fill",
+        "bi-lightning-charge-fill","bi-fire","bi-flag-fill","bi-shield-check",
+        "bi-snow2","bi-graph-up-arrow","bi-stopwatch-fill","bi-people-fill","bi-heart-fill"
+    };
+
+    string TierColor(string tier) => tier switch
+    {
+        "bronze"   => "***REMOVED***cd7f32",
+        "silver"   => "***REMOVED***aaa",
+        "gold"     => "***REMOVED***ffb800",
+        "platinum" => "***REMOVED***00e5ff",
+        _          => "var(--ink-3)"
+    };
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ffb800;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-award-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Vergeben gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***b95cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Select(x => x.Driver).Distinct().Count()</div>
+                <div class="adm-kpi-card__label">Empfänger</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Where(x => !string.IsNullOrWhiteSpace(x.LeagueId)).Select(x => x.LeagueId).Distinct().Count()</div>
+                <div class="adm-kpi-card__label">Liga-spezifisch</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***00e5ff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-globe"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count(x => string.IsNullOrWhiteSpace(x.LeagueId))</div>
+                <div class="adm-kpi-card__label">Ligaweit</div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- Links ---- *@
+    <div style="display:flex;justify-content:flex-end;">
+        <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminAchievements" asp-action="Definitions">
+            <i class="bi bi-sliders me-1"></i>Achievement-Definitionen verwalten
+        </a>
+    </div>
+
+    @* ---- Formular (Vergabe / Bearbeitung) ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                @if (edit != null)
+                {
+                    <i class="bi bi-pencil-square me-2" style="color:***REMOVED***5b8cff;"></i>
+                    <span>Achievement ***REMOVED***@edit.Id bearbeiten</span>
+                }
+                else
+                {
+                    <i class="bi bi-plus-circle-fill me-2" style="color:***REMOVED***5b8cff;"></i>
+                    <span>Neues Achievement vergeben</span>
+                }
+            </span>
+            @if (edit != null)
+            {
+                <a class="adm-panel__head-action" asp-controller="AdminAchievements" asp-action="Index">
+                    <i class="bi bi-x me-1"></i>Abbrechen
+                </a>
+            }
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminAchievements" asp-action="Save" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@(edit?.Id ?? 0)" />
+
+                <div class="col-md-4">
+                    <label class="adm-form-label">Fahrer *</label>
+                    <input class="form-control form-control-sm" name="Driver" required maxlength="128"
+                           list="known-drivers" value="@edit?.Driver" placeholder="z. B. Max Mustermann" />
+                    <datalist id="known-drivers">
+                        @foreach (var d in knownDrivers) { <option value="@d"></option> }
+                    </datalist>
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Liga (optional)</label>
+                    <select class="form-select form-select-sm" name="LeagueId">
+                        <option value="">— Alle Ligen —</option>
+                        @foreach (var l in leagues)
+                        {
+                            <option value="@l.Id" selected="@(edit?.LeagueId == l.Id ? "selected" : null)">@l.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Kategorie</label>
+                    <select class="form-select form-select-sm" name="Category">
+                        @foreach (var c in categories)
+                        {
+                            <option value="@c" selected="@(edit?.Category == c ? "selected" : null)">@c</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Tier</label>
+                    <select class="form-select form-select-sm" name="Tier">
+                        @foreach (var t in tiers)
+                        {
+                            <option value="@t" selected="@((edit?.Tier ?? "gold") == t ? "selected" : null)">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="Title" required maxlength="128"
+                           value="@edit?.Title" placeholder="z. B. Driver of the Day" />
+                </div>
+                <div class="col-md-5">
+                    <label class="adm-form-label">Beschreibung *</label>
+                    <input class="form-control form-control-sm" name="Description" required maxlength="512"
+                           value="@edit?.Description" placeholder="Kurztext für die Profilseite" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Tone (Farbe)</label>
+                    <select class="form-select form-select-sm" name="Tone">
+                        @foreach (var t in tones)
+                        {
+                            <option value="@t" selected="@((edit?.Tone ?? "amber") == t ? "selected" : null)">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Icon (Bootstrap Icons)</label>
+                    <select class="form-select form-select-sm" name="Icon">
+                        @foreach (var i in icons)
+                        {
+                            <option value="@i" selected="@(edit?.Icon == i ? "selected" : null)">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-save me-1"></i>@(edit != null ? "Änderungen speichern" : "Achievement vergeben")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Liste ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-list-ul me-2" style="color:var(--accent);"></i>Vergebene Achievements
+            </span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-award adm-empty__icon"></i>
+                    <span>Noch keine Custom-Achievements vergeben.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var item in Model)
+                {
+                    var leagueName = leagues.FirstOrDefault(l => l.Id == item.LeagueId)?.Name ?? "Alle Ligen";
+                    <div class="adm-item-row">
+                        <div class="adm-item-row__main">
+                            <div class="adm-item-row__body">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <i class="bi @item.Icon" style="color:@TierColor(item.Tier);font-size:1.05rem;"></i>
+                                    <span class="adm-item-row__title">@item.Title</span>
+                                    <span class="adm-status-badge" style="color:@TierColor(item.Tier);background:transparent;border-color:currentColor;">@item.Tier</span>
+                                    <span class="adm-status-badge adm-status-badge--gray">@item.Category</span>
+                                </div>
+                                <div class="adm-item-row__meta">
+                                    <span><i class="bi bi-person me-1"></i>@item.Driver</span>
+                                    <span><i class="bi bi-flag me-1"></i>@leagueName</span>
+                                    <span><i class="bi bi-calendar3 me-1"></i>@item.AwardedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                                </div>
+                                <div style="font-size:.78rem;color:var(--ink-3);">@item.Description</div>
+                            </div>
+                            <div class="adm-item-row__actions">
+                                <a class="btn btn-xs btn-outline-secondary"
+                                   asp-controller="AdminAchievements" asp-action="Index" asp-route-editId="@item.Id"
+                                   title="Bearbeiten">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-controller="AdminAchievements" asp-action="Delete" method="post"
+                                      onsubmit="return confirm('Dieses Achievement wirklich löschen?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

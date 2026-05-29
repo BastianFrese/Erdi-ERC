@@ -1,0 +1,232 @@
+@model List<<OWNER_HANDLE>_ERC.Models.AboutMeProfile>
+@{
+    ViewData["Title"]     = "Über-mich-Seiten";
+    ViewData["HeroTitle"] = "Über-mich";
+    ViewData["Kicker"]    = "Admin · Profile verwalten";
+}
+
+@section Styles {
+<style>
+.abm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+}
+.abm-card {
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.abm-card:hover { border-color: var(--stroke-2); box-shadow: var(--sh-2); }
+.abm-card__banner {
+    height: 72px;
+    background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+.abm-card__banner-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,.55));
+}
+.abm-card__avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 3px solid var(--surface-1);
+    object-fit: cover;
+    position: absolute;
+    bottom: -26px; left: 1rem;
+    background: var(--surface-2);
+}
+.abm-card__avatar-fallback {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 3px solid var(--surface-1);
+    background: var(--surface-3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    position: absolute;
+    bottom: -26px; left: 1rem;
+}
+.abm-card__body {
+    padding: 2rem 1rem 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+.abm-card__name {
+    font-family: var(--ff-tech);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.abm-card__number {
+    font-family: var(--ff-tech);
+    font-size: .7rem;
+    color: var(--ink-4);
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-pill);
+    padding: .05rem .45rem;
+}
+.abm-card__tagline {
+    font-size: .75rem;
+    color: var(--ink-3);
+    font-style: italic;
+}
+.abm-card__slug {
+    font-family: var(--ff-mono);
+    font-size: .6rem;
+    color: var(--ink-4);
+}
+.abm-card__meta {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: .25rem;
+}
+.abm-badge {
+    font-size: .55rem;
+    font-family: var(--ff-tech);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .1rem .45rem;
+    border-radius: var(--r-pill);
+    border: 1px solid;
+}
+.abm-badge--public  { background: rgba(87,242,135,.12); color: ***REMOVED***57f287; border-color: rgba(87,242,135,.3); }
+.abm-badge--hidden  { background: rgba(255,107,53,.12);  color: ***REMOVED***ff6b35; border-color: rgba(255,107,53,.3); }
+.abm-card__actions {
+    display: flex;
+    gap: .5rem;
+    padding: .75rem 1rem;
+    border-top: 1px solid var(--stroke-1);
+    background: var(--surface-2);
+}
+.abm-btn {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-family: var(--ff-tech); font-size: .6rem; letter-spacing: .06em; text-transform: uppercase;
+    padding: .3rem .75rem; border-radius: var(--r-pill); border: 1px solid;
+    cursor: pointer; transition: all var(--t-fast); text-decoration: none;
+}
+.abm-btn--edit    { background: rgba(88,101,242,.15); color: ***REMOVED***7289da; border-color: rgba(88,101,242,.35); }
+.abm-btn--edit:hover { background: rgba(88,101,242,.28); border-color: ***REMOVED***7289da; color: ***REMOVED***fff; }
+.abm-btn--vis     { background: var(--surface-3); color: var(--ink-3); border-color: var(--stroke-1); }
+.abm-btn--vis:hover { border-color: var(--ink-3); color: var(--ink); }
+.abm-btn--del     { background: rgba(237,66,69,.12); color: ***REMOVED***ed4245; border-color: rgba(237,66,69,.3); margin-left: auto; }
+.abm-btn--del:hover { background: rgba(237,66,69,.25); border-color: ***REMOVED***ed4245; }
+.abm-create-card {
+    background: var(--surface-1);
+    border: 2px dashed var(--stroke-2);
+    border-radius: var(--r-3);
+    min-height: 200px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
+    color: var(--ink-4);
+    text-decoration: none;
+    transition: all var(--t-fast);
+    font-family: var(--ff-tech);
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.abm-create-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.abm-create-card i { font-size: 2rem; }
+.abm-accent-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 2px solid rgba(255,255,255,.2);
+    flex-shrink: 0;
+}
+</style>
+}
+
+<div class="adm-page-head">
+    <div>
+        <div class="adm-page-kicker">@ViewData["Kicker"]</div>
+        <h1 class="adm-page-title">@ViewData["HeroTitle"]</h1>
+    </div>
+</div>
+
+@if (TempData["AboutSuccess"] is string msg)
+{
+    <div class="adm-alert adm-alert--success"><i class="bi bi-check-circle-fill"></i> @msg</div>
+}
+
+<div class="abm-grid">
+
+    @foreach (var p in Model)
+    {
+        <div class="abm-card" style="--card-accent: @(p.AccentColor ?? "***REMOVED***e10600");">
+            <div class="abm-card__banner" style="@(string.IsNullOrEmpty(p.BannerUrl) ? "" : $"background-image:url('{p.BannerUrl}')")">
+                <div class="abm-card__banner-overlay"></div>
+                @if (!string.IsNullOrEmpty(p.AvatarUrl))
+                {
+                    <img class="abm-card__avatar" src="@p.AvatarUrl" alt="@p.DisplayName" />
+                }
+                else
+                {
+                    <div class="abm-card__avatar-fallback">👤</div>
+                }
+            </div>
+            <div class="abm-card__body">
+                <div class="abm-card__name">
+                    <span class="abm-accent-dot" style="background:@(p.AccentColor ?? "***REMOVED***e10600");"></span>
+                    @p.DisplayName
+                    @if (!string.IsNullOrEmpty(p.RacingNumber))
+                    {
+                        <span class="abm-card__number">***REMOVED***@p.RacingNumber</span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(p.Tagline))
+                {
+                    <div class="abm-card__tagline">@p.Tagline</div>
+                }
+                <div class="abm-card__slug">/@p.Slug</div>
+                <div class="abm-card__meta">
+                    <span class="abm-badge @(p.IsPublic ? "abm-badge--public" : "abm-badge--hidden")">
+                        <i class="bi @(p.IsPublic ? "bi-eye" : "bi-eye-slash")"></i>
+                        @(p.IsPublic ? "Öffentlich" : "Versteckt")
+                    </span>
+                    @if (p.LastEditedBy != null)
+                    {
+                        <span class="abm-badge" style="background:var(--surface-3);color:var(--ink-4);border-color:var(--stroke-1);">
+                            Bearb. von @p.LastEditedBy
+                        </span>
+                    }
+                </div>
+            </div>
+            <div class="abm-card__actions">
+                <a class="abm-btn abm-btn--edit" asp-controller="AdminAbout" asp-action="Edit" asp-route-id="@p.Id">
+                    <i class="bi bi-pencil-fill"></i> Bearbeiten
+                </a>
+                <form method="post" asp-controller="AdminAbout" asp-action="TogglePublic" asp-route-id="@p.Id" style="display:contents;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="abm-btn abm-btn--vis" title="@(p.IsPublic ? "Verstecken" : "Veröffentlichen")">
+                        <i class="bi @(p.IsPublic ? "bi-eye-slash" : "bi-eye")"></i>
+                        @(p.IsPublic ? "Verstecken" : "Zeigen")
+                    </button>
+                </form>
+                <form method="post" asp-controller="AdminAbout" asp-action="Delete" asp-route-id="@p.Id" style="display:contents;"
+                      onsubmit="return confirm('Profil \'@p.DisplayName\' wirklich löschen?')">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="abm-btn abm-btn--del"><i class="bi bi-trash3-fill"></i></button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <a class="abm-create-card" asp-controller="AdminAbout" asp-action="Create">
+        <i class="bi bi-plus-circle-dotted"></i>
+        Neues Profil erstellen
+    </a>
+
+</div>

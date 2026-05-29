@@ -1,0 +1,279 @@
+@model List<<OWNER_HANDLE>_ERC.Models.RealLifeEvent>
+@{
+    ViewData["Title"] = "Real-Life Events";
+    ViewData["Kicker"] = "Community";
+    ViewData["HeroTitle"] = "Real-Life Events";
+    var upcomingCount = Model.Count(x => x.IsUpcoming);
+    var pastCount     = Model.Count - upcomingCount;
+    var videoCount    = Model.Count(x => !string.IsNullOrWhiteSpace(x.YouTubeUrl));
+    var imageCount    = Model.Sum(x => x.Images?.Count ?? 0) + Model.Count(x => !string.IsNullOrWhiteSpace(x.ImageFileName));
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-calendar2-event-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Events gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-calendar-check-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@upcomingCount</div>
+                <div class="adm-kpi-card__label">Upcoming</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ff8a4c;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-images"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@imageCount</div>
+                <div class="adm-kpi-card__label">Bilder</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-youtube"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@videoCount</div>
+                <div class="adm-kpi-card__label">YouTube-Videos</div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- Neues Event anlegen ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-plus-circle-fill me-2" style="color:***REMOVED***5b8cff;"></i>Neues Event anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-action="SaveRealLifeEvent" method="post" enctype="multipart/form-data" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="0" />
+
+                <div class="col-md-5">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="title" required maxlength="256" placeholder="z.B. KART-EVENT · Wackersdorf" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Datum / Uhrzeit *</label>
+                    <input class="form-control form-control-sm" name="date" type="datetime-local" required value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Location</label>
+                    <input class="form-control form-control-sm" name="location" maxlength="256" placeholder="Motorsportarena …" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="adm-check-label">
+                        <input class="adm-checkbox" type="checkbox" name="isUpcoming" value="true" id="isUpcomingNew" checked />
+                        <label class="adm-check-text" for="isUpcomingNew">Upcoming</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Titelbild (optional)</label>
+                    <input class="form-control form-control-sm" name="image" type="file" accept="image/*" />
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">YouTube-Link (optional)</label>
+                    <input class="form-control form-control-sm" name="youTubeUrl" maxlength="512" placeholder="https://www.youtube.com/watch?v=…" />
+                </div>
+                <div class="col-12">
+                    <label class="adm-form-label">Beschreibung</label>
+                    <textarea class="form-control form-control-sm" name="description" rows="3" placeholder="Wann, wo, was &amp; wer?"></textarea>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Event anlegen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Bestehende Events ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-calendar2-event-fill me-2" style="color:var(--accent);"></i>Bestehende Events
+            </span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-calendar-x adm-empty__icon"></i>
+                    <span>Noch keine Events vorhanden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var ev in Model)
+                {
+                    <div class="adm-item-row">
+                        <div class="adm-item-row__main">
+
+                            @* Thumbnail *@
+                            @if (!string.IsNullOrEmpty(ev.ImageFileName))
+                            {
+                                <img src="/uploads/events/@ev.ImageFileName" alt=""
+                                     style="width:80px;height:56px;object-fit:cover;border-radius:var(--r-3);flex-shrink:0;" />
+                            }
+                            else
+                            {
+                                <div style="width:80px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--bg-3);border-radius:var(--r-3);font-size:1.4rem;flex-shrink:0;border:1px solid var(--stroke-1);">
+                                    <i class="bi bi-flag-fill"></i>
+                                </div>
+                            }
+
+                            <div class="adm-item-row__body">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="adm-item-row__title">@ev.Title</span>
+                                    @if (ev.IsUpcoming)
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--green">Upcoming</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--gray">Past</span>
+                                    }
+                                </div>
+                                <div class="adm-item-row__meta">
+                                    <span><i class="bi bi-calendar3 me-1"></i>@ev.Date.ToString("dd.MM.yyyy HH:mm")</span>
+                                    @if (!string.IsNullOrWhiteSpace(ev.Location))
+                                    {
+                                        <span><i class="bi bi-geo-alt me-1"></i>@ev.Location</span>
+                                    }
+                                    @if (ev.Images.Count > 0)
+                                    {
+                                        <span><i class="bi bi-images me-1"></i>@ev.Images.Count Galerie-Fotos</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(ev.YouTubeUrl))
+                                    {
+                                        <a href="@ev.YouTubeUrl" target="_blank" rel="noopener" style="color:***REMOVED***ff0000;font-size:.78rem;"><i class="bi bi-youtube me-1"></i>Video</a>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(ev.Description))
+                                {
+                                    <div style="font-size:.78rem;color:var(--ink-3);white-space:pre-wrap;margin-top:.2rem;max-height:3em;overflow:hidden;text-overflow:ellipsis;">@ev.Description</div>
+                                }
+                            </div>
+
+                            <div class="adm-item-row__actions">
+                                <button class="btn btn-xs btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="***REMOVED***edit-ev-@ev.Id"
+                                        title="Bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <form asp-action="DeleteRealLifeEvent" method="post" class="d-inline"
+                                      onsubmit="return confirm('Event &quot;@ev.Title&quot; wirklich löschen?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@ev.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        @* Edit-Panel *@
+                        <div class="collapse adm-item-row__edit" id="edit-ev-@ev.Id">
+                            <div class="mb-3">
+                                <form asp-action="SaveRealLifeEvent" method="post" enctype="multipart/form-data" class="row g-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@ev.Id" />
+
+                                    <div class="col-md-5">
+                                        <label class="adm-form-label">Titel</label>
+                                        <input class="form-control form-control-sm" name="title" required maxlength="256" value="@ev.Title" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="adm-form-label">Datum / Uhrzeit</label>
+                                        <input class="form-control form-control-sm" name="date" type="datetime-local" required value="@ev.Date.ToString("yyyy-MM-ddTHH:mm")" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="adm-form-label">Location</label>
+                                        <input class="form-control form-control-sm" name="location" maxlength="256" value="@ev.Location" />
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <div class="adm-check-label">
+                                            <input class="adm-checkbox" type="checkbox" name="isUpcoming" value="true" id="isUp-@ev.Id" @(ev.IsUpcoming ? "checked" : "") />
+                                            <label class="adm-check-text" for="isUp-@ev.Id">Upcoming</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="adm-form-label">Bild ersetzen</label>
+                                        <input class="form-control form-control-sm" name="image" type="file" accept="image/*" />
+                                        @if (!string.IsNullOrEmpty(ev.ImageFileName))
+                                        {
+                                            <div class="adm-check-label mt-1">
+                                                <input class="adm-checkbox" type="checkbox" name="removeImage" value="true" id="rm-@ev.Id" />
+                                                <label style="font-size:.78rem;color:***REMOVED***ff6b6b;cursor:pointer;" for="rm-@ev.Id">Aktuelles Bild entfernen</label>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="adm-form-label">YouTube-Link</label>
+                                        <input class="form-control form-control-sm" name="youTubeUrl" maxlength="512" value="@ev.YouTubeUrl" placeholder="https://www.youtube.com/watch?v=…" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="adm-form-label">Beschreibung</label>
+                                        <textarea class="form-control form-control-sm" name="description" rows="3">@ev.Description</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-sm btn-success" type="submit">
+                                            <i class="bi bi-check-lg me-1"></i>Speichern
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            @* Bildergalerie *@
+                            <div style="border-top:1px solid var(--stroke-1);padding-top:.85rem;">
+                                <div class="adm-form-label mb-2">
+                                    <i class="bi bi-images me-1"></i>Bildergalerie (@ev.Images.Count Fotos)
+                                </div>
+                                @if (ev.Images.Count > 0)
+                                {
+                                    <div class="adm-gallery mb-3">
+                                        @foreach (var img in ev.Images)
+                                        {
+                                            <div class="adm-gallery__thumb">
+                                                <img src="/uploads/events/@img.FileName" alt="" />
+                                                <form asp-action="DeleteEventImage" method="post"
+                                                      onsubmit="return confirm('Bild löschen?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="imageId" value="@img.Id" />
+                                                    <input type="hidden" name="eventId" value="@ev.Id" />
+                                                    <button type="submit" class="btn btn-danger btn-sm adm-gallery__del" title="Löschen">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                <form asp-action="AddEventImages" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="eventId" value="@ev.Id" />
+                                    <input class="form-control form-control-sm" style="max-width:320px;" type="file" name="images" multiple accept="image/*" />
+                                    <button class="btn btn-sm btn-outline-secondary" type="submit">
+                                        <i class="bi bi-upload me-1"></i>Fotos hochladen
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

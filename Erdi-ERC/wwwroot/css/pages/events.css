@@ -1,0 +1,79 @@
+/* =====================================================================
+   PAGE · EVENTS
+   F1-Broadcast-styled real-life events page.
+   Erweitert pages/home-index.css.
+   ===================================================================== */
+
+/* =====================================================================
+   NEXT EVENT CARD · Upcoming-Spotlight below hero
+   ===================================================================== */
+.f1-next-event {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-left: 4px solid var(--sig-cyan);
+    border-radius: var(--r-3);
+    box-shadow: var(--sh-2), 0 0 30px -12px rgba(0,229,255,.15);
+    overflow: hidden;
+}
+.f1-next-event__badge { flex-shrink: 0; }
+.f1-next-event__info {
+    flex: 1;
+    min-width: 0;
+}
+.f1-next-event__eyebrow {
+    font: 700 .6rem/1 var(--ff-tech);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: .25rem;
+}
+.f1-next-event__title {
+    font: 700 1.1rem/1.2 var(--ff-tech);
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: .2rem;
+}
+.f1-next-event__meta {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    font: 400 .78rem/1 var(--ff-body);
+    color: var(--ink-3);
+}
+.f1-next-event__meta .f1-icon { width: 12px; height: 12px; }
+.f1-next-event__countdown {
+    flex-shrink: 0;
+    text-align: right;
+    padding: .5rem .85rem;
+    background: rgba(0,229,255,.06);
+    border: 1px solid rgba(0,229,255,.25);
+    border-radius: var(--r-2);
+}
+.f1-next-event__countdown-label {
+    font: 700 .6rem/1 var(--ff-tech);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: .35rem;
+}
+.f1-next-event__countdown-value {
+    display: block;
+    font: 800 1.25rem/1 var(--ff-tech);
+    color: var(--sig-cyan);
+    letter-spacing: .02em;
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 767.98px) {
+    .f1-next-event { flex-wrap: wrap; gap: 1rem; }
+    .f1-next-event__countdown { text-align: left; width: 100%; }
+    .f1-next-event__countdown-value { font-size: 1rem; }
+}
