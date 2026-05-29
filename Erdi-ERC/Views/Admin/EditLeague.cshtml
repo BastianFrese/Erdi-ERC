@@ -1,0 +1,439 @@
+@model <OWNER_HANDLE>_ERC.Models.League
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = $"Liga: {Model.Name}";
+    ViewData["Kicker"] = "Liga";
+    ViewData["HeroTitle"] = Model.Name;
+    ViewData["HeroSubtitle"] = "Verwalte Details, Fahrerliste, Rennen und kommende Events dieser Liga in einem zentralen Bereich.";
+    var recentRaceUndos = (ViewBag.RecentRaceUndos as List<<OWNER_HANDLE>_ERC.Models.RaceUndoEntry>) ?? new List<<OWNER_HANDLE>_ERC.Models.RaceUndoEntry>();
+    var mainDriverOptions = Model.Standings
+        .Where(x => !x.IsReserveDriver && !string.IsNullOrWhiteSpace(x.Driver))
+        .Select(x => x.Driver.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(x => x)
+        .ToList();
+}
+
+
+<div class="league-page">
+    <div class="league-page-hero">
+        <div>
+            <partial name="_AdminHeroCard" />
+            <div class="league-page-pills mt-3">
+                <span class="league-page-pill"><i class="bi bi-trophy-fill me-1"></i>@Model.Standings.Count Fahrer</span>
+                <span class="league-page-pill"><i class="bi bi-flag-fill me-1"></i>@Model.Races.Count Rennen</span>
+                <span class="league-page-pill">@(Model.IsArchived ? "Archiviert" : "Aktiv")</span>
+            </div>
+        </div>
+        <div class="league-page-side">
+            <div class="league-page-hero-card league-page-action-panel">
+                <div class="league-page-action-panel__title">Aktionen</div>
+                <div class="league-page-action-panel__stack">
+                    <a class="btn btn-outline-secondary" asp-action="Index">← Zurück zum Dashboard</a>
+                    <form asp-controller="AdminLeague" asp-action="ValidateReserveData" method="post" class="d-inline" onsubmit="return confirm('Reservefahrer-Daten dieser Liga prüfen?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button class="btn btn-outline-info w-100" type="submit">Reserve-Daten prüfen</button>
+                    </form>
+                    <form asp-action="RebuildLeagueStats" method="post" class="d-inline" onsubmit="return confirm('Stats für diese Liga neu berechnen?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button class="btn btn-outline-warning w-100" type="submit">Stats dieser Liga neu berechnen</button>
+                    </form>
+                    <a class="btn btn-primary" asp-controller="AdminLeague" asp-action="EnterRace" asp-route-leagueId="@Model.Id">Renn-Ergebnis eintragen</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @if (recentRaceUndos.Count > 0)
+    {
+        <div class="card mb-4 shadow-sm league-page-surface">
+            <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                <strong>Letzte Löschungen rückgängig</strong>
+                <button class="btn btn-sm btn-outline-secondary" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="***REMOVED***recentRaceUndosCollapse"
+                        aria-expanded="false"
+                        aria-controls="recentRaceUndosCollapse">
+                    Ein-/Ausklappen
+                </button>
+            </div>
+            <div id="recentRaceUndosCollapse" class="collapse">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Zeit (UTC)</th>
+                                    <th>Gelöschtes Rennen</th>
+                                    <th>Benutzer</th>
+                                    <th class="text-end">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var undo in recentRaceUndos)
+                                {
+                                    <tr>
+                                        <td>@undo.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>***REMOVED***@undo.OriginalRaceId</td>
+                                        <td>@undo.Actor</td>
+                                        <td class="text-end">
+                                            <form asp-controller="AdminLeague" asp-action="UndoDeleteRace" method="post" class="d-inline" onsubmit="return confirm('Gelöschtes Rennen wiederherstellen?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="undoId" value="@undo.Id" />
+                                                <button class="btn btn-sm btn-outline-success" type="submit">Wiederherstellen</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4 shadow-sm league-page-surface">
+        <div class="card-header"><strong>Liga-Details</strong></div>
+        <div class="card-body">
+            <form asp-action="UpdateLeague" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="col-md-4">
+                    <label class="form-label">Name</label>
+                    <input class="form-control" name="name" value="@Model.Name" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Beschreibung</label>
+                    <input class="form-control" name="description" value="@Model.Description" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" type="submit">Speichern</button>
+                </div>
+            </form>
+
+            <hr />
+
+            @if (!Model.IsArchived)
+            {
+                <form asp-action="ArchiveLeague" method="post" class="row g-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="col-md-8">
+                        <label class="form-label">Name in Ewiger Liste (Archivname)</label>
+                        <input class="form-control" name="archivedName" placeholder="z. B. ERC MAIN S10" value="@Model.Name" />
+                    </div>
+                    <div class="col-md-4 d-grid">
+                        <button class="btn btn-outline-warning" type="submit" onclick="return confirm('Liga als abgeschlossen markieren? Dabei wird auch der .xlsx Snapshot aktualisiert.');">Liga als abgeschlossen markieren</button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-warning d-flex justify-content-between align-items-center mb-0">
+                    <div>
+                        Diese Liga ist abgeschlossen und erscheint mit <strong>@(Model.ArchivedName ?? Model.Name)</strong> in der Ewigen Liste.
+                        @if (Model.ArchivedAt.HasValue)
+                        {
+                            <span class="text-muted">(seit @Model.ArchivedAt.Value.ToString("dd.MM.yyyy"))</span>
+                        }
+                    </div>
+                    <form asp-action="UnarchiveLeague" method="post" class="ms-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">Wieder aktiv setzen</button>
+                    </form>
+                </div>
+            }
+
+            <hr />
+
+            <div class="d-flex flex-column gap-2">
+                <div class="small text-muted">Reset / Saison-Neustart: Entfernt alle Fahrer, Rennen, Events, Strafen und Undo-Einträge dieser Liga. Funktioniert auch bei abgeschlossener Liga.</div>
+                <form asp-action="ClearLeagueData" method="post" class="d-inline"
+                      onsubmit="return confirm('Diese Liga wirklich vollständig leeren? Alle aktuellen Liga-Daten werden entfernt. Bei abgeschlossener Liga wird vorher ein .xlsx Snapshot aktualisiert.');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button class="btn btn-outline-danger" type="submit">Liga vollständig leeren</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* === Formulare außerhalb der Tabellen, per form="..." referenziert === *@
+
+    @* Standings *@
+    @foreach (var s in Model.Standings)
+    {
+        <form asp-controller="AdminLeague" asp-action="SaveStanding" method="post" id="save-standing-@s.RowId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="rowId" value="@s.RowId" />
+            <input type="hidden" name="leagueId" value="@Model.Id" />
+        </form>
+        <form asp-controller="AdminLeague" asp-action="DeleteStanding" method="post" id="del-standing-@s.RowId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="rowId" value="@s.RowId" />
+        </form>
+    }
+    <form asp-controller="AdminLeague" asp-action="SaveStanding" method="post" id="add-standing">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="leagueId" value="@Model.Id" />
+    </form>
+
+    <div class="card mb-4 shadow-sm league-page-surface league-page-surface--standings">
+        <div class="card-header"><strong>Bestenliste</strong></div>
+        <div class="card-body p-0">
+            <table class="table table-sm align-middle mb-0 league-page-standings-table">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:80px">***REMOVED***</th>
+                        <th>Fahrer</th>
+                        <th style="width:90px">Nr.</th>
+                        <th>Team</th>
+                        <th style="width:120px">Reserve?</th>
+                        <th>Reservefahrer</th>
+                        <th style="width:90px">Siege</th>
+                        <th style="width:90px">Punkte</th>
+                        <th style="width:140px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Standings)
+                    {
+                        var f = $"save-standing-{s.RowId}";
+                        var d = $"del-standing-{s.RowId}";
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="number" name="position" value="@s.Position" form="@f" required /></td>
+                            <td>
+                                <input class="form-control form-control-sm js-driver-input" name="driver" value="@s.Driver" form="@f" autocomplete="off" list="driver-suggestions" required />
+                            </td>
+                            <td><input class="form-control form-control-sm" type="number" min="0" max="999" name="driverNumber" value="@s.DriverNumber" form="@f" /></td>
+                            <td>
+                                <select class="form-select form-select-sm" name="team" form="@f">
+                                    <option value="">-- Team wählen --</option>
+                                    @foreach (var t in F1TeamsHelper.Teams)
+                                    {
+                                        <option value="@t.Name" selected="@(t.Name == s.Team ? "selected" : null)">@t.Name</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm js-reserve-toggle" name="isReserveDriver" form="@f" data-target="reserve-for-@s.RowId">
+                                    <option value="false" selected="@(!s.IsReserveDriver ? "selected" : null)">Nein</option>
+                                    <option value="true" selected="@(s.IsReserveDriver ? "selected" : null)">Ja</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm" id="reserve-for-@s.RowId" name="reserveForDriver" form="@f" disabled="@(!s.IsReserveDriver ? "disabled" : null)">
+                                    <option value="">-- Hauptfahrer wählen --</option>
+                                    @foreach (var mainDriver in mainDriverOptions)
+                                    {
+                                        <option value="@mainDriver" selected="@(string.Equals(mainDriver, s.ReserveForDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><input class="form-control form-control-sm" type="number" name="wins" value="@s.Wins" form="@f" /></td>
+                            <td><input class="form-control form-control-sm" type="number" name="points" value="@s.Points" form="@f" /></td>
+                            <td>
+                                <button class="btn btn-sm btn-success" type="submit" form="@f">✔</button>
+                                <button class="btn btn-sm btn-outline-danger" type="submit" form="@d"
+                                        onclick="return confirm('Eintrag löschen?');">🗑️</button>
+                            </td>
+                        </tr>
+                    }
+                    <tr class="league-page-add-row">
+                        <td><input class="form-control form-control-sm" type="number" name="position" placeholder="***REMOVED***" form="add-standing" required /></td>
+                        <td><input class="form-control form-control-sm js-driver-input" name="driver" placeholder="Fahrer" form="add-standing" autocomplete="off" list="driver-suggestions" required /></td>
+                        <td><input class="form-control form-control-sm" type="number" min="0" max="999" name="driverNumber" placeholder="Nr." form="add-standing" /></td>
+                        <td>
+                            <select class="form-select form-select-sm" name="team" form="add-standing">
+                                <option value="">-- Team wählen --</option>
+                                @foreach (var t in F1TeamsHelper.Teams)
+                                {
+                                    <option value="@t.Name">@t.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm js-reserve-toggle" name="isReserveDriver" form="add-standing" data-target="reserve-for-add-standing">
+                                <option value="false" selected="selected">Nein</option>
+                                <option value="true">Ja</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm" id="reserve-for-add-standing" name="reserveForDriver" form="add-standing" disabled>
+                                <option value="">-- Hauptfahrer wählen --</option>
+                                @foreach (var mainDriver in mainDriverOptions)
+                                {
+                                    <option value="@mainDriver">@mainDriver</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input class="form-control form-control-sm" type="number" name="wins" value="0" form="add-standing" /></td>
+                        <td><input class="form-control form-control-sm" type="number" name="points" value="0" form="add-standing" /></td>
+                        <td><button class="btn btn-sm btn-primary" type="submit" form="add-standing">+ Hinzufügen</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @section Scripts {
+        <datalist id="driver-suggestions"></datalist>
+        <script>
+            (() => {
+                const toggles = Array.from(document.querySelectorAll('.js-reserve-toggle'));
+
+                const sync = (toggle) => {
+                    const targetId = toggle.getAttribute('data-target');
+                    if (!targetId) return;
+                    const target = document.getElementById(targetId);
+                    if (!target) return;
+
+                    const isReserve = (toggle.value || '').toLowerCase() === 'true';
+                    target.disabled = !isReserve;
+                    if (!isReserve) {
+                        target.value = '';
+                    }
+                };
+
+                for (const toggle of toggles) {
+                    toggle.addEventListener('change', () => sync(toggle));
+                    sync(toggle);
+                }
+
+                const datalist = document.getElementById('driver-suggestions');
+                let timer = null;
+                let lastQuery = '';
+                const cache = new Map();
+
+                async function loadSuggestions(q, input) {
+                    if (!datalist || q.length < 2 || q === lastQuery) return;
+                    lastQuery = q;
+                    let items;
+                    if (cache.has(q)) {
+                        items = cache.get(q);
+                    } else {
+                        try {
+                            const resp = await fetch(`/Admin/DriverSuggestions?q=${encodeURIComponent(q)}`, { credentials: 'same-origin' });
+                            if (!resp.ok) return;
+                            items = await resp.json();
+                            cache.set(q, items);
+                        } catch { return; }
+                    }
+                    datalist.innerHTML = '';
+                    const seen = new Set();
+                    for (const m of items) {
+                        const key = (m.gamerTag || '').toLowerCase();
+                        if (!key || seen.has(key)) continue;
+                        seen.add(key);
+                        const opt = document.createElement('option');
+                        opt.value = m.gamerTag;
+                        opt.label = `${m.platform} • ${m.discordName}`;
+                        datalist.appendChild(opt);
+                    }
+                    input.classList.toggle('is-valid', items.some(m => m.exact && m.gamerTag.toLowerCase() === q.toLowerCase()));
+                }
+
+                document.addEventListener('input', (ev) => {
+                    const t = ev.target;
+                    if (!(t instanceof HTMLInputElement) || !t.classList.contains('js-driver-input')) return;
+                    const val = (t.value || '').trim();
+                    clearTimeout(timer);
+                    timer = setTimeout(() => loadSuggestions(val, t), 200);
+                });
+            })();
+        </script>
+    }
+
+    @* Races *@
+    @foreach (var r in Model.Races)
+    {
+        <form asp-controller="AdminLeague" asp-action="SaveRace" method="post" id="save-race-@r.RowId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="rowId" value="@r.RowId" />
+            <input type="hidden" name="leagueId" value="@Model.Id" />
+        </form>
+        <form asp-controller="AdminLeague" asp-action="DeleteRace" method="post" id="del-race-@r.RowId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="rowId" value="@r.RowId" />
+        </form>
+    }
+
+    <div class="card mb-4 shadow-sm league-page-surface">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Rennen</strong>
+            <a class="btn btn-sm btn-primary" asp-controller="AdminLeague" asp-action="EnterRace" asp-route-leagueId="@Model.Id">Renn-Ergebnis eintragen</a>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:220px">Datum / Start</th>
+                        <th>Strecke</th>
+                        <th>Sieger</th>
+                        <th>Schnellste Runde</th>
+                        <th>Reserve-Einsätze</th>
+                        <th style="width:140px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Races)
+                    {
+                        var f = $"save-race-{r.RowId}";
+                        var d = $"del-race-{r.RowId}";
+                        var reserveAssignments = r.ReserveAssignments
+                            .Where(x => !string.IsNullOrWhiteSpace(x.ReserveDriver) && !string.IsNullOrWhiteSpace(x.MainDriver))
+                            .OrderBy(x => x.ReserveDriver)
+                            .ToList();
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="datetime-local" name="date" value="@r.Date.ToString("yyyy-MM-ddTHH:mm")" form="@f" required /></td>
+                            <td><input class="form-control form-control-sm" name="track" value="@r.Track" form="@f" required /></td>
+                            <td><input class="form-control form-control-sm" name="winner" value="@r.Winner" form="@f" /></td>
+                            <td><input class="form-control form-control-sm" name="fastestLap" value="@r.FastestLap" form="@f" /></td>
+                            <td>
+                                @if (reserveAssignments.Count == 0)
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                                else
+                                {
+                                    <div class="small d-flex flex-column gap-1">
+                                        @foreach (var assignment in reserveAssignments)
+                                        {
+                                            <span class="badge text-bg-info text-start">@assignment.ReserveDriver → @assignment.MainDriver</span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-success" type="submit" form="@f">✔</button>
+                                <button class="btn btn-sm btn-outline-danger" type="submit" form="@d"
+                                        onclick="return confirm('Rennen löschen?');">❌</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm league-page-surface">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center gap-2">
+            <strong>📅 Anstehende Events</strong>
+            <a class="btn btn-sm btn-outline-primary" asp-controller="AdminRaceCalendar" asp-action="Index">
+                Renn-Kalender verwalten <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="card-body">
+            <p class="mb-0 text-muted small">
+                Renntermine werden zentral im <strong>Renn-Kalender</strong> verwaltet — ein Strecken-Wochenende mit Distanz und einem Termin pro Liga.
+            </p>
+        </div>
+    </div>
+</div>
+
+

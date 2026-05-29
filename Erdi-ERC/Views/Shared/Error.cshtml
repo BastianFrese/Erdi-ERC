@@ -1,0 +1,46 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Fehler";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Box, Box · Technical Issue",
+    Title     = "Da ist was auf der",
+    Highlight = "Strecke schiefgelaufen.",
+    Lead      = "Ein unerwarteter Fehler ist aufgetreten. Wir haben die Telemetrie protokolliert &ndash; du kannst jederzeit zurück in die Boxengasse.",
+    GhostText = "ERR",
+    Actions   = new List<F1ButtonVm> {
+        new() { Label = "Zur Startseite",  Href = "/",                    Variant = "primary", IconLucide = "home"       },
+        new() { Label = "Zurück",          Href = "javascript:history.back()", Variant = "ghost", IconLucide = "arrow-left" }
+    }
+})" />
+
+<section class="f1-section reveal">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);">
+                <div style="padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent);">
+                    <i class="bi bi-bug-fill" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Fehlerdetails
+                </div>
+                <div style="padding:1.25rem;">
+                    @if (Model.ShowRequestId)
+                    {
+                        <p class="mb-2 text-mute">Bitte gib bei einer Rückfrage diese Request-ID an:</p>
+                        <code class="text-mono" style="color:var(--sig-cyan);">@Model.RequestId</code>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-mute">Kein Request-Trace verfügbar.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

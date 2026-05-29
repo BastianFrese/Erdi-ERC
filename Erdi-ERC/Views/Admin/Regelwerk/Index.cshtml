@@ -1,0 +1,117 @@
+@model List<<OWNER_HANDLE>_ERC.Models.RegelwerkDocument>
+@{
+    ViewData["Title"] = "Regelwerk-Dokumente";
+    ViewData["HeroTitle"] = "Regelwerk";
+    ViewData["Kicker"] = "Dokument-Verwaltung";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="adm-page-title mb-0">Regelwerk-Dokumente</h4>
+        <p class="adm-page-sub mt-1 mb-0">PDFs &amp; Markdown-Regelwerke verwalten und versionieren.</p>
+    </div>
+    <a asp-action="Upload" class="btn btn-sm btn-primary">
+        <i class="bi bi-upload me-1"></i> Neues Dokument
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="adm-empty-state">
+        <i class="bi bi-file-earmark-text adm-empty-state__icon"></i>
+        <p>Noch keine Regelwerk-Dokumente hochgeladen.</p>
+        <a asp-action="Upload" class="btn btn-sm btn-outline-light">Jetzt hochladen</a>
+    </div>
+}
+else
+{
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr>
+                    <th>Titel</th>
+                    <th>Version</th>
+                    <th>Datei</th>
+                    <th>Hochgeladen</th>
+                    <th>Status</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var doc in Model)
+                {
+                    <tr>
+                        <td>
+                            <span class="fw-600 text-ink">@doc.Title</span>
+                            @if (!string.IsNullOrEmpty(doc.Description))
+                            {
+                                <div class="text-ink-3" style="font-size:.75rem;margin-top:.2rem;">@doc.Description</div>
+                            }
+                        </td>
+                        <td><span class="badge bg-secondary">v@doc.Version</span></td>
+                        <td>
+                            <a href="@doc.FilePath" target="_blank" class="text-ink-2 small" title="@doc.OriginalFileName">
+                                <i class="bi @(doc.ContentType == "application/pdf" ? "bi-file-earmark-pdf" : "bi-file-earmark-text") me-1"></i>
+                                @doc.OriginalFileName
+                            </a>
+                        </td>
+                        <td class="text-ink-3 small">
+                            @doc.UploadedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            @if (!string.IsNullOrEmpty(doc.UploadedBy))
+                            {
+                                <div>@doc.UploadedBy</div>
+                            }
+                        </td>
+                        <td>
+                            @if (doc.IsActive)
+                            {
+                                <span class="status-pill is-live"><i class="bi bi-check-circle-fill"></i> Aktiv</span>
+                            }
+                            else if (doc.IsArchived)
+                            {
+                                <span class="status-pill is-offline"><i class="bi bi-archive"></i> Archiviert</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill is-amber"><i class="bi bi-hourglass-split"></i> Inaktiv</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="@doc.FilePath" target="_blank" class="btn btn-xs btn-outline-secondary" title="Anzeigen / Download">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                @if (!doc.IsActive)
+                                {
+                                    <form asp-action="SetActive" asp-route-id="@doc.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-xs btn-outline-success" title="Als aktiv markieren">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                }
+                                @if (!doc.IsArchived)
+                                {
+                                    <form asp-action="Archive" asp-route-id="@doc.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-xs btn-outline-warning" title="Archivieren">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
+                                    </form>
+                                }
+                                <form asp-action="Delete" asp-route-id="@doc.Id" method="post"
+                                      onsubmit="return confirm('Dokument wirklich löschen?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-xs btn-outline-danger" title="Löschen">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

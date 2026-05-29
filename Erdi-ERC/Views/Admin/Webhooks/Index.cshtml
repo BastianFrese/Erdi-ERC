@@ -1,0 +1,262 @@
+@model List<<OWNER_HANDLE>_ERC.Models.DiscordWebhook>
+@{
+    ViewData["Title"]     = "Discord Webhooks";
+    ViewData["HeroTitle"] = "Discord Webhooks";
+    ViewData["Kicker"]    = "System · Integrationen";
+    var successMsg = TempData["WebhookSuccess"] as string;
+    var errorMsg   = TempData["WebhookError"]   as string;
+    var categories = (ViewBag.Categories as List<string>) ?? new List<string>();
+
+    // Maskiert den Webhook-Token im URL-Display (zeigt nur die Webhook-ID).
+    // Verhindert versehentliches Leaken beim Screenshare oder Screenshot.
+    string MaskUrl(string url)
+    {
+        var idx = url.IndexOf("/webhooks/", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return url;
+        var afterPrefix = url[(idx + "/webhooks/".Length)..];
+        var slash = afterPrefix.IndexOf('/');
+        if (slash < 0) return url;
+        var id = afterPrefix[..slash];
+        return $"discord.com/api/webhooks/{id}/••••••••";
+    }
+}
+
+@section Styles {
+<style>
+.wh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+.wh-card {
+    background: var(--surface-1); border: 1px solid var(--stroke-1); border-radius: var(--r-3);
+    padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: .6rem;
+    transition: border-color var(--t-fast);
+}
+.wh-card:hover { border-color: var(--stroke-2); }
+.wh-card__head { display: flex; align-items: flex-start; gap: .5rem; justify-content: space-between; }
+.wh-card__name { font-family: var(--ff-tech); font-size: .95rem; font-weight: 700; color: var(--ink); }
+.wh-card__cat {
+    display: inline-block; font-family: var(--ff-tech); font-size: .58rem; letter-spacing: .1em;
+    text-transform: uppercase; padding: .1rem .5rem; border-radius: var(--r-pill);
+    background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.wh-card__desc { font-size: .78rem; color: var(--ink-3); }
+.wh-card__url  {
+    font-family: var(--ff-mono); font-size: .65rem; color: var(--ink-4); word-break: break-all;
+    background: var(--surface-2); border: 1px solid var(--stroke-1); border-radius: var(--r-1);
+    padding: .25rem .5rem;
+}
+.wh-card__meta { font-size: .7rem; color: var(--ink-4); display: flex; gap: .75rem; flex-wrap: wrap; }
+.wh-card__actions { display: flex; gap: .4rem; margin-top: .25rem; flex-wrap: wrap; }
+.wh-btn-send {
+    flex: 1; min-width: 130px; background: var(--accent); color: ***REMOVED***fff; border: none; border-radius: var(--r-2);
+    font-family: var(--ff-tech); font-size: .7rem; letter-spacing: .07em; text-transform: uppercase;
+    padding: .4rem .8rem; cursor: pointer; text-decoration: none; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    transition: background var(--t-fast);
+}
+.wh-btn-send:hover { background: var(--accent-2); color: ***REMOVED***fff; }
+.wh-btn-icon {
+    background: transparent; border: 1px solid var(--stroke-1); color: var(--ink-3);
+    border-radius: var(--r-2); padding: .35rem .6rem; cursor: pointer; font-size: .78rem;
+    transition: all var(--t-fast); text-decoration: none;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.wh-btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.wh-btn-icon--test:hover { border-color: ***REMOVED***57f287; color: ***REMOVED***57f287; }
+.wh-btn-icon--del:hover  { border-color: ***REMOVED***ff4757; color: ***REMOVED***ff4757; }
+
+/* Create / Edit panel */
+.wh-create-panel {
+    background: var(--surface-1); border: 1px solid var(--stroke-1); border-radius: var(--r-3);
+    padding: 1.4rem 1.5rem; margin-bottom: 2rem;
+}
+.wh-input {
+    background: var(--surface-2); border: 1px solid var(--stroke-1); color: var(--ink);
+    border-radius: var(--r-2); padding: .45rem .75rem; font-size: .82rem; width: 100%;
+    transition: border-color var(--t-fast);
+}
+.wh-input:focus { outline: none; border-color: var(--accent); }
+.wh-label { font-family: var(--ff-tech); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .25rem; display: block; }
+.wh-submit {
+    background: var(--accent); color: ***REMOVED***fff; border: none; border-radius: var(--r-2);
+    font-family: var(--ff-tech); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: .5rem 1.25rem; cursor: pointer; transition: background var(--t-fast);
+}
+.wh-submit:hover { background: var(--accent-2); }
+
+/* Edit collapse panel inside card */
+.wh-edit-collapse { display: none; }
+.wh-edit-collapse.is-open { display: block; }
+.wh-edit-collapse-inner {
+    margin-top: .75rem; padding-top: .75rem;
+    border-top: 1px dashed var(--stroke-1);
+    display: flex; flex-direction: column; gap: .5rem;
+}
+.wh-edit-row { display: grid; grid-template-columns: 1fr; gap: .35rem; }
+.wh-edit-actions { display: flex; gap: .4rem; justify-content: flex-end; margin-top: .3rem; }
+.wh-btn-save {
+    background: var(--accent); color: ***REMOVED***fff; border: none; border-radius: var(--r-2);
+    font-size: .72rem; padding: .42rem .9rem; cursor: pointer;
+}
+.wh-btn-cancel {
+    background: transparent; border: 1px solid var(--stroke-1); color: var(--ink-3);
+    border-radius: var(--r-2); font-size: .72rem; padding: .42rem .9rem; cursor: pointer;
+}
+</style>
+}
+
+<div class="adm-page-head">
+    <div class="adm-page-head__text">
+        <div class="adm-page-head__kicker">System · Integrationen</div>
+        <h1 class="adm-page-head__title">Discord Webhooks</h1>
+    </div>
+</div>
+
+@if (successMsg != null)
+{
+    <div class="adm-alert is-success mb-3"><i class="bi bi-check-circle me-2"></i>@successMsg</div>
+}
+@if (errorMsg != null)
+{
+    <div class="adm-alert is-error mb-3"><i class="bi bi-exclamation-triangle me-2"></i>@errorMsg</div>
+}
+
+@* ── Neuen Webhook anlegen ── *@
+<div class="wh-create-panel">
+    <div class="adm-section-label mb-3"><i class="bi bi-plus-circle me-1"></i>Neuer Webhook</div>
+    <form method="post" asp-controller="AdminWebhooks" asp-action="Create">
+        @Html.AntiForgeryToken()
+        <div class="row g-2 mb-2">
+            <div class="col-md-3">
+                <label class="wh-label">Name *</label>
+                <input class="wh-input" name="name" required maxlength="100" placeholder="z.B. Rennberichte" />
+            </div>
+            <div class="col-md-5">
+                <label class="wh-label">Webhook URL *</label>
+                <input class="wh-input" name="url" required type="url" maxlength="500"
+                       pattern="https://(ptb\.|canary\.)?discord(app)?\.com/api/(v\d+/)?webhooks/\d+/[\w-]+/?"
+                       title="Erwartet: https://discord.com/api/webhooks/<id>/<token>"
+                       placeholder="https://discord.com/api/webhooks/..." />
+            </div>
+            <div class="col-md-2">
+                <label class="wh-label">Kategorie</label>
+                <input class="wh-input" name="category" maxlength="64" list="wh-categories" placeholder="z.B. News" />
+                <datalist id="wh-categories">
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c"></option>
+                    }
+                </datalist>
+            </div>
+            <div class="col-md-2">
+                <label class="wh-label">Beschreibung</label>
+                <input class="wh-input" name="description" maxlength="200" placeholder="Optional" />
+            </div>
+        </div>
+        <button type="submit" class="wh-submit"><i class="bi bi-plus-lg me-1"></i>Webhook speichern</button>
+    </form>
+</div>
+
+@* ── Webhook-Liste ── *@
+<div class="adm-section-label mb-2">
+    <i class="bi bi-discord me-1"></i>Gespeicherte Webhooks (@Model.Count)
+</div>
+
+@if (!Model.Any())
+{
+    <div class="adm-empty-state">
+        <i class="bi bi-discord" style="font-size:2.5rem;color:var(--ink-4);display:block;margin-bottom:.75rem;"></i>
+        <p>Noch keine Webhooks angelegt.</p>
+    </div>
+}
+else
+{
+    <div class="wh-grid">
+        @foreach (var wh in Model)
+        {
+            <div class="wh-card" id="wh-card-@wh.Id">
+                <div class="wh-card__head">
+                    <div>
+                        <div class="wh-card__name">@wh.Name</div>
+                        @if (!string.IsNullOrEmpty(wh.Category))
+                        {
+                            <span class="wh-card__cat">@wh.Category</span>
+                        }
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(wh.Description))
+                {
+                    <div class="wh-card__desc">@wh.Description</div>
+                }
+                <div class="wh-card__url" title="Token aus Sicherheitsgründen maskiert">@MaskUrl(wh.Url)</div>
+                <div class="wh-card__meta">
+                    <span><i class="bi bi-clock me-1"></i>@wh.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                    @if (wh.LastUsedAt.HasValue)
+                    {
+                        <span><i class="bi bi-send me-1"></i>Zuletzt: @wh.LastUsedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                    }
+                    @if (!string.IsNullOrEmpty(wh.CreatedBy))
+                    {
+                        <span><i class="bi bi-person me-1"></i>@wh.CreatedBy</span>
+                    }
+                </div>
+                <div class="wh-card__actions">
+                    <a class="wh-btn-send" asp-controller="AdminWebhooks" asp-action="Send" asp-route-id="@wh.Id">
+                        <i class="bi bi-send-fill"></i> Nachricht senden
+                    </a>
+                    <form method="post" asp-controller="AdminWebhooks" asp-action="Test" asp-route-id="@wh.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="wh-btn-icon wh-btn-icon--test" title="Test-Ping senden">
+                            <i class="bi bi-broadcast"></i> Test
+                        </button>
+                    </form>
+                    <button type="button" class="wh-btn-icon" title="Bearbeiten"
+                            onclick="document.getElementById('wh-edit-@wh.Id').classList.toggle('is-open')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="post" asp-controller="AdminWebhooks" asp-action="Delete" asp-route-id="@wh.Id"
+                          onsubmit="return confirm('Webhook \'@wh.Name\' wirklich löschen?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="wh-btn-icon wh-btn-icon--del" title="Löschen">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+                </div>
+
+                @* ── Inline-Edit (collapsed) ── *@
+                <div class="wh-edit-collapse" id="wh-edit-@wh.Id">
+                    <div class="wh-edit-collapse-inner">
+                        <form method="post" asp-controller="AdminWebhooks" asp-action="Edit" asp-route-id="@wh.Id">
+                            @Html.AntiForgeryToken()
+                            <div class="wh-edit-row">
+                                <label class="wh-label">Name</label>
+                                <input class="wh-input" name="name" value="@wh.Name" required maxlength="100" />
+                            </div>
+                            <div class="wh-edit-row">
+                                <label class="wh-label">URL</label>
+                                <input class="wh-input" name="url" value="@wh.Url" required type="url" maxlength="500"
+                                       pattern="https://(ptb\.|canary\.)?discord(app)?\.com/api/(v\d+/)?webhooks/\d+/[\w-]+/?"
+                                       title="Erwartet: https://discord.com/api/webhooks/<id>/<token>" />
+                            </div>
+                            <div class="wh-edit-row">
+                                <label class="wh-label">Kategorie</label>
+                                <input class="wh-input" name="category" value="@wh.Category" maxlength="64" list="wh-categories" />
+                            </div>
+                            <div class="wh-edit-row">
+                                <label class="wh-label">Beschreibung</label>
+                                <input class="wh-input" name="description" value="@wh.Description" maxlength="200" />
+                            </div>
+                            <div class="wh-edit-actions">
+                                <button type="button" class="wh-btn-cancel"
+                                        onclick="document.getElementById('wh-edit-@wh.Id').classList.remove('is-open')">
+                                    Abbrechen
+                                </button>
+                                <button type="submit" class="wh-btn-save">
+                                    <i class="bi bi-floppy-fill me-1"></i>Speichern
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

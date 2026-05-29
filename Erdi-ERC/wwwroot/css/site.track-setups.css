@@ -1,0 +1,172 @@
+.setup-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-4);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+    box-shadow: var(--sh-1);
+    overflow: hidden;
+}
+
+.setup-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: .9rem;
+    padding: 1rem 1.05rem;
+    border-bottom: 1px solid var(--stroke-1);
+}
+
+.setup-card__body {
+    padding: 1rem 1.05rem;
+}
+
+.setup-card__sub {
+    color: var(--ink-3);
+    font-size: .78rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.setup-card__title {
+    color: ***REMOVED***fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.setup-card--collapsible {
+    cursor: pointer;
+}
+
+.setup-card--collapsible .setup-user-playground[hidden] {
+    display: none !important;
+}
+
+.setup-user-playground {
+    margin-top: .35rem;
+}
+
+.setup-user-metrics {
+    display: grid;
+    gap: .55rem;
+    margin-top: .85rem;
+    padding-top: .25rem;
+}
+
+.setup-user-metric {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) 42px;
+    gap: .6rem;
+    align-items: center;
+}
+
+.setup-user-metric span {
+    color: var(--ink-2);
+    font-size: .82rem;
+}
+
+.setup-user-metric strong {
+    color: ***REMOVED***fff;
+    font-family: var(--ff-mono);
+    font-size: .88rem;
+    text-align: right;
+}
+
+.setup-user-metric > div {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+}
+
+.setup-user-metric > div > i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, ***REMOVED***25d7ff 0%, ***REMOVED***39ff14 55%, ***REMOVED***ff5a3d 100%);
+    box-shadow: 0 0 10px rgba(37,215,255,.25);
+    transition: width var(--t-base);
+}
+
+.setup-strategy-block {
+    background: rgba(255, 193, 7, .08);
+}
+
+/* ── Interaktive Slider (immer aktiv) ────────────────────────────── */
+.setup-ingame-editor input[type="range"]:not(:disabled) {
+    cursor: ew-resize;
+    accent-color: ***REMOVED***e8002d;
+}
+
+.setup-ingame-editor input[type="range"]:not(:disabled):focus {
+    outline: none;
+}
+
+/* ── Reset-Button ─────────────────────────────────────────────────── */
+.setup-reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 6px;
+    color: rgba(255,255,255,.5);
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .28rem .65rem;
+    transition: color .18s, border-color .18s, background .18s, box-shadow .18s;
+    user-select: none;
+}
+
+.setup-reset-btn i {
+    font-size: .78rem;
+    transition: transform .35s ease;
+}
+
+.setup-reset-btn:hover {
+    color: ***REMOVED***e8002d;
+    border-color: rgba(232,0,45,.45);
+    background: rgba(232,0,45,.08);
+    box-shadow: 0 0 10px rgba(232,0,45,.15);
+}
+
+.setup-reset-btn:hover i {
+    transform: rotate(-360deg);
+}
+
+.setup-reset-btn:active {
+    transform: scale(.95);
+}
+
+.tire {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.tire--soft { background: rgba(255, 82, 82, .16); color: ***REMOVED***ff8f8f; }
+.tire--medium { background: rgba(255, 193, 7, .14); color: ***REMOVED***ffd86b; }
+.tire--hard { background: rgba(245, 245, 245, .14); color: ***REMOVED***f2f2f2; }
+.tire--inter { background: rgba(76, 175, 80, .16); color: ***REMOVED***8eff93; }
+.tire--wet { background: rgba(33, 150, 243, .16); color: ***REMOVED***79c8ff; }
+
+@media (max-width: 575.98px) {
+    .setup-card__head {
+        flex-direction: column;
+    }
+
+    .setup-user-metric {
+        grid-template-columns: 1fr;
+    }
+}

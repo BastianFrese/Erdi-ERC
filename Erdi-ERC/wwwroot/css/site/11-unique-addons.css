@@ -1,0 +1,288 @@
+/* =====================================================================
+   11 · UNIQUE ADD-ONS
+   - Achievement chips
+   - Rivalry cards
+   - Team-color theme variables (driven by body.team-*)
+   - Keyboard shortcut cheatsheet
+   - Live race-mode badge
+   - Tab race-lights animation hooks
+   ===================================================================== */
+
+/* ---- Achievement Tiers ---- */
+.achievement-chip { position: relative; }
+.achievement-chip__tier {
+    text-transform: uppercase; letter-spacing: .08em; font-size: .62rem; font-weight: 800;
+    padding: .1rem .35rem; border-radius: 999px; margin-left: .25rem;
+    background: rgba(255,255,255,.08); color: ***REMOVED***fff;
+}
+.achievement-chip--bronze   { box-shadow: inset 0 0 0 1px ***REMOVED***8a5a2bcc; }
+.achievement-chip--bronze   .achievement-chip__tier { background: linear-gradient(135deg,***REMOVED***cd7f32,***REMOVED***7a4a1f); color:***REMOVED***fff; }
+.achievement-chip--silver   { box-shadow: inset 0 0 0 1px ***REMOVED***b8becacc; }
+.achievement-chip--silver   .achievement-chip__tier { background: linear-gradient(135deg,***REMOVED***e6e8ee,***REMOVED***9aa3b1); color:***REMOVED***222; }
+.achievement-chip--gold     { box-shadow: inset 0 0 0 1px ***REMOVED***e6b400cc; }
+.achievement-chip--gold     .achievement-chip__tier { background: linear-gradient(135deg,***REMOVED***ffd24a,***REMOVED***b8860b); color:***REMOVED***1a1300; }
+.achievement-chip--platinum { box-shadow: inset 0 0 0 1px ***REMOVED***b388ffcc, 0 0 18px rgba(179,136,255,.25); }
+.achievement-chip--platinum .achievement-chip__tier { background: linear-gradient(135deg,***REMOVED***b388ff,***REMOVED***7a4dff); color:***REMOVED***fff; }
+.achievement-chip--gold,
+.achievement-chip--platinum { animation: chipShine 3.5s ease-in-out infinite; }
+@keyframes chipShine {
+    0%,100% { filter: brightness(1); }
+    50%     { filter: brightness(1.18); }
+}
+
+/* ---- Achievement Layout ---- */
+.achievements__filters {
+    display: flex; flex-wrap: wrap; gap: .35rem; margin: .25rem 0 1rem;
+}
+.ach-filter {
+    appearance: none; border: 1px solid ***REMOVED***2a2e36; background: transparent; color: ***REMOVED***d6d8de;
+    padding: .3rem .7rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
+    letter-spacing: .02em; cursor: pointer; transition: all .15s ease;
+}
+.ach-filter:hover { border-color: ***REMOVED***4a4f5a; color: ***REMOVED***fff; }
+.ach-filter.is-active {
+    background: var(--team-primary, ***REMOVED***e50914); border-color: transparent; color: ***REMOVED***fff;
+    box-shadow: 0 4px 14px rgba(229,9,20,.25);
+}
+
+.achievements__group { margin-bottom: 1.25rem; }
+.achievements__group-head {
+    display: flex; align-items: baseline; gap: .6rem; margin: 0 0 .55rem;
+}
+.achievements__group-title {
+    text-transform: uppercase; letter-spacing: .14em; font-weight: 800; font-size: .78rem; color: ***REMOVED***fff;
+}
+.achievements__group-count {
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: ***REMOVED***9aa0aa;
+}
+.achievements__grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .6rem;
+}
+
+/* ---- Achievement Chip (Card-Variante) ---- */
+.achievement-chip {
+    position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem;
+    padding: .55rem .7rem .85rem; border-radius: 12px;
+    background: ***REMOVED***14171d; color: ***REMOVED***e7e9ee; outline: none;
+    transition: transform .15s ease, box-shadow .15s ease, filter .2s ease;
+    overflow: hidden;
+}
+.achievement-chip > i.bi { font-size: 1.1rem; }
+.achievement-chip__title { font-weight: 700; }
+.achievement-chip:hover, .achievement-chip:focus-visible { transform: translateY(-1px); }
+.achievement-chip:focus-visible { box-shadow: 0 0 0 2px var(--team-primary, ***REMOVED***e50914); }
+
+.achievement-chip__progress {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+    background: rgba(255,255,255,.06);
+}
+.achievement-chip__progress-fill {
+    display: block; height: 100%; background: linear-gradient(90deg, var(--team-primary, ***REMOVED***e50914), ***REMOVED***ffd24a);
+    transition: width .4s ease;
+}
+.achievement-chip__meta {
+    flex-basis: 100%; font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: ***REMOVED***9aa0aa;
+    display: flex; align-items: center; gap: .3rem;
+}
+
+/* Locked vs Unlocked */
+.achievement-chip.is-locked {
+    filter: grayscale(.85) brightness(.7);
+}
+.achievement-chip.is-locked .achievement-chip__tier { opacity: .55; }
+.achievement-chip.is-locked:hover { filter: grayscale(.4) brightness(.9); }
+
+/* "NEU"-Marker */
+.achievement-chip__new {
+    position: absolute; top: .35rem; right: .4rem;
+    background: var(--team-primary, ***REMOVED***e50914); color: ***REMOVED***fff;
+    font-size: .58rem; font-weight: 800; letter-spacing: .12em;
+    padding: .1rem .35rem; border-radius: 6px;
+    animation: newPulse 1.6s ease-in-out infinite;
+}
+@keyframes newPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(229,9,20,.5); }
+    60%     { box-shadow: 0 0 0 8px rgba(229,9,20,0); }
+}
+.achievement-chip.is-new { box-shadow: 0 0 0 1px var(--team-primary, ***REMOVED***e50914); }
+
+/* Featured Badge im Hero */
+.featured-achievement {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .25rem .55rem; border-radius: 999px;
+    font-size: .8rem; vertical-align: middle;
+    background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+    color: var(--ink) !important;
+    -webkit-text-fill-color: var(--ink) !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+}
+.featured-achievement,
+.featured-achievement * {
+    color: var(--ink) !important;
+    -webkit-text-fill-color: var(--ink) !important;
+}
+.featured-achievement i.bi { font-size: 1rem; }
+.featured-achievement__title {
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .achievement-chip,
+    .achievement-chip--gold,
+    .achievement-chip--platinum,
+    .achievement-chip__new { animation: none !important; transition: none !important; }
+}
+
+/* ---- Live Race Hero Banner ---- */
+.live-race-banner {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .75rem 1rem; margin: 0 0 1rem;
+    border-radius: 14px; text-decoration: none; color: ***REMOVED***fff;
+    background: linear-gradient(90deg, rgba(229,9,20,.18), rgba(229,9,20,.04) 60%, transparent);
+    border: 1px solid rgba(229,9,20,.45);
+    box-shadow: 0 8px 24px rgba(229,9,20,.18), inset 0 0 0 1px rgba(255,255,255,.04);
+    position: relative; overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.live-race-banner:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(229,9,20,.28); border-color: rgba(229,9,20,.7); color:***REMOVED***fff; }
+.live-race-banner::after {
+    content: ""; position:absolute; inset:0; pointer-events:none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+    transform: translateX(-100%);
+    animation: liveSweep 4.5s ease-in-out infinite;
+}
+@keyframes liveSweep { 0%,100% { transform: translateX(-100%); } 60% { transform: translateX(120%); } }
+.live-race-banner__pulse {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: ***REMOVED***ff2d2d;
+    box-shadow: 0 0 0 0 rgba(255,45,45,.6);
+    animation: livePulse 1.4s ease-out infinite;
+    flex: 0 0 auto;
+}
+@keyframes livePulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,45,45,.6); }
+    70%  { box-shadow: 0 0 0 14px rgba(255,45,45,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,45,45,0); }
+}
+.live-race-banner__label {
+    text-transform: uppercase; letter-spacing: .14em; font-weight: 800;
+    font-size: .72rem; padding: .15rem .45rem; border-radius: 6px;
+    background: ***REMOVED***ff2d2d; color: ***REMOVED***fff;
+}
+.live-race-banner__title { font-weight: 700; flex: 1 1 auto; }
+.live-race-banner__cta { font-size: .85rem; opacity: .85; white-space: nowrap; }
+.live-race-banner__cta i { margin-right: .25rem; }
+
+/* ---------- Team color theme – alias to --accent token ---------- */
+:root {
+    --team-primary: var(--accent);
+    --team-secondary: var(--accent-2);
+}
+
+/* Dezentes Glow auf Brand & aktiver Nav-Item, das die Team-Farbe widerspiegelt */
+body[class*="team-"] .navbar-brand .brand-mark { box-shadow: 0 0 24px var(--team-primary); }
+body[class*="team-"] .topbar { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--team-primary) 35%, transparent); }
+body[class*="team-"] .nav-link.active { color: var(--team-primary) !important; }
+body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(--team-primary), var(--team-secondary)); }
+
+/* ---------- Achievement chips ---------- */
+.achievement-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .4rem .75rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    color: ***REMOVED***e6e6e6;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.achievement-chip:hover { transform: translateY(-1px); }
+.achievement-chip i { font-size: 1rem; }
+.achievement-chip__title { white-space: nowrap; }
+
+.achievement-chip--amber  { border-color: rgba(255,176,32,.45);  color: ***REMOVED***ffd27a; box-shadow: 0 0 18px rgba(255,176,32,.18); }
+.achievement-chip--cyan   { border-color: rgba(64,200,255,.45);  color: ***REMOVED***b9eaff; box-shadow: 0 0 18px rgba(64,200,255,.18); }
+.achievement-chip--green  { border-color: rgba(80,220,120,.45);  color: ***REMOVED***b6f3c8; box-shadow: 0 0 18px rgba(80,220,120,.18); }
+.achievement-chip--violet { border-color: rgba(180,120,255,.45); color: ***REMOVED***dccaff; box-shadow: 0 0 18px rgba(180,120,255,.18); }
+
+/* ---------- Rivalry cards ---------- */
+.rivalry-card .rivalry-bar {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(220,60,60,.25), rgba(80,220,120,.25));
+    overflow: hidden;
+}
+.rivalry-card .rivalry-bar__fill {
+    position: absolute; inset: 0;
+    width: 50%;
+    background: linear-gradient(90deg, ***REMOVED***50dc78, ***REMOVED***b6f3c8);
+    border-right: 1px solid rgba(255,255,255,.6);
+    transition: width .3s ease;
+}
+
+/* ---------- Live race-mode pill ---------- */
+.live-race-pill {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .35rem .7rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, ***REMOVED***ff1d1d, ***REMOVED***b80505);
+    color: ***REMOVED***fff; font-weight: 800; letter-spacing: .14em; font-size: .72rem;
+    text-transform: uppercase;
+    box-shadow: 0 0 18px rgba(255,29,29,.45);
+    animation: liveRacePulse 1.4s ease-in-out infinite;
+}
+.live-race-pill .live-race-pill__dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: ***REMOVED***fff; box-shadow: 0 0 10px ***REMOVED***fff;
+}
+@keyframes liveRacePulse {
+    0%, 100% { box-shadow: 0 0 18px rgba(255,29,29,.45); }
+    50%      { box-shadow: 0 0 28px rgba(255,29,29,.85); }
+}
+
+/* ---------- Keyboard cheatsheet ---------- */
+.shortcut-overlay {
+    position: fixed; inset: 0;
+    background: rgba(6,7,10,.78);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 1080;
+    animation: shortcutFade .18s ease both;
+}
+.shortcut-overlay.is-open { display: flex; }
+.shortcut-overlay__card {
+    width: min(520px, 92vw);
+    background: linear-gradient(180deg, ***REMOVED***11141a, ***REMOVED***0a0c10);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px;
+    padding: 1.25rem 1.5rem;
+    color: ***REMOVED***e6e6e6;
+    box-shadow: 0 30px 80px rgba(0,0,0,.7);
+}
+.shortcut-overlay h3 { font-family: Orbitron, sans-serif; letter-spacing: .12em; font-size: 1rem; margin: 0 0 1rem; color: var(--team-primary); }
+.shortcut-row { display: flex; align-items: center; justify-content: space-between; padding: .35rem 0; border-bottom: 1px dashed rgba(255,255,255,.06); }
+.shortcut-row:last-child { border-bottom: 0; }
+.shortcut-keys kbd {
+    display: inline-block; padding: .15rem .45rem; margin-left: .25rem;
+    border-radius: 6px; background: ***REMOVED***1a1d24; border: 1px solid ***REMOVED***2a2e36;
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: ***REMOVED***fff;
+}
+@keyframes shortcutFade { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
+
+/* ---- Rivalry Sparkline ---- */
+.rivalry-spark { display:flex; gap:4px; }
+.rivalry-spark__dot { width:10px; height:10px; border-radius:50%; background:***REMOVED***2a2e36; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+.rivalry-spark__dot.is-w { background: linear-gradient(135deg, ***REMOVED***1ed760, ***REMOVED***0aa84a); }
+.rivalry-spark__dot.is-l { background: linear-gradient(135deg, ***REMOVED***ff4d4f, ***REMOVED***c62828); }
+.rivalry-spark__dot.is-d { background: linear-gradient(135deg, ***REMOVED***b0b6c0, ***REMOVED***6b7280); }
+

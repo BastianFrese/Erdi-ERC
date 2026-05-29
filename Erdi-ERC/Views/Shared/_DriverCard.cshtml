@@ -1,0 +1,66 @@
+@model <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    var profile = ViewBag.Profile as DriverProfile;
+    var photo = profile?.PhotoUrl ?? "/images/placeholder-driver.png";
+    var age = profile?.Age?.ToString() ?? "--";
+    var number = "94";
+    if (Model != null)
+    {
+        try
+        {
+            var prop = Model.GetType().GetProperty("DriverNumber");
+            var val = prop?.GetValue(Model);
+            if (val != null) number = val.ToString() ?? "94";
+        }
+        catch { /* ignore reflection failures, fallback to default */ }
+    }
+}
+<div class="driver-card-root">
+    <div class="driver-card__inner">
+        <div class="driver-card__top">
+            <div class="driver-card__age-tile">
+                <div class="age-number">@age</div>
+                <div class="age-label">ALTER</div>
+            </div>
+            <div class="driver-card__logo">
+                <img src="/images/erc-logo.png" alt="ERC League Racing" />
+            </div>
+        </div>
+
+        <div class="driver-card__flag">
+            <img src="/images/flags/de.png" alt="Deutschland" />
+        </div>
+
+        <div class="driver-card__photo-wrap">
+            <img class="driver-photo" src="@photo" alt="Fahrerfoto" />
+        </div>
+
+        <div class="driver-card__name">
+            <div class="driver-name">@Model.Driver</div>
+            <div class="driver-community"><img src="/images/erc-logo-small.png" alt="ERC"/> ERDI´s RACING COMMUNITY</div>
+        </div>
+
+        <div class="driver-card__carbon">
+            <div class="carbon-inner">
+                <div class="sponsor left"><img src="/images/logos/aston-martin.png" alt="Aston Martin"/></div>
+                <div class="sponsor middle">
+                    <img class="track-outline" src="/images/tracks/monaco-outline.png" alt="Monaco"/>
+                    <div class="track-label">MONACO</div>
+                </div>
+                <div class="sponsor right">
+                    <img src="/images/logos/fanatec.png" alt="Fanatec"/>
+                    <img src="/images/logos/moza.png" alt="Moza Racing"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="driver-card__footer">
+            <img src="/images/logos/ea-sports-white.png" alt="EA Sports" />
+            <img src="/images/logos/f1-white.png" alt="F1 25/26" />
+            <img src="/images/logos/f1-licensed-white.png" alt="Licensed" />
+        </div>
+
+        <div class="driver-card__big-number">***REMOVED***@number</div>
+    </div>
+</div>

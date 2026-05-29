@@ -1,0 +1,445 @@
+@model <OWNER_HANDLE>_ERC.Models.AboutMeProfile?
+@{
+    var p = Model;
+    ViewData["Title"] = p != null ? $"Über {p.DisplayName}" : "Über mich";
+    Layout = "_Layout";
+
+    string accent = p?.AccentColor ?? "***REMOVED***e10600";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+    /* ── Hero banner ────────────────────────────────────────────────── */
+    .abp-hero {
+        position: relative;
+        height: 300px;
+        background: var(--surface-1);
+        background-size: cover;
+        background-position: center 30%;
+        background-attachment: scroll;
+        overflow: hidden;
+    }
+    .abp-hero__overlay {
+        position: absolute; inset: 0;
+        background:
+            linear-gradient(to bottom,
+                rgba(0,0,0,.10) 0%,
+                rgba(0,0,0,.20) 55%,
+                rgba(7,8,11,.70) 85%,
+                rgba(7,8,11,.95) 100%);
+    }
+    .abp-hero__accent {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 4px;
+        background: @accent;
+        box-shadow: 0 0 24px @(accent)88;
+    }
+    .abp-hero__number {
+        position: absolute;
+        right: 2rem; bottom: 1.5rem;
+        font-family: var(--ff-tech);
+        font-size: clamp(4rem, 10vw, 8rem);
+        font-weight: 900;
+        color: rgba(255,255,255,.06);
+        line-height: 1;
+        pointer-events: none;
+        user-select: none;
+        letter-spacing: -.04em;
+    }
+
+    /* ── Identity row ───────────────────────────────────────────────── */
+    .abp-identity {
+        display: flex;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-top: -56px;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 2;
+        flex-wrap: wrap;
+        padding-top: 0;
+    }
+    .abp-identity--no-banner {
+        margin-top: 0;
+        padding-top: 2rem;
+        align-items: center;
+    }
+    .abp-avatar {
+        width: 96px; height: 96px;
+        border-radius: 50%;
+        border: 4px solid var(--bg);
+        object-fit: cover;
+        background: var(--surface-2);
+        flex-shrink: 0;
+        box-shadow: 0 4px 24px rgba(0,0,0,.5);
+    }
+    .abp-avatar-fb {
+        width: 96px; height: 96px;
+        border-radius: 50%;
+        border: 4px solid var(--bg);
+        background: var(--surface-2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.8rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 24px rgba(0,0,0,.5);
+    }
+    .abp-identity__info {
+        flex: 1;
+        padding-bottom: .25rem;
+        min-width: 0;
+    }
+    .abp-name {
+        font-family: var(--ff-tech);
+        font-weight: 900;
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        color: var(--ink);
+        line-height: 1.1;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        flex-wrap: wrap;
+    }
+    .abp-number-badge {
+        font-family: var(--ff-tech);
+        font-size: .75rem;
+        font-weight: 700;
+        color: @accent;
+        background: @(accent)22;
+        border: 1px solid @(accent)55;
+        border-radius: var(--r-pill);
+        padding: .15rem .65rem;
+    }
+    .abp-tagline {
+        font-size: .9rem;
+        color: var(--ink-3);
+        margin-top: .2rem;
+        font-style: italic;
+    }
+    .abp-socials {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        margin-top: .65rem;
+    }
+    .abp-social-btn {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: var(--surface-1);
+        border: 1px solid var(--stroke-1);
+        border-radius: var(--r-pill);
+        color: var(--ink-3);
+        font-size: .7rem;
+        font-family: var(--ff-tech);
+        letter-spacing: .05em;
+        padding: .3rem .85rem;
+        text-decoration: none;
+        transition: all var(--t-fast);
+    }
+    .abp-social-btn:hover { border-color: @accent; color: @accent; background: @(accent)15; }
+    .abp-social-btn i { font-size: .95rem; }
+
+    /* ── Layout grid ────────────────────────────────────────────────── */
+    .abp-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 1.75rem;
+        align-items: start;
+    }
+    @@media(max-width:900px){ .abp-grid { grid-template-columns: 1fr; } }
+
+    /* ── Bio card ───────────────────────────────────────────────────── */
+    .abp-card {
+        background: var(--surface-1);
+        border: 1px solid var(--stroke-1);
+        border-radius: var(--r-3);
+        overflow: hidden;
+    }
+    .abp-card__head {
+        display: flex; align-items: center; gap: .5rem;
+        padding: .65rem 1.1rem;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--stroke-1);
+        font-family: var(--ff-tech);
+        font-size: .62rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+    }
+    .abp-card__head i { color: @accent; }
+    .abp-card__body { padding: 1.25rem 1.4rem; }
+
+    /* ── Markdown bio ───────────────────────────────────────────────── */
+    .abp-bio { line-height: 1.8; color: var(--ink-2); font-size: .88rem; }
+    .abp-bio h1,.abp-bio h2,.abp-bio h3 {
+        font-family: var(--ff-tech);
+        color: var(--ink);
+        margin: 1.25rem 0 .5rem;
+    }
+    .abp-bio h2 { font-size: 1rem; border-bottom: 1px solid var(--stroke-1); padding-bottom: .35rem; }
+    .abp-bio h3 { font-size: .88rem; color: @accent; }
+    .abp-bio strong { color: var(--ink); }
+    .abp-bio code {
+        background: var(--surface-2); border: 1px solid var(--stroke-1);
+        border-radius: var(--r-1); padding: .05rem .4rem;
+        font-family: var(--ff-mono); font-size: .8em;
+    }
+    .abp-bio pre {
+        background: var(--surface-2); border: 1px solid var(--stroke-1);
+        border-radius: var(--r-2); padding: .85rem 1rem;
+        font-family: var(--ff-mono); font-size: .78rem; overflow-x: auto;
+    }
+    .abp-bio blockquote {
+        border-left: 3px solid @accent;
+        padding-left: 1rem;
+        color: var(--ink-3);
+        margin: .75rem 0;
+        font-style: italic;
+    }
+    .abp-bio ul, .abp-bio ol { padding-left: 1.5rem; }
+    .abp-bio a { color: @accent; text-decoration: none; }
+    .abp-bio a:hover { text-decoration: underline; }
+
+    /* ── Facts sidebar ──────────────────────────────────────────────── */
+    .abp-fact-list { display: flex; flex-direction: column; gap: .65rem; }
+    .abp-fact {
+        display: flex; flex-direction: column; gap: .15rem;
+        padding: .65rem .85rem;
+        background: var(--surface-2);
+        border: 1px solid var(--stroke-1);
+        border-radius: var(--r-2);
+        border-left: 3px solid @accent;
+    }
+    .abp-fact__label {
+        font-family: var(--ff-tech);
+        font-size: .55rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+    }
+    .abp-fact__value {
+        font-size: .82rem;
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* ── Empty state ────────────────────────────────────────────────── */
+    .abp-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--ink-4);
+    }
+    .abp-empty i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+    .abp-empty p { font-size: .85rem; }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+@if (p != null && !string.IsNullOrEmpty(p.BackgroundUrl))
+{
+    <style>
+    .abp-page-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+    }
+    .abp-page-bg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        opacity: .18;
+        display: block;
+    }
+    </style>
+    <div class="abp-page-bg" aria-hidden="true"><img src="@p.BackgroundUrl" alt="" loading="lazy" /></div>
+}
+
+@if (p == null)
+{
+    <partial name="_F1PageHero" model="@(new F1PageHeroVm {
+        Eyebrow   = "ERC",
+        Title     = "Über",
+        Highlight = "mich",
+        Lead      = "Diese Seite wurde noch nicht eingerichtet.",
+        GhostText = "ABOUT"
+    })" />
+    <div class="container" style="padding:3rem 1rem;">
+        <div class="abp-empty">
+            <i class="bi bi-person-x"></i>
+            <p>Hier gibt es noch nichts zu sehen.</p>
+        </div>
+    </div>
+}
+else
+{
+    @* ── Hero Banner ──────────────────────────────────────────────────── *@
+    @if (p.ShowBanner)
+    {
+    <div class="abp-hero" style="@(!string.IsNullOrEmpty(p.BannerUrl) ? $"background-image:url('{p.BannerUrl}');" : "")">
+        <div class="abp-hero__overlay"></div>
+        @if (!string.IsNullOrEmpty(p.RacingNumber))
+        {
+            <div class="abp-hero__number">***REMOVED***@p.RacingNumber</div>
+        }
+        <div class="abp-hero__accent"></div>
+    </div>
+    }
+
+    <div class="container" style="padding-top:0; padding-bottom:3rem;">
+
+        @* ── Identity row ──────────────────────────────────────────────── *@
+        <div class="abp-identity @(!p.ShowBanner ? "abp-identity--no-banner" : "")">
+            @if (!string.IsNullOrEmpty(p.AvatarUrl))
+            {
+                <img class="abp-avatar" src="@p.AvatarUrl" alt="@p.DisplayName" />
+            }
+            else
+            {
+                <div class="abp-avatar-fb">👤</div>
+            }
+            <div class="abp-identity__info">
+                <div class="abp-name">
+                    @p.DisplayName
+                    @if (!string.IsNullOrEmpty(p.RacingNumber))
+                    {
+                        <span class="abp-number-badge">***REMOVED***@p.RacingNumber</span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(p.Tagline))
+                {
+                    <div class="abp-tagline">@p.Tagline</div>
+                }
+
+                @* Social Buttons *@
+                <div class="abp-socials">
+                    @if (!string.IsNullOrEmpty(p.DiscordUsername))
+                    {
+                        <span class="abp-social-btn" style="color:***REMOVED***5865f2;border-color:rgba(88,101,242,.3);">
+                            <i class="bi bi-discord"></i> @p.DiscordUsername
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(p.TwitchUrl))
+                    {
+                        <a class="abp-social-btn" href="@p.TwitchUrl" target="_blank" rel="noopener" style="color:***REMOVED***9146ff;">
+                            <i class="bi bi-twitch"></i> Twitch
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(p.YouTubeUrl))
+                    {
+                        <a class="abp-social-btn" href="@p.YouTubeUrl" target="_blank" rel="noopener" style="color:***REMOVED***ff0000;">
+                            <i class="bi bi-youtube"></i> YouTube
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(p.InstagramUrl))
+                    {
+                        <a class="abp-social-btn" href="@p.InstagramUrl" target="_blank" rel="noopener" style="color:***REMOVED***e1306c;">
+                            <i class="bi bi-instagram"></i> Instagram
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(p.TwitterUrl))
+                    {
+                        <a class="abp-social-btn" href="@p.TwitterUrl" target="_blank" rel="noopener">
+                            <i class="bi bi-twitter-x"></i> X
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(p.SteamUrl))
+                    {
+                        <a class="abp-social-btn" href="@p.SteamUrl" target="_blank" rel="noopener" style="color:***REMOVED***1b9bc2;">
+                            <i class="bi bi-steam"></i> Steam
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* ── Content grid ───────────────────────────────────────────────── *@
+        <div class="abp-grid">
+
+            @* Main bio *@
+            <div>
+                @if (!string.IsNullOrEmpty(p.Bio))
+                {
+                    <div class="abp-card">
+                        <div class="abp-card__head"><i class="bi bi-file-earmark-person-fill"></i> Über mich</div>
+                        <div class="abp-card__body">
+                            <div class="abp-bio">@Html.Raw(RenderMarkdown(p.Bio))</div>
+                        </div>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(p.ShortBio))
+                {
+                    <div class="abp-card">
+                        <div class="abp-card__head"><i class="bi bi-file-earmark-person-fill"></i> Über mich</div>
+                        <div class="abp-card__body">
+                            <p class="abp-bio">@p.ShortBio</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Sidebar facts *@
+            <div class="abp-fact-list">
+                @if (!string.IsNullOrEmpty(p.FavoriteTrack))
+                {
+                    <div class="abp-fact">
+                        <div class="abp-fact__label"><i class="bi bi-geo-alt-fill"></i> Lieblingsstrecke</div>
+                        <div class="abp-fact__value">@p.FavoriteTrack</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(p.FavoriteCar))
+                {
+                    <div class="abp-fact">
+                        <div class="abp-fact__label"><i class="bi bi-car-front-fill"></i> Lieblingsauto</div>
+                        <div class="abp-fact__value">@p.FavoriteCar</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(p.RacingNumber))
+                {
+                    <div class="abp-fact">
+                        <div class="abp-fact__label"><i class="bi bi-hash"></i> Rennnummer</div>
+                        <div class="abp-fact__value">***REMOVED***@p.RacingNumber</div>
+                    </div>
+                }
+                <div class="abp-fact">
+                    <div class="abp-fact__label"><i class="bi bi-calendar3"></i> Mitglied seit</div>
+                    <div class="abp-fact__value">@p.CreatedAt.ToString("MMMM yyyy")</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+@functions {
+    static string RenderMarkdown(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var s = System.Net.WebUtility.HtmlEncode(text);
+        // Headings
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^***REMOVED******REMOVED******REMOVED*** (.+)$", "<h3>$1</h3>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^***REMOVED******REMOVED*** (.+)$",  "<h2>$1</h2>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^***REMOVED*** (.+)$",   "<h1>$1</h1>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        // Code blocks before inline
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"```[\r\n]?([\s\S]*?)```", "<pre><code>$1</code></pre>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"`([^`\n]+)`", "<code>$1</code>");
+        // Bold / italic
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"\*\*\*(.+?)\*\*\*", "<strong><em>$1</em></strong>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"\*\*(.+?)\*\*",     "<strong>$1</strong>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"\*(.+?)\*",         "<em>$1</em>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"_([^_\n]+)_",       "<em>$1</em>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"~~(.+?)~~",         "<del>$1</del>");
+        // Blockquote
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^&gt; (.+)$", "<blockquote>$1</blockquote>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        // Links
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"\[([^\]]+)\]\((https?://[^\)]+)\)", "<a href=\"$2\" target=\"_blank\" rel=\"noopener\">$1</a>");
+        // Lists
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"(?m)^- (.+)$", "<li>$1</li>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"(<li>.*?</li>(\n|$))+", "<ul>$0</ul>", System.Text.RegularExpressions.RegexOptions.Singleline);
+        // Line breaks
+        s = s.Replace("\r\n", "\n").Replace("\n\n", "</p><p>").Replace("\n", "<br />");
+        return "<p>" + s + "</p>";
+    }
+}

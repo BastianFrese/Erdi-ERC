@@ -1,0 +1,20 @@
+/* Driver card styles (highly custom, card/sleeve layout) */
+.driver-card-root { width:360px; height:640px; position:relative; font-family:var(--ff-body); }
+.driver-card__inner { position:relative; width:100%; height:100%; border-radius:20px; padding:18px; box-sizing:border-box; border:6px solid ***REMOVED***ff1d1d; background:linear-gradient(135deg,***REMOVED***110000 10%, ***REMOVED***9a2b00 35%, ***REMOVED***ffd24a 95%); overflow:hidden; }
+.driver-card__top { display:flex; align-items:flex-start; gap:12px; }
+.driver-card__age-tile { background:***REMOVED***0f0f0f; padding:12px 14px; border-radius:8px; display:flex; flex-direction:column; align-items:flex-start; box-shadow:0 4px 18px rgba(0,0,0,.6); border-right:4px solid rgba(255,255,255,.03); }
+.driver-card__age-tile .age-number { font-size:36px; font-weight:800; color:***REMOVED***fff; }
+.driver-card__age-tile .age-label { font-size:12px; color:***REMOVED***fff; letter-spacing:.18em; margin-top:4px; }
+.driver-card__logo img { height:58px; }
+.driver-card__flag img { position:absolute; left:16px; top:110px; width:56px; border-radius:8px; border:2px solid ***REMOVED***fff; }
+.driver-card__photo-wrap { position:absolute; left:80px; top:60px; width:220px; height:310px; display:flex; align-items:center; justify-content:center; overflow:visible; }
+.driver-photo { width:220px; height:310px; object-fit:cover; border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,.6); }
+.driver-card__name { position:absolute; left:18px; bottom:180px; color:***REMOVED***fff; }
+.driver-card__name .driver-name { font-size:36px; font-weight:800; }
+.driver-card__name .driver-community { display:flex; align-items:center; gap:8px; font-size:12px; color:***REMOVED***fff; margin-top:6px; }
+.driver-card__carbon { position:absolute; left:12px; right:12px; bottom:70px; height:110px; background:linear-gradient(180deg,***REMOVED***0b0b0b,***REMOVED***1c1c1c); border-radius:12px; border:3px solid rgba(255,255,255,.04); display:flex; align-items:center; justify-content:center; }
+.carbon-inner { width:96%; display:flex; align-items:center; justify-content:space-between; }
+.carbon-inner .sponsor img { max-height:44px; display:block; }
+.driver-card__footer { position:absolute; left:12px; right:12px; bottom:12px; height:44px; display:flex; align-items:center; justify-content:flex-start; gap:18px; }
+.driver-card__footer img { height:28px; filter:brightness(1) invert(1); }
+.driver-card__big-number { position:absolute; right:8px; top:40px; font-size:160px; color:rgba(255,160,0,.12); -webkit-text-stroke:1px rgba(0,0,0,.3); transform:translateY(20px); }

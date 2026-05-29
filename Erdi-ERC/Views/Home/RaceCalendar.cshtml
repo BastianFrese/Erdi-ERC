@@ -1,0 +1,282 @@
+@using <OWNER_HANDLE>_ERC.Helpers
+@using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Models.UiComponents
+@{
+    ViewData["Title"] = "Race Calendar";
+
+    var settings = (RaceCalendarSettings?)ViewBag.CalendarSettings ?? new RaceCalendarSettings();
+    var leagues  = (ViewBag.Leagues  as List<League>)      ?? new List<League>();
+    var weekends = (ViewBag.Weekends as List<RaceWeekend>) ?? new List<RaceWeekend>();
+
+    var seasonTitle    = string.IsNullOrWhiteSpace(settings.SeasonTitle) ? "Saison-Kalender" : settings.SeasonTitle;
+    var seasonSubtitle = string.IsNullOrWhiteSpace(settings.SeasonSubtitle)
+        ? "Alle Renntermine der ERC-Ligen auf einen Blick."
+        : settings.SeasonSubtitle;
+
+    var bgUrl     = string.IsNullOrWhiteSpace(settings.BackgroundImageFileName)
+                        ? null
+                        : "/uploads/calendar/" + settings.BackgroundImageFileName;
+    var today    = DateTime.Today;
+
+    var orderedWeekends = weekends.OrderBy(w => w.Order).ThenBy(w => w.Id).ToList();
+    var upcomingLegs    = orderedWeekends.SelectMany(w => w.Legs).Where(l => l.Date >= today).OrderBy(l => l.Date).ToList();
+    var nextLeg         = upcomingLegs.FirstOrDefault();
+    var nextWeekendId   = nextLeg?.RaceWeekendId;
+
+    var leagueLookup = leagues.ToDictionary(l => l.Id, l => l, StringComparer.OrdinalIgnoreCase);
+    var startInPreview = Context.Request.Query.ContainsKey("preview");
+
+    string FormatDay(DateTime d)  => d.ToString("ddd", new System.Globalization.CultureInfo("de-DE")).ToUpperInvariant();
+    string FormatTime(DateTime d) => d.ToString("HH:mm");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+        /* ───────── Saison-Poster (= Render-View + Discord-Vorschau) ───────── */
+        .rc-poster-doc {
+            position: relative; color: ***REMOVED***fff; overflow: hidden;
+            border-radius: var(--r-3); border: 1px solid var(--stroke-1);
+            box-shadow: var(--sh-2);
+            max-width: 1100px; margin: 0 auto;
+            background-color: ***REMOVED***0b1117;
+            background-image: var(--rc-bg-image, none);
+            background-size: cover; background-position: center;
+        }
+        /* Dunkler Verlauf über dem Hintergrundbild für lesbaren Content */
+        .rc-poster-doc::before {
+            content: ""; position: absolute; inset: 0; z-index: 0;
+            background: linear-gradient(180deg, rgba(8,10,16,.55) 0%, rgba(8,10,16,.78) 100%);
+            pointer-events: none;
+        }
+        .rc-poster-doc > * { position: relative; z-index: 1; }
+        .rc-poster-doc__chequer {
+            position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 2;
+            background-image: linear-gradient(90deg, ***REMOVED***fff 0, ***REMOVED***fff 12px, transparent 12px, transparent 24px),
+                              linear-gradient(90deg, transparent 0, transparent 12px, ***REMOVED***fff 12px, ***REMOVED***fff 24px);
+            background-size: 24px 6px; background-position: 0 0, 0 0;
+        }
+
+        .rc-poster-doc__head {
+            display: flex; flex-direction: column; align-items: center; gap: .9rem;
+            padding: 2.4rem 1.6rem 1.6rem;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            text-align: center;
+        }
+        .rc-poster-doc__logo {
+            width: 130px; height: auto; filter: drop-shadow(0 6px 18px rgba(0,0,0,.55));
+        }
+        .rc-poster-doc__eyebrow {
+            font: 700 .68rem/1 var(--ff-tech); letter-spacing: .25em; text-transform: uppercase;
+            color: var(--sig-cyan);
+        }
+        .rc-poster-doc__title {
+            font: 900 clamp(1.9rem, 4.4vw, 2.8rem)/.95 var(--ff-heading);
+            text-transform: uppercase; letter-spacing: -.01em; margin: 0; color: ***REMOVED***fff;
+        }
+        .rc-poster-doc__sub {
+            font: 400 .95rem/1.45 var(--ff-body); color: rgba(255,255,255,.72); max-width: 580px; margin: 0;
+        }
+
+        .rc-poster-doc__body { padding: 1.4rem 1.4rem 1.6rem; display: flex; flex-direction: column; gap: .6rem; }
+        .rc-poster-doc__row {
+            display: grid;
+            grid-template-columns: 50px 72px 1fr auto;
+            gap: .9rem; align-items: center;
+            padding: .85rem 1rem;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 6px;
+            background: rgba(255,255,255,.04);
+            position: relative; overflow: hidden;
+        }
+        .rc-poster-doc__row::before {
+            content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: transparent;
+        }
+        .rc-poster-doc__row.is-next {
+            border-color: rgba(34, 211, 238, .55);
+            background: linear-gradient(135deg, rgba(34,211,238,.10), rgba(34,211,238,.02));
+        }
+        .rc-poster-doc__row.is-next::before { background: var(--sig-cyan); }
+        .rc-poster-doc__order {
+            font: 900 1.5rem/1 var(--ff-heading); text-align: center;
+            font-feature-settings: "tnum"; color: ***REMOVED***fff;
+        }
+        .rc-poster-doc__flag { font-size: 2.3rem; line-height: 1; text-align: center; filter: drop-shadow(0 4px 12px rgba(0,0,0,.55)); }
+        .rc-poster-doc__main { min-width: 0; display: flex; flex-direction: column; gap: .35rem; }
+        .rc-poster-doc__track {
+            font: 900 1.05rem/1.05 var(--ff-heading); text-transform: uppercase; letter-spacing: .02em; color: ***REMOVED***fff;
+        }
+        .rc-poster-doc__track .next-tag {
+            display: inline-block; margin-left: .45rem;
+            font: 700 .54rem/1 var(--ff-tech); letter-spacing: .18em; text-transform: uppercase;
+            color: ***REMOVED***0b1117; background: var(--sig-cyan);
+            padding: .22rem .5rem; border-radius: 3px; vertical-align: middle;
+        }
+        .rc-poster-doc__distance {
+            display: inline-flex; align-items: center;
+            font: 700 .58rem/1 var(--ff-tech); letter-spacing: .14em; text-transform: uppercase;
+            color: ***REMOVED***ff4b4b; border: 1px solid rgba(255,75,75,.5);
+            padding: .25rem .55rem; border-radius: 999px;
+            background: rgba(255,75,75,.08); align-self: flex-start;
+        }
+        .rc-poster-doc__legs { display: flex; gap: .4rem; flex-wrap: wrap; }
+        .rc-poster-doc__leg {
+            display: flex; flex-direction: column; gap: .15rem;
+            min-width: 88px;
+            padding: .45rem .6rem;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 5px;
+            background: rgba(0,0,0,.35);
+            text-align: center;
+        }
+        .rc-poster-doc__leg.is-next {
+            border-color: rgba(34,211,238,.6);
+            background: rgba(34,211,238,.08);
+        }
+        .rc-poster-doc__leg-league { font: 700 .54rem/1 var(--ff-tech); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+        .rc-poster-doc__leg.is-next .rc-poster-doc__leg-league { color: var(--sig-cyan); }
+        .rc-poster-doc__leg-date   { font: 700 .85rem/1 var(--ff-tech); color: ***REMOVED***fff; margin-top: .3rem; }
+        .rc-poster-doc__leg-time   { font: 700 .64rem/1 var(--ff-tech); color: rgba(255,255,255,.6); margin-top: .2rem; }
+
+        .rc-poster-doc__footer {
+            display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
+            padding: .9rem 1.4rem 1.2rem;
+            border-top: 1px solid rgba(255,255,255,.08);
+            font: 700 .6rem/1 var(--ff-tech); letter-spacing: .18em; text-transform: uppercase;
+            color: rgba(255,255,255,.5);
+        }
+
+        @@media (max-width: 600px) {
+            .rc-poster-doc__row { grid-template-columns: 36px 50px 1fr; }
+            .rc-poster-doc__legs { grid-column: 1 / -1; }
+            .rc-poster-doc__leg { flex: 1; min-width: 0; }
+        }
+
+        /* ───────── Vollbild-Modus (Discord-Vorschau via ?preview=1) ───────── */
+        body.rc-preview-active { overflow: hidden; }
+        body.rc-preview-active .f1-home-backdrop,
+        body.rc-preview-active .erdi-empty-state,
+        body.rc-preview-active > nav,
+        body.rc-preview-active > header,
+        body.rc-preview-active > footer,
+        body.rc-preview-active main > nav,
+        body.rc-preview-active main > header,
+        body.rc-preview-active main > footer { display: none !important; }
+        body.rc-preview-active .rc-poster-doc {
+            position: fixed; inset: 1.2rem; max-width: none; margin: 0;
+            max-height: calc(100vh - 2.4rem); overflow-y: auto;
+            z-index: 9999;
+        }
+        body.rc-preview-active .rc-preview-backdrop {
+            display: block;
+            position: fixed; inset: 0; z-index: 9998;
+            background: rgba(0,0,0,.86); backdrop-filter: blur(8px);
+        }
+        .rc-preview-backdrop { display: none; }
+        .rc-preview-close {
+            position: fixed; top: 1.2rem; right: 1.2rem; z-index: 10000;
+            background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: ***REMOVED***fff;
+            width: 36px; height: 36px; border-radius: 50%; font-size: .9rem; cursor: pointer;
+            display: none; align-items: center; justify-content: center;
+            transition: background .15s ease;
+        }
+        .rc-preview-close:hover { background: rgba(225,6,0,.75); }
+        body.rc-preview-active .rc-preview-close { display: flex; }
+    </style>
+}
+
+@if (orderedWeekends.Count == 0)
+{
+    <section class="erdi-empty-state reveal">
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-calendar-x"></i></span>
+            <div class="empty-state__title">Keine Renn-Wochenenden eingetragen</div>
+            <p class="empty-state__lead">Sobald die Saison feststeht, erscheinen die Strecken hier.</p>
+        </div>
+    </section>
+}
+else
+{
+    <div class="rc-poster-doc reveal" style="@(bgUrl is null ? "" : $"--rc-bg-image: url('{bgUrl}');")">
+        <div class="rc-poster-doc__chequer"></div>
+
+        <header class="rc-poster-doc__head">
+            <img class="rc-poster-doc__logo" src="~/images/ERCLogoHighRes1.png" alt="<OWNER_HANDLE>'s Racing Community" />
+            <span class="rc-poster-doc__eyebrow">F1 26 · ERC Season Schedule</span>
+            <h1 class="rc-poster-doc__title">@seasonTitle</h1>
+            <p class="rc-poster-doc__sub">@seasonSubtitle</p>
+        </header>
+
+        <div class="rc-poster-doc__body">
+            @foreach (var w in orderedWeekends)
+            {
+                var isNextWeekend = w.Id == nextWeekendId;
+                var orderedLegs = w.Legs.OrderBy(l => l.Date).ToList();
+                <div class="rc-poster-doc__row @(isNextWeekend ? "is-next" : "")">
+                    <div class="rc-poster-doc__order">@w.Order.ToString("00")</div>
+                    <div class="rc-poster-doc__flag">@RaceFlagHelper.Resolve(w.Track)</div>
+                    <div class="rc-poster-doc__main">
+                        <div class="rc-poster-doc__track">
+                            @w.Track
+                            @if (isNextWeekend)
+                            {
+                                <span class="next-tag">Next</span>
+                            }
+                        </div>
+                        <span class="rc-poster-doc__distance">@w.DistancePercent% Race</span>
+                    </div>
+                    <div class="rc-poster-doc__legs">
+                        @if (orderedLegs.Count == 0)
+                        {
+                            <span style="font-size:.6rem; color:rgba(255,255,255,.45); letter-spacing:.12em; text-transform:uppercase; align-self:center;">—</span>
+                        }
+                        else
+                        {
+                            @foreach (var leg in orderedLegs)
+                            {
+                                var league = leagueLookup.TryGetValue(leg.LeagueId, out var lg) ? lg : null;
+                                var leagueShort = league?.Name ?? leg.LeagueId;
+                                var isNextLeg = leg == nextLeg;
+                                <div class="rc-poster-doc__leg @(isNextLeg ? "is-next" : "")">
+                                    <span class="rc-poster-doc__leg-league">@leagueShort</span>
+                                    <span class="rc-poster-doc__leg-date">@FormatDay(leg.Date) @leg.Date.ToString("dd.MM")</span>
+                                    <span class="rc-poster-doc__leg-time">@FormatTime(leg.Date)</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <footer class="rc-poster-doc__footer">
+            <span><OWNER_HANDLE>'s Racing Community</span>
+            <span>F1 26 · @DateTime.Now.Year</span>
+        </footer>
+    </div>
+}
+
+<div class="rc-preview-backdrop" onclick="closeCalendarPreview()"></div>
+<button type="button" class="rc-preview-close" onclick="closeCalendarPreview()" aria-label="Vorschau schließen"><i class="bi bi-x-lg"></i></button>
+
+@section Scripts {
+    <script>
+        (function () {
+            var startInPreview = @(startInPreview ? "true" : "false");
+            window.closeCalendarPreview = function () {
+                document.body.classList.remove('rc-preview-active');
+                if (history.replaceState) {
+                    history.replaceState(null, '', window.location.pathname);
+                }
+            };
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && document.body.classList.contains('rc-preview-active')) {
+                    window.closeCalendarPreview();
+                }
+            });
+            if (startInPreview) {
+                document.body.classList.add('rc-preview-active');
+            }
+        })();
+    </script>
+}

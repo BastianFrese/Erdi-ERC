@@ -1,0 +1,267 @@
+@model List<<OWNER_HANDLE>_ERC.Models.AchievementDefinition>
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "Achievement-Definitionen";
+    ViewData["Kicker"] = "Fahrer";
+    ViewData["HeroTitle"] = "Achievement-Definitionen";
+    var edit       = ViewBag.EditItem as AchievementDefinition;
+    var tiers      = new[] { "bronze", "silver", "gold", "platinum" };
+    var tones      = new[] { "amber", "cyan", "violet", "green", "red" };
+    var categories = new[] { "Siege", "Podien", "Pace", "Konstanz", "Karriere", "Community", "Saison", "Spezial" };
+    var icons      = new[]
+    {
+        "bi-award-fill","bi-trophy-fill","bi-stars","bi-gem","bi-crown-fill",
+        "bi-lightning-charge-fill","bi-fire","bi-flag-fill","bi-shield-check",
+        "bi-snow2","bi-snow","bi-graph-up","bi-graph-up-arrow","bi-stopwatch-fill","bi-stopwatch",
+        "bi-people-fill","bi-heart-fill","bi-award","bi-lightning-fill"
+    };
+    var metrics = Enum.GetValues(typeof(AchievementMetric)).Cast<AchievementMetric>().ToArray();
+
+    string MetricLabel(AchievementMetric m) => m switch
+    {
+        AchievementMetric.TotalWins            => "Gesamtsiege ≥ Target",
+        AchievementMetric.TotalPodiums         => "Gesamt-Podien ≥ Target",
+        AchievementMetric.TotalFastestLaps     => "Schnellste Runden ≥ Target",
+        AchievementMetric.TotalFinishedRaces   => "Gefinishte Rennen ≥ Target",
+        AchievementMetric.BestFinishStreak     => "Längste Finish-Serie ≥ Target",
+        AchievementMetric.AverageFinishMaxX10  => "Ø Finish ≤ Target/10 (z.B. 60 = 6,0)",
+        AchievementMetric.WinWithFastestLap    => "Sieg + Fastest Lap im selben Rennen",
+        AchievementMetric.ReserveInPoints      => "Als Reservist in den Punkten",
+        _ => m.ToString()
+    };
+
+    string TierColor(string tier) => tier switch
+    {
+        "bronze"   => "***REMOVED***cd7f32",
+        "silver"   => "***REMOVED***aaa",
+        "gold"     => "***REMOVED***ffb800",
+        "platinum" => "***REMOVED***00e5ff",
+        _          => "var(--ink-3)"
+    };
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-list-check"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Definitionen</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-check2-circle"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count(x => x.IsActive)</div>
+                <div class="adm-kpi-card__label">Aktiv</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-cpu"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count(x => x.IsBuiltIn)</div>
+                <div class="adm-kpi-card__label">Built-in</div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- Back to Achievements ---- *@
+    <div style="display:flex;justify-content:flex-end;">
+        <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminAchievements" asp-action="Index">
+            <i class="bi bi-arrow-left me-1"></i>Zurück zur Vergabe
+        </a>
+    </div>
+
+    @* ---- Formular (Anlegen / Bearbeiten) ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                @if (edit != null)
+                {
+                    <i class="bi bi-pencil-square me-2" style="color:***REMOVED***5b8cff;"></i>
+                    <span>Achievement '@edit.Title' bearbeiten</span>
+                }
+                else
+                {
+                    <i class="bi bi-plus-circle-fill me-2" style="color:***REMOVED***5b8cff;"></i>
+                    <span>Neues Achievement anlegen</span>
+                }
+            </span>
+            @if (edit != null)
+            {
+                <a class="adm-panel__head-action" asp-controller="AdminAchievements" asp-action="Definitions">
+                    <i class="bi bi-x me-1"></i>Abbrechen
+                </a>
+            }
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminAchievements" asp-action="SaveDefinition" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@(edit?.Id ?? 0)" />
+                <input type="hidden" name="IsBuiltIn" value="@((edit?.IsBuiltIn ?? false).ToString().ToLowerInvariant())" />
+
+                <div class="col-md-3">
+                    <label class="adm-form-label">Key * <span style="color:var(--ink-3);font-size:.72em;">(eindeutig, lowercase)</span></label>
+                    <input class="form-control form-control-sm" name="Key" required maxlength="64"
+                           value="@edit?.Key" placeholder="z. B. first-win"
+                           @(edit?.IsBuiltIn == true ? "readonly" : "") />
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="Title" required maxlength="128"
+                           value="@edit?.Title" placeholder="z. B. First Win" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Kategorie</label>
+                    <select class="form-select form-select-sm" name="Category">
+                        @foreach (var c in categories)
+                        {
+                            <option value="@c" selected="@(edit?.Category == c ? "selected" : null)">@c</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Tier</label>
+                    <select class="form-select form-select-sm" name="Tier">
+                        @foreach (var t in tiers)
+                        {
+                            <option value="@t" selected="@((edit?.Tier ?? "gold") == t ? "selected" : null)">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="adm-form-label">Beschreibung *</label>
+                    <input class="form-control form-control-sm" name="Description" required maxlength="512"
+                           value="@edit?.Description" placeholder="Kurztext für die Profilseite" />
+                </div>
+                <div class="col-md-5">
+                    <label class="adm-form-label">Metric *</label>
+                    <select class="form-select form-select-sm" name="Metric">
+                        @foreach (var m in metrics)
+                        {
+                            <option value="@((int)m)" selected="@(edit?.Metric == m ? "selected" : null)">@MetricLabel(m)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="adm-form-label">Target *</label>
+                    <input class="form-control form-control-sm" name="Target" type="number" min="1" required value="@(edit?.Target ?? 1)" />
+                </div>
+                <div class="col-md-1">
+                    <label class="adm-form-label">Sort</label>
+                    <input class="form-control form-control-sm" name="SortOrder" type="number" value="@(edit?.SortOrder ?? 100)" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Tone</label>
+                    <select class="form-select form-select-sm" name="Tone">
+                        @foreach (var t in tones)
+                        {
+                            <option value="@t" selected="@((edit?.Tone ?? "amber") == t ? "selected" : null)">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Icon (Bootstrap Icons)</label>
+                    <select class="form-select form-select-sm" name="Icon">
+                        @foreach (var i in icons)
+                        {
+                            <option value="@i" selected="@((edit?.Icon ?? "bi-award-fill") == i ? "selected" : null)">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 d-flex align-items-center gap-3 flex-wrap">
+                    <div class="adm-check-label">
+                        <input type="hidden" name="IsActive" value="false" />
+                        <input class="adm-checkbox" type="checkbox" name="IsActive" value="true"
+                               id="defActive" @((edit?.IsActive ?? true) ? "checked" : "") />
+                        <label class="adm-check-text" for="defActive">Aktiv</label>
+                    </div>
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-save me-1"></i>@(edit != null ? "Änderungen speichern" : "Achievement anlegen")
+                    </button>
+                </div>
+                <div class="col-12">
+                    <p class="mb-0 small" style="color:var(--ink-3);">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Built-in-Achievements können nicht gelöscht, aber deaktiviert oder mit neuem Target/Beschreibung angepasst werden.
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Liste ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-list-ul me-2" style="color:var(--accent);"></i>Achievement-Definitionen
+            </span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-list-check adm-empty__icon"></i>
+                    <span>Noch keine Definitionen vorhanden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var item in Model)
+                {
+                    <div class="adm-item-row @(item.IsActive ? "" : "opacity-50")">
+                        <div class="adm-item-row__main">
+                            <div class="adm-item-row__body">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <i class="bi @item.Icon" style="color:@TierColor(item.Tier);font-size:1.05rem;"></i>
+                                    <span class="adm-item-row__title">@item.Title</span>
+                                    <span class="adm-status-badge" style="color:@TierColor(item.Tier);background:transparent;border-color:currentColor;">@item.Tier</span>
+                                    <span class="adm-status-badge adm-status-badge--gray">@item.Category</span>
+                                    @if (item.IsBuiltIn)
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--cyan">Built-in</span>
+                                    }
+                                    @if (!item.IsActive)
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--amber">Inaktiv</span>
+                                    }
+                                </div>
+                                <div class="adm-item-row__meta">
+                                    <code style="font-size:.78rem;color:var(--sig-cyan);">@item.Key</code>
+                                    <span>·</span>
+                                    <span>@MetricLabel(item.Metric)</span>
+                                    <span>·</span>
+                                    <span><strong style="color:var(--ink);">Target: @item.Target</strong></span>
+                                </div>
+                                <div style="font-size:.78rem;color:var(--ink-3);">@item.Description</div>
+                            </div>
+                            <div class="adm-item-row__actions">
+                                <a class="btn btn-xs btn-outline-secondary"
+                                   asp-controller="AdminAchievements" asp-action="Definitions" asp-route-editId="@item.Id"
+                                   title="Bearbeiten">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-controller="AdminAchievements" asp-action="DeleteDefinition" method="post"
+                                      onsubmit="return confirm('@(item.IsBuiltIn ? "Built-in deaktivieren?" : "Definition wirklich löschen?")');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit"
+                                            title="@(item.IsBuiltIn ? "Deaktivieren" : "Löschen")">
+                                        <i class="bi @(item.IsBuiltIn ? "bi-pause-circle" : "bi-trash3")"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

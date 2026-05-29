@@ -1,0 +1,345 @@
+@using Markdig
+@using <OWNER_HANDLE>_ERC.Helpers
+@inject <OWNER_HANDLE>_ERC.Data.AppDbContext _rwDb
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment _rwEnv
+@{
+    var _activeDoc = _rwDb.RegelwerkDocuments.Where(d => d.IsActive).OrderByDescending(d => d.UploadedAt).FirstOrDefault();
+    var _archivedDocs = _rwDb.RegelwerkDocuments.Where(d => d.IsArchived && !d.IsActive).OrderByDescending(d => d.UploadedAt).Take(10).ToList();
+    ViewData["Title"] = "Regelwerk";
+    Layout = "_Layout";
+
+    // Dokument-Inhalt für Anzeige vorbereiten
+    // _sections wird für PDF, Markdown und TXT gleichermaßen befüllt
+    List<RegelwerkRenderer.Section>? _sections = null;
+    List<PdfTextExtractor.Section>? _pdfSections = null;
+    Microsoft.AspNetCore.Html.IHtmlContent? _plainContent = null;
+    string? _extractionError = null;
+    bool _fileExists = false;
+
+    if (_activeDoc != null)
+    {
+        var _physicalPath = System.IO.Path.Combine(
+            _rwEnv.WebRootPath,
+            _activeDoc.FilePath.TrimStart('/').Replace('/', System.IO.Path.DirectorySeparatorChar));
+
+        _fileExists = System.IO.File.Exists(_physicalPath);
+
+        if (_fileExists)
+        {
+            if (_activeDoc.ContentType == "application/pdf")
+            {
+                // PDF → Text extrahieren und in Sektionen aufteilen
+                try
+                {
+                    _pdfSections = PdfTextExtractor.ExtractSections(_physicalPath);
+                }
+                catch (Exception ex)
+                {
+                    _extractionError = ex.Message;
+                }
+            }
+            else
+            {
+                var _rawText = await System.IO.File.ReadAllTextAsync(_physicalPath);
+                bool _isMarkdown = _activeDoc.ContentType == "text/markdown"
+                    || _activeDoc.OriginalFileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
+
+                if (_isMarkdown)
+                {
+                    _sections = RegelwerkRenderer.Parse(_rawText);
+                }
+                else
+                {
+                    // .txt als Plaintext-Karte
+                    _plainContent = new Microsoft.AspNetCore.Html.HtmlString(
+                        $"<pre class=\"rw-plaintext\">{System.Net.WebUtility.HtmlEncode(_rawText)}</pre>");
+                }
+            }
+        }
+    }
+
+    // Icon-Pool für Sektionskarten
+    string[] _sectionIcons = [
+        "bi-flag-fill is-cyan", "bi-people-fill is-cyan", "bi-sliders is-amber",
+        "bi-clock-history is-cyan", "bi-shield-check is-cyan", "bi-trophy-fill is-cyan",
+        "bi-star-fill is-amber", "bi-gear-fill is-cyan", "bi-info-circle-fill is-cyan"
+    ];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
+        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .doc-card__body { padding:1.25rem;line-height:1.75; }
+        .rw-doc-banner { display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--surface-2);border:1px solid var(--stroke-1);border-radius:var(--r-3);margin-bottom:1.5rem; }
+        .rw-doc-banner__icon { font-size:2rem;color:var(--sig-cyan);flex-shrink:0; }
+        .rw-doc-banner__meta { flex:1;min-width:0; }
+        .rw-doc-banner__title { font-weight:700;font-size:.95rem;color:var(--ink); }
+        .rw-doc-banner__sub { font-size:.75rem;color:var(--ink-3);margin-top:.15rem; }
+        .rw-pdf-embed { width:100%;height:80vh;border:none;border-radius:var(--r-3); }
+        /* Markdown-Inhalt innerhalb doc-cards */
+        .rw-md h1,.rw-md h2 { display:none; } /* Headings sind bereits im doc-card__head */
+        .rw-md h3,.rw-md h4,.rw-md h5,.rw-md h6 { font-family:var(--ff-tech,inherit);font-size:.9rem;color:var(--ink);text-transform:uppercase;letter-spacing:.05em;margin:1.25rem 0 .4rem; }
+        .rw-md p { margin-bottom:.75rem; }
+        .rw-md ul,.rw-md ol { padding-left:1.4rem;margin-bottom:.75rem; }
+        .rw-md li { margin-bottom:.2rem; }
+        .rw-md code { background:var(--surface-2);padding:.1em .35em;border-radius:4px;font-size:.85em;color:var(--sig-cyan); }
+        .rw-md pre { background:var(--surface-2);padding:1rem;border-radius:var(--r-2);overflow-x:auto;margin-bottom:.75rem; }
+        .rw-md blockquote { border-left:3px solid var(--accent);padding:.5rem 1rem;margin:1rem 0;color:var(--ink-2);font-style:italic;background:var(--surface-glass,.03);border-radius:0 var(--r-2) var(--r-2) 0; }
+        .rw-md table { width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:.75rem; }
+        .rw-md th,.rw-md td { border:1px solid var(--stroke-1);padding:.4rem .75rem; }
+        .rw-md th { background:var(--surface-2);font-weight:700; }
+        .rw-md strong { color:var(--ink); }
+        .rw-md a { color:var(--sig-cyan); }
+        .rw-plaintext { white-space:pre-wrap;word-break:break-word;font-size:.85rem;color:var(--ink-2); }
+        /* Intro-Sektion (Inhalt vor erster Überschrift) */
+        .rw-intro { background:var(--surface-glass,.03);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.25rem;line-height:1.75; }
+        /* PDF-Text Sektionskörper */
+        .rw-pdf-text { color:var(--ink-2);font-size:.9rem;line-height:1.8; }
+        .rw-pdf-text p { margin-bottom:.9rem;text-align:justify; }
+        .rw-pdf-text p:last-child { margin-bottom:0; }
+        /* Intro */
+        .rw-intro { background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.4rem 1.6rem;line-height:1.8;color:var(--ink-2);font-size:.9rem; }
+        .rw-intro p { margin-bottom:.9rem;text-align:justify; }
+        .rw-intro p:last-child { margin-bottom:0; }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "<OWNER_HANDLE>'s Racing Community · Dokumente",
+    Title     = "Offizielles",
+    Highlight = "Regelwerk",
+    Lead      = _activeDoc != null
+        ? $"Version <span class=\"text-mono\" style=\"color:var(--sig-cyan);\">{_activeDoc.Version}</span> &ndash; Wichtige Regeln für unser Zusammenleben und Racing."
+        : "Wichtige Regeln für unser Zusammenleben und Racing.",
+    GhostText = "RULES"
+})" />
+
+
+<section class="f1-section">
+    <div class="row g-4">
+
+        @* ── Aktives Dokument: Download-Banner ─────────────────────────────── *@
+        @if (_activeDoc != null)
+        {
+            <div class="col-12">
+                <div class="rw-doc-banner">
+                    <i class="bi @(_activeDoc.ContentType == "application/pdf" ? "bi-file-earmark-pdf-fill" : "bi-file-earmark-text-fill") rw-doc-banner__icon"></i>
+                    <div class="rw-doc-banner__meta">
+                        <div class="rw-doc-banner__title">@_activeDoc.Title</div>
+                        <div class="rw-doc-banner__sub">
+                            Version @_activeDoc.Version &nbsp;·&nbsp;
+                            @_activeDoc.UploadedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                            @if (!string.IsNullOrEmpty(_activeDoc.Description))
+                            {
+                                <span>&nbsp;·&nbsp; @_activeDoc.Description</span>
+                            }
+                        </div>
+                    </div>
+                    <a href="@_activeDoc.FilePath" target="_blank" class="btn btn-sm btn-outline-light flex-shrink-0">
+                        <i class="bi bi-download me-1"></i> Download
+                    </a>
+                </div>
+            </div>
+
+            @* ── Dokument-Viewer ────────────────────────────────────────────── *@
+            @if (_extractionError != null)
+            {
+                <div class="col-12">
+                    <div class="doc-card">
+                        <div class="doc-card__body text-ink-3">
+                            <i class="bi bi-exclamation-triangle me-1 text-warning"></i>
+                            Das Dokument konnte nicht angezeigt werden. Bitte lade es direkt herunter.<br/>
+                            <a href="@_activeDoc!.FilePath" target="_blank" class="btn btn-sm btn-outline-light mt-2">
+                                <i class="bi bi-download me-1"></i> Direkt herunterladen
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (!_fileExists)
+            {
+                <div class="col-12">
+                    <div class="doc-card">
+                        <div class="doc-card__body text-ink-3">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Die Datei wurde nicht auf dem Server gefunden.
+                            <a href="@_activeDoc!.FilePath" target="_blank" class="ms-1">Direkt herunterladen.</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (_pdfSections != null && _pdfSections.Count > 0)
+            {
+                // Zeilen zu Absätzen zusammenfassen: Leerzeile = Absatzgrenze
+                Func<string, List<string>> toParagraphs = (body) => {
+                    var paras = new List<string>();
+                    var buf = new System.Text.StringBuilder();
+                    foreach (var ln in body.Split('\n'))
+                    {
+                        if (string.IsNullOrWhiteSpace(ln))
+                        {
+                            var s = buf.ToString().Trim();
+                            if (s.Length > 0) { paras.Add(s); buf.Clear(); }
+                        }
+                        else
+                        {
+                            if (buf.Length > 0) buf.Append(' ');
+                            buf.Append(ln.Trim());
+                        }
+                    }
+                    var last = buf.ToString().Trim();
+                    if (last.Length > 0) paras.Add(last);
+                    return paras;
+                };
+
+                // Intro
+                var _pdfIntro = _pdfSections.FirstOrDefault(s => string.IsNullOrEmpty(s.Heading) && !string.IsNullOrWhiteSpace(s.Body));
+                if (_pdfIntro != null)
+                {
+                    <div class="col-12">
+                        <div class="rw-intro">
+                            @foreach (var para in toParagraphs(_pdfIntro.Body))
+                            {
+                                <p>@para</p>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @foreach (var pdfSec in _pdfSections.Where(s => !string.IsNullOrEmpty(s.Heading) && !string.IsNullOrWhiteSpace(s.Body)))
+                {
+                    var _icon = _sectionIcons[pdfSec.Index % _sectionIcons.Length];
+                    var _iconParts = _icon.Split(' ');
+                    var _iconClass = _iconParts[0];
+                    var _chipVariant = _iconParts.Length > 1 ? _iconParts[1] : "";
+                    <div class="col-12">
+                        <div class="doc-card">
+                            <div class="doc-card__head">
+                                <span class="icon-chip @_chipVariant"><i class="bi @_iconClass"></i></span>
+                                @pdfSec.Heading
+                            </div>
+                            <div class="doc-card__body rw-pdf-text">
+                                @foreach (var para in toParagraphs(pdfSec.Body))
+                                {
+                                    <p>@para</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else if (_pdfSections != null && _pdfSections.Count == 0)
+            {
+                <div class="col-12">
+                    <div class="doc-card">
+                        <div class="doc-card__body text-ink-3">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Der Text konnte aus dem PDF nicht extrahiert werden.
+                            <a href="@_activeDoc!.FilePath" target="_blank" class="ms-1">Direkt herunterladen.</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (_sections != null)
+            {
+                var _intro = _sections.FirstOrDefault(s => string.IsNullOrEmpty(s.HeadingHtml));
+                if (_intro != null && !string.IsNullOrWhiteSpace(_intro.BodyHtml))
+                {
+                    <div class="col-12">
+                        <div class="rw-intro rw-md">@Html.Raw(_intro.BodyHtml)</div>
+                    </div>
+                }
+
+                @* Eine doc-card pro Abschnitt *@
+                @foreach (var sec in _sections.Where(s => !string.IsNullOrEmpty(s.HeadingHtml)))
+                {
+                    var _icon = _sectionIcons[sec.Index % _sectionIcons.Length];
+                    var _iconParts = _icon.Split(' ');
+                    var _iconClass = _iconParts[0];
+                    var _chipVariant = _iconParts.Length > 1 ? _iconParts[1] : "";
+                    <div class="col-12">
+                        <div class="doc-card">
+                            <div class="doc-card__head">
+                                <span class="icon-chip @_chipVariant"><i class="bi @_iconClass"></i></span>
+                                @Html.Raw(sec.HeadingHtml)
+                            </div>
+                            <div class="doc-card__body rw-md">@Html.Raw(sec.BodyHtml)</div>
+                        </div>
+                    </div>
+                }
+            }
+            else if (_plainContent != null)
+            {
+                <div class="col-12">
+                    <div class="doc-card">
+                        <div class="doc-card__head">
+                            <span class="icon-chip is-cyan"><i class="bi bi-file-earmark-text-fill"></i></span>
+                            @_activeDoc!.Title
+                        </div>
+                        <div class="doc-card__body rw-md">@_plainContent</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="doc-card">
+                        <div class="doc-card__body text-ink-3">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Die Datei konnte nicht gelesen werden.
+                            <a href="@_activeDoc!.FilePath" target="_blank" class="ms-1">Direkt herunterladen.</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        @* ── Kein aktives Dokument ─────────────────────────────────────────── *@
+        @if (_activeDoc == null)
+        {
+            <div class="col-12">
+                <div class="doc-card">
+                    <div class="doc-card__body text-center text-ink-3 py-5">
+                        <i class="bi bi-file-earmark-x fs-2 d-block mb-2"></i>
+                        Es ist aktuell kein Regelwerk hinterlegt.
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* ── Archivierte Versionen ───────────────────────────────────────────── *@
+        @if (_archivedDocs.Count > 0)
+        {
+            <div class="col-12">
+                <details class="doc-card">
+                    <summary class="doc-card__head" style="cursor:pointer;list-style:none;">
+                        <span class="icon-chip"><i class="bi bi-archive"></i></span>
+                        Ältere Versionen
+                        <span class="badge bg-secondary ms-auto">@_archivedDocs.Count</span>
+                    </summary>
+                    <div class="doc-card__body p-0">
+                        <table class="table table-dark table-sm mb-0" style="font-size:.82rem;">
+                            <thead><tr><th>Titel</th><th>Version</th><th>Datum</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var ad in _archivedDocs)
+                                {
+                                    <tr>
+                                        <td class="text-ink-2">@ad.Title</td>
+                                        <td><span class="badge bg-secondary">v@ad.Version</span></td>
+                                        <td class="text-ink-3">@ad.UploadedAt.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                                        <td><a href="@ad.FilePath" target="_blank" class="btn btn-xs btn-outline-secondary"><i class="bi bi-download"></i></a></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+        }
+
+    </div>
+</section>

@@ -1,0 +1,22 @@
+@model <OWNER_HANDLE>_ERC.Models.UiComponents.F1StatTileVm
+<div class="f1-stat">
+    <div class="f1-stat__head">
+        @if (!string.IsNullOrWhiteSpace(Model.IconLucide))
+        {
+            <span class="f1-stat__icon">
+                <i class="f1-icon" data-lucide="@Model.IconLucide"></i>
+            </span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Pos))
+        {
+            <span class="f1-stat__pos">@Model.Pos</span>
+        }
+    </div>
+    <div class="f1-stat__label">@Model.Label</div>
+    <div class="f1-stat__value">@Model.Value</div>
+    @if (!string.IsNullOrWhiteSpace(Model.Sub))
+    {
+        <div class="f1-stat__sub">@Html.Raw(Model.Sub)</div>
+    }
+    <div class="f1-stat__bar"><span></span></div>
+</div>

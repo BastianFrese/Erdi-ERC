@@ -1,0 +1,127 @@
+@model <OWNER_HANDLE>_ERC.Models.WebhookAutomationRule
+@using <OWNER_HANDLE>_ERC.Models
+
+@{
+    var webhooks  = (List<DiscordWebhook>)ViewData["Webhooks"]!;
+    var eventKey  = (string)ViewData["EventKey"]!;
+    var varsHint  = (string)ViewData["VarsHint"]!;
+    var isNew     = (bool)ViewData["IsNew"]!;
+    var formId    = isNew ? $"form-new-{eventKey.Replace('.', '-')}" : $"form-edit-{Model.Id}";
+}
+
+<form method="post" asp-action="Save" asp-controller="AdminWebhookAutomation" id="@formId">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id"        value="@(isNew ? "" : Model.Id.ToString())" />
+    <input type="hidden" name="eventType" value="@eventKey" />
+
+    @if (!string.IsNullOrWhiteSpace(varsHint))
+    {
+        <div class="alert alert-dark border-secondary py-2 mb-3 small">
+            <i class="bi bi-braces me-1 text-warning"></i>
+            <strong>Verfügbare Variablen:</strong>
+            <span class="font-monospace text-info">@varsHint</span>
+        </div>
+    }
+
+    <div class="row g-3">
+        @* ── Webhook & options ── *@
+        <div class="col-md-4">
+            <label class="form-label text-white-50 small">Webhook</label>
+            <select name="webhookId" class="form-select form-select-sm bg-dark text-white border-secondary" required>
+                <option value="">— Webhook wählen —</option>
+                @foreach (var wh in webhooks)
+                {
+                    if (!isNew && Model.WebhookId == wh.Id)
+                    {
+                        <option value="@wh.Id" selected>@wh.Name (@(wh.Category ?? "Allgemein"))</option>
+                    }
+                    else
+                    {
+                        <option value="@wh.Id">@wh.Name (@(wh.Category ?? "Allgemein"))</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-white-50 small">Bot-Name Override <span class="text-muted">(optional)</span></label>
+            <input type="text" name="usernameOverride" class="form-control form-control-sm bg-dark text-white border-secondary"
+                   placeholder="<OWNER_HANDLE>'s Racing Community" value="@Model.UsernameOverride" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-white-50 small">Avatar-URL Override <span class="text-muted">(optional)</span></label>
+            <input type="url" name="avatarUrlOverride" class="form-control form-control-sm bg-dark text-white border-secondary"
+                   placeholder="https://…/avatar.png" value="@Model.AvatarUrlOverride" />
+        </div>
+
+        @* ── Plain content ── *@
+        <div class="col-12">
+            <label class="form-label text-white-50 small">Nachrichtentext <span class="text-muted">(optional, unterstützt {{Variablen}})</span></label>
+            <textarea name="contentTemplate" rows="2" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace"
+                      placeholder="z.B. Neues Rennergebnis für {{Track}}!">@Model.ContentTemplate</textarea>
+        </div>
+
+        @* ── Embed toggle ── *@
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="useEmbed" value="true"
+                       id="useEmbed-@formId" @(Model.UseEmbed ? "checked" : "") onchange="toggleEmbed(this,'@formId')" />
+                <input type="hidden" name="useEmbed" value="false" />
+                <label class="form-check-label text-white-50 small" for="useEmbed-@formId">Embed verwenden</label>
+            </div>
+        </div>
+
+        @* ── Embed fields ── *@
+        <div id="embed-fields-@formId" @(Model.UseEmbed ? "" : "style=\"display:none\"") class="col-12">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label text-white-50 small">Embed-Titel</label>
+                    <input type="text" name="embedTitleTemplate" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           placeholder="z.B. 🏆 Rennergebnis – {{Track}}" value="@Model.EmbedTitleTemplate" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small">Farbe</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="color" name="embedColor" class="form-control form-control-color form-control-sm bg-dark border-secondary"
+                               value="@(Model.EmbedColor ?? "***REMOVED***e10600")" style="width:42px;height:32px" />
+                        <span class="text-muted small">Embed-Randfarbe</span>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label text-white-50 small">Embed-Beschreibung</label>
+                    <textarea name="embedDescriptionTemplate" rows="3" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace"
+                              placeholder="z.B. **Sieger:** {{Winner}}&***REMOVED***10;**Strecke:** {{Track}}">@Model.EmbedDescriptionTemplate</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small">Footer <span class="text-muted">(optional)</span></label>
+                    <input type="text" name="embedFooterTemplate" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           placeholder="z.B. <OWNER_HANDLE>'s Racing Community – {{Date}}" value="@Model.EmbedFooterTemplate" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small">Thumbnail-URL <span class="text-muted">(optional)</span></label>
+                    <input type="url" name="embedThumbnailTemplate" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           placeholder="https://…/thumb.png" value="@Model.EmbedThumbnailTemplate" />
+                </div>
+            </div>
+        </div>
+
+        @* ── Active + save ── *@
+        <div class="col-12 d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="isEnabled" value="true"
+                       id="isEnabled-@formId" @(Model.IsEnabled ? "checked" : "") />
+                <input type="hidden" name="isEnabled" value="false" />
+                <label class="form-check-label text-white-50 small" for="isEnabled-@formId">Aktiv</label>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary ms-auto">
+                <i class="bi bi-floppy2-fill me-1"></i>@(isNew ? "Regel erstellen" : "Speichern")
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    function toggleEmbed(cb, formId) {
+        var el = document.getElementById('embed-fields-' + formId);
+        if (el) el.style.display = cb.checked ? '' : 'none';
+    }
+</script>

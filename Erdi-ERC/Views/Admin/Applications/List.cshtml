@@ -1,0 +1,194 @@
+@model <OWNER_HANDLE>_ERC.Controllers.ApplicationListViewModel
+
+@{
+    ViewData["Title"] = "Bewerbungen - Liste";
+    ViewData["Kicker"] = "Admin · Bewerbungen";
+    ViewData["HeroTitle"] = "Bewerbungen";
+    ViewData["HeroSubtitle"] = "Vollständige Liste mit Filterung";
+}
+
+@section Styles {
+    <style>
+        .filter-bar { 
+            background: var(--surface-1); 
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-2);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group { display: flex; align-items: center; gap: 0.5rem; }
+        .filter-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-1);
+            background: var(--surface-0);
+            color: var(--ink);
+            font-size: 0.875rem;
+        }
+        .app-table { width: 100%; border-collapse: collapse; }
+        .app-table thead { background: var(--surface-2); }
+        .app-table th { 
+            padding: 1rem; 
+            text-align: left; 
+            font-weight: 600;
+            border-bottom: 1px solid var(--stroke-1);
+            font-size: 0.875rem;
+        }
+        .app-table td { 
+            padding: 1rem; 
+            border-bottom: 1px solid var(--stroke-1);
+        }
+        .app-table tbody tr:hover { background: var(--surface-1); }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status--pending { background: rgba(255, 193, 7, 0.1); color: ***REMOVED***ffc107; }
+        .status--accepted { background: rgba(76, 175, 80, 0.1); color: ***REMOVED***4caf50; }
+        .pagination { display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: center; }
+        .pagination a, .pagination span { 
+            padding: 0.5rem 0.75rem; 
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-1);
+            background: var(--surface-1);
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .pagination a:hover { background: var(--surface-2); }
+        .pagination .active { background: var(--sig-cyan); color: white; }
+    </style>
+}
+
+<div class="container-fluid py-5">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mb-3">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-3">@TempData["Error"]</div>
+    }
+    @{
+        var _err = TempData["Error"] as string;
+        if (!string.IsNullOrEmpty(_err) && _err.IndexOf("Konflikt", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            <div class="alert alert-warning mb-3">
+                <strong>Konflikt erkannt:</strong> Die Bewerbung wurde zwischenzeitlich von jemand anderem geändert.
+                <div style="margin-top:.5rem; display:flex; gap:.5rem;">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="if(confirm('Seite neu laden und lokale Aktion verwerfen?')) { window.location.href='@Url.Action("List","AdminApplications")'; }">Neu laden und Änderungen verwerfen</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload();">Seite neu laden</button>
+                </div>
+            </div>
+        }
+    }
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Bewerbungen</h1>
+            <p class="text-mute">@Model.Statistics.TotalApplications gesamt | @Model.Statistics.OpenApplications offen | @Model.Statistics.AcceptedApplications akzeptiert</p>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <form method="get" action="@Url.Action("List", "AdminApplications")" style="display: flex; gap: 1rem; width: 100%;">
+            <div class="filter-group">
+                <label>Division:</label>
+                <select name="division" class="filter-select" onchange="this.form.submit()">
+                    @Html.Raw("<option value=\"\">Alle</option>")
+                    @foreach (var div in new[] { "Main Division 1", "Second Crossplay Division 2", "Rookie Crossplay Division 3", "Community Crossplay Event" })
+                    {
+                        @Html.Raw($"<option value=\"{div}\"{(Model.CurrentDivision == div ? " selected" : "")}>{div}</option>")
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status:</label>
+                <select name="accepted" class="filter-select" onchange="this.form.submit()">
+                    @Html.Raw("<option value=\"\">Alle</option>")
+                    @Html.Raw($"<option value=\"false\"{(Model.CurrentAcceptedFilter == false ? " selected" : "")}>Offen</option>")
+                    @Html.Raw($"<option value=\"true\"{(Model.CurrentAcceptedFilter == true ? " selected" : "")}>Akzeptiert</option>")
+                </select>
+            </div>
+        </form>
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <a href="@Url.Action("Dashboard", "AdminApplications")" class="btn-admin btn-admin--secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Applications Table -->
+    @if (Model.Applications.Count > 0)
+    {
+        <div style="overflow-x: auto;">
+            <table class="app-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Division</th>
+                        <th>Rolle</th>
+                        <th>EA-Name</th>
+                        <th>Status</th>
+                        <th>Eingereicht</th>
+                        <th style="text-align: right;">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var app in Model.Applications)
+                    {
+                        var statusClass = app.IsAccepted ? "status--accepted" : "status--pending";
+                        var statusText = app.IsAccepted ? "Akzeptiert" : "Offen";
+
+                        <tr>
+                            <td><strong>@app.DiscordName</strong></td>
+                            <td>@app.Division</td>
+                            <td>@app.Role</td>
+                            <td>@app.GamingName <span class="text-mute small">(@app.Platform)</span></td>
+                            <td><span class="status-badge @statusClass">@statusText</span></td>
+                            <td>@app.SubmittedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td style="text-align: right;">
+                                <a href="@Url.Action("Detail", "AdminApplications", new { id = app.Id })" class="btn-admin btn-admin--secondary" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
+                                    <i class="bi bi-eye"></i> Detail
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.CurrentPage > 1 || Model.Applications.Count >= 50)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@Url.Action("List", "AdminApplications", new { page = Model.CurrentPage - 1, division = Model.CurrentDivision })">
+                        <i class="bi bi-chevron-left"></i> Zurück
+                    </a>
+                }
+                <span class="active">Seite @Model.CurrentPage</span>
+                @if (Model.Applications.Count >= 50)
+                {
+                    <a href="@Url.Action("List", "AdminApplications", new { page = Model.CurrentPage + 1, division = Model.CurrentDivision })">
+                        Weiter <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div style="background: var(--surface-1); border: 1px solid var(--stroke-1); border-radius: var(--r-2); padding: 2rem; text-align: center; color: var(--ink-secondary);">
+            <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p style="margin-top: 1rem;">Keine Bewerbungen gefunden</p>
+        </div>
+    }
+</div>

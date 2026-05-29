@@ -1,0 +1,54 @@
+***REMOVED*** --- .NET / Build output ---
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pidb
+*.svclog
+*.scc
+
+***REMOVED*** --- Visual Studio / Rider / VS Code ---
+.vs/
+.vscode/
+.idea/
+*.swp
+
+***REMOVED*** --- Test / coverage ---
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+***REMOVED*** --- Logs ---
+*.log
+logs/
+
+***REMOVED*** --- OS ---
+.DS_Store
+Thumbs.db
+
+***REMOVED*** --- Sensitive config (NIE einchecken!) ---
+***REMOVED*** appsettings.Production.json wird BEWUSST eingecheckt + gepublished,
+***REMOVED*** Secrets dort daher NUR in einem privaten Repo eintragen!
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+*.pfx
+*.key
+
+***REMOVED*** --- Uploads / User content ---
+<OWNER_HANDLE>-ERC/wwwroot/uploads/**/*
+!<OWNER_HANDLE>-ERC/wwwroot/uploads/**/.gitkeep
+
+***REMOVED*** --- Background music (große Binärdateien) ---
+<OWNER_HANDLE>-ERC/backgroundmusic/*
+!<OWNER_HANDLE>-ERC/backgroundmusic/.gitkeep
+
+***REMOVED*** --- Migration Bootstrap (enthält ggf. sensible Daten) ---
+***REMOVED*** migration_bootstrap.sql  ***REMOVED*** optional auskommentieren falls du es behalten willst

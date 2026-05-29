@@ -1,0 +1,218 @@
+/* =====================================================================
+   PAGE · EWIGE LISTE
+   F1-Broadcast-styled archive view.
+   Erweitert pages/home-index.css (muss vorher geladen sein).
+   ===================================================================== */
+
+/* =====================================================================
+   TAB NAVIGATION
+   ===================================================================== */
+.f1-ewige-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-bottom: 1rem;
+    padding-bottom: .7rem;
+    border-bottom: 1px solid var(--stroke-1);
+    position: relative;
+}
+.f1-ewige-tabs::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; left: 0;
+    width: 100%; height: 1px;
+    background: var(--telemetry-stripe-soft);
+    pointer-events: none;
+}
+.f1-ewige-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    padding: .45rem .95rem;
+    background: rgba(255,255,255,.03);
+    color: var(--ink-3);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    font: 700 .7rem/1 var(--ff-tech);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--t-fast);
+    white-space: nowrap;
+}
+.f1-ewige-tabs__tab:hover {
+    background: rgba(255,255,255,.07);
+    color: var(--ink);
+    border-color: var(--stroke-2);
+}
+.f1-ewige-tabs__tab.is-active {
+    background: rgba(0,229,255,.1);
+    color: var(--sig-cyan);
+    border-color: rgba(0,229,255,.4);
+    box-shadow: 0 0 12px rgba(0,229,255,.12), inset 0 1px 0 rgba(0,229,255,.2);
+}
+
+/* =====================================================================
+   EWIGE CARD · Archive surface
+   ===================================================================== */
+.f1-ewige-card {
+    position: relative;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%),
+        var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+    box-shadow: var(--sh-2);
+    margin-bottom: 1.5rem;
+}
+.f1-ewige-card__telemetry {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--telemetry-stripe);
+    box-shadow: 0 0 12px rgba(225,6,0,.4);
+    z-index: 2;
+    pointer-events: none;
+}
+.f1-ewige-card__corner {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 78px; height: 16px;
+    background:
+        repeating-linear-gradient(45deg, var(--ink) 0 6px, transparent 6px 12px),
+        repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.06) 6px 12px);
+    opacity: .35;
+    transform: skewX(-18deg);
+    border-left: 2px solid var(--accent);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* =====================================================================
+   TOOLBAR · Search + Export + Count
+   ===================================================================== */
+.f1-ewige-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .55rem;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--stroke-1);
+    background: linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+}
+.f1-ewige-toolbar__search {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex: 1 1 240px;
+    min-width: 0;
+    background: rgba(0,0,0,.35);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    padding: .42rem .7rem;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.f1-ewige-toolbar__search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.f1-ewige-toolbar__search .f1-icon {
+    color: var(--ink-4);
+    flex-shrink: 0;
+    width: 14px; height: 14px;
+}
+.f1-ewige-toolbar__input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--ink);
+    font: 500 .83rem/1.2 var(--ff-body);
+    min-width: 0;
+    outline: none;
+}
+.f1-ewige-toolbar__input::placeholder { color: var(--ink-4); }
+.f1-ewige-toolbar__export {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .45rem .85rem;
+    background: rgba(255,255,255,.04);
+    color: var(--ink-2);
+    border: 1px solid var(--stroke-2);
+    border-radius: var(--r-2);
+    font: 700 .7rem/1 var(--ff-tech);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--t-fast);
+    white-space: nowrap;
+}
+.f1-ewige-toolbar__export:hover {
+    background: rgba(255,255,255,.08);
+    color: ***REMOVED***fff;
+    border-color: var(--stroke-3);
+    transform: translateY(-1px);
+}
+.f1-ewige-toolbar__export:active { transform: translateY(0); }
+.f1-ewige-toolbar__export .f1-icon { width: 13px; height: 13px; }
+.f1-ewige-toolbar__count {
+    font: 700 .68rem/1 var(--ff-tech);
+    letter-spacing: .1em;
+    color: var(--ink-3);
+    margin-left: auto;
+}
+
+/* =====================================================================
+   TABLE WRAPPER + TABLE
+   ===================================================================== */
+.f1-ewige-table-wrap {
+    overflow: auto;
+    max-height: 72vh;
+    -webkit-overflow-scrolling: touch;
+}
+.f1-ewige-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--ink);
+    font-size: .84rem;
+}
+.f1-ewige-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.3));
+    color: var(--ink-3);
+    font: 700 .67rem/1 var(--ff-tech);
+    letter-spacing: var(--letter-track);
+    text-transform: uppercase;
+    padding: .85rem .65rem;
+    border-bottom: 1px solid var(--stroke-1);
+    white-space: nowrap;
+    text-align: left;
+}
+.f1-ewige-table tbody td {
+    padding: .52rem .65rem;
+    border-bottom: 1px solid var(--stroke-1);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.f1-ewige-table tbody tr {
+    transition: background var(--t-fast);
+}
+.f1-ewige-table tbody tr:hover {
+    background: rgba(255,255,255,.035);
+}
+.f1-ewige-table tbody tr:last-child td { border-bottom: 0; }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 767.98px) {
+    .f1-ewige-tabs { gap: .25rem; }
+    .f1-ewige-tabs__tab { font-size: .64rem; padding: .4rem .7rem; }
+    .f1-ewige-toolbar { padding: .6rem .75rem; gap: .4rem; }
+    .f1-ewige-card__corner { display: none; }
+    .f1-ewige-table-wrap { max-height: 60vh; }
+}

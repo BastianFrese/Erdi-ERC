@@ -1,0 +1,138 @@
+@model <OWNER_HANDLE>_ERC.Controllers.ApplicationListViewModel
+
+@{
+    ViewData["Title"] = "Akzeptierte Bewerbungen";
+    ViewData["Kicker"] = "Admin · Bewerbungen";
+    ViewData["HeroTitle"] = "Akzeptierte Bewerbungen";
+    ViewData["HeroSubtitle"] = "Alle akzeptierten Bewerbungen (Audit & Rückgängigmachung)";
+}
+
+@section Styles {
+    <style>
+        .info-banner {
+            background: rgba(0, 188, 212, 0.1);
+            border-left: 4px solid ***REMOVED***00bcd4;
+            padding: 1rem;
+            border-radius: var(--r-2);
+            margin-bottom: 2rem;
+            color: ***REMOVED***00bcd4;
+            font-size: 0.875rem;
+        }
+
+        .app-card {
+            background: var(--surface-1);
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-2);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+        }
+        .app-card-info h3 { margin: 0; color: var(--ink); }
+        .app-card-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--ink-secondary);
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(76, 175, 80, 0.1);
+            color: ***REMOVED***4caf50;
+        }
+        .acceptance-time { font-size: 0.75rem; color: var(--ink-tertiary); }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-direction: column;
+        }
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: var(--r-1);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-sm--secondary { background: var(--surface-2); color: var(--ink); }
+        .btn-sm--secondary:hover { background: var(--surface-3); }
+        .btn-sm--danger { background: rgba(244, 67, 54, 0.9); color: white; }
+        .btn-sm--danger:hover { background: rgba(244, 67, 54, 1); }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--ink-secondary);
+        }
+        .empty-state-icon { font-size: 3rem; opacity: 0.3; margin-bottom: 1rem; }
+    </style>
+}
+
+<div class="container-fluid py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Akzeptierte Bewerbungen</h1>
+            <p class="text-mute">@Model.Statistics.AcceptedApplications akzeptierte Bewerbungen</p>
+        </div>
+        <div class="col-auto">
+            <a href="@Url.Action("Dashboard", "AdminApplications")" class="btn btn-sm btn-sm--secondary">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="info-banner">
+        <i class="bi bi-info-circle"></i> Diese Liste zeigt alle akzeptierten Bewerbungen. Sie können hier auch die Akzeptanz rückgängig machen oder den Audit-Trail einsehen.
+    </div>
+
+    <!-- Applications List -->
+    @if (Model.Applications.Count > 0)
+    {
+        @foreach (var app in Model.Applications)
+        {
+            var hoursToExpire = app.AcceptedAt.HasValue ? 48 - (DateTime.UtcNow - app.AcceptedAt.Value).TotalHours : 0;
+            var isExpiring = hoursToExpire < 12 && hoursToExpire > 0;
+
+            <div class="app-card" style="@(isExpiring ? "border-left: 4px solid ***REMOVED***ff9800;" : "")">
+                <div class="app-card-info">
+                    <h3>@app.DiscordName</h3>
+                    <div class="app-card-meta">
+                        <span class="badge">✓ Akzeptiert</span>
+                        <span>@app.Division</span>
+                        <span>@app.Role</span>
+                        @if (isExpiring)
+                        {
+                            <span style="color: ***REMOVED***ff9800;"><i class="bi bi-exclamation-triangle"></i> Verfällt in @hoursToExpire.ToString("0")h</span>
+                        }
+                    </div>
+                    <div class="acceptance-time">
+                        Akzeptiert: @app.AcceptedAt?.ToString("dd.MM.yyyy HH:mm")
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="@Url.Action("Detail", "AdminApplications", new { id = app.Id })" class="btn-sm btn-sm--secondary">
+                        <i class="bi bi-eye"></i> Audit-Trail
+                    </a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <h3>Keine akzeptierten Bewerbungen</h3>
+            <p>Noch keine Bewerbungen akzeptiert</p>
+        </div>
+    }
+</div>

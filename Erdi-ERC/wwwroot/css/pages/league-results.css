@@ -1,0 +1,116 @@
+/* =====================================================================
+   PAGE · LEAGUE RESULTS
+   F1-Broadcast-styled league overview (race calendar + constructors).
+   Erweitert pages/home-index.css + pages/results.css.
+   ===================================================================== */
+
+/* =====================================================================
+   RACE CARD · Clickable race calendar entry
+   ===================================================================== */
+.f1-race-card {
+    position: relative;
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-left: 4px solid var(--race-color, var(--stroke-2));
+    border-radius: var(--r-3);
+    padding: 1rem 1.1rem;
+    height: 100%;
+    cursor: pointer;
+    transition: box-shadow var(--t-fast), transform var(--t-fast);
+    box-shadow: var(--sh-2);
+    overflow: hidden;
+}
+.f1-race-card:hover {
+    box-shadow: var(--sh-3, var(--sh-2)), 0 0 22px -8px var(--race-color, transparent);
+    transform: translateY(-2px);
+}
+.f1-race-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: .55rem;
+}
+.f1-race-card__round {
+    display: flex;
+    flex-direction: column;
+}
+.f1-race-card__round-label {
+    font: 700 .58rem/1 var(--ff-tech);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: .15rem;
+}
+.f1-race-card__round-num {
+    font: 800 1rem/1 var(--ff-tech);
+    color: var(--ink-3);
+}
+.f1-race-card__date {
+    font: 600 .72rem/1 var(--ff-body);
+    color: var(--ink-3);
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-1);
+    padding: .2rem .45rem;
+    white-space: nowrap;
+}
+.f1-race-card__track {
+    font: 700 1.15rem/1.2 var(--ff-tech);
+    color: var(--ink);
+    margin-bottom: .75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.f1-race-card__winner {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .65rem;
+    background: rgba(255,255,255,.035);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    margin-bottom: .65rem;
+    font: 600 .8rem/1 var(--ff-body);
+}
+.f1-race-card__winner-icon {
+    color: var(--text-amber, ***REMOVED***f59e0b);
+    flex-shrink: 0;
+    width: 14px; height: 14px;
+}
+.f1-race-card__winner-name {
+    color: var(--ink);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+.f1-race-card__winner-name:hover { color: var(--accent-2); }
+.f1-race-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.f1-race-card__time {
+    font: 400 .72rem/1 var(--ff-body);
+    color: var(--ink-4);
+}
+.f1-race-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font: 600 .72rem/1 var(--ff-body);
+    color: var(--accent-2, var(--sig-cyan));
+    text-decoration: none;
+    transition: color var(--t-fast);
+}
+.f1-race-card__link:hover { color: var(--ink); }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 767.98px) {
+    .f1-race-card__track { font-size: 1rem; }
+}

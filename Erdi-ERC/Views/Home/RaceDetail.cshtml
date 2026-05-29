@@ -1,0 +1,240 @@
+@model <OWNER_HANDLE>_ERC.Models.RaceResultDetailViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = $"{Model.League.Name} · {Model.Race.Track}";
+
+    var reserveDrivers = Model.League.Standings
+        .Where(s => s.IsReserveDriver && !string.IsNullOrWhiteSpace(s.Driver))
+        .GroupBy(s => s.Driver.Trim(), StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+    var raceReserveToMain = Model.Race.ReserveAssignments
+        .Where(a => !string.IsNullOrWhiteSpace(a.ReserveDriver) && !string.IsNullOrWhiteSpace(a.MainDriver))
+        .GroupBy(a => a.ReserveDriver.Trim(), StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(g => g.Key, g => g.First().MainDriver.Trim(), StringComparer.OrdinalIgnoreCase);
+
+    static string FormatRaceTime(int? ms)
+    {
+        if (!ms.HasValue) return "—";
+        var t = TimeSpan.FromMilliseconds(ms.Value);
+        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+    }
+
+    static string FormatGap(int? ms)
+    {
+        if (!ms.HasValue) return "—";
+        if (ms.Value <= 0) return "+0.000";
+        var t = TimeSpan.FromMilliseconds(ms.Value);
+        return $"+{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+    }
+
+    var podium     = Model.Rows.Where(r => r.Position is >= 1 and <= 3).OrderBy(r => r.Position).ToList();
+    var fastest    = Model.Rows.FirstOrDefault(r => r.FastestLap);
+
+    var orderedRaces = Model.League.Races.OrderBy(r => r.Date).ToList();
+    var raceIndex    = orderedRaces.FindIndex(r => r.RowId == Model.Race.RowId);
+    if (raceIndex < 0) raceIndex = 0;
+    var raceNumber   = raceIndex + 1;
+    var raceTotal    = Math.Max(orderedRaces.Count, raceNumber);
+
+    var flSubText = fastest != null
+        ? $"FL · {fastest.Driver} · {FormatRaceTime(fastest.RaceTimeMs)}"
+        : null;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/race-detail.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = $"{Model.League.Name} · Grand Prix",
+    Title     = Model.Race.Track,
+    Lead      = $"Round <strong>{raceNumber}</strong> von {raceTotal} · {Model.Race.Date.ToString("dd. MMMM yyyy")}",
+    GhostText = "RACE",
+    Actions   = new() {
+        new F1ButtonVm { Label="Zur Liga", Variant="primary", IconLucide="arrow-left", Href=Url.Action("LeagueResults","Home", new { leagueId=Model.League.Id })! },
+        new F1ButtonVm { Label="Hub",      Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10","Home")! }
+    }
+})" />
+
+<!-- ═══════════════════════════════════════════════════════════ STAT TILES -->
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "hash",
+        Label      = "Runde",
+        Value      = $"R{raceNumber:00}",
+        Sub        = $"von {raceTotal} in {Model.League.Name}"
+    })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "users",
+        Label      = "Fahrer",
+        Value      = Model.Rows.Count.ToString("00"),
+        Sub        = "Klassifizierte Starter"
+    })" />
+    @if (fastest != null)
+    {
+        <partial name="_F1StatTile" model="@(new F1StatTileVm {
+            IconLucide = "zap",
+            Label      = "Fastest Lap",
+            Value      = fastest.Driver,
+            Sub        = FormatRaceTime(fastest.RaceTimeMs)
+        })" />
+    }
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ PODIUM -->
+@if (podium.Any())
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Podium",
+            Title   = "Podium",
+            SubText = flSubText
+        })" />
+
+        <div class="row g-3">
+            @foreach (var row in podium)
+            {
+                var team   = F1TeamsHelper.GetTeamByName(row.Team);
+                var color  = team?.PrimaryColor ?? "var(--accent)";
+                var icon   = row.Position == 1 ? "trophy-fill" : row.Position == 2 ? "award-fill" : "patch-check-fill";
+                var posCls = row.Position == 1 ? "is-1" : row.Position == 2 ? "is-2" : "is-3";
+                <div class="col-md-4">
+                    <div class="f1-podium-card f1-podium-card--p@(row.Position)">
+                        <div class="f1-podium-card__header">
+                            <span class="driver-tile__pos @posCls">@($"P{row.Position}")</span>
+                            <i class="bi bi-@icon f1-podium-card__icon"></i>
+                        </div>
+                        <a class="f1-podium-card__driver"
+                           asp-controller="Profile" asp-action="ByDriverName"
+                           asp-route-driverName="@row.Driver">
+                            @row.Driver
+                        </a>
+                        <div class="f1-podium-card__team" style="color: @color;">
+                            @(team?.Name ?? row.Team)
+                        </div>
+                        <div class="f1-podium-card__footer">
+                            <span class="f1-podium-card__time">
+                                <i class="f1-icon" data-lucide="timer"></i>
+                                @FormatRaceTime(row.RaceTimeMs)
+                            </span>
+                            <span class="f1-podium-card__pts">
+                                <i class="f1-icon" data-lucide="coins"></i>
+                                @row.Points Pkt
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- ══════════════════════════════════════════════ RACE CLASSIFICATION -->
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Ergebnis",
+        Title   = "Race Classification",
+        SubText = $"{Model.Rows.Count} Fahrer"
+    })" />
+
+    @if (!Model.Rows.Any())
+    {
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-bar-chart"></i></span>
+            <div class="empty-state__title">Keine Fahrer-Daten</div>
+            <p class="empty-state__lead">Für dieses Rennen sind noch keine Ergebnisse hinterlegt.</p>
+        </div>
+    }
+    else
+    {
+        <div class="f1-results-card">
+            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+            <div class="f1-results-card__corner"    aria-hidden="true"></div>
+            <div class="table-responsive">
+                <table class="f1-results-table">
+                    <colgroup>
+                        <col style="width:60px" />
+                        <col style="min-width:180px" />
+                        <col style="min-width:140px" />
+                        <col style="width:140px" />
+                        <col style="width:140px" />
+                        <col style="width:72px" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="is-center">Pos</th>
+                            <th>Fahrer</th>
+                            <th>Team</th>
+                            <th>Zeit</th>
+                            <th>Rückstand</th>
+                            <th class="is-center">PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Rows)
+                        {
+                            var team             = F1TeamsHelper.GetTeamByName(row.Team);
+                            var color            = team?.PrimaryColor ?? "var(--ink-3)";
+                            var normalizedDriver = (row.Driver ?? string.Empty).Trim();
+                            var raceReserveFor   = raceReserveToMain.TryGetValue(normalizedDriver, out var mappedMain) ? mappedMain : null;
+                            var posClass         = row.Position == 1 ? "is-1" : row.Position == 2 ? "is-2" : row.Position == 3 ? "is-3" : "";
+                            var isDnf            = row.Position <= 0;
+                            <tr>
+                                <td class="is-center">
+                                    @if (isDnf)
+                                    {
+                                        <span class="badge bg-danger" style="font-size:.65rem;">DNF</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="driver-tile__pos @posClass">@row.Position</span>
+                                    }
+                                </td>
+                                <td style="border-left: 3px solid @color; padding-left: .7rem;">
+                                    <a class="fw-semibold text-decoration-none"
+                                       asp-controller="Profile" asp-action="ByDriverName"
+                                       asp-route-driverName="@row.Driver">@row.Driver</a>
+                                    @if (reserveDrivers.TryGetValue(normalizedDriver, out var reserveStanding))
+                                    {
+                                        var reserveForDisplay = raceReserveFor ?? reserveStanding.ReserveForDriver;
+                                        <span class="badge bg-info ms-1"
+                                              title="Ersatzfahrer@(string.IsNullOrWhiteSpace(reserveForDisplay) ? "" : $" für {reserveForDisplay}")">Ersatz</span>
+                                    }
+                                    @if (row.FastestLap)
+                                    {
+                                        <span class="sector sector--purple ms-1" title="Fastest Lap">
+                                            <i class="bi bi-lightning-charge-fill"></i> FL
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (team != null)
+                                    {
+                                        <span class="text-mono fw-semibold" style="font-size:.82rem; color:@color;">@team.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-mute" style="font-size:.82rem;">@row.Team</span>
+                                    }
+                                </td>
+                                <td class="text-mono" style="font-size:.8rem;">
+                                    @(isDnf ? "—" : FormatRaceTime(row.RaceTimeMs))
+                                </td>
+                                <td class="text-mono text-mute" style="font-size:.8rem;">
+                                    @if (isDnf) { <text>—</text> }
+                                    else { @(row.Position == 1 ? "Leader" : FormatGap(row.GapToLeaderMs)) }
+                                </td>
+                                <td class="text-tech fw-bold is-center">@row.Points</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</section>

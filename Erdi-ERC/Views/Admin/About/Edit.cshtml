@@ -1,0 +1,746 @@
+@model <OWNER_HANDLE>_ERC.Models.AboutMeProfile
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"]     = isNew ? "Profil erstellen" : $"Profil bearbeiten · {Model.DisplayName}";
+    ViewData["HeroTitle"] = isNew ? "Neues Profil" : "Profil bearbeiten";
+    ViewData["Kicker"]    = "Admin · Über-mich";
+}
+
+@section Styles {
+<style>
+/* ── Shell ─────────────────────────────────────────────────────────── */
+.abe-shell {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 1.5rem;
+    align-items: start;
+}
+@@media(max-width:1100px){ .abe-shell { grid-template-columns: 1fr; } }
+
+/* ── Editor panels ─────────────────────────────────────────────────── */
+.abe-panel {
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+}
+.abe-panel__head {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .7rem 1.1rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--stroke-1);
+    font-family: var(--ff-tech);
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.abe-panel__head i { font-size: .9rem; color: var(--accent); }
+.abe-panel__body { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+/* ── Form fields ───────────────────────────────────────────────────── */
+.abe-field { display: flex; flex-direction: column; gap: .3rem; }
+.abe-label {
+    font-family: var(--ff-tech);
+    font-size: .6rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.abe-label span { color: var(--accent); }
+.abe-input, .abe-textarea, .abe-select {
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    color: var(--ink);
+    font-family: var(--ff-sans);
+    font-size: .82rem;
+    padding: .45rem .75rem;
+    transition: border-color var(--t-fast);
+    width: 100%;
+}
+.abe-input:focus, .abe-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.abe-textarea { resize: vertical; min-height: 120px; font-family: var(--ff-mono); font-size: .78rem; }
+.abe-hint { font-size: .62rem; color: var(--ink-4); }
+.abe-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+@@media(max-width:520px){ .abe-grid-2 { grid-template-columns: 1fr; } }
+
+/* ── Color row ─────────────────────────────────────────────────────── */
+.abe-color-row { display: flex; align-items: center; gap: .6rem; }
+.abe-color-swatch {
+    width: 36px; height: 36px;
+    border-radius: var(--r-2);
+    border: 2px solid var(--stroke-2);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.abe-color-hex {
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    color: var(--ink);
+    font-family: var(--ff-mono);
+    font-size: .78rem;
+    padding: .4rem .65rem;
+    width: 110px;
+}
+.abe-presets { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .35rem; }
+.abe-preset {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform .12s, border-color .12s;
+}
+.abe-preset:hover, .abe-preset.is-selected { transform: scale(1.25); border-color: ***REMOVED***fff; }
+
+/* ── Toggle ────────────────────────────────────────────────────────── */
+.abe-toggle-row {
+    display: flex; align-items: center; gap: .75rem;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    padding: .6rem .85rem;
+}
+.abe-toggle-row label {
+    font-family: var(--ff-tech); font-size: .62rem;
+    letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+    margin: 0; cursor: pointer; flex: 1;
+}
+.abe-toggle {
+    appearance: none; -webkit-appearance: none;
+    width: 36px; height: 20px;
+    background: var(--surface-3);
+    border-radius: 20px;
+    border: 1px solid var(--stroke-2);
+    cursor: pointer;
+    position: relative;
+    transition: background var(--t-fast);
+    flex-shrink: 0;
+}
+.abe-toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: ***REMOVED***fff;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: left var(--t-fast);
+}
+.abe-toggle:checked { background: var(--accent); border-color: var(--accent); }
+.abe-toggle:checked::after { left: 18px; }
+
+/* ── Social links ──────────────────────────────────────────────────── */
+.abe-social-row {
+    display: flex; align-items: center; gap: .5rem;
+}
+.abe-social-icon {
+    width: 32px; height: 32px;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    color: var(--ink-3);
+    flex-shrink: 0;
+}
+
+/* ── Preview card ──────────────────────────────────────────────────── */
+.abe-preview {
+    position: sticky;
+    top: 1rem;
+}
+.abe-preview-card {
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
+    overflow: hidden;
+}
+.abe-pv-banner {
+    height: 90px;
+    background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+.abe-pv-banner-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.6));
+}
+.abe-pv-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--surface-1);
+    object-fit: cover;
+    position: absolute;
+    bottom: -32px; left: 1.1rem;
+    background: var(--surface-2);
+}
+.abe-pv-avatar-fb {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--surface-1);
+    background: var(--surface-3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    position: absolute;
+    bottom: -32px; left: 1.1rem;
+}
+.abe-pv-body { padding: 2.5rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: .4rem; }
+.abe-pv-name {
+    font-family: var(--ff-tech);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--ink);
+    display: flex; align-items: center; gap: .5rem;
+}
+.abe-pv-number {
+    font-family: var(--ff-tech);
+    font-size: .7rem;
+    color: var(--ink-4);
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-pill);
+    padding: .05rem .5rem;
+}
+.abe-pv-tagline { font-size: .78rem; color: var(--ink-3); font-style: italic; }
+.abe-pv-slug { font-family: var(--ff-mono); font-size: .6rem; color: var(--ink-4); }
+.abe-pv-bio { font-size: .78rem; color: var(--ink-2); line-height: 1.55; margin-top: .25rem; }
+.abe-pv-socials { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.abe-pv-social {
+    width: 28px; height: 28px;
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+    border: 1px solid var(--stroke-1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; color: var(--ink-3);
+}
+.abe-pv-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .4rem;
+    margin-top: .5rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--stroke-1);
+}
+.abe-pv-fact { font-size: .68rem; color: var(--ink-3); display: flex; flex-direction: column; gap: .1rem; }
+.abe-pv-fact strong { font-family: var(--ff-tech); font-size: .6rem; color: var(--ink-4); text-transform: uppercase; letter-spacing: .06em; font-weight: 400; }
+.abe-accent-bar {
+    height: 3px;
+    width: 100%;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.abe-actions { display: flex; gap: .75rem; align-items: center; margin-top: .5rem; }
+.abe-btn-save {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: var(--accent);
+    color: ***REMOVED***fff;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--ff-tech);
+    font-size: .65rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .55rem 1.4rem;
+    cursor: pointer;
+    transition: opacity var(--t-fast), box-shadow var(--t-fast);
+}
+.abe-btn-save:hover { opacity: .88; box-shadow: 0 0 12px var(--accent-soft); }
+.abe-btn-back {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: var(--surface-2); color: var(--ink-3);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-pill);
+    font-family: var(--ff-tech); font-size: .6rem; letter-spacing: .07em; text-transform: uppercase;
+    padding: .5rem 1rem; cursor: pointer; text-decoration: none;
+    transition: border-color var(--t-fast);
+}
+.abe-btn-back:hover { border-color: var(--ink-3); color: var(--ink); }
+
+/* ── Image source tabs ─────────────────────────────────────────────── */
+.abe-img-tabs { display: flex; gap: .3rem; margin-bottom: .4rem; }
+.abe-imgtab {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .25rem .65rem;
+    font-family: var(--ff-tech); font-size: .6rem; letter-spacing: .07em; text-transform: uppercase;
+    background: var(--surface-2); border: 1px solid var(--stroke-1); border-radius: var(--r-2);
+    color: var(--ink-3); cursor: pointer; transition: all var(--t-fast);
+}
+.abe-imgtab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.abe-imgtab:hover:not(.active) { border-color: var(--ink-3); color: var(--ink); }
+</style>
+}
+
+<div class="adm-page-head">
+    <div>
+        <div class="adm-page-kicker">@ViewData["Kicker"]</div>
+        <h1 class="adm-page-title">@ViewData["HeroTitle"]</h1>
+    </div>
+    <a class="abe-btn-back" asp-controller="AdminAbout" asp-action="Index">
+        <i class="bi bi-arrow-left"></i> Zurück
+    </a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="adm-alert adm-alert--error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>
+            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@err.ErrorMessage</div>
+            }
+        </div>
+    </div>
+}
+
+<form method="post" asp-controller="AdminAbout" asp-action="Save" id="abeForm" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="abe-shell">
+
+        @* ══ LEFT: Editor ══ *@
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+            @* ── Basis-Infos ─────────────────────────────────────────── *@
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-person-fill"></i> Basis-Informationen</div>
+                <div class="abe-panel__body">
+                    <div class="abe-grid-2">
+                        <div class="abe-field">
+                            <label class="abe-label" for="DisplayName">Anzeigename <span>*</span></label>
+                            <input class="abe-input" asp-for="DisplayName" id="DisplayName" placeholder="Max Mustermann" oninput="updatePreview()" />
+                        </div>
+                        <div class="abe-field">
+                            <label class="abe-label" for="RacingNumber">Rennnummer</label>
+                            <input class="abe-input" asp-for="RacingNumber" id="RacingNumber" placeholder="77" oninput="updatePreview()" />
+                        </div>
+                    </div>
+                    <div class="abe-grid-2">
+                        <div class="abe-field">
+                            <label class="abe-label" for="Slug">URL-Slug <span>*</span></label>
+                            <input class="abe-input" asp-for="Slug" id="Slug" placeholder="max-mustermann" oninput="normalizeSlug()" />
+                            <span class="abe-hint">Wird automatisch bereinigt · /About/<span id="slugPreview">@Model.Slug</span></span>
+                        </div>
+                        <div class="abe-field">
+                            <label class="abe-label" for="SortOrder">Reihenfolge</label>
+                            <input class="abe-input" asp-for="SortOrder" id="SortOrder" type="number" placeholder="0" />
+                        </div>
+                    </div>
+                    <div class="abe-field">
+                        <label class="abe-label" for="Tagline">Tagline</label>
+                        <input class="abe-input" asp-for="Tagline" id="Tagline" placeholder="Sim-Racer · ERC Fahrer · Teamkaptitän" oninput="updatePreview()" />
+                    </div>
+                </div>
+            </div>
+
+            @* ── Bilder ──────────────────────────────────────────────── *@
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-image"></i> Bilder</div>
+                <div class="abe-panel__body">
+
+                    @* Profilbild *@
+                    <div class="abe-field">
+                        <label class="abe-label">Profilbild</label>
+                        <div class="abe-img-tabs" id="avatarTabs">
+                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('avatar','url',this)"><i class="bi bi-link-45deg"></i> URL</button>
+                            <button type="button" class="abe-imgtab" onclick="switchImgTab('avatar','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
+                        </div>
+                        <div id="avatarUrlPane">
+                            <input class="abe-input" asp-for="AvatarUrl" id="AvatarUrl"
+                                   placeholder="https://cdn.discordapp.com/... oder https://i.imgur.com/..."
+                                   type="text" oninput="updatePreview()" />
+                            <span class="abe-hint">Discord CDN, Imgur, oder direkte Bild-URL</span>
+                        </div>
+                        <div id="avatarUploadPane" style="display:none;">
+                            <input class="abe-input" type="file" name="avatarFile" id="avatarFile"
+                                   accept=".jpg,.jpeg,.png,.webp,.gif,.avif"
+                                   onchange="previewLocalImage(this,'AvatarUrl','pvAvatar')" />
+                            <span class="abe-hint">jpg / png / webp · max. 10 MB</span>
+                        </div>
+                    </div>
+
+                    @* Banner *@
+                    <div class="abe-field">
+                        <label class="abe-label">Banner</label>
+                        <div class="abe-img-tabs" id="bannerTabs">
+                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('banner','url',this)"><i class="bi bi-link-45deg"></i> URL</button>
+                            <button type="button" class="abe-imgtab" onclick="switchImgTab('banner','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
+                        </div>
+                        <div id="bannerUrlPane">
+                            <input class="abe-input" asp-for="BannerUrl" id="BannerUrl"
+                                   placeholder="https://cdn.discordapp.com/... oder https://i.imgur.com/..."
+                                   type="text" oninput="updatePreview()" />
+                            <span class="abe-hint">Discord CDN, Imgur, oder direkte Bild-URL · Empfohlen: 1200 × 300 px</span>
+                        </div>
+                        <div id="bannerUploadPane" style="display:none;">
+                            <input class="abe-input" type="file" name="bannerFile" id="bannerFile"
+                                   accept=".jpg,.jpeg,.png,.webp,.gif,.avif"
+                                   onchange="previewLocalImage(this,'BannerUrl','pvBanner')" />
+                            <span class="abe-hint">jpg / png / webp · max. 10 MB · Empfohlen: 1200 × 300 px</span>
+                        </div>
+                        <div class="abe-toggle-row" style="margin-top:.4rem;">
+                            <input type="checkbox" class="abe-toggle" asp-for="ShowBanner" id="ShowBanner" onchange="updateBannerVisibility()" />
+                            <label for="ShowBanner">Banner auf der Seite anzeigen</label>
+                        </div>
+                    </div>
+
+                    @* Seitenhintergrund *@
+                    <div class="abe-field">
+                        <label class="abe-label">Seitenhintergrund</label>
+                        <div class="abe-img-tabs" id="backgroundTabs">
+                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('background','url',this)"><i class="bi bi-link-45deg"></i> URL</button>
+                            <button type="button" class="abe-imgtab" onclick="switchImgTab('background','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
+                        </div>
+                        <div id="backgroundUrlPane">
+                            <input class="abe-input" asp-for="BackgroundUrl" id="BackgroundUrl"
+                                   placeholder="https://cdn.discordapp.com/... oder https://i.imgur.com/..."
+                                   type="text" oninput="updatePreview()" />
+                            <span class="abe-hint">Hintergrundbild hinter dem gesamten Seiteninhalt · Empfohlen: 1920 × 1080 px</span>
+                        </div>
+                        <div id="backgroundUploadPane" style="display:none;">
+                            <input class="abe-input" type="file" name="backgroundFile" id="backgroundFile"
+                                   accept=".jpg,.jpeg,.png,.webp,.gif,.avif"
+                                   onchange="previewLocalImage(this,'BackgroundUrl',null)" />
+                            <span class="abe-hint">jpg / png / webp · max. 10 MB · Empfohlen: 1920 × 1080 px</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            @* ── Biografie ───────────────────────────────────────────── *@
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-file-earmark-text"></i> Biografie</div>
+                <div class="abe-panel__body">
+                    <div class="abe-field">
+                        <label class="abe-label" for="ShortBio">Kurzbeschreibung <span class="abe-hint" style="text-transform:none;">(max. 300 Zeichen, für Kartenvorschau)</span></label>
+                        <input class="abe-input" asp-for="ShortBio" id="ShortBio" placeholder="Kurzer Überblick..." oninput="updatePreview()" />
+                    </div>
+                    <div class="abe-field">
+                        <label class="abe-label" for="Bio">Haupttext <span class="abe-hint" style="text-transform:none;">(Markdown)</span></label>
+                        <textarea class="abe-textarea" asp-for="Bio" id="Bio" rows="8"
+                            placeholder="**Über mich**&***REMOVED***10;&***REMOVED***10;Hier kannst du deinen vollständigen Text eingeben. Markdown wird unterstützt.&***REMOVED***10;&***REMOVED***10;- Punkt 1&***REMOVED***10;- Punkt 2"></textarea>
+                        <span class="abe-hint">Unterstützt: **fett**, *kursiv*, `code`, > Zitat, ***REMOVED******REMOVED*** Überschriften</span>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Racing Facts ────────────────────────────────────────── *@
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-trophy-fill"></i> Racing Facts</div>
+                <div class="abe-panel__body">
+                    <div class="abe-grid-2">
+                        <div class="abe-field">
+                            <label class="abe-label" for="FavoriteTrack">Lieblingsstrecke</label>
+                            <input class="abe-input" asp-for="FavoriteTrack" id="FavoriteTrack" placeholder="Nordschleife" oninput="updatePreview()" />
+                        </div>
+                        <div class="abe-field">
+                            <label class="abe-label" for="FavoriteCar">Lieblingsauto</label>
+                            <input class="abe-input" asp-for="FavoriteCar" id="FavoriteCar" placeholder="Ferrari 488 GT3" oninput="updatePreview()" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Social Links ────────────────────────────────────────── *@
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-share-fill"></i> Social Links</div>
+                <div class="abe-panel__body">
+                    <div class="abe-field">
+                        <label class="abe-label" for="DiscordUsername">Discord-Nutzername</label>
+                        <div class="abe-social-row">
+                            <div class="abe-social-icon" style="color:***REMOVED***5865f2;"><i class="bi bi-discord"></i></div>
+                            <input class="abe-input" asp-for="DiscordUsername" id="DiscordUsername" placeholder="maxmustermann" oninput="updatePreview()" />
+                        </div>
+                    </div>
+                    <div class="abe-field">
+                        <label class="abe-label" for="TwitchUrl">Twitch</label>
+                        <div class="abe-social-row">
+                            <div class="abe-social-icon" style="color:***REMOVED***9146ff;"><i class="bi bi-twitch"></i></div>
+                            <input class="abe-input" asp-for="TwitchUrl" id="TwitchUrl" placeholder="https://twitch.tv/..." type="url" oninput="updatePreview()" />
+                        </div>
+                    </div>
+                    <div class="abe-field">
+                        <label class="abe-label" for="YouTubeUrl">YouTube</label>
+                        <div class="abe-social-row">
+                            <div class="abe-social-icon" style="color:***REMOVED***ff0000;"><i class="bi bi-youtube"></i></div>
+                            <input class="abe-input" asp-for="YouTubeUrl" id="YouTubeUrl" placeholder="https://youtube.com/&***REMOVED***64;..." type="url" oninput="updatePreview()" />
+                        </div>
+                    </div>
+                    <div class="abe-field">
+                        <label class="abe-label" for="InstagramUrl">Instagram</label>
+                        <div class="abe-social-row">
+                            <div class="abe-social-icon" style="color:***REMOVED***e1306c;"><i class="bi bi-instagram"></i></div>
+                            <input class="abe-input" asp-for="InstagramUrl" id="InstagramUrl" placeholder="https://instagram.com/..." type="url" oninput="updatePreview()" />
+                        </div>
+                    </div>
+                    <div class="abe-grid-2">
+                        <div class="abe-field">
+                            <label class="abe-label" for="TwitterUrl">X / Twitter</label>
+                            <div class="abe-social-row">
+                                <div class="abe-social-icon"><i class="bi bi-twitter-x"></i></div>
+                                <input class="abe-input" asp-for="TwitterUrl" id="TwitterUrl" placeholder="https://x.com/..." type="url" oninput="updatePreview()" />
+                            </div>
+                        </div>
+                        <div class="abe-field">
+                            <label class="abe-label" for="SteamUrl">Steam</label>
+                            <div class="abe-social-row">
+                                <div class="abe-social-icon" style="color:***REMOVED***1b9bc2;"><i class="bi bi-steam"></i></div>
+                                <input class="abe-input" asp-for="SteamUrl" id="SteamUrl" placeholder="https://steamcommunity.com/..." type="url" oninput="updatePreview()" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Design & Sichtbarkeit ────────────────────────────────── *@
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-palette-fill"></i> Design & Sichtbarkeit</div>
+                <div class="abe-panel__body">
+                    <div class="abe-field">
+                        <label class="abe-label">Akzentfarbe</label>
+                        <div class="abe-color-row">
+                            <input type="color" class="abe-color-swatch" id="accentSwatch" value="@(Model.AccentColor ?? "***REMOVED***e10600")" oninput="setAccent(this.value)" />
+                            <input type="text" class="abe-color-hex" id="accentHex" value="@(Model.AccentColor ?? "***REMOVED***e10600")" maxlength="7" placeholder="***REMOVED***e10600" oninput="hexChanged(this.value)" />
+                            <input type="hidden" asp-for="AccentColor" id="AccentColor" value="@(Model.AccentColor ?? "***REMOVED***e10600")" />
+                        </div>
+                        <div class="abe-presets" id="colorPresets">
+                            @foreach (var c in new[]{ ("***REMOVED***e10600","ERC Rot"),("***REMOVED***5865f2","Discord"),("***REMOVED***57f287","Grün"),("***REMOVED***fee75c","Gelb"),("***REMOVED***eb459e","Pink"),("***REMOVED***ed4245","Rot"),("***REMOVED***faa61a","Orange"),("***REMOVED***00aff4","Cyan"),("***REMOVED***9b59b6","Lila"),("***REMOVED***1abc9c","Türkis"),("***REMOVED***ffffff","Weiß"),("***REMOVED***b9bbbe","Grau") })
+                            {
+                                <div class="abe-preset" style="background:@c.Item1;" data-hex="@c.Item1" onclick="setAccent('@c.Item1')" title="@c.Item2"></div>
+                            }
+                        </div>
+                    </div>
+                    <div class="abe-toggle-row">
+                        <input type="checkbox" class="abe-toggle" asp-for="IsPublic" id="IsPublic" onchange="updatePreview()" />
+                        <label for="IsPublic">Profil öffentlich sichtbar</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="abe-actions">
+                <button type="submit" class="abe-btn-save">
+                    <i class="bi bi-floppy-fill"></i> @(isNew ? "Profil erstellen" : "Änderungen speichern")
+                </button>
+                <a class="abe-btn-back" asp-controller="AdminAbout" asp-action="Index">
+                    <i class="bi bi-x-lg"></i> Abbrechen
+                </a>
+            </div>
+
+        </div>
+
+        @* ══ RIGHT: Live Preview ══ *@
+        <div class="abe-preview">
+            <div class="abe-panel">
+                <div class="abe-panel__head"><i class="bi bi-eye-fill"></i> Live-Vorschau</div>
+            </div>
+            <div class="abe-preview-card" style="margin-top:.75rem;">
+                <div class="abe-accent-bar" id="pvAccentBar" style="background:***REMOVED***e10600;"></div>
+                <div class="abe-pv-banner" id="pvBanner">
+                    <div class="abe-pv-banner-overlay"></div>
+                    <div id="pvBannerHidden" style="display:none;position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-family:var(--ff-tech);font-size:.6rem;letter-spacing:.08em;color:var(--ink-4);text-transform:uppercase;"><i class="bi bi-eye-slash" style="margin-right:.3rem;"></i> Banner ausgeblendet</div>
+                    <div class="abe-pv-avatar-fb" id="pvAvatarFb">👤</div>
+                    <img class="abe-pv-avatar" id="pvAvatar" src="" alt="" style="display:none;" />
+                </div>
+                <div class="abe-pv-body">
+                    <div class="abe-pv-name" id="pvName">
+                        <span id="pvNameText">@Model.DisplayName</span>
+                        <span class="abe-pv-number" id="pvNumber" style="display:none;"></span>
+                    </div>
+                    <div class="abe-pv-tagline" id="pvTagline" style="@(string.IsNullOrEmpty(Model.Tagline) ? "display:none;" : "")">@Model.Tagline</div>
+                    <div class="abe-pv-slug" id="pvSlug">/about/@Model.Slug</div>
+                    <div class="abe-pv-bio" id="pvBio" style="@(string.IsNullOrEmpty(Model.ShortBio) ? "display:none;" : "")">@Model.ShortBio</div>
+                    <div class="abe-pv-socials" id="pvSocials"></div>
+                    <div class="abe-pv-facts" id="pvFacts" style="display:none;">
+                        <div class="abe-pv-fact" id="pvTrackFact" style="display:none;">
+                            <strong>Strecke</strong>
+                            <span id="pvTrack"></span>
+                        </div>
+                        <div class="abe-pv-fact" id="pvCarFact" style="display:none;">
+                            <strong>Auto</strong>
+                            <span id="pvCar"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!isNew)
+            {
+                <div style="margin-top:.75rem;padding:.65rem 1rem;background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);font-size:.65rem;color:var(--ink-4);display:flex;flex-direction:column;gap:.2rem;">
+                    <div><i class="bi bi-clock-history"></i> Erstellt: @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                    <div><i class="bi bi-pencil"></i> Zuletzt bearb.: @Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                    @if (!string.IsNullOrEmpty(Model.LastEditedBy))
+                    {
+                        <div><i class="bi bi-person"></i> von @Model.LastEditedBy</div>
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+</form>
+
+@section Scripts {
+<script>
+(function(){
+'use strict';
+function g(id){ return document.getElementById(id); }
+function tv(el,show){ if(el) el.style.display=show?'':'none'; }
+
+// ── Image tab switching ─────────────────────────────────────────────
+function switchImgTab(field, mode, btn) {
+    var isUpload = mode === 'upload';
+    tv(g(field+'UrlPane'),    !isUpload);
+    tv(g(field+'UploadPane'),  isUpload);
+    // Clear only the file input when switching back to URL mode
+    if (!isUpload) { var f = g(field+'File'); if(f) f.value=''; }
+    // Update tab button styles
+    var tabs = btn.closest('.abe-img-tabs');
+    if (tabs) tabs.querySelectorAll('.abe-imgtab').forEach(function(t){ t.classList.toggle('active', t===btn); });
+    updatePreview();
+}
+window.switchImgTab = switchImgTab;
+
+// ── Local file preview before upload ───────────────────────────────
+function previewLocalImage(input, urlFieldId, previewId) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        if (previewId) {
+            var pv = g(previewId);
+            if (pv) { pv.src = e.target.result; pv.style.display = ''; }
+            if (previewId === 'pvAvatar') { var fb = g('pvAvatarFb'); if (fb) fb.style.display = 'none'; }
+            if (previewId === 'pvBanner') { var bd = g('pvBanner'); if (bd) bd.style.backgroundImage = 'url(' + e.target.result + ')'; }
+        }
+        var urlField = g(urlFieldId);
+        if (urlField) urlField.value = '';
+    };
+    reader.readAsDataURL(file);
+}
+window.previewLocalImage = previewLocalImage;
+
+function updatePreview(){
+    var name    = (g('DisplayName').value||'').trim()||'Anzeigename';
+
+    var tagline = (g('Tagline').value||'').trim();
+    var slug    = (g('Slug').value||'').trim();
+    var bio     = (g('ShortBio').value||'').trim();
+    var avatar  = (g('AvatarUrl').value||'').trim();
+    var banner  = (g('BannerUrl').value||'').trim();
+    var track   = (g('FavoriteTrack').value||'').trim();
+    var car     = (g('FavoriteCar').value||'').trim();
+
+    g('pvNameText').textContent = name;
+    tv(g('pvNumber'), !!num);
+    if(num) g('pvNumber').textContent = '***REMOVED***'+num;
+
+    tv(g('pvTagline'), !!tagline);
+    g('pvTagline').textContent = tagline;
+
+    g('pvSlug').textContent = '/about/'+(slug||'...');
+
+    tv(g('pvBio'), !!bio);
+    g('pvBio').textContent = bio;
+
+    // Avatar
+    if(avatar){
+        tv(g('pvAvatarFb'), false);
+        g('pvAvatar').src = avatar;
+        g('pvAvatar').onerror = function(){ tv(g('pvAvatar'),false); tv(g('pvAvatarFb'),true); };
+        tv(g('pvAvatar'), true);
+    } else {
+        tv(g('pvAvatar'), false);
+        tv(g('pvAvatarFb'), true);
+    }
+
+    // Banner
+    if(banner){
+        g('pvBanner').style.backgroundImage = 'url('+banner+')';
+    } else {
+        g('pvBanner').style.backgroundImage = '';
+    }
+
+    // Facts
+    tv(g('pvTrackFact'), !!track);
+    if(track) g('pvTrack').textContent = track;
+    tv(g('pvCarFact'), !!car);
+    if(car) g('pvCar').textContent = car;
+    tv(g('pvFacts'), !!(track||car));
+
+    // Socials
+    var soc = g('pvSocials'); soc.innerHTML = '';
+    var links = [
+        {id:'DiscordUsername', icon:'bi-discord', color:'***REMOVED***5865f2', isName:true},
+        {id:'TwitchUrl',       icon:'bi-twitch',  color:'***REMOVED***9146ff'},
+        {id:'YouTubeUrl',      icon:'bi-youtube', color:'***REMOVED***ff0000'},
+        {id:'InstagramUrl',    icon:'bi-instagram',color:'***REMOVED***e1306c'},
+        {id:'TwitterUrl',      icon:'bi-twitter-x',color:'var(--ink)'},
+        {id:'SteamUrl',        icon:'bi-steam',   color:'***REMOVED***1b9bc2'},
+    ];
+    links.forEach(function(l){
+        var val = (g(l.id).value||'').trim();
+        if(!val) return;
+        var d = document.createElement('div');
+        d.className = 'abe-pv-social';
+        d.innerHTML = '<i class="bi '+l.icon+'" style="color:'+l.color+';"></i>';
+        d.title = val;
+        soc.appendChild(d);
+    });
+}
+
+function normalizeSlug(){
+    var s = g('Slug').value
+        .toLowerCase()
+        .replace(/\s+/g,'-')
+        .replace(/[^a-z0-9\-]/g,'');
+    g('slugPreview').textContent = s||'...';
+    updatePreview();
+}
+
+window.updateBannerVisibility = function(){
+    var show = g('ShowBanner') && g('ShowBanner').checked;
+    var pv = g('pvBanner');
+    if (pv) pv.style.opacity = show ? '1' : '0.25';
+    var label = g('pvBannerHidden');
+    if (label) label.style.display = show ? 'none' : '';
+};
+
+window.setAccent = function(hex){
+    g('accentSwatch').value = hex;
+    g('accentHex').value    = hex;
+    g('AccentColor').value  = hex;
+    g('pvAccentBar').style.background = hex;
+    document.querySelectorAll('.abe-preset').forEach(function(p){
+        p.classList.toggle('is-selected', p.dataset.hex.toLowerCase()===hex.toLowerCase());
+    });
+};
+
+window.hexChanged = function(val){
+    if(/^***REMOVED***[0-9a-fA-F]{6}$/.test(val)){
+        setAccent(val);
+    }
+};
+
+// Init
+setAccent(g('AccentColor').value||'***REMOVED***e10600');
+updateBannerVisibility();
+updatePreview();
+
+g('Slug').addEventListener('input', normalizeSlug);
+['DisplayName','RacingNumber','Tagline','ShortBio','AvatarUrl','BannerUrl','BackgroundUrl',
+ 'FavoriteTrack','FavoriteCar','DiscordUsername','TwitchUrl','YouTubeUrl',
+ 'InstagramUrl','TwitterUrl','SteamUrl'].forEach(function(id){
+    var el = g(id); if(el) el.addEventListener('input', updatePreview);
+});
+
+})();
+</script>
+}

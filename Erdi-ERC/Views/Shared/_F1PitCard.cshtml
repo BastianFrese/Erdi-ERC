@@ -1,0 +1,33 @@
+@model <OWNER_HANDLE>_ERC.Models.UiComponents.F1PitCardVm
+@*
+    F1 PitCard — Feature/Navigation-Card mit Icon, Tag, Titel, Lead, CTA.
+    CSS: pages/home-index.css (.f1-pitcard*)
+    IconVariant: "" | "cyan" | "amber" | "green" | "magenta"
+*@
+<a class="text-decoration-none" href="@Model.Href">
+    <div class="f1-pitcard">
+        <div class="f1-pitcard__head">
+            <span class="f1-pitcard__icon@(string.IsNullOrEmpty(Model.IconVariant) ? "" : $" f1-pitcard__icon--{Model.IconVariant}")">
+                @if (!string.IsNullOrWhiteSpace(Model.IconLucide))
+                {
+                    <i class="f1-icon" data-lucide="@Model.IconLucide"></i>
+                }
+            </span>
+            @if (!string.IsNullOrWhiteSpace(Model.Tag))
+            {
+                <span class="f1-pitcard__tag">@Model.Tag</span>
+            }
+        </div>
+        <h5 class="f1-pitcard__title">@Model.Title</h5>
+        @if (!string.IsNullOrWhiteSpace(Model.Lead))
+        {
+            <p class="f1-pitcard__lead">@Model.Lead</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Cta))
+        {
+            <span class="f1-pitcard__cta">
+                @Model.Cta <i class="f1-icon" data-lucide="arrow-right"></i>
+            </span>
+        }
+    </div>
+</a>

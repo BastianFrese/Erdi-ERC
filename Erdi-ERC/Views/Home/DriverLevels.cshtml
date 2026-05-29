@@ -1,0 +1,81 @@
+@model <OWNER_HANDLE>_ERC.Models.DriverLevelsPageViewModel
+@{
+    ViewData["Title"] = "Fahrerlevel & XP";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "ERC Gamification",
+    Title     = "Fahrerlevel",
+    Highlight = "XP",
+    Lead      = "Community-Level basierend auf Teilnahme, Erfolgen und Aktivität – nur für Motivation und Spaß, nicht sportlich relevant.",
+    GhostText = "XP"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "zap",
+        Label      = "Gelistete Fahrer",
+        Value      = Model.Entries.Count.ToString(),
+        Sub        = "Mit berechnetem Level und XP"
+    })" />
+</div>
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip    = "Rangliste",
+        Title   = "Fahrer XP-Übersicht",
+        SubText = $"{Model.Entries.Count} Fahrer"
+    })" />
+
+    @if (!Model.Entries.Any())
+    {
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-lightning-charge"></i></span>
+            <div class="empty-state__title">Noch keine Einträge</div>
+            <p class="empty-state__lead">XP werden automatisch berechnet sobald Renndaten vorliegen.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var entry in Model.Entries)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="community-card h-100">
+                        <div class="community-card__body d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                <h5 class="mb-0">
+                                    @if (!string.IsNullOrWhiteSpace(entry.DiscordId))
+                                    {
+                                        <a class="community-link-title text-decoration-none text-reset"
+                                           asp-controller="Profile" asp-action="Index"
+                                           asp-route-discordId="@entry.DiscordId">@entry.Driver</a>
+                                    }
+                                    else
+                                    {
+                                        @entry.Driver
+                                    }
+                                </h5>
+                                <span class="community-level-badge badge bg-warning text-dark">Lv. @entry.Level</span>
+                            </div>
+                            <div class="display-6 fw-bold text-accent">@entry.Xp XP</div>
+                            <div class="text-mute small">Noch @entry.XpToNext XP bis zum nächsten Level</div>
+                            <div class="community-stat-grid mt-1">
+                                <div class="community-stat-tile"><div class="community-stat-tile__label">Races</div><div class="community-stat-tile__value">@entry.Races</div></div>
+                                <div class="community-stat-tile"><div class="community-stat-tile__label">Wins</div><div class="community-stat-tile__value">@entry.Wins</div></div>
+                                <div class="community-stat-tile"><div class="community-stat-tile__label">Podien</div><div class="community-stat-tile__value">@entry.Podiums</div></div>
+                                <div class="community-stat-tile"><div class="community-stat-tile__label">Community</div><div class="community-stat-tile__value">@entry.CommunityScore</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

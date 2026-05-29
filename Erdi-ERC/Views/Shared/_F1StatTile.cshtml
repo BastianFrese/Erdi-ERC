@@ -1,0 +1,19 @@
+@model <OWNER_HANDLE>_ERC.Models.UiComponents.F1StatTileVm
+@*
+    F1 StatTile — HUD/Telemetrie-Look für Kennzahlen.
+    CSS: pages/home-index.css (.f1-stat*)
+    Optionaler Link via Href (sonst statisch).
+*@
+@{
+    var hasHref = !string.IsNullOrWhiteSpace(Model.Href);
+}
+@if (hasHref)
+{
+    <a class="text-decoration-none" href="@Model.Href">
+        <partial name="_F1StatTileInner" model="Model" />
+    </a>
+}
+else
+{
+    <partial name="_F1StatTileInner" model="Model" />
+}

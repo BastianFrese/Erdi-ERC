@@ -1,0 +1,455 @@
+@using System.Text.Json
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "F1 Setups";
+
+    var tracks = (ViewBag.SetupTracks as List<string>) ?? new List<string>();
+    var selectedTrack = ViewBag.SelectedTrack as string;
+    var visibleSetups = (ViewBag.VisibleSetups as List<<OWNER_HANDLE>_ERC.Models.TrackSetup>) ?? new List<<OWNER_HANDLE>_ERC.Models.TrackSetup>();
+    var hiddenSetups = (ViewBag.HiddenSetups as List<<OWNER_HANDLE>_ERC.Models.TrackSetup>) ?? new List<<OWNER_HANDLE>_ERC.Models.TrackSetup>();
+    var setupTier = ViewBag.SetupTier is int t ? t : 0;
+    var setupRole = ViewBag.SetupRole as string;
+    var isOnCommunityGuild = ViewBag.IsOnCommunityGuild is bool icg && icg;
+    var isTenurePending = ViewBag.IsTenurePending is bool itp && itp;
+    var guildJoinedAt = ViewBag.GuildJoinedAt as DateTimeOffset?;
+    var tenureRequiredDays = ViewBag.TenureRequiredDays is int trd ? trd : 0;
+    var tenureUnlockAt = guildJoinedAt?.AddDays(tenureRequiredDays);
+    var tenureRemaining = tenureUnlockAt.HasValue ? tenureUnlockAt.Value - DateTimeOffset.UtcNow : (TimeSpan?)null;
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var categoryNames = (ViewBag.SetupCategoryNames as IReadOnlyDictionary<string, string>) ?? SetupGameSpec.GetCategoryDisplayNames();
+    var fieldNames = (ViewBag.SetupFieldNames as IReadOnlyDictionary<string, string>) ?? SetupGameSpec.GetFieldDisplayNames();
+    var editorConfig = ViewBag.SetupEditorConfig as SetupEditorConfig ?? SetupGameSpec.GetEditorConfig();
+    var metricConfig = ViewBag.SetupMetricConfig as IReadOnlyList<SetupMetricConfig> ?? SetupGameSpec.GetMetricConfig();
+    var setupComments = (ViewBag.SetupComments as Dictionary<int, List<SetupComment>>) ?? new Dictionary<int, List<SetupComment>>();
+    var setupLikeCounts = (ViewBag.SetupLikeCounts as Dictionary<int, int>) ?? new Dictionary<int, int>();
+    var likedSetupIds = (ViewBag.LikedSetupIds as HashSet<int>) ?? new HashSet<int>();
+
+    static string TierLabel(int tier, string? role) => tier switch
+    {
+        0 => "Öffentlich",
+        // Legacy: Setups die noch Tier 2 in der DB haben werden wie Tier 1 behandelt.
+        1 or 2 => "Community",
+        3 => string.IsNullOrWhiteSpace(role) ? "Pit Crew"        : role,
+        4 => string.IsNullOrWhiteSpace(role) ? "Race Engineer"   : role,
+        5 => string.IsNullOrWhiteSpace(role) ? "Team Principal"  : role,
+        _ => "Unbekannt"
+    };
+
+    static string TierIcon(int tier) => tier switch
+    {
+        0 => "bi-globe2",
+        1 or 2 => "bi-discord",
+        3 or 4 or 5 => "bi-twitch",
+        _ => "bi-shield"
+    };
+
+    static string TierBadgeClass(int tier) => tier switch
+    {
+        0 => "tier-badge tier-badge--public",
+        1 or 2 => "tier-badge tier-badge--community",
+        3 => "tier-badge tier-badge--t1",
+        4 => "tier-badge tier-badge--t2",
+        5 => "tier-badge tier-badge--t3",
+        _ => "tier-badge"
+    };
+
+    static string NormalizeLabel(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return "Wert";
+        var withSpaces = System.Text.RegularExpressions.Regex.Replace(key, "([a-z])([A-Z])", "$1 $2");
+        withSpaces = withSpaces.Replace("_", " ").Replace("-", " ");
+        return char.ToUpper(withSpaces[0]) + withSpaces[1..];
+    }
+
+    List<(string Category, List<(string Label, string Value)> Values)> ParseSetupPayload(string raw)
+    {
+        var parsed = new List<(string Category, List<(string Label, string Value)> Values)>();
+        if (string.IsNullOrWhiteSpace(raw)) return parsed;
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            if (!doc.RootElement.TryGetProperty("categories", out var categories) || categories.ValueKind != JsonValueKind.Object)
+                return parsed;
+
+            foreach (var cat in categories.EnumerateObject())
+            {
+                var values = new List<(string Label, string Value)>();
+                if (cat.Value.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var item in cat.Value.EnumerateObject())
+                    {
+                        var text = item.Value.ValueKind switch
+                        {
+                            JsonValueKind.Number => item.Value.GetRawText(),
+                            JsonValueKind.String => item.Value.GetString() ?? string.Empty,
+                            _ => item.Value.GetRawText()
+                        };
+                        var fieldLabel = fieldNames.TryGetValue(item.Name, out var mappedField) ? mappedField : NormalizeLabel(item.Name);
+                        values.Add((Label: fieldLabel, Value: text));
+                    }
+                }
+                var categoryName = categoryNames.TryGetValue(cat.Name, out var mapped) ? mapped : NormalizeLabel(cat.Name);
+                if (values.Count > 0) parsed.Add((Category: categoryName, Values: values));
+            }
+        }
+        catch { }
+        return parsed;
+    }
+
+    static (string Cls, string Label, string Title) TireCompound(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
+    {
+        var hay = ((s.Title ?? string.Empty) + " " + (s.SetupInfo ?? string.Empty)).ToLowerInvariant();
+        if (hay.Contains("regen") || hay.Contains("wet") || hay.Contains("nass") || hay.Contains("rain"))
+            return ("tire--wet", "Wet", "Regenreifen empfohlen");
+        if (hay.Contains("inter") || hay.Contains("intermediate"))
+            return ("tire--inter", "Inter", "Intermediates empfohlen");
+        if (hay.Contains("quali") || hay.Contains("qualy") || hay.Contains("qualifying") || hay.Contains("hotlap") || hay.Contains("time attack"))
+            return ("tire--soft", "Soft", "Quali / Soft Compound");
+        if (hay.Contains("hard") || hay.Contains("long run") || hay.Contains("longrun") || hay.Contains("stint"))
+            return ("tire--hard", "Hard", "Long Run / Hard Compound");
+        return ("tire--medium", "Medium", "Race / Medium Compound");
+    }
+
+    SetupRaceStrategyConfig? StrategyFor(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
+    {
+        var key = SetupGameSpec.ReadStrategyKey(s.SetupText);
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        return editorConfig.RaceStrategies.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
+    }
+
+    (string? TrackName, string? LengthLabel, string? Plan) StrategyPlanFor(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
+    {
+        var ctx = SetupGameSpec.ReadStrategyContext(s.SetupText);
+        var track = F1RaceCatalog.FindTrack(ctx.TrackKey);
+        var length = F1RaceCatalog.FindLength(ctx.LengthKey);
+        return (track?.Name, length?.Label, ctx.StrategyPlan);
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+        .tier-badge {
+            display:inline-flex;align-items:center;gap:.35rem;
+            padding:.28rem .6rem;border-radius:999px;
+            font:600 .72rem/1 var(--ff-body);letter-spacing:.02em;
+            border:1px solid var(--stroke-1);
+            background:var(--surface-2);color:var(--ink-2);
+            white-space:nowrap;
+        }
+        .tier-badge i { font-size:.85rem; }
+        .tier-badge--public    { background:rgba(120,140,160,.12); color:***REMOVED***a8b6c4; border-color:rgba(120,140,160,.35); }
+        .tier-badge--community { background:rgba(88,101,242,.14);  color:***REMOVED***a4adff; border-color:rgba(88,101,242,.45); }
+        .tier-badge--t1        { background:rgba(34,211,238,.12);  color:***REMOVED***67e8f9; border-color:rgba(34,211,238,.45); }
+        .tier-badge--t2      { background:rgba(245,158,11,.14);  color:***REMOVED***fbbf24; border-color:rgba(245,158,11,.50); }
+        .tier-badge--t3      {
+            background:linear-gradient(135deg,rgba(244,63,94,.18),rgba(217,70,239,.14));
+            color:***REMOVED***fda4af;border-color:rgba(244,63,94,.55);
+            box-shadow:0 0 0 1px rgba(244,63,94,.10) inset;
+        }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "F1 26 · Setup Library",
+    Title     = "F1 Setup",
+    Highlight = "Library",
+    Lead      = "Setups für jede Strecke – schnell finden, vergleichen und ins Spiel übernehmen.",
+    GhostText = "SETUPS"
+})" />
+
+<div class="d-flex align-items-center gap-2 mb-4 reveal flex-wrap">
+    <span class="status-pill">
+        <i class="bi @TierIcon(setupTier)"></i>
+        Dein Zugriff: <strong class="ms-1">@TierLabel(setupTier, setupRole)</strong>
+    </span>
+    @if (isAuthenticated && !isOnCommunityGuild)
+    {
+        <span class="small text-warning"><i class="bi bi-exclamation-triangle me-1"></i> Tritt dem Community-Discord bei, um Zugang zu Setups freizuschalten.</span>
+    }
+    else if (isAuthenticated && isTenurePending && tenureRemaining is { } remaining && remaining > TimeSpan.Zero)
+    {
+        var days = (int)Math.Ceiling(remaining.TotalDays);
+        var hours = (int)Math.Ceiling(remaining.TotalHours);
+        var waitText = days >= 2 ? $"noch ca. {days} Tage" : $"noch ca. {hours} Stunden";
+        <span class="small text-warning">
+            <i class="bi bi-hourglass-split me-1"></i>
+            Du bist erst seit kurzem auf dem Community-Discord. Setup-Zugang wird @waitText freigeschaltet.
+        </span>
+    }
+</div>
+
+<!-- ═══════════════════════════════════════════════════ INTRO -->
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip  = "Tutorial",
+        Title = "Erste Schritte"
+    })" />
+
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);max-width:480px;">
+                <div style="padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.65rem;">
+                    <span class="icon-chip is-cyan"><i class="bi bi-play-fill"></i></span>
+                    <span style="font:700 .9rem/1 var(--ff-body);color:var(--ink);"><OWNER_HANDLE>s Setup Tutorial</span>
+                </div>
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/H9g4J0G_rKQ"
+                            title="<OWNER_HANDLE> Setup Tutorial"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                            loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.1rem;height:100%;box-shadow:var(--sh-2);">
+                <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.85rem;">
+                    <span class="icon-chip is-cyan"><i class="bi bi-link-45deg"></i></span>
+                    <span style="font:700 .9rem/1 var(--ff-body);color:var(--ink);">Twitch ↔ Discord verknüpfen</span>
+                </div>
+                <p class="small text-mute mb-3">Seid ihr Subscriber auf <OWNER_HANDLE>s Twitch-Kanal, könnt ihr euch die Subscriber-Rollen abholen:</p>
+                <ol class="small text-mute mb-0 ps-3" style="line-height:1.8;">
+                    <li>Discord öffnen → Benutzereinstellungen über das Zahnrad.</li>
+                    <li>Links auf <strong style="color:var(--ink);">Verknüpfungen</strong> klicken.</li>
+                    <li>In der Liste <strong style="color:var(--ink);">Twitch</strong> wählen.</li>
+                    <li>Im Pop-up mit Twitch anmelden bzw. <strong style="color:var(--ink);">Autorisieren</strong>.</li>
+                    <li>Optional: in den Einstellungen Twitch-Account auf dem Profil anzeigen.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ FILTER -->
+<section class="f1-section reveal">
+    <form method="get" asp-action="TrackSetups" class="d-flex gap-2 align-items-end flex-wrap">
+        <div class="flex-grow-1" style="min-width:240px;">
+            <label for="track" class="form-label mb-1">Strecke filtern</label>
+            <select id="track" name="track" class="form-select" onchange="this.form.submit()">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(selectedTrack))">Alle Strecken</option>
+                @foreach (var tr in tracks)
+                {
+                    <option value="@tr" selected="@(string.Equals(tr, selectedTrack, StringComparison.OrdinalIgnoreCase))">@tr</option>
+                }
+            </select>
+        </div>
+        <button class="f1-btn f1-btn--primary" type="submit">
+            <i class="f1-icon" data-lucide="filter"></i> Filtern
+        </button>
+        @if (!string.IsNullOrWhiteSpace(selectedTrack))
+        {
+            <a class="f1-btn f1-btn--ghost" asp-action="TrackSetups">
+                <i class="f1-icon" data-lucide="x"></i> Reset
+            </a>
+        }
+    </form>
+
+    @if (!isAuthenticated)
+    {
+        <div class="alert alert-info mt-3">Für geschützte Setups bitte zuerst einloggen.</div>
+    }
+    else if (!isOnCommunityGuild)
+    {
+        <div class="alert alert-warning mt-3">
+            <strong>Setups gesperrt:</strong> Du musst Mitglied auf dem <OWNER_HANDLE> Community Discord sein, damit dir die Setups angezeigt werden.
+            <div class="mt-2">
+                <a class="f1-btn f1-btn--ghost" href="https://discord.gg/VyhjtDXYYV" target="_blank" rel="noopener">
+                    <i class="bi bi-discord"></i> Community Discord beitreten
+                </a>
+            </div>
+        </div>
+    }
+</section>
+
+@if (!visibleSetups.Any() && !hiddenSetups.Any())
+{
+    <div class="empty-state reveal">
+        <span class="icon-chip is-amber"><i class="bi bi-tools"></i></span>
+        <div class="empty-state__title">Keine Setups hinterlegt</div>
+        <p class="empty-state__lead">Sobald Setups verfügbar sind, erscheinen sie hier.</p>
+    </div>
+}
+else
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Setups",
+            Title   = "Verfügbare Setups",
+            SubText = $"{visibleSetups.Count} freigegeben"
+        })" />
+
+        <div class="row g-3">
+            @foreach (var setup in visibleSetups)
+            {
+                var parsed = ParseSetupPayload(setup.SetupText);
+                var hasPayload = parsed.Count > 0;
+                var payloadVersion = SetupGameSpec.ReadPayloadVersion(setup.SetupText);
+                var compound = TireCompound(setup);
+                var strategy = StrategyFor(setup);
+                <div class="col-12 col-xl-6">
+                    <article class="setup-card h-100" data-setup-json="@(hasPayload ? setup.SetupText : string.Empty)">
+                        <div class="setup-card__head">
+                            <span class="icon-chip is-accent"><i class="bi bi-tools"></i></span>
+                            <div class="flex-fill min-w-0">
+                                <div class="setup-card__sub"><i class="bi bi-geo-alt-fill"></i> @setup.Track</div>
+                                <div class="setup-card__title">@setup.Title</div>
+                                <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="tire @compound.Cls" title="@compound.Title">@compound.Label</span>
+                                    @if (strategy is not null)
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="@strategy.Description">
+                                            @strategy.Icon @strategy.Label · @strategy.Distance
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-1 align-items-end">
+                                <span class="badge bg-secondary text-mono">v@(payloadVersion)</span>
+                                <span class="@TierBadgeClass(setup.RequiredAccessTier)"><i class="bi @TierIcon(setup.RequiredAccessTier)"></i> @TierLabel(setup.RequiredAccessTier, setup.RequiredRoleLabel)</span>
+                            </div>
+                        </div>
+                        <div class="setup-card__body">
+                            @if (!string.IsNullOrWhiteSpace(setup.SetupInfo))
+                            {
+                                <p class="text-mute small mb-3">@setup.SetupInfo</p>
+                            }
+                            @{
+                                var planInfo = StrategyPlanFor(setup);
+                            }
+                            @if (!string.IsNullOrWhiteSpace(planInfo.Plan))
+                            {
+                                <div class="setup-strategy-block mb-3 p-2 rounded border border-warning-subtle bg-dark-subtle">
+                                    <div class="small text-warning fw-semibold mb-1">
+                                        <i class="bi bi-flag-fill me-1"></i> Renn-Strategie@(string.IsNullOrWhiteSpace(planInfo.TrackName) ? "" : $" · {planInfo.TrackName}")@(string.IsNullOrWhiteSpace(planInfo.LengthLabel) ? "" : $" · {planInfo.LengthLabel}")
+                                    </div>
+                                    <pre class="small text-mono mb-0" style="white-space:pre-wrap;color:var(--ink-2);">@planInfo.Plan</pre>
+                                </div>
+                            }
+
+                            @if (hasPayload)
+                            {
+                                <div class="setup-user-playground" data-setup-root></div>
+                                <div class="setup-user-metrics mt-3">
+                                    <div class="setup-user-metric" data-metric="topSpeed"><span>Top Speed</span><div><i></i></div><strong>0</strong></div>
+                                    <div class="setup-user-metric" data-metric="traction"><span>Traktion</span><div><i></i></div><strong>0</strong></div>
+                                    <div class="setup-user-metric" data-metric="rotation"><span>Einlenken</span><div><i></i></div><strong>0</strong></div>
+                                    <div class="setup-user-metric" data-metric="stability"><span>Stabilität</span><div><i></i></div><strong>0</strong></div>
+                                    <div class="setup-user-metric" data-metric="tyreWear"><span>Reifenschonung</span><div><i></i></div><strong>0</strong></div>
+                                </div>
+                            }
+                            else
+                            {
+                                <pre class="setup-user-data">@setup.SetupText</pre>
+                            }
+
+                            <div class="mt-3 pt-3 border-top border-secondary-subtle">
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                                    <h6 class="mb-0"><i class="bi bi-chat-left-dots"></i> Community Meinung</h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (hasPayload)
+                                        {
+                                            <button type="button"
+                                                    class="setup-reset-btn"
+                                                    data-sandbox-reset
+                                                    title="Setup-Regler zurücksetzen">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                            </button>
+                                        }
+                                        <span class="text-mute small"><i class="bi bi-heart-fill text-danger"></i> @(setupLikeCounts.TryGetValue(setup.Id, out var lc) ? lc : 0)</span>
+                                        @if (isAuthenticated)
+                                        {
+                                            <form asp-action="ToggleSetupLike" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="setupId" value="@setup.Id" />
+                                                <input type="hidden" name="track" value="@selectedTrack" />
+                                                <button class="f1-btn @(likedSetupIds.Contains(setup.Id) ? "f1-btn--primary" : "f1-btn--ghost") btn-sm" type="submit">
+                                                    <i class="bi bi-heart-fill"></i> @(likedSetupIds.Contains(setup.Id) ? "Geliked" : "Liken")
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (isAuthenticated)
+                                {
+                                    <form asp-action="AddSetupComment" method="post" class="d-flex flex-column gap-2 mb-3">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="setupId" value="@setup.Id" />
+                                        <input type="hidden" name="track" value="@selectedTrack" />
+                                        <textarea class="form-control form-control-sm" name="message" rows="2" maxlength="600" placeholder="z.B. für Regen top / gutes Race Trim / stabile Hinterachse" required></textarea>
+                                        <div class="d-flex justify-content-end">
+                                            <button class="f1-btn f1-btn--ghost" type="submit">Kommentar posten</button>
+                                        </div>
+                                    </form>
+                                }
+
+                                @if (setupComments.TryGetValue(setup.Id, out var comments) && comments.Any())
+                                {
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach (var comment in comments.Take(5))
+                                        {
+                                            <div class="surface-glass p-2 rounded">
+                                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-1">
+                                                    <strong class="small">@comment.AuthorName</strong>
+                                                    <span class="text-mute small">@comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                                </div>
+                                                <div class="small">@comment.Message</div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    </section>
+
+    @if (hiddenSetups.Any())
+    {
+        <section class="f1-section reveal">
+            <partial name="_F1Section" model="@(new F1SectionVm {
+                Chip    = "Gesperrt",
+                Title   = "Gesperrte Setups",
+                SubText = $"{hiddenSetups.Count} gesperrt"
+            })" />
+
+            <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.1rem;box-shadow:var(--sh-2);">
+                <div class="d-flex flex-column gap-2 mb-3">
+                    @foreach (var setup in hiddenSetups)
+                    {
+                        <div class="d-flex justify-content-between align-items-center gap-2 p-2 surface-glass">
+                            <div class="d-flex align-items-center gap-2 min-w-0">
+                                <i class="bi bi-lock-fill text-mute"></i>
+                                <span class="fw-semibold text-truncate">@setup.Track · @setup.Title</span>
+                            </div>
+                            <span class="@TierBadgeClass(setup.RequiredAccessTier)"><i class="bi @TierIcon(setup.RequiredAccessTier)"></i> @TierLabel(setup.RequiredAccessTier, setup.RequiredRoleLabel)</span>
+                        </div>
+                    }
+                </div>
+                @if (isAuthenticated)
+                {
+                    <p class="text-mute small mb-0">Wenn dein Zugang nicht passt, bitte mit dem passenden Account neu anmelden.</p>
+                }
+                else
+                {
+                    <a class="f1-btn f1-btn--primary" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">
+                        <i class="bi bi-discord"></i> Login mit Discord
+                    </a>
+                }
+            </div>
+        </section>
+    }
+}
+
+@section Scripts {
+    <script>
+        window.erdiSetupEditorConfig = @Html.Raw(JsonSerializer.Serialize(editorConfig));
+        window.erdiSetupMetricConfig = @Html.Raw(JsonSerializer.Serialize(metricConfig));
+    </script>
+    <script src="~/js/track-setups.js" asp-append-version="true"></script>
+}

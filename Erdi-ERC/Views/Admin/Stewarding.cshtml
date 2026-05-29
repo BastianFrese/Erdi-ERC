@@ -1,0 +1,585 @@
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "Stewarding";
+    ViewData["Kicker"] = "Community";
+    ViewData["HeroTitle"] = "Stewarding";
+
+    var penalties    = (ViewBag.Penalties   as List<LeaguePenalty>) ?? new();
+    var driverList   = (ViewBag.DriverList  as List<string>)         ?? new();
+    var leagueList   = (ViewBag.LeagueList  as List<dynamic>)        ?? new();
+    var allLeagues   = (ViewBag.AllLeagues  as List<string>)         ?? new();
+    var leagueFilter = (ViewBag.LeagueFilter as string)              ?? "";
+    var typeFilter   = (ViewBag.TypeFilter   as string)              ?? "";
+
+    string[] penaltyTypes = ["Zeitstrafe", "Gridstrafe", "Punkteabzug", "DSQ", "Verwarnung"];
+
+    string TypeColor(string t) => t switch
+    {
+        "DSQ"         => "***REMOVED***ff6b6b",
+        "Punkteabzug" => "***REMOVED***ff8a4c",
+        "Zeitstrafe"  => "***REMOVED***ffb800",
+        "Gridstrafe"  => "***REMOVED***5b8cff",
+        "Verwarnung"  => "***REMOVED***c084fc",
+        _             => "var(--ink-3)"
+    };
+    var total   = penalties.Count;
+    var pub     = penalties.Count(x => x.IsPublic);
+    var priv    = penalties.Count(x => !x.IsPublic);
+    var withDSQ = penalties.Count(x => x.PenaltyType == "DSQ");
+}
+
+@section Styles {
+<style>
+.fia-preview {
+    background: ***REMOVED***f7f6f1; color: ***REMOVED***111;
+    font-family: Arial, Helvetica, sans-serif; font-size: 12.5px;
+    border: 1px solid ***REMOVED***ccc; border-radius: 3px; overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0,0,0,.35); position: sticky; top: 1.5rem;
+}
+.fia-preview__lh { padding: .6rem 1.1rem .4rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid ***REMOVED***c00; gap: .5rem; }
+.fia-preview__brand { display: flex; align-items: center; gap: .4rem; }
+.fia-preview__brand-mark { background: ***REMOVED***e10600; color: ***REMOVED***fff; font-size: 10px; font-weight: 900; letter-spacing: .1em; padding: .1rem .4rem; border-radius: 2px; text-transform: uppercase; }
+.fia-preview__brand-text { font-size: 10px; font-weight: 700; color: ***REMOVED***222; text-transform: uppercase; letter-spacing: .08em; }
+.fia-preview__docnum { font-size: 10px; font-weight: 700; color: ***REMOVED***e10600; text-align: right; }
+.fia-preview__title-block { text-align: center; padding: .55rem 1.1rem .4rem; border-bottom: 1px solid ***REMOVED***ccc; }
+.fia-preview__gp { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; font-variant: small-caps; }
+.fia-preview__gpdate { font-size: 10px; color: ***REMOVED***555; }
+.fia-preview__meta { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid ***REMOVED***ccc; }
+.fia-preview__meta-left, .fia-preview__meta-right { padding: .45rem .9rem; display: flex; flex-direction: column; gap: .18rem; }
+.fia-preview__meta-right { border-left: 1px solid ***REMOVED***ddd; }
+.fia-preview__meta-row { display: grid; grid-template-columns: 65px 1fr; font-size: 11px; }
+.fia-preview__meta-lbl { font-weight: 700; }
+.fia-preview__meta-val { color: ***REMOVED***111; }
+.fia-preview__meta-val--red { color: ***REMOVED***c00; font-weight: 600; }
+.fia-preview__body { padding: .6rem .9rem .7rem; }
+.fia-preview__intro { font-size: 11px; line-height: 1.55; color: ***REMOVED***333; margin-bottom: .55rem; padding-bottom: .45rem; border-bottom: 1px solid ***REMOVED***ddd; }
+.fia-preview__def { display: flex; flex-direction: column; }
+.fia-preview__def-row { display: grid; grid-template-columns: 90px 1fr; gap: .2rem .5rem; padding: .28rem 0; border-bottom: 1px solid ***REMOVED***e8e8e3; font-size: 11px; line-height: 1.45; }
+.fia-preview__def-row:last-child { border-bottom: none; }
+.fia-preview__def-key { font-weight: 700; color: ***REMOVED***111; }
+.fia-preview__def-val { color: ***REMOVED***222; }
+.fia-preview__def-decision { font-weight: 700; }
+.fia-preview__def-pts { color: ***REMOVED***c00; font-weight: 700; }
+.fia-preview__def-reason p { margin: 0 0 .35rem; }
+.fia-preview__def-reason p:last-child { margin: 0; }
+.fia-preview__footer { background: ***REMOVED***eeeee8; border-top: 1px solid ***REMOVED***ccc; padding: .4rem .9rem; font-size: 10px; color: ***REMOVED***666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem; }
+.stw-doc-card { background: var(--surface-1); border: 1px solid var(--stroke-1); border-left: 4px solid var(--card-color, var(--stroke-1)); border-radius: var(--r-3); overflow: hidden; }
+.stw-doc-card__head { display: flex; align-items: flex-start; gap: 1rem; padding: .8rem 1rem; justify-content: space-between; }
+.stw-doc-card__meta { flex: 1; min-width: 0; }
+.stw-doc-card__type { display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .5rem; border-radius: 999px; font-size: .65rem; font-weight: 700; font-family: var(--ff-tech); letter-spacing: .1em; text-transform: uppercase; border: 1px solid var(--card-color); color: var(--card-color); background: color-mix(in srgb, var(--card-color) 12%, transparent); }
+.stw-doc-card__driver { font: 700 .95rem/1.2 var(--ff-heading); color: var(--ink); margin: .25rem 0 .15rem; }
+.stw-doc-card__info { display: flex; flex-wrap: wrap; gap: .45rem; font-size: .75rem; color: var(--ink-3); align-items: center; }
+.stw-doc-card__reason { font-size: .78rem; color: var(--ink-2); font-style: italic; margin-top: .3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 540px; }
+.stw-doc-card__docbadge { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .2rem; width: 40px; }
+.stw-doc-card__docicon { width: 38px; height: 48px; background: ***REMOVED***fff; border: 1px solid ***REMOVED***ddd; border-radius: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 1px 2px 5px rgba(0,0,0,.12); position: relative; }
+.stw-doc-card__docicon::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: ***REMOVED***e10600; border-radius: 1px 1px 0 0; }
+.stw-doc-card__docicon i { font-size: .85rem; color: ***REMOVED***1a1a1a; margin-top: 2px; }
+.stw-doc-card__doclabel { font-family: var(--ff-tech); font-size: .55rem; letter-spacing: .06em; color: var(--ink-3); }
+.stw-doc-card__actions { padding: .4rem 1rem .6rem; display: flex; gap: .5rem; flex-wrap: wrap; border-top: 1px solid var(--stroke-1); }
+.stw-doc-card__edit-panel { display: none; border-top: 1px solid var(--stroke-1); background: rgba(0,0,0,.15); padding: 1rem; }
+</style>
+}
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ff6b6b;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-shield-fill-exclamation"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@total</div>
+                <div class="adm-kpi-card__label">Dokumente gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-eye-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@pub</div>
+                <div class="adm-kpi-card__label">Oeffentlich</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-eye-slash-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@priv</div>
+                <div class="adm-kpi-card__label">Intern</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ff6b6b;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-x-octagon-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@withDSQ</div>
+                <div class="adm-kpi-card__label">DSQ</div>
+            </div>
+        </div>
+    </section>
+
+    @* Neues Dokument erstellen *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-file-earmark-plus-fill me-2" style="color:***REMOVED***39ff14;"></i>Neues Steward-Dokument erstellen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start;">
+
+                @* Form *@
+                <form asp-controller="AdminCommunity" asp-action="SavePenalty" method="post" id="createForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="" />
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="adm-form-label">Liga / Meisterschaft *</label>
+                            <select class="form-select form-select-sm" name="leagueId" id="f_league" required>
+                                <option value="">-- Liga waehlen --</option>
+                                @foreach (var lg in leagueList)
+                                {
+                                    <option value="@lg.Id">@lg.Name (@lg.Id)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="adm-form-label">Strecke / Grand Prix</label>
+                            <input class="form-control form-control-sm" name="raceTrack" id="f_track" placeholder="z. B. Bahrain Grand Prix" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="adm-form-label">Datum des Vorfalls *</label>
+                            <input class="form-control form-control-sm" type="date" name="date" id="f_date" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="adm-form-label">Fahrer (No / Driver) *</label>
+                            <input class="form-control form-control-sm" name="driver" id="f_driver" list="driverListDl" placeholder="z. B. 16 - Charles Leclerc" required />
+                            <datalist id="driverListDl">
+                                @foreach (var d in driverList) { <option value="@d" /> }
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="adm-form-label">Zweiter beteiligter Fahrer</label>
+                            <input class="form-control form-control-sm" name="secondDriver" id="f_driver2" list="driverListDl2" placeholder="Optional" />
+                            <datalist id="driverListDl2">
+                                @foreach (var d in driverList) { <option value="@d" /> }
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="adm-form-label">Decision *</label>
+                            <select class="form-select form-select-sm" name="penaltyType" id="f_type" required>
+                                @foreach (var t in penaltyTypes)
+                                {
+                                    <option value="@t">@t</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="adm-form-label">Punkteabzug (0 = kein Abzug)</label>
+                            <input class="form-control form-control-sm" type="number" name="points" id="f_points" value="0" min="0" step="1" />
+                        </div>
+                        <div class="col-12">
+                            <label class="adm-form-label">Fact <small class="text-muted">(Sachverhalt)</small></label>
+                            <input class="form-control form-control-sm" name="incident" id="f_incident" placeholder="z. B. Car 16 left the track without justifiable reason." maxlength="500" />
+                        </div>
+                        <div class="col-12">
+                            <label class="adm-form-label">Infringement + Reason <small class="text-muted">(Regelverstoß und Urteilsbegründung)</small> *</label>
+                            <textarea class="form-control form-control-sm" name="reason" id="f_reason" rows="5" placeholder="The Stewards heard from the driver of Car 16..." maxlength="4000" required></textarea>
+                            <div style="font-size:.72rem;color:var(--ink-3);margin-top:.2rem;">Zeilenumbrüche werden als separate Absätze dargestellt.</div>
+                        </div>
+                        <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
+                            <label class="adm-check-label">
+                                <input class="adm-checkbox" type="checkbox" name="isPublic" value="true" id="f_public" checked />
+                                <span class="adm-check-text">
+                                    <i class="bi bi-eye-fill me-1" style="color:***REMOVED***39ff14;"></i>Sofort oeffentlich veroeffentlichen
+                                </span>
+                            </label>
+                            <button class="btn btn-sm btn-success ms-auto" type="submit">
+                                <i class="bi bi-file-earmark-check me-1"></i>Dokument speichern
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                @* Live Preview *@
+                <div>
+                    <div style="font-size:.68rem;font-family:var(--ff-tech);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.5rem;text-align:center;">
+                        <i class="bi bi-eye me-1"></i>Vorschau
+                    </div>
+                    <div class="fia-preview">
+                        <div class="fia-preview__lh">
+                            <div class="fia-preview__brand">
+                                <span class="fia-preview__brand-mark">ERC</span>
+                                <span class="fia-preview__brand-text"><OWNER_HANDLE>'s Racing Community</span>
+                            </div>
+                            <div class="fia-preview__docnum">Document --</div>
+                        </div>
+                        <div class="fia-preview__title-block">
+                            <div class="fia-preview__gp" id="pv_gp">--</div>
+                            <div class="fia-preview__gpdate" id="pv_date">--</div>
+                        </div>
+                        <div class="fia-preview__meta">
+                            <div class="fia-preview__meta-left">
+                                <div class="fia-preview__meta-row">
+                                    <span class="fia-preview__meta-lbl">From</span>
+                                    <span class="fia-preview__meta-val">The Stewards</span>
+                                </div>
+                                <div class="fia-preview__meta-row">
+                                    <span class="fia-preview__meta-lbl">To</span>
+                                    <span class="fia-preview__meta-val fia-preview__meta-val--red" id="pv_to">--</span>
+                                </div>
+                            </div>
+                            <div class="fia-preview__meta-right">
+                                <div class="fia-preview__meta-row">
+                                    <span class="fia-preview__meta-lbl">Document</span>
+                                    <span class="fia-preview__meta-val">auto</span>
+                                </div>
+                                <div class="fia-preview__meta-row">
+                                    <span class="fia-preview__meta-lbl">Date</span>
+                                    <span class="fia-preview__meta-val" id="pv_metadate">--</span>
+                                </div>
+                                <div class="fia-preview__meta-row">
+                                    <span class="fia-preview__meta-lbl">Time</span>
+                                    <span class="fia-preview__meta-val" id="pv_time">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fia-preview__body">
+                            <p class="fia-preview__intro">The Stewards, having received a report from the Race Director, examined the available evidence and determine the following:</p>
+                            <div class="fia-preview__def">
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">No / Driver</span>
+                                    <span class="fia-preview__def-val" id="pv_driver">--</span>
+                                </div>
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">Competitor</span>
+                                    <span class="fia-preview__def-val" id="pv_league">--</span>
+                                </div>
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">Time</span>
+                                    <span class="fia-preview__def-val" id="pv_time2">--</span>
+                                </div>
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">Session</span>
+                                    <span class="fia-preview__def-val">Race</span>
+                                </div>
+                                <div class="fia-preview__def-row" id="pv_factRow" style="display:none;">
+                                    <span class="fia-preview__def-key">Fact</span>
+                                    <span class="fia-preview__def-val" id="pv_fact">--</span>
+                                </div>
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">Infringement</span>
+                                    <span class="fia-preview__def-val" id="pv_offence">--</span>
+                                </div>
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">Decision</span>
+                                    <div class="fia-preview__def-val">
+                                        <span class="fia-preview__def-decision" id="pv_decision">--</span>
+                                        <span class="fia-preview__def-pts" id="pv_pts" style="display:none;"></span>
+                                    </div>
+                                </div>
+                                <div class="fia-preview__def-row">
+                                    <span class="fia-preview__def-key">Reason</span>
+                                    <div class="fia-preview__def-val fia-preview__def-reason" id="pv_reason"><em style="color:***REMOVED***aaa;">Begruendung erscheint hier...</em></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fia-preview__footer">
+                            <span style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;">The Stewards</span>
+                            <span id="pv_ts">--</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    @* Filter + Dokumentenliste *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-folder2-open me-2" style="color:***REMOVED***ff8a4c;"></i>Steward-Dokumente
+            </span>
+            <span class="adm-badge">@penalties.Count</span>
+        </div>
+        <div class="adm-panel__body" style="padding-bottom:.5rem;">
+            <form asp-controller="AdminCommunity" asp-action="Stewarding" method="get" class="d-flex gap-2 flex-wrap align-items-end">
+                <div>
+                    <label class="adm-form-label">Liga</label>
+                    <select class="form-select form-select-sm" name="leagueFilter" style="min-width:120px;">
+                        <option value="">Alle</option>
+                        @foreach (var l in allLeagues)
+                        {
+                            <option value="@l" selected="@(l == leagueFilter ? "selected" : null)">@l</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="adm-form-label">Decision-Typ</label>
+                    <select class="form-select form-select-sm" name="typeFilter" style="min-width:140px;">
+                        <option value="">Alle</option>
+                        @foreach (var t in penaltyTypes)
+                        {
+                            <option value="@t" selected="@(t == typeFilter ? "selected" : null)">@t</option>
+                        }
+                    </select>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" type="submit">
+                    <i class="bi bi-funnel me-1"></i>Filtern
+                </button>
+                @if (!string.IsNullOrEmpty(leagueFilter) || !string.IsNullOrEmpty(typeFilter))
+                {
+                    <a class="btn btn-sm btn-outline-danger" asp-controller="AdminCommunity" asp-action="Stewarding">
+                        <i class="bi bi-x-lg me-1"></i>Reset
+                    </a>
+                }
+            </form>
+        </div>
+
+        @if (!penalties.Any())
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-shield-check adm-empty__icon" style="color:***REMOVED***39ff14;opacity:1;"></i>
+                    <span>Keine Dokumente gefunden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div style="display:flex;flex-direction:column;gap:.5rem;padding:0 1rem 1rem;">
+                @foreach (var p in penalties)
+                {
+                    var col = TypeColor(p.PenaltyType);
+                    <div class="stw-doc-card" style="--card-color:@col;" id="doc-@p.Id">
+                        <div class="stw-doc-card__head">
+                            <div class="stw-doc-card__meta">
+                                <div>
+                                    <span class="stw-doc-card__type">@p.PenaltyType</span>
+                                    @if (p.IsPublic)
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--green ms-1"><i class="bi bi-eye-fill"></i> oeffentlich</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--gray ms-1"><i class="bi bi-eye-slash-fill"></i> intern</span>
+                                    }
+                                </div>
+                                <div class="stw-doc-card__driver">@p.Driver</div>
+                                <div class="stw-doc-card__info">
+                                    <code style="color:var(--sig-cyan);font-size:.72rem;">@p.LeagueId</code>
+                                    <span>@p.Date.ToString("dd.MM.yyyy")</span>
+                                    @if (!string.IsNullOrEmpty(p.RaceTrack))
+                                    {
+                                        <span><i class="bi bi-geo-alt-fill me-1"></i>@p.RaceTrack</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(p.SecondDriver))
+                                    {
+                                        <span><i class="bi bi-person-fill me-1"></i>@p.SecondDriver</span>
+                                    }
+                                    @if (p.Points > 0)
+                                    {
+                                        <span style="color:@col;font-weight:700;">-@p.Points Pkt.</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(p.Incident))
+                                {
+                                    <div class="stw-doc-card__reason"><i class="bi bi-chat-square-text me-1"></i>@p.Incident</div>
+                                }
+                                <div class="stw-doc-card__reason" style="font-style:normal;color:var(--ink-3);">@p.Reason</div>
+                                @if (!string.IsNullOrEmpty(p.CreatedBy))
+                                {
+                                    <div style="font-size:.7rem;color:var(--ink-3);margin-top:.2rem;">
+                                        <i class="bi bi-person me-1"></i>@p.CreatedBy · @p.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                }
+                            </div>
+                            <div class="stw-doc-card__docbadge">
+                                <div class="stw-doc-card__docicon"><i class="bi bi-file-text-fill"></i></div>
+                                <span class="stw-doc-card__doclabel">DOK. @p.Id</span>
+                            </div>
+                        </div>
+                        <div class="stw-doc-card__actions">
+                            <form asp-controller="AdminCommunity" asp-action="TogglePenaltyPublic" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <button class="btn btn-xs @(p.IsPublic ? "btn-outline-warning" : "btn-outline-success")" type="submit"
+                                        title="@(p.IsPublic ? "Intern setzen" : "Oeffentlich veroeffentlichen")">
+                                    <i class="bi @(p.IsPublic ? "bi-eye-slash" : "bi-eye") me-1"></i>
+                                    @(p.IsPublic ? "Intern setzen" : "Veroeffentlichen")
+                                </button>
+                            </form>
+                            <button class="btn btn-xs btn-outline-secondary" type="button" data-toggle-edit="doc-edit-@p.Id">
+                                <i class="bi bi-pencil-square me-1"></i>Bearbeiten
+                            </button>
+                            <form asp-controller="AdminCommunity" asp-action="DeletePenalty" method="post" class="d-inline ms-auto"
+                                  onsubmit="return confirm('Dokument fuer @p.Driver wirklich loeschen?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <button class="btn btn-xs btn-outline-danger" type="submit" title="Loeschen">
+                                    <i class="bi bi-trash3 me-1"></i>Loeschen
+                                </button>
+                            </form>
+                        </div>
+                        @* Inline Edit *@
+                        <div class="stw-doc-card__edit-panel" id="doc-edit-@p.Id">
+                            <div style="font-size:.7rem;font-family:var(--ff-tech);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.75rem;">
+                                <i class="bi bi-pencil me-1"></i>Dokument bearbeiten -- ***REMOVED***@p.Id
+                            </div>
+                            <form asp-controller="AdminCommunity" asp-action="SavePenalty" method="post" class="row g-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <div class="col-md-4">
+                                    <label class="adm-form-label">Liga *</label>
+                                    <select class="form-select form-select-sm" name="leagueId" required>
+                                        @foreach (var lg in leagueList)
+                                        {
+                                            <option value="@lg.Id" selected="@(lg.Id == p.LeagueId ? "selected" : null)">@lg.Name (@lg.Id)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="adm-form-label">Strecke / Grand Prix</label>
+                                    <input class="form-control form-control-sm" name="raceTrack" value="@p.RaceTrack" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="adm-form-label">Datum *</label>
+                                    <input class="form-control form-control-sm" type="date" name="date" value="@p.Date.ToString("yyyy-MM-dd")" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="adm-form-label">Fahrer *</label>
+                                    <input class="form-control form-control-sm" name="driver" value="@p.Driver" list="driverListEdit-@p.Id" required />
+                                    <datalist id="driverListEdit-@p.Id">
+                                        @foreach (var d in driverList) { <option value="@d" /> }
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="adm-form-label">Zweiter Fahrer</label>
+                                    <input class="form-control form-control-sm" name="secondDriver" value="@p.SecondDriver" list="driverListEdit2-@p.Id" />
+                                    <datalist id="driverListEdit2-@p.Id">
+                                        @foreach (var d in driverList) { <option value="@d" /> }
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="adm-form-label">Decision *</label>
+                                    <select class="form-select form-select-sm" name="penaltyType" required>
+                                        @foreach (var t in penaltyTypes)
+                                        {
+                                            <option value="@t" selected="@(t == p.PenaltyType ? "selected" : null)">@t</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="adm-form-label">Punkteabzug</label>
+                                    <input class="form-control form-control-sm" type="number" name="points" value="@p.Points" min="0" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="adm-form-label">Fact (Sachverhalt)</label>
+                                    <input class="form-control form-control-sm" name="incident" value="@p.Incident" maxlength="500" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="adm-form-label">Infringement + Reason *</label>
+                                    <textarea class="form-control form-control-sm" name="reason" rows="4" required maxlength="4000">@p.Reason</textarea>
+                                </div>
+                                <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
+                                    <label class="adm-check-label">
+                                        <input class="adm-checkbox" type="checkbox" name="isPublic" value="true"
+                                               id="editPub-@p.Id" @(p.IsPublic ? "checked" : "") />
+                                        <span class="adm-check-text">
+                                            <i class="bi bi-eye-fill me-1" style="color:***REMOVED***39ff14;"></i>Oeffentlich
+                                        </span>
+                                    </label>
+                                    <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Speichern</button>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle-edit="doc-edit-@p.Id">Abbrechen</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var panel = document.getElementById(btn.dataset.toggleEdit);
+        if (!panel) return;
+        panel.style.display = panel.style.display !== 'none' ? 'none' : 'block';
+    });
+});
+
+(function () {
+    var fDate    = document.getElementById('f_date');
+    var fDriver  = document.getElementById('f_driver');
+    var fDriver2 = document.getElementById('f_driver2');
+    var fLeague  = document.getElementById('f_league');
+    var fTrack   = document.getElementById('f_track');
+    var fType    = document.getElementById('f_type');
+    var fPoints  = document.getElementById('f_points');
+    var fIncident= document.getElementById('f_incident');
+    var fReason  = document.getElementById('f_reason');
+
+    function fmt(iso) {
+        if (!iso) return '--';
+        var p = iso.split('-');
+        return p.length === 3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
+    }
+    function nowTime() {
+        var n = new Date();
+        return n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+    }
+    function set(id, v) { var e = document.getElementById(id); if (e) e.textContent = v || '--'; }
+
+    function buildReason(raw) {
+        var el = document.getElementById('pv_reason');
+        if (!el) return;
+        el.innerHTML = '';
+        if (!raw || !raw.trim()) { el.innerHTML = '<em style="color:***REMOVED***aaa;">Begruendung erscheint hier...</em>'; return; }
+        raw.split(/\n+/).filter(function(l){return l.trim();}).forEach(function(line){
+            var p = document.createElement('p'); p.textContent = line; el.appendChild(p);
+        });
+    }
+
+    function update() {
+        var driver  = fDriver.value.trim() || '--';
+        var driver2 = fDriver2.value.trim();
+        var leagueId= fLeague.value || '--';
+        var track   = fTrack.value.trim();
+        var type    = fType.value || '--';
+        var pts     = parseInt(fPoints.value || '0', 10);
+        var incident= fIncident.value.trim();
+        var reason  = fReason.value.trim();
+        var dateVal = fDate.value;
+        var t       = nowTime();
+
+        set('pv_gp', track ? track.toUpperCase()+' GRAND PRIX' : (leagueId !== '--' ? leagueId.toUpperCase() : '--'));
+        set('pv_date', fmt(dateVal));
+        set('pv_metadate', fmt(dateVal));
+        set('pv_time', t); set('pv_time2', t);
+        set('pv_ts', fmt(dateVal)+' '+t);
+        set('pv_to', driver2 ? driver+' & '+driver2 : driver);
+        set('pv_driver', driver);
+        set('pv_league', leagueId !== '--' ? leagueId : '--');
+
+        var factRow = document.getElementById('pv_factRow');
+        if (incident) { set('pv_fact', incident); factRow.style.display = ''; }
+        else { factRow.style.display = 'none'; }
+
+        set('pv_offence', '--');
+
+        set('pv_decision', type !== '--' ? type+' imposed.' : '--');
+        var ptsEl = document.getElementById('pv_pts');
+        if (pts > 0) { ptsEl.textContent = ' (-'+pts+' Championship points deducted.)'; ptsEl.style.display = 'inline'; }
+        else { ptsEl.textContent = ''; ptsEl.style.display = 'none'; }
+
+        buildReason(reason);
+    }
+
+    [fDate, fDriver, fDriver2, fLeague, fTrack, fType, fPoints, fIncident].forEach(function(el){
+        if (el) { el.addEventListener('input', update); el.addEventListener('change', update); }
+    });
+    if (fReason) fReason.addEventListener('input', update);
+    update();
+})();
+</script>
+}

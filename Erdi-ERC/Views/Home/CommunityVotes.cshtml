@@ -1,0 +1,89 @@
+@model <OWNER_HANDLE>_ERC.Models.CommunityVotesPageViewModel
+@{
+    ViewData["Title"] = "Community-Votings";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "<OWNER_HANDLE>'s Racing Community",
+    Title     = "Community",
+    Highlight = "Votings",
+    Lead      = "Vote für Fahrer des Tages, bestes Überholmanöver, schönstes Event oder deine Lieblingsstrecke.",
+    GhostText = "VOTE"
+})" />
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm {
+        IconLucide = "bar-chart-2",
+        Label      = "Aktive Polls",
+        Value      = Model.Polls.Count.ToString(),
+        Sub        = "Laufende Community-Abstimmungen"
+    })" />
+</div>
+
+<section class="f1-section reveal">
+    <partial name="_F1Section" model="@(new F1SectionVm {
+        Chip  = "Votings",
+        Title = "Aktuelle Abstimmungen"
+    })" />
+
+    @if (!Model.Polls.Any())
+    {
+        <div class="empty-state community-empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-bar-chart"></i></span>
+            <div class="empty-state__title">Keine aktiven Votings</div>
+            <p class="empty-state__lead">Sobald neue Community-Votings live sind, erscheinen sie hier.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var poll in Model.Polls)
+            {
+                <div class="col-lg-6">
+                    <div class="community-card h-100">
+                        <div class="community-card__body d-flex flex-column gap-3">
+                            <div>
+                                <div class="community-card__meta mb-1">
+                                    <span class="badge bg-secondary">@poll.Poll.Category</span>
+                                    <span class="text-mute small">@poll.TotalVotes Votes</span>
+                                </div>
+                                <div class="community-card__title mb-1">@poll.Poll.Title</div>
+                                @if (!string.IsNullOrWhiteSpace(poll.Poll.Description))
+                                {
+                                    <p class="community-card__text mb-0">@poll.Poll.Description</p>
+                                }
+                            </div>
+
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <form asp-action="VoteCommunityPoll" method="post" class="d-flex flex-column gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="pollId" value="@poll.Poll.Id" />
+                                    @foreach (var option in poll.Poll.Options)
+                                    {
+                                        var count = poll.VoteCounts.TryGetValue(option.Id, out var c) ? c : 0;
+                                        <button class="community-option-btn btn @(poll.CurrentOptionId == option.Id ? "btn-primary" : "btn-outline-light") text-start d-flex justify-content-between align-items-center"
+                                                type="submit" name="optionId" value="@option.Id">
+                                            <span>@option.Label</span>
+                                            <span class="badge bg-dark">@count</span>
+                                        </button>
+                                    }
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info mb-0">Bitte einloggen, um bei Community-Votings mitzumachen.</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

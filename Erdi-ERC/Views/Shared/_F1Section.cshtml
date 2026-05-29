@@ -1,0 +1,20 @@
+@model <OWNER_HANDLE>_ERC.Models.UiComponents.F1SectionVm
+@*
+    F1 Section Header — wiederverwendbarer Section-Title-Block.
+    CSS: pages/home-index.css (.f1-section__*)
+    Hinweis: Eltern-Element sollte .f1-section sein (margin/positioning).
+*@
+<div class="f1-section__head">
+    <span class="f1-section__bar" aria-hidden="true"></span>
+    @if (!string.IsNullOrWhiteSpace(Model.Chip))
+    {
+        <span class="f1-section__chip">@Model.Chip</span>
+    }
+    <h2 class="f1-section__title">@Model.Title</h2>
+    @if (!string.IsNullOrWhiteSpace(Model.SubLink) && !string.IsNullOrWhiteSpace(Model.SubText))
+    {
+        <a class="f1-section__sub" href="@Model.SubLink">
+            @Model.SubText <i class="f1-icon" data-lucide="arrow-right"></i>
+        </a>
+    }
+</div>

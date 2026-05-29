@@ -1,0 +1,45 @@
+/* =====================================================================
+   09 · RESPONSIVE
+   ===================================================================== */
+@media (max-width: 992px) {
+    .navbar .nav-link { padding:.56rem .64rem!important; font-size:.74rem; letter-spacing:.07em; }
+    .hero { padding:1.3rem; border-radius:8px; }
+    .hero__meta { gap:1rem; }
+    .race-hud-grid,
+    .race-weekend-timeline { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .podium-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 768px) {
+    .stat-grid { grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); }
+    .hero { padding:1rem; }
+    .hero__title { font-size:1.5rem; }
+    .music-player {
+        top:calc(52px + .5rem);
+        left:.5rem;
+        right:.5rem;
+        min-width:0;
+        max-width:calc(100vw - 1rem);
+        flex-wrap:wrap;
+    }
+    .music-meta { flex:1 1 160px; max-width:none; }
+    .music-volume { flex:1 1 100%; width:100%; }
+    .table thead th, .table tbody td { padding:.55rem .6rem; }
+    .result-row { grid-template-columns:auto 1fr auto; }
+    .result-row__time { display:none; }
+    .event-card { flex-direction:column; }
+    .event-card__date { flex:0 0 auto; align-self:flex-start; }
+    .btn { font-size:.68rem; letter-spacing:.08em; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+    *,*::before,*::after { animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; scroll-behavior:auto!important; }
+    .topbar::after,
+    .hero::after,
+    .section-head__bar,
+    .icon-chip,
+    .btn-primary .bi,
+    .btn-primary i,
+    body::after {
+        animation:none!important;
+    }
+}

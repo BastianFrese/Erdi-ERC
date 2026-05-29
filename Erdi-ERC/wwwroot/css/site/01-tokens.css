@@ -1,0 +1,100 @@
+/* =====================================================================
+   01 · TOKENS
+   ===================================================================== */
+:root {
+    --bg-0:***REMOVED***030407;
+    --bg-1:***REMOVED***07090f;
+    --bg-2:***REMOVED***0d1119;
+    --surface-1:rgba(12,16,24,.86);
+    --surface-2:rgba(16,21,31,.92);
+    --surface-3:rgba(24,30,44,.96);
+
+    --stroke-1:rgba(255,255,255,.12);
+    --stroke-2:rgba(255,255,255,.2);
+    --stroke-3:rgba(255,255,255,.3);
+
+    --ink:***REMOVED***f4f6fb;
+    --ink-2:rgba(244,246,251,.74);
+    --ink-3:rgba(244,246,251,.52);
+    --ink-4:rgba(244,246,251,.34);
+
+    --accent:***REMOVED***e10600;
+    --accent-2:***REMOVED***ff3b2f;
+    --accent-soft:rgba(225,6,0,.18);
+    --accent-glow:rgba(225,6,0,.55);
+
+    --sig-cyan:***REMOVED***00e5ff;
+    --sig-amber:***REMOVED***ffb800;
+    --sig-green:***REMOVED***39ff14;
+    --sig-magenta:***REMOVED***b95cff;
+    --sig-blue:***REMOVED***3da9fc;
+    --sig-red:***REMOVED***ff4757;
+
+    --gold:***REMOVED***ffd24a;
+    --silver:***REMOVED***d4d8e0;
+    --bronze:***REMOVED***d68a4a;
+
+    --ff-display:'Inter','Segoe UI',system-ui,sans-serif;
+    --ff-tech:'Orbitron','Inter',system-ui,sans-serif;
+    --ff-body:'Inter','Segoe UI',system-ui,sans-serif;
+    --ff-mono:'JetBrains Mono','Cascadia Code',Consolas,monospace;
+
+    --r-1:4px;
+    --r-2:6px;
+    --r-3:8px;
+    --r-4:10px;
+    --r-5:12px;
+    --r-pill:999px;
+
+    --s-1:.25rem; --s-2:.5rem; --s-3:.75rem; --s-4:1rem;
+    --s-5:1.25rem; --s-6:1.5rem; --s-7:2rem; --s-8:3rem; --s-9:4rem;
+
+    --t-fast:120ms cubic-bezier(.4,0,.2,1);
+    --t-base:220ms cubic-bezier(.22,1,.36,1);
+    --t-slow:480ms cubic-bezier(.22,1,.36,1);
+
+    --sh-1:0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px -8px rgba(0,0,0,.5);
+    --sh-2:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 60px -20px rgba(0,0,0,.65), 0 6px 18px -8px rgba(0,0,0,.45);
+    --sh-3:0 1px 0 rgba(255,255,255,.06) inset, 0 30px 80px -24px rgba(0,0,0,.75), 0 0 0 1px var(--stroke-1);
+
+    --g-aurora:
+        radial-gradient(60% 80% at 20% 0%, rgba(0,229,255,.18), transparent 60%),
+        radial-gradient(50% 70% at 80% 10%, var(--accent-soft), transparent 60%),
+        radial-gradient(70% 60% at 50% 100%, rgba(185,92,255,.14), transparent 70%);
+    --g-chrome:linear-gradient(180deg,***REMOVED***f6f8ff 0%,***REMOVED***cfd6e4 45%,***REMOVED***7d8699 55%,***REMOVED***cfd6e4 100%);
+    --g-text-1:linear-gradient(180deg,***REMOVED***ffffff 0%,***REMOVED***c8cdd8 100%);
+    --g-text-2:linear-gradient(180deg,***REMOVED***ffffff 0%,***REMOVED***9aa3b6 100%);
+    --g-accent:linear-gradient(180deg,var(--accent-2),var(--accent));
+
+    --glass-blur:blur(10px) saturate(135%);
+    --glass-blur-sm:blur(6px) saturate(120%);
+}
+
+body.team-redbull       { --accent:***REMOVED***3671C6; --accent-2:***REMOVED***5b8fe0; --accent-soft:rgba(54,113,198,.20); --accent-glow:rgba(54,113,198,.55); }
+body.team-mercedes      { --accent:***REMOVED***00D2BE; --accent-2:***REMOVED***3ce6d6; --accent-soft:rgba(0,210,190,.20);  --accent-glow:rgba(0,210,190,.55); }
+body.team-ferrari       { --accent:***REMOVED***E8002D; --accent-2:***REMOVED***ff3357; --accent-soft:rgba(232,0,45,.20);   --accent-glow:rgba(232,0,45,.55); }
+body.team-mclaren       { --accent:***REMOVED***FF8000; --accent-2:***REMOVED***ffa133; --accent-soft:rgba(255,128,0,.20);  --accent-glow:rgba(255,128,0,.55); }
+body.team-astonmartin   { --accent:***REMOVED***229971; --accent-2:***REMOVED***3ec494; --accent-soft:rgba(34,153,113,.20); --accent-glow:rgba(34,153,113,.55); }
+body.team-alpine        { --accent:***REMOVED***FF87BC; --accent-2:***REMOVED***ffaecf; --accent-soft:rgba(255,135,188,.22);--accent-glow:rgba(255,135,188,.55); }
+body.team-williams      { --accent:***REMOVED***64C4FF; --accent-2:***REMOVED***8fd5ff; --accent-soft:rgba(100,196,255,.22);--accent-glow:rgba(100,196,255,.55); }
+body.team-haas          { --accent:***REMOVED***B6BABD; --accent-2:***REMOVED***d4d7d9; --accent-soft:rgba(182,186,189,.22);--accent-glow:rgba(182,186,189,.45); }
+body.team-racingbulls,
+body.team-rb            { --accent:***REMOVED***6692FF; --accent-2:***REMOVED***90b0ff; --accent-soft:rgba(102,146,255,.22);--accent-glow:rgba(102,146,255,.55); }
+body.team-sauber,
+body.team-kicksauber    { --accent:***REMOVED***52E252; --accent-2:***REMOVED***7feb7f; --accent-soft:rgba(82,226,82,.22); --accent-glow:rgba(82,226,82,.50); }
+
+:root {
+    --f1-red:var(--accent); --f1-red-dark:var(--accent); --f1-red-glow:var(--accent-glow);
+    --f1-accent-yellow:var(--sig-amber); --f1-accent-green:var(--sig-green); --f1-accent-cyan:var(--sig-cyan);
+    --f1-bg:var(--bg-0); --f1-bg-2:var(--bg-1);
+    --f1-surface:var(--surface-1); --f1-surface-strong:var(--surface-2);
+    --f1-border:var(--stroke-1); --f1-border-strong:var(--stroke-3);
+    --f1-text:var(--ink); --f1-text-muted:var(--ink-2); --f1-silver:var(--silver);
+    --radius-sm:var(--r-1); --radius-md:var(--r-2); --radius-lg:var(--r-3); --radius-xl:var(--r-4);
+    --shadow-sm:var(--sh-1); --shadow-md:var(--sh-1); --shadow-lg:var(--sh-2); --shadow-glow-red:0 0 0 1px var(--accent-soft);
+    --tr-fast:var(--t-fast); --tr-base:var(--t-base); --tr-slow:var(--t-slow);
+    --panel-bg:var(--surface-1); --carbon:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px);
+    --f1-grid:repeating-linear-gradient(90deg, transparent 0 34px, rgba(255,255,255,.018) 34px 35px);
+    --f1-checker:repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 6px, transparent 6px 12px);
+    --f1-telemetry:linear-gradient(90deg, var(--sig-cyan), var(--accent), var(--sig-magenta));
+}

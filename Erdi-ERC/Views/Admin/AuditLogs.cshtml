@@ -1,0 +1,90 @@
+@model List<<OWNER_HANDLE>_ERC.Models.AdminAuditLog>
+@{
+    ViewData["Title"] = "Audit Logs";
+    ViewData["Kicker"] = "System";
+    ViewData["HeroTitle"] = "Audit Logs";
+    var actorCount = Model.Select(x => x.Actor).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+    var actionCount = Model.Select(x => x.Action).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+}
+
+<div class="adm-dashboard">
+
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-journal-text"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Einträge geladen</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***66d18f;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-person-badge"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@actorCount</div>
+                <div class="adm-kpi-card__label">Akteure</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-activity"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@actionCount</div>
+                <div class="adm-kpi-card__label">Aktionstypen</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-clock-history me-2" style="color:var(--sig-cyan);"></i>Protokoll
+            </span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-check2-all adm-empty__icon"></i>
+                    <span>Keine Audit-Einträge vorhanden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" style="font-size:.82rem;">
+                    <thead style="background:var(--bg-3);color:var(--ink-3);font-family:var(--ff-tech);text-transform:uppercase;letter-spacing:.06em;font-size:.68rem;">
+                        <tr>
+                            <th class="px-3 py-2">Zeit (UTC)</th>
+                            <th class="py-2">Actor</th>
+                            <th class="py-2">Action</th>
+                            <th class="py-2">Entity</th>
+                            <th class="py-2 pe-3">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model)
+                        {
+                            <tr style="border-top:1px solid var(--stroke-1);">
+                                <td class="px-3" style="color:var(--ink-3);white-space:nowrap;font-family:var(--ff-mono,monospace);font-size:.78rem;">@log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td style="font-weight:600;">@log.Actor</td>
+                                <td>
+                                    <span style="display:inline-flex;align-items:center;padding:.15rem .55rem;border-radius:999px;border:1px solid var(--stroke-1);background:rgba(255,255,255,.05);font-family:var(--ff-tech);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;">
+                                        @log.Action
+                                    </span>
+                                </td>
+                                <td style="color:var(--ink-3);">
+                                    <span style="font-size:.78rem;">@log.EntityType</span>
+                                    <code style="font-size:.78rem;color:var(--sig-cyan);">@log.EntityId</code>
+                                </td>
+                                <td class="pe-3" style="color:var(--ink-3);font-size:.78rem;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@log.Details</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>

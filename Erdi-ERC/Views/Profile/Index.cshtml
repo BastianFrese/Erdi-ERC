@@ -1,0 +1,433 @@
+@model <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = $"Profil – {Model.Driver}";
+    var profile = ViewBag.Profile as <OWNER_HANDLE>_ERC.Models.DriverProfile;
+    var canEditEaName = ViewBag.CanEditEaName is bool ce && ce;
+    var currentEaTag = profile?.GamerTags?.FirstOrDefault(t => string.Equals(t.Platform, "EA", StringComparison.OrdinalIgnoreCase))?.GamerTag ?? string.Empty;
+    var wallMessages = (ViewBag.ProfileWall as List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>) ?? new List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>();
+
+    var featured = DriverAchievementsHelper.GetFeatured(Model.Achievements);
+    var totalRaces = Model.Races.Count;
+    var finishedRaces = Model.Races.Count(r => r.Position > 0);
+    var dnfRaces = Model.Races.Count(r => r.Position <= 0);
+    var top10Races = Model.Races.Count(r => r.Position is >= 1 and <= 10);
+    var winRate = finishedRaces > 0 ? (int)Math.Round(100.0 * Model.Wins / finishedRaces) : 0;
+    var top10Rate = finishedRaces > 0 ? (int)Math.Round(100.0 * top10Races / finishedRaces) : 0;
+    var reliability = totalRaces > 0 ? (int)Math.Round(100.0 * finishedRaces / totalRaces) : 0;
+    var recentRaces = Model.Races.OrderByDescending(r => r.Date).Take(8).ToList();
+    var unlocked = Model.Achievements.Where(a => a.IsUnlocked).ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
+    <style>
+        .profile-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
+        .profile-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .profile-card__body { padding:1.25rem; }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Fahrer-Profil · ERC",
+    Title     = Model.Driver,
+    GhostText = "PROFILE"
+})" />
+
+@* Driver card visual (custom partial) *@
+<div class="mb-4 reveal">
+    <partial name="_DriverCard" model="Model" />
+</div>
+
+@if (featured != null || profile is not null || totalRaces > 0)
+{
+    <div class="reveal mb-4 d-flex flex-wrap gap-3 align-items-center">
+        @if (profile is not null)
+        {
+            <span class="text-mute" style="font-size:.88rem;">Discord: <strong style="color:var(--ink);">@profile.DiscordName</strong></span>
+        }
+        @if (featured != null)
+        {
+            <span class="featured-achievement achievement-chip--@featured.Tier" title="@featured.Title – @featured.Description">
+                <i class="bi @featured.Icon"></i>
+                <span class="featured-achievement__title">@featured.Title</span>
+                <span class="achievement-chip__tier">@featured.Tier</span>
+            </span>
+        }
+        @if (totalRaces > 0)
+        {
+            <span class="race-lights-pill" data-state="green">
+                <span class="race-lights-pill__strip" aria-hidden="true">
+                    <span class="race-lights-pill__lamp"></span><span class="race-lights-pill__lamp"></span><span class="race-lights-pill__lamp"></span><span class="race-lights-pill__lamp"></span><span class="race-lights-pill__lamp"></span>
+                </span>
+                Profile · Live Stats
+            </span>
+            <div class="lap-counter" title="Gefahrene Rennen"><span class="lap-counter__label">Races</span><span class="lap-counter__value">@totalRaces.ToString("00")</span></div>
+            <div class="lap-counter" title="Top-10 Quote"><span class="lap-counter__label">Top 10</span><span class="lap-counter__value">@top10Rate%</span></div>
+        }
+    </div>
+}
+
+@if (TempData["ProfileMessage"] is string profileMessage && !string.IsNullOrWhiteSpace(profileMessage))
+{
+    <div class="alert alert-info reveal">@profileMessage</div>
+}
+
+<div class="f1-stat-grid reveal mb-4">
+    <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "trophy",     Label = "Siege",        Value = Model.Wins.ToString(),        Sub = $"{winRate}% Win-Rate" })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "medal",      Label = "Podien",       Value = Model.Podiums.ToString() })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "zap",        Label = "Fastest Laps", Value = Model.FastestLaps.ToString() })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "circle-dot", Label = "Punkte",       Value = Model.TotalPoints.ToString() })" />
+</div>
+
+<div class="row g-4 reveal">
+    <div class="col-lg-4">
+
+        <div class="profile-card">
+            <div class="profile-card__head"><i class="bi bi-controller" style="color:var(--sig-cyan);"></i> Verknüpfte Gamer-Tags</div>
+            <div class="profile-card__body d-flex flex-column gap-2">
+                @if (profile?.GamerTags?.Any() == true)
+                {
+                    foreach (var tag in profile.GamerTags.OrderByDescending(t => t.IsPrimary))
+                    {
+                        <div class="d-flex align-items-center justify-content-between surface-glass p-2">
+                            <div>
+                                <div class="text-mute small">@tag.Platform</div>
+                                <div class="fw-semibold">@tag.GamerTag</div>
+                            </div>
+                            @if (tag.IsPrimary)
+                            {
+                                <span class="status-pill is-green">Primär</span>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-mute">Noch keine Tags verknüpft.</div>
+                }
+            </div>
+        </div>
+
+        <div class="profile-card mt-4">
+            <div class="profile-card__head"><i class="bi bi-stars" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Profil-Infos</div>
+            <div class="profile-card__body d-flex flex-column gap-2">
+                <div class="surface-glass p-2">
+                    <div class="text-mute small">Lieblingsstrecke</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.FavoriteTrack) ? "-" : profile!.FavoriteTrack)</div>
+                </div>
+                <div class="surface-glass p-2">
+                    <div class="text-mute small">Input</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.InputDevice) ? "-" : profile!.InputDevice)</div>
+                </div>
+                <div class="surface-glass p-2">
+                    <div class="text-mute small">Plattform</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.PreferredPlatform) ? "-" : profile!.PreferredPlatform)</div>
+                </div>
+                <div class="surface-glass p-2">
+                    <div class="text-mute small">Nationalität / Flagge</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.Nationality) ? "-" : profile!.Nationality)</div>
+                </div>
+                <div class="surface-glass p-2">
+                    <div class="text-mute small">Bio</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.Bio) ? "-" : profile!.Bio)</div>
+                </div>
+            </div>
+        </div>
+
+        @if (canEditEaName)
+        {
+            <div class="profile-card mt-4" style="border-color:var(--text-amber,***REMOVED***f59e0b);">
+                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> EA-Namen ändern</div>
+                <div class="profile-card__body d-flex flex-column gap-3">
+                    <div class="text-mute small">Hier kannst du deinen EA-Namen selbst anpassen.</div>
+                    <div class="surface-glass p-3" style="border-left:3px solid var(--text-amber,***REMOVED***f59e0b);font-size:.88rem;">
+                        <strong>Wichtiger Hinweis:</strong> Bitte trage hier immer zu <strong>100% deinen echten und korrekten EA-Namen</strong> ein. Falsche oder unehrliche Angaben führen zu falschen Zuordnungen im System.
+                    </div>
+                    <form asp-action="UpdateEaName" method="post" class="d-flex flex-column gap-2">
+                        @Html.AntiForgeryToken()
+                        <label class="form-label mb-0" for="eaName">EA-Name</label>
+                        <input class="form-control" id="eaName" name="eaName" maxlength="128" value="@currentEaTag" placeholder="Dein exakter EA-Name" required />
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" id="confirmEaNameAccuracy" name="confirmEaNameAccuracy" value="true" required />
+                            <label class="form-check-label small" for="confirmEaNameAccuracy">
+                                Ich bestätige, dass dieser EA-Name mein echter, vollständiger und aktueller EA-Namen ist.
+                            </label>
+                        </div>
+                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,***REMOVED***f59e0b);color:var(--text-amber,***REMOVED***f59e0b);">EA-Namen speichern</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="profile-card mt-4">
+                <div class="profile-card__head"><i class="bi bi-person-lines-fill" style="color:var(--sig-cyan);"></i> Profil erweitern</div>
+                <div class="profile-card__body">
+                    <div class="text-mute small mb-3">Mehr Community-Infos für Teamseiten, Reservebörse und Profilansicht.</div>
+                    <form asp-action="UpdateProfileMeta" method="post" class="row g-2">
+                        @Html.AntiForgeryToken()
+                        <div class="col-12">
+                            <label class="form-label mb-0">Lieblingsstrecke</label>
+                            <input class="form-control" name="favoriteTrack" maxlength="128" value="@profile?.FavoriteTrack" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-0">Lenkrad / Pad</label>
+                            <input class="form-control" name="inputDevice" maxlength="64" value="@profile?.InputDevice" placeholder="Wheel / Pad" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-0">Plattform</label>
+                            <input class="form-control" name="preferredPlatform" maxlength="64" value="@profile?.PreferredPlatform" placeholder="EA / Steam / Xbox / Playstation" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-0">Nationalität / Flagge</label>
+                            <input class="form-control" name="nationality" maxlength="64" value="@profile?.Nationality" placeholder="z.B. Deutschland" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-0">Kurze Bio</label>
+                            <textarea class="form-control" name="bio" rows="3" maxlength="512" placeholder="Kurz etwas über dich, deinen Fahrstil oder deine Ziele...">@profile?.Bio</textarea>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button class="f1-btn f1-btn--ghost" type="submit">Profil-Infos speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @if (totalRaces > 0)
+        {
+            <div class="profile-card mt-4">
+                <div class="profile-card__head"><i class="bi bi-shield-check" style="color:var(--sig-cyan);"></i> Konstanz</div>
+                <div class="profile-card__body">
+                    <div class="small text-mute mb-1">Reliability</div>
+                    <div class="progress mb-2" style="height:10px;">
+                        <div class="progress-bar js-reliability-bar" role="progressbar" style="width:0;transition:width .9s cubic-bezier(.22,.61,.36,1);" data-target-width="@reliability" aria-valuenow="@reliability" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-mono small">@finishedRaces Finishes · @dnfRaces DNF/DNS · @reliability%</div>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <div class="col-lg-8">
+
+        @if (totalRaces > 0)
+        {
+            <div class="profile-card mb-4">
+                <div class="profile-card__head">
+                    <i class="bi bi-activity" style="color:var(--sig-cyan);"></i> Formkurve (letzte @recentRaces.Count Rennen)
+                    <span class="ms-auto text-mute" style="font-weight:400;font-size:.78rem;">Neueste zuerst</span>
+                </div>
+                <div class="profile-card__body">
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var rr in recentRaces)
+                        {
+                            var cls = rr.Position == 1 ? "bg-warning text-dark" : rr.Position == 2 ? "bg-light text-dark" : rr.Position == 3 ? "bg-secondary" : rr.Position is >= 4 and <= 10 ? "bg-info text-dark" : "bg-danger";
+                            var label = rr.Position > 0 ? $"P{rr.Position}" : "DNF";
+                            var pulseCls = rr.Position == 1 ? " js-form-chip--p1" : "";
+                            <span class="badge @cls js-form-chip@pulseCls" title="@rr.Track · @rr.Date.ToString("dd.MM.yyyy")">@label</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="profile-card mb-4">
+            <div class="profile-card__head"><i class="bi bi-trophy" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Achievements</div>
+            <div class="profile-card__body">
+                @if (unlocked.Any())
+                {
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var a in unlocked)
+                        {
+                            <span class="badge bg-secondary p-2" title="@a.Description"><i class="bi @a.Icon me-1"></i>@a.Title</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-mute">Noch keine Achievements freigeschaltet.</div>
+                }
+            </div>
+        </div>
+
+        <div class="profile-card mb-4">
+            <div class="profile-card__head">
+                <i class="bi bi-chat-left-text" style="color:var(--sig-cyan);"></i> Community Wall
+                <span class="ms-auto text-mute" style="font-weight:400;font-size:.78rem;">Kurze Kommentare &amp; Rivalry-Talk</span>
+            </div>
+            <div class="profile-card__body">
+                @if (User.Identity?.IsAuthenticated == true && profile is not null)
+                {
+                    <form asp-action="AddWallMessage" method="post" class="d-flex flex-column gap-2 mb-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="profileDiscordId" value="@profile.DiscordId" />
+                        <textarea class="form-control" name="message" rows="3" maxlength="600" placeholder="Schreib eine kurze öffentliche Nachricht an diesen Fahrer..." required></textarea>
+                        <div class="d-flex justify-content-end">
+                            <button class="f1-btn f1-btn--ghost" type="submit" style="font-size:.85rem;padding:.4rem 1rem;">Nachricht posten</button>
+                        </div>
+                    </form>
+                }
+
+                @if (wallMessages.Any())
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var entry in wallMessages)
+                        {
+                            <div class="surface-glass p-3" style="border-radius:var(--r-2);">
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-1">
+                                    <strong>@entry.AuthorName</strong>
+                                    <span class="text-mute small">@entry.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                </div>
+                                <div style="white-space:pre-wrap;">@entry.Message</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-mute">Noch keine Wall-Nachrichten vorhanden.</div>
+                }
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-card__head"><i class="bi bi-flag" style="color:var(--sig-cyan);"></i> Renn-Historie</div>
+            <div class="profile-card__body p-0">
+                @if (Model.Races.Any())
+                {
+                    <div class="f1-results-card" style="box-shadow:none;border:none;border-radius:0;">
+                        <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+                        <div class="table-responsive">
+                            <table class="f1-results-table profile-race-table">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Strecke</th>
+                                        <th class="is-center">Pos.</th>
+                                        <th class="is-center">FL</th>
+                                        <th>Reserve für</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in Model.Races)
+                                    {
+                                        var hasLink = r.RaceId > 0 && !string.IsNullOrWhiteSpace(r.LeagueId);
+                                        var url = hasLink ? Url.Action("RaceDetail", "Home", new { leagueId = r.LeagueId, raceId = r.RaceId }) : null;
+                                        <tr class="@(hasLink ? "race-row" : null)"
+                                            data-href="@(hasLink ? url : null)"
+                                            role="@(hasLink ? "button" : null)"
+                                            style="@(hasLink ? "cursor:pointer" : null)"
+                                            title="@(hasLink ? "Renndetails öffnen" : null)">
+                                            <td class="text-mono" style="font-size:.8rem;color:var(--ink-3);">
+                                                @if (hasLink)
+                                                {
+                                                    <a class="text-decoration-none" style="color:var(--sig-cyan);" href="@url">@r.Date.ToString("dd.MM.yyyy")</a>
+                                                }
+                                                else
+                                                {
+                                                    @r.Date.ToString("dd.MM.yyyy")
+                                                }
+                                            </td>
+                                            <td>@r.Track</td>
+                                            <td class="is-center">
+@if (r.Position > 0)
+{
+    <span class="driver-tile__pos @(r.Position == 1 ? "is-1" : r.Position == 2 ? "is-2" : r.Position == 3 ? "is-3" : "")">@($"P{r.Position}")</span>
+}
+else
+{
+    <span class="status-pill" style="background:rgba(239,68,68,.15);color:***REMOVED***ef4444;">@(r.Position == 0 ? "DNF" : "DNS")</span>
+}
+</td>
+                                            <td class="text-tech is-center" style="color:var(--sig-purple,***REMOVED***a855f7);">@(r.FastestLap ? "★" : "")</td>
+                                            <td style="font-size:.82rem;color:var(--ink-2);">@(r.WasReserve ? r.ReserveForDriver : "")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-mute p-4">Noch keine Rennen gefahren.</div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.profile-race-table tr.race-row').forEach(function (row) {
+            row.addEventListener('click', function (ev) {
+                if (ev.target.closest('a')) return;
+                var href = row.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+        });
+
+        (function () {
+            const formChips = Array.from(document.querySelectorAll('.js-form-chip'));
+            formChips.forEach((chip, i) => {
+                chip.style.opacity = '0';
+                chip.style.transform = 'translateY(6px) scale(.98)';
+                chip.style.transition = 'opacity .28s ease, transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s ease';
+                setTimeout(() => {
+                    chip.style.opacity = '1';
+                    chip.style.transform = 'translateY(0) scale(1)';
+                }, 80 + (i * 55));
+            });
+
+            const p1Chips = Array.from(document.querySelectorAll('.js-form-chip--p1'));
+            if (p1Chips.length > 0) {
+                setTimeout(() => {
+                    p1Chips.forEach((chip, i) => {
+                        setTimeout(() => {
+                            chip.animate([
+                                { transform: 'translateY(0) scale(1)', boxShadow: '0 0 0 rgba(255, 193, 7, 0)' },
+                                { transform: 'translateY(-1px) scale(1.04)', boxShadow: '0 0 14px rgba(255, 193, 7, .55)' },
+                                { transform: 'translateY(0) scale(1)', boxShadow: '0 0 0 rgba(255, 193, 7, 0)' }
+                            ], {
+                                duration: 1350,
+                                easing: 'cubic-bezier(.22,.61,.36,1)',
+                                iterations: 2,
+                                delay: i * 120
+                            });
+                        }, i * 70);
+                    });
+                }, 520);
+            }
+
+            const bar = document.querySelector('.js-reliability-bar');
+            if (!bar) return;
+            const target = parseInt(bar.getAttribute('data-target-width') || '0', 10);
+
+            const animate = () => {
+                requestAnimationFrame(() => {
+                    bar.style.width = Math.max(0, Math.min(100, target)) + '%';
+                });
+            };
+
+            if ('IntersectionObserver' in window) {
+                const io = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(e => {
+                        if (e.isIntersecting) {
+                            animate();
+                            obs.disconnect();
+                        }
+                    });
+                }, { threshold: .35 });
+                io.observe(bar);
+            } else {
+                animate();
+            }
+        })();
+    </script>
+}

@@ -1,0 +1,315 @@
+@model List<<OWNER_HANDLE>_ERC.Models.StreamSchedule>
+@{
+    ViewData["Title"] = "Stream-Zeiten";
+    ViewData["Kicker"] = "Community";
+    ViewData["HeroTitle"] = "Stream-Zeiten";
+    var recurring = Model.Where(x => x.IsRecurring).OrderBy(x => x.DayOfWeek).ThenBy(x => x.TimeOfDay).ToList();
+    var oneTime   = Model.Where(x => !x.IsRecurring).OrderBy(x => x.StartAt).ToList();
+    var weekdays  = new[]
+    {
+        new { Value = 0, Text = "Sonntag" },
+        new { Value = 1, Text = "Montag" },
+        new { Value = 2, Text = "Dienstag" },
+        new { Value = 3, Text = "Mittwoch" },
+        new { Value = 4, Text = "Donnerstag" },
+        new { Value = 5, Text = "Freitag" },
+        new { Value = 6, Text = "Samstag" }
+    };
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-broadcast-pin"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Streams gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-arrow-repeat"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@recurring.Count</div>
+                <div class="adm-kpi-card__label">Wiederkehrende Slots</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ff8a4c;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-calendar-plus"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@oneTime.Count</div>
+                <div class="adm-kpi-card__label">Spontane Streams</div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- Anlegen: Spontan ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-calendar-plus me-2" style="color:***REMOVED***ff8a4c;"></i>Spontanen Stream anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminCommunity" asp-action="SaveStreamSchedule" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="0" />
+                <input type="hidden" name="isRecurring" value="false" />
+
+                <div class="col-md-3">
+                    <label class="adm-form-label">Start</label>
+                    <input class="form-control form-control-sm" type="datetime-local" name="startAt" required value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Dauer (Min.)</label>
+                    <input class="form-control form-control-sm" type="number" min="1" name="durationMinutes" value="180" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="adm-form-label">Titel</label>
+                    <input class="form-control form-control-sm" name="title" required maxlength="256" placeholder="z. B. Spontaner Abendstream" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Stream-URL (optional)</label>
+                    <input class="form-control form-control-sm" name="url" maxlength="512" placeholder="https://twitch.tv/erdi10" />
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Stream speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Anlegen: Wiederkehrend ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-arrow-repeat me-2" style="color:***REMOVED***39ff14;"></i>Wiederkehrenden Stream anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-controller="AdminCommunity" asp-action="SaveStreamSchedule" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="0" />
+                <input type="hidden" name="isRecurring" value="true" />
+
+                <div class="col-md-2">
+                    <label class="adm-form-label">Wochentag</label>
+                    <select class="form-select form-select-sm" name="dayOfWeek" required>
+                        @foreach (var day in weekdays)
+                        {
+                            <option value="@day.Value">@day.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Uhrzeit</label>
+                    <input class="form-control form-control-sm" type="time" name="timeOfDay" required value="20:00" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Dauer (Min.)</label>
+                    <input class="form-control form-control-sm" type="number" min="1" name="durationMinutes" value="180" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Titel</label>
+                    <input class="form-control form-control-sm" name="title" required maxlength="256" placeholder="z. B. Ligaabend" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Stream-URL (optional)</label>
+                    <input class="form-control form-control-sm" name="url" maxlength="512" placeholder="https://twitch.tv/erdi10" />
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Wiederkehrenden Stream speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Liste: Wiederkehrend ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-arrow-repeat me-2" style="color:***REMOVED***39ff14;"></i>Wiederkehrende Streams
+            </span>
+            <span class="adm-badge">@recurring.Count</span>
+        </div>
+
+        @if (recurring.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-calendar-x adm-empty__icon"></i>
+                    <span>Keine wiederkehrenden Streams hinterlegt.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var item in recurring)
+                {
+                    <div class="adm-item-row">
+                        <div class="adm-item-row__main">
+                            <div class="adm-item-row__body">
+                                <span class="adm-item-row__title">@item.Title</span>
+                                <div class="adm-item-row__meta">
+                                    <span><i class="bi bi-calendar3 me-1"></i>Jeden @weekdays.First(x => x.Value == (item.DayOfWeek ?? 0)).Text</span>
+                                    <span><i class="bi bi-clock me-1"></i>@item.TimeOfDay?.ToString(@"hh\:mm") Uhr</span>
+                                    <span><i class="bi bi-stopwatch me-1"></i>@item.DurationMinutes Min.</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Url))
+                                    {
+                                        <a href="@item.Url" target="_blank" rel="noopener" style="color:var(--sig-cyan);font-size:.78rem;"><i class="bi bi-box-arrow-up-right me-1"></i>Link</a>
+                                    }
+                                </div>
+                            </div>
+                            <div class="adm-item-row__actions">
+                                <button class="btn btn-xs btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="***REMOVED***edit-r-@item.Id"
+                                        title="Bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <form asp-controller="AdminCommunity" asp-action="DeleteStreamSchedule" method="post"
+                                      onsubmit="return confirm('Diesen wiederkehrenden Stream löschen?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="collapse adm-item-row__edit" id="edit-r-@item.Id">
+                            <form asp-controller="AdminCommunity" asp-action="SaveStreamSchedule" method="post" class="row g-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="isRecurring" value="true" />
+                                <div class="col-md-2">
+                                    <label class="adm-form-label">Wochentag</label>
+                                    <select class="form-select form-select-sm" name="dayOfWeek" required>
+                                        @foreach (var day in weekdays)
+                                        {
+                                            <option value="@day.Value" selected="@(item.DayOfWeek == day.Value ? "selected" : null)">@day.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="adm-form-label">Uhrzeit</label>
+                                    <input class="form-control form-control-sm" type="time" name="timeOfDay" required value="@item.TimeOfDay?.ToString(@"hh\:mm")" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="adm-form-label">Dauer (Min.)</label>
+                                    <input class="form-control form-control-sm" type="number" min="1" name="durationMinutes" value="@item.DurationMinutes" required />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="adm-form-label">Titel</label>
+                                    <input class="form-control form-control-sm" name="title" required maxlength="256" value="@item.Title" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="adm-form-label">URL</label>
+                                    <input class="form-control form-control-sm" name="url" maxlength="512" value="@item.Url" />
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-sm btn-success" type="submit">
+                                        <i class="bi bi-check-lg me-1"></i>Speichern
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @* ---- Liste: Spontan ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-calendar-plus me-2" style="color:***REMOVED***ff8a4c;"></i>Spontane Streams
+            </span>
+            <span class="adm-badge">@oneTime.Count</span>
+        </div>
+
+        @if (oneTime.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-calendar-x adm-empty__icon"></i>
+                    <span>Keine spontanen Streams hinterlegt.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var item in oneTime)
+                {
+                    <div class="adm-item-row">
+                        <div class="adm-item-row__main">
+                            <div class="adm-item-row__body">
+                                <span class="adm-item-row__title">@item.Title</span>
+                                <div class="adm-item-row__meta">
+                                    <span><i class="bi bi-calendar3 me-1"></i>@item.StartAt.ToLocalTime().ToString("ddd, dd.MM.yyyy")</span>
+                                    <span><i class="bi bi-clock me-1"></i>@item.StartAt.ToLocalTime().ToString("HH:mm") Uhr</span>
+                                    <span><i class="bi bi-stopwatch me-1"></i>@item.DurationMinutes Min.</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Url))
+                                    {
+                                        <a href="@item.Url" target="_blank" rel="noopener" style="color:var(--sig-cyan);font-size:.78rem;"><i class="bi bi-box-arrow-up-right me-1"></i>Link</a>
+                                    }
+                                </div>
+                            </div>
+                            <div class="adm-item-row__actions">
+                                <button class="btn btn-xs btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="***REMOVED***edit-o-@item.Id"
+                                        title="Bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <form asp-controller="AdminCommunity" asp-action="DeleteStreamSchedule" method="post"
+                                      onsubmit="return confirm('Diesen spontanen Stream löschen?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="collapse adm-item-row__edit" id="edit-o-@item.Id">
+                            <form asp-controller="AdminCommunity" asp-action="SaveStreamSchedule" method="post" class="row g-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="isRecurring" value="false" />
+                                <div class="col-md-3">
+                                    <label class="adm-form-label">Start</label>
+                                    <input class="form-control form-control-sm" type="datetime-local" name="startAt" required value="@item.StartAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="adm-form-label">Dauer (Min.)</label>
+                                    <input class="form-control form-control-sm" type="number" min="1" name="durationMinutes" value="@item.DurationMinutes" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="adm-form-label">Titel</label>
+                                    <input class="form-control form-control-sm" name="title" required maxlength="256" value="@item.Title" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="adm-form-label">URL</label>
+                                    <input class="form-control form-control-sm" name="url" maxlength="512" value="@item.Url" />
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-sm btn-success" type="submit">
+                                        <i class="bi bi-check-lg me-1"></i>Speichern
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

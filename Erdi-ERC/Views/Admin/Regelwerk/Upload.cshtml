@@ -1,0 +1,70 @@
+@model <OWNER_HANDLE>_ERC.Models.RegelwerkDocument
+@{
+    ViewData["Title"] = "Regelwerk hochladen";
+    ViewData["HeroTitle"] = "Regelwerk Upload";
+    ViewData["Kicker"] = "Dokument-Verwaltung";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Zurück zur Übersicht
+    </a>
+</div>
+
+<div class="adm-card" style="max-width:640px;">
+    <div class="adm-card__head">
+        <i class="bi bi-upload"></i> Neues Regelwerk hochladen
+    </div>
+    <div class="adm-card__body">
+        <form asp-action="Upload" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label adm-label">Titel *</label>
+                <input asp-for="Title" class="form-control adm-input" placeholder="z.B. ERC Regelwerk Saison 4" required />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label adm-label">Version</label>
+                <input asp-for="Version" class="form-control adm-input" placeholder="z.B. 5.2" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label adm-label">Beschreibung / Änderungshistorie</label>
+                <textarea asp-for="Description" class="form-control adm-input" rows="3"
+                          placeholder="Was hat sich in dieser Version geändert?"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label adm-label">Datei * <span class="text-ink-3 small">(PDF, Markdown .md, .txt – max. 20 MB)</span></label>
+                <input type="file" name="file" class="form-control adm-input" accept=".pdf,.md,.txt" required />
+            </div>
+
+            <div class="mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="makeActive" value="true" id="makeActive" checked />
+                    <label class="form-check-label adm-label" for="makeActive">
+                        Dieses Dokument sofort als aktives Regelwerk festlegen
+                        <span class="text-ink-3 small d-block">Ältere aktive Versionen werden automatisch archiviert.</span>
+                    </label>
+                </div>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger small mb-3">
+                    @foreach (var e in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div>@e.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-upload me-1"></i> Hochladen
+            </button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,228 @@
+@model List<<OWNER_HANDLE>_ERC.Models.WebhookAutomationRule>
+@using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Services
+
+@{
+    ViewData["Title"] = "Webhook-Automatisierung";
+    var webhooks = (List<DiscordWebhook>)ViewBag.Webhooks;
+    var events = (IReadOnlyList<(string Key, string Label, string Icon, string Description)>)ViewBag.Events;
+
+    // group existing rules by event type for display
+    var rulesByEvent = Model.GroupBy(r => r.EventType).ToDictionary(g => g.Key, g => g.ToList());
+
+    string VarsFor(string eventType) => eventType switch
+    {
+        WebhookEvents.RaceResultSaved     => "{{League}}, {{Track}}, {{Date}}, {{Winner}}, {{FastestLap}}",
+        WebhookEvents.PenaltySaved        => "{{Driver}}, {{SecondDriver}}, {{PenaltyType}}, {{Points}}, {{RaceTrack}}, {{League}}, {{Date}}, {{Reason}}",
+        WebhookEvents.NewsPostPublished   => "{{Title}}, {{Category}}, {{Summary}}, {{Author}}",
+        WebhookEvents.RaceWeekendSaved    => "{{Track}}, {{DistancePercent}}, {{Order}}, {{Legs}}",
+        WebhookEvents.StreamScheduled     => "{{Title}}, {{Url}}, {{StartAt}}",
+        WebhookEvents.HighlightApproved   => "{{Title}}, {{Url}}, {{Category}}, {{RaceLabel}}, {{Author}}",
+        WebhookEvents.VotePollPublished   => "{{Title}}, {{Category}}, {{Description}}, {{Options}}",
+        WebhookEvents.ApplicationReceived => "{{DiscordName}}, {{DiscordId}}, {{GamingName}}, {{Role}}, {{SubmittedAt}}",
+        WebhookEvents.ApplicationAccepted => "{{DiscordName}}, {{GamingName}}, {{Platform}}, {{Division}}, {{Role}}, {{Actor}}",
+        WebhookEvents.ApplicationRejected => "{{DiscordName}}, {{GamingName}}, {{Platform}}, {{Reason}}, {{Actor}}",
+        _                                 => ""
+    };
+}
+
+<div class="f1-page-hero mb-4">
+    <div class="f1-page-hero__inner">
+        <span class="f1-page-hero__eyebrow"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> System</span>
+        <h1 class="f1-page-hero__title">Webhook-Automatisierung</h1>
+        <p class="f1-page-hero__subtitle">Definiere, welche Discord-Webhooks bei System-Events automatisch ausgelöst werden.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@ok
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@err
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!webhooks.Any())
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Noch keine Webhooks angelegt. <a href="/Admin/Webhooks" class="alert-link">Erstelle zuerst einen Webhook</a>, bevor du Automationen konfigurierst.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var (key, label, icon, description) in events)
+        {
+            var existingRules = rulesByEvent.TryGetValue(key, out var list) ? list : [];
+            var vars = VarsFor(key);
+
+            <div class="col-12">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header d-flex align-items-center gap-3 py-3">
+                        <i class="bi @icon fs-4 text-warning"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-white">@label</div>
+                            <div class="text-muted small">@description</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success" type="button"
+                                data-bs-toggle="collapse" data-bs-target="***REMOVED***new-@key.Replace('.', '-')"
+                                aria-expanded="false">
+                            <i class="bi bi-plus-lg me-1"></i>Neue Regel
+                        </button>
+                    </div>
+
+                    @* ── Existing rules ── *@
+                    @if (existingRules.Count > 0)
+                    {
+                        <div class="card-body pt-0 pb-2">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-sm table-hover mb-0">
+                                    <thead class="text-muted">
+                                        <tr>
+                                            <th>Webhook</th>
+                                            <th>Nachricht</th>
+                                            <th>Embed</th>
+                                            <th class="text-center">Aktiv</th>
+                                            <th class="text-center">Letzter Lauf</th>
+                                            <th class="text-center">Stats</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var rule in existingRules)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-discord me-1"></i>@(rule.Webhook?.Name ?? $"***REMOVED***{rule.WebhookId}")
+                                                    </span>
+                                                </td>
+                                                <td class="text-muted small font-monospace text-truncate" style="max-width:220px">
+                                                    @(rule.ContentTemplate ?? rule.EmbedTitleTemplate ?? "(Embed only)")
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (rule.UseEmbed)
+                                                    {
+                                                        <span class="badge" style="background:@rule.EmbedColor">Embed</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    <form method="post" asp-action="ToggleEnabled" asp-controller="AdminWebhookAutomation" class="d-inline">
+                                                        <input type="hidden" name="id" value="@rule.Id" />
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm @(rule.IsEnabled ? "btn-success" : "btn-secondary") py-0 px-2">
+                                                            @(rule.IsEnabled ? "Aktiv" : "Inaktiv")
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                                <td class="text-center small">
+                                                    @if (rule.LastRunAt.HasValue)
+                                                    {
+                                                        var statusBadge = rule.LastStatus switch
+                                                        {
+                                                            "OK"     => "bg-success",
+                                                            "Failed" => "bg-danger",
+                                                            _        => "bg-secondary"
+                                                        };
+                                                        <span class="badge @statusBadge mb-1" title="@rule.LastError">@(rule.LastStatus ?? "—")</span>
+                                                        <div class="text-muted" style="font-size:.7rem;">@rule.LastRunAt.Value.ToLocalTime().ToString("dd.MM HH:mm")</div>
+                                                        @if (rule.LastStatus == "Failed" && !string.IsNullOrEmpty(rule.LastError))
+                                                        {
+                                                            <div class="text-danger text-truncate" style="font-size:.65rem;max-width:180px;" title="@rule.LastError">@rule.LastError</div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">noch nie</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center small text-muted" style="white-space:nowrap;">
+                                                    <span class="text-success">@rule.SuccessCount</span>
+                                                    <span class="text-muted">/</span>
+                                                    <span class="text-danger">@rule.FailureCount</span>
+                                                </td>
+                                                <td class="text-end" style="white-space:nowrap;">
+                                                    <form method="post" asp-action="Test" asp-controller="AdminWebhookAutomation" class="d-inline">
+                                                        <input type="hidden" name="id" value="@rule.Id" />
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-success me-1" title="Mit Mock-Daten testen">
+                                                            <i class="bi bi-broadcast"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form method="post" asp-action="Duplicate" asp-controller="AdminWebhookAutomation" class="d-inline">
+                                                        <input type="hidden" name="id" value="@rule.Id" />
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary me-1" title="Duplizieren (deaktiviert)">
+                                                            <i class="bi bi-files"></i>
+                                                        </button>
+                                                    </form>
+                                                    <button class="btn btn-sm btn-outline-primary me-1" type="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="***REMOVED***edit-rule-@rule.Id"
+                                                            title="Bearbeiten">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <form method="post" asp-action="Delete" asp-controller="AdminWebhookAutomation" class="d-inline"
+                                                          onsubmit="return confirm('Regel löschen?')">
+                                                        <input type="hidden" name="id" value="@rule.Id" />
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Löschen"><i class="bi bi-trash3"></i></button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+
+                                            @* Edit form (collapsed) *@
+                                            <tr>
+                                                <td colspan="7" class="p-0">
+                                                    <div class="collapse" id="edit-rule-@rule.Id">
+                                                        <div class="p-3 border-top border-secondary">
+                                                            @await Html.PartialAsync("~/Views/Admin/WebhookAutomation/_AutomationRuleForm.cshtml", rule, new ViewDataDictionary(ViewData)
+                                                            {
+                                                                ["Webhooks"]  = webhooks,
+                                                                ["EventKey"]  = key,
+                                                                ["VarsHint"]  = vars,
+                                                                ["Action"]    = "Save",
+                                                                ["IsNew"]     = false
+                                                            })
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    @* ── New rule form (collapsed) ── *@
+                    <div class="collapse" id="new-@key.Replace('.', '-')">
+                        <div class="card-body border-top border-secondary">
+                            @await Html.PartialAsync("~/Views/Admin/WebhookAutomation/_AutomationRuleForm.cshtml", new WebhookAutomationRule { EventType = key, IsEnabled = true, UseEmbed = true, EmbedColor = "***REMOVED***e10600" },
+                                new ViewDataDictionary(ViewData)
+                                {
+                                    ["Webhooks"]  = webhooks,
+                                    ["EventKey"]  = key,
+                                    ["VarsHint"]  = vars,
+                                    ["Action"]    = "Save",
+                                    ["IsNew"]     = true
+                                })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,91 @@
+/* =====================================================================
+   08 · ANIMATIONS
+   ===================================================================== */
+.reveal { opacity:0; transform:translateY(14px); transition:opacity var(--t-slow), transform var(--t-slow); }
+.reveal.is-visible { opacity:1; transform:none; }
+
+@keyframes fade-in { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+.fade-in { animation:fade-in var(--t-slow) both; }
+
+@keyframes shine { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+.shine {
+    background:linear-gradient(110deg, var(--ink) 0%, var(--ink) 40%, ***REMOVED***fff 50%, var(--ink) 60%, var(--ink) 100%);
+    background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    animation:shine 4s linear infinite;
+}
+
+@keyframes telemetry-pan {
+    0% { transform:translateX(0); }
+    50% { transform:translateX(-1.2%); }
+    100% { transform:translateX(0); }
+}
+
+@keyframes race-pulse {
+    0%,100% { box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+    50% { box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 26%, transparent); }
+}
+
+@keyframes telemetry-glow {
+    0%,100% { filter:drop-shadow(0 0 0 color-mix(in srgb, var(--accent) 0%, transparent)); }
+    50% { filter:drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 55%, transparent)); }
+}
+
+@keyframes telemetry-run {
+    0% { background-position:0% 50%; }
+    100% { background-position:200% 50%; }
+}
+
+@keyframes section-bar-pulse {
+    0%,100% { transform:scaleY(.92); box-shadow:0 0 8px var(--accent-glow); }
+    50% { transform:scaleY(1.08); box-shadow:0 0 16px color-mix(in srgb, var(--accent) 65%, transparent); }
+}
+
+@keyframes icon-idle-float {
+    0%,100% { transform:translateY(0); }
+    50% { transform:translateY(-2px); }
+}
+
+@keyframes card-stripe-scan {
+    0% { opacity:.18; transform:translateX(-120%); }
+    50% { opacity:.38; }
+    100% { opacity:.12; transform:translateX(220%); }
+}
+
+.btn-primary,
+.status-pill.is-live {
+    animation:race-pulse 2.8s ease-in-out infinite;
+}
+
+.topbar::after,
+.hero::after {
+    background-size:200% 100%;
+    animation:telemetry-run 12s linear infinite;
+}
+
+.section-head__bar {
+    transform-origin:center;
+    animation:section-bar-pulse 2.6s ease-in-out infinite;
+}
+
+.icon-chip {
+    animation:icon-idle-float 3.4s ease-in-out infinite;
+}
+
+.card::after,
+.panel::after,
+.surface::after {
+    animation:telemetry-glow 2.8s ease-in-out infinite;
+}
+
+.table tbody tr {
+    transition:background var(--t-fast), transform var(--t-fast);
+}
+.table tbody tr:hover {
+    transform:translateX(2px);
+}
+
+.btn-primary .bi,
+.btn-primary i {
+    animation:icon-idle-float 2.4s ease-in-out infinite;
+}

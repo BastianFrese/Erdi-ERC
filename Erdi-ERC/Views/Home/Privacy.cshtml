@@ -1,0 +1,154 @@
+@{
+    ViewData["Title"] = "Datenschutzerklärung";
+    Layout = "_Layout";
+    var stand = DateTime.UtcNow.ToString("MMMM yyyy", new System.Globalization.CultureInfo("de-DE"));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <style>
+        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
+        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .doc-card__body { padding:1.25rem;line-height:1.75; }
+    </style>
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "Legal · Datenschutz",
+    Title     = "Datenschutz",
+    Highlight = "erklärung",
+    Lead      = "Volle Transparenz darüber, welche Daten wir verarbeiten &ndash; und welche nicht.",
+    GhostText = "DSGVO"
+})" />
+
+<section class="f1-section reveal">
+    <div class="row g-4">
+
+        <div class="col-12 reveal">
+            <div class="doc-card">
+                <div class="doc-card__head"><i class="bi bi-person-badge-fill" style="color:var(--sig-cyan);"></i> 1. Verantwortlicher</div>
+                <div class="doc-card__body">
+                    <p class="mb-1">Verantwortlich für den Betrieb dieser Website ist:</p>
+                    <p class="mb-0">
+                        <strong><OWNER_HANDLE>'s Racing Community</strong><br />
+                        Betrieben durch: <strong><OWNER_HANDLE>10</strong><br />
+                        Kontakt: <a class="text-cyan" href="https://twitch.tv/erdi10" target="_blank" rel="noopener">twitch.tv/erdi10</a>
+                        &middot; <a class="text-cyan" href="https://erdi-erc.de">erdi-erc.de</a>
+                        &middot; <a class="text-cyan" asp-controller="Home" asp-action="Impressum">Impressum</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 reveal">
+            <div class="doc-card">
+                <div class="doc-card__head"><i class="bi bi-database-fill" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> 2. Welche Daten wir speichern</div>
+                <div class="doc-card__body">
+                    <p>Wenn du dich über <strong>Discord OAuth2</strong> anmeldest, übermittelt Discord folgende Daten an uns:</p>
+                    <ul class="mb-3">
+                        <li><strong>Discord-User-ID</strong> (Snowflake) &ndash; eine numerische, öffentlich sichtbare ID deines Discord-Kontos</li>
+                        <li><strong>Discord-Anzeigename</strong> (Username) &ndash; dein aktuell eingestellter Discord-Benutzername</li>
+                    </ul>
+                    <p class="mb-0">
+                        Diese Daten werden ausschließlich gespeichert, wenn du als Admin in der Datenbank hinterlegt bist
+                        oder manuell durch den Betreiber eingetragen wirst. Reguläre Besucher ohne Admin-Rolle werden
+                        <strong class="text-accent">nicht</strong> in der Datenbank gespeichert.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 reveal">
+            <div class="doc-card h-100">
+                <div class="doc-card__head"><i class="bi bi-bullseye" style="color:var(--sig-cyan);"></i> 3. Zweck der Verarbeitung</div>
+                <div class="doc-card__body">
+                    <p class="mb-1">Die gespeicherten Daten werden ausschließlich für folgende Zwecke verwendet:</p>
+                    <ul class="mb-0">
+                        <li>Überprüfung von Admin-Berechtigungen beim Login</li>
+                        <li>Aufrechterhaltung der Login-Session via verschlüsseltem Cookie</li>
+                        <li>Anzeige des Benutzernamens im Dashboard</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 reveal">
+            <div class="doc-card h-100">
+                <div class="doc-card__head"><i class="bi bi-x-octagon-fill" style="color:***REMOVED***22c55e;"></i> 4. Was wir <span style="color:***REMOVED***22c55e;">nicht</span> tun</div>
+                <div class="doc-card__body">
+                    <ul class="mb-0">
+                        <li>Kein Tracking oder Analyse-Cookies</li>
+                        <li>Keine Weitergabe an Dritte oder Werbepartner</li>
+                        <li>Kein Zugriff auf Discord-DMs, Server-Mitgliedschaften oder E-Mail</li>
+                        <li>Kein Verkauf von Nutzerdaten</li>
+                        <li>Keine Nutzung von Google Analytics o.&nbsp;ä.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 reveal">
+            <div class="doc-card h-100">
+                <div class="doc-card__head"><i class="bi bi-cookie" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> 5. Cookies</div>
+                <div class="doc-card__body">
+                    <p class="mb-1">Wir setzen ausschließlich technisch notwendige Cookies:</p>
+                    <ul class="mb-0">
+                        <li><strong>Auth-Cookie</strong> &ndash; enthält deine verschlüsselte Login-Session. Läuft nach 14 Tagen ab (Sliding Expiration). Wird beim Logout sofort gelöscht.</li>
+                        <li><strong>OAuth-Correlation-Cookie</strong> &ndash; temporäres Cookie während des Discord-Login-Flows. Wird nach Abschluss automatisch entfernt.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 reveal">
+            <div class="doc-card h-100">
+                <div class="doc-card__head"><i class="bi bi-plug-fill" style="color:var(--sig-cyan);"></i> 6. Drittdienste</div>
+                <div class="doc-card__body">
+                    <ul class="mb-0">
+                        <li><strong>Discord OAuth2</strong> &ndash; für die Authentifizierung. Es gilt die <a class="text-cyan" href="https://discord.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Discord</a>.</li>
+                        <li><strong>Twitch Player / Chat</strong> &ndash; eingebettet auf der Racing-Hub-Seite. Es gilt die <a class="text-cyan" href="https://www.twitch.tv/p/de-de/legal/privacy-notice/" target="_blank" rel="noopener">Datenschutzerklärung von Twitch</a>.</li>
+                        <li><strong>Google Fonts</strong> &ndash; Schriftarten werden von Google-Servern geladen. Es gilt die <a class="text-cyan" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 reveal">
+            <div class="doc-card">
+                <div class="doc-card__head"><i class="bi bi-person-check-fill" style="color:var(--accent);"></i> 7. Deine Rechte</div>
+                <div class="doc-card__body">
+                    <p class="mb-2">
+                        Gemäß DSGVO hast du jederzeit das Recht auf <strong>Auskunft</strong>, <strong>Berichtigung</strong>
+                        und <strong>Löschung</strong> deiner gespeicherten Daten. Da wir ausschließlich Admins speichern,
+                        kannst du dich direkt an den Betreiber wenden &ndash; dein Eintrag wird dann umgehend entfernt.
+                    </p>
+                    <p class="mb-0 text-mute">
+                        Kontakt: über Twitch unter
+                        <a class="text-cyan" href="https://twitch.tv/erdi10" target="_blank" rel="noopener">twitch.tv/erdi10</a>
+                        oder über den Discord-Server der <OWNER_HANDLE>'s Racing Community.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 reveal">
+            <div class="doc-card">
+                <div class="doc-card__head"><i class="bi bi-lock-fill" style="color:var(--sig-cyan);"></i> 8. Datensicherheit</div>
+                <div class="doc-card__body">
+                    <p class="mb-0">
+                        Die Verbindung zur Website wird ausschließlich über <strong>HTTPS</strong> verschlüsselt übertragen.
+                        Auth-Cookies sind <code class="text-mono text-cyan">HttpOnly</code>, <code class="text-mono text-cyan">Secure</code> und haben eine begrenzte Lebensdauer.
+                        Die Datenbank befindet sich in einem internen Netzwerk und ist nicht direkt aus dem Internet erreichbar.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <p class="text-mute small text-end mb-0">Stand: @stand</p>
+        </div>
+
+    </div>
+</section>

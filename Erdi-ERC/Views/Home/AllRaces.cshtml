@@ -1,0 +1,156 @@
+@model <OWNER_HANDLE>_ERC.Models.AllRacesViewModel
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = "Alle Rennen";
+    Layout = "_Layout";
+
+    static string FormatRaceTime(int? ms)
+    {
+        if (!ms.HasValue) return "—";
+        var t = TimeSpan.FromMilliseconds(ms.Value);
+        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+    }
+
+    var totalRaces = Model.Leagues.Sum(l => l.Races.Count);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
+}
+
+@await Html.PartialAsync("_LiveRaceBanner")
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "<OWNER_HANDLE>'s Racing Community · Datenbank",
+    Title     = "Alle",
+    Highlight = "Rennen",
+    Lead      = "Alle gefahrenen Rennen der ERC – mit Sieger, Podium und Bestzeit.",
+    GhostText = "ARCHIVE",
+    Actions   = new() {
+        new F1ButtonVm { Label="Startseite", Variant="ghost", IconLucide="arrow-left", Href=Url.Action("Index","Home")! }
+    }
+})" />
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4 reveal">
+    <span class="race-lights-pill" data-state="green">
+        <span class="race-lights-pill__strip" aria-hidden="true">
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+            <span class="race-lights-pill__lamp"></span>
+        </span>
+        Archive · Online
+    </span>
+    <div class="lap-counter" title="Rennen gesamt">
+        <span class="lap-counter__label">Races</span>
+        <span class="lap-counter__value">@totalRaces.ToString("00")</span>
+    </div>
+    <div class="lap-counter" title="Ligen">
+        <span class="lap-counter__label">Leagues</span>
+        <span class="lap-counter__value">@Model.Leagues.Count.ToString("00")</span>
+    </div>
+</div>
+
+@if (totalRaces == 0)
+{
+    <section class="f1-section reveal">
+        <div class="empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-flag"></i></span>
+            <div class="empty-state__title">Noch keine Rennen vorhanden</div>
+            <p class="empty-state__lead">Sobald die ersten Rennen gefahren wurden, erscheinen sie hier.</p>
+        </div>
+    </section>
+}
+else
+{
+    @foreach (var league in Model.Leagues)
+    {
+        var leagueDetailUrl = Url.Action("LeagueResults", "Home", new { leagueId = league.LeagueId })!;
+        <section class="f1-section reveal">
+            <partial name="_F1Section" model="@(new F1SectionVm {
+                Chip    = "Liga",
+                Title   = league.LeagueName,
+                SubLink = leagueDetailUrl,
+                SubText = "Liga-Details"
+            })" />
+
+            <div class="f1-results-card">
+                <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+                <div class="f1-results-card__corner"    aria-hidden="true"></div>
+                <div class="table-responsive">
+                    <table class="f1-results-table">
+                        <colgroup>
+                            <col style="width:120px" />
+                            <col style="min-width:160px" />
+                            <col style="min-width:150px" />
+                            <col style="min-width:220px" />
+                            <col style="width:130px" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Strecke</th>
+                                <th>Sieger</th>
+                                <th>Podium</th>
+                                <th class="is-center">Siegerzeit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var race in league.Races)
+                            {
+                                var raceUrl    = Url.Action("RaceDetail", "Home", new { leagueId = league.LeagueId, raceId = race.RaceId });
+                                var winnerTeam = F1TeamsHelper.GetTeamByName(F1TeamsHelper.GetCssKeyForDriver(race.Winner) ?? "");
+                                var winnerColor = winnerTeam?.PrimaryColor ?? "var(--ink-3)";
+                                <tr style="cursor:pointer;"
+                                    onclick="if(event.target.closest('a')) return; window.location.href='@raceUrl'">
+                                    <td class="text-mono" style="font-size:.8rem; color:var(--ink-3);">
+                                        @race.Date.ToString("dd.MM.yyyy")
+                                    </td>
+                                    <td>
+                                        <i class="f1-icon" data-lucide="map-pin" style="width:13px;height:13px;color:var(--sig-cyan);margin-right:.3rem;"></i>
+                                        <span class="fw-semibold">@race.Track</span>
+                                    </td>
+                                    <td style="border-left: 3px solid @winnerColor; padding-left:.7rem;">
+                                        <a class="fw-semibold text-decoration-none"
+                                           style="color: @winnerColor;"
+                                           asp-controller="Profile" asp-action="ByDriverName"
+                                           asp-route-driverName="@race.Winner">@race.Winner</a>
+                                    </td>
+                                    <td style="font-size:.8rem; color:var(--ink-3);">
+                                        <span class="text-mono">P1</span>
+                                        <a class="text-decoration-none" style="color:var(--ink-2);"
+                                           asp-controller="Profile" asp-action="ByDriverName"
+                                           asp-route-driverName="@race.Winner">@race.Winner</a>
+                                        @if (!string.IsNullOrWhiteSpace(race.P2))
+                                        {
+                                            <span class="mx-1" style="color:var(--stroke-3);">·</span>
+                                            <span class="text-mono">P2</span>
+                                            <a class="text-decoration-none" style="color:var(--ink-2);"
+                                               asp-controller="Profile" asp-action="ByDriverName"
+                                               asp-route-driverName="@race.P2">@race.P2</a>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(race.P3))
+                                        {
+                                            <span class="mx-1" style="color:var(--stroke-3);">·</span>
+                                            <span class="text-mono">P3</span>
+                                            <a class="text-decoration-none" style="color:var(--ink-2);"
+                                               asp-controller="Profile" asp-action="ByDriverName"
+                                               asp-route-driverName="@race.P3">@race.P3</a>
+                                        }
+                                    </td>
+                                    <td class="text-mono is-center" style="font-size:.8rem;">
+                                        @FormatRaceTime(race.WinnerRaceTimeMs)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    }
+}

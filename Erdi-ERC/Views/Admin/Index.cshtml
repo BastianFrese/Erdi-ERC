@@ -1,0 +1,258 @@
+@model List<<OWNER_HANDLE>_ERC.Models.League>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Kicker"] = "Control Center";
+    ViewData["HeroTitle"] = "Admin Dashboard";
+    var recentEaNameChanges = (ViewBag.RecentEaNameChanges as List<<OWNER_HANDLE>_ERC.Models.AdminAuditLog>) ?? new();
+    var nextStream = ViewBag.NextStream as <OWNER_HANDLE>_ERC.Models.StreamSchedule;
+}
+
+<div class="adm-dashboard">
+
+    @* ══════════════════════════════════════════════════════════════════
+       KPI ROW
+    ══════════════════════════════════════════════════════════════════ *@
+    <section class="adm-kpi-grid">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminApplications" asp-action="Open" style="--kpi-color:***REMOVED***5b8cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-inbox-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@ViewBag.OpenApplications</div>
+                <div class="adm-kpi-card__label">Offene Bewerbungen</div>
+            </div>
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminApplications" asp-action="Accepted" style="--kpi-color:***REMOVED***39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-check2-circle"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@ViewBag.AcceptedApplications</div>
+                <div class="adm-kpi-card__label">Angenommen</div>
+            </div>
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ffb800;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@ViewBag.TotalRaces</div>
+                <div class="adm-kpi-card__label">Rennen gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***b95cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@ViewBag.TotalDrivers</div>
+                <div class="adm-kpi-card__label">Stammplätze</div>
+            </div>
+        </div>
+        <a class="adm-kpi-card text-decoration-none" asp-action="AuditLogs" style="--kpi-color:***REMOVED***00e5ff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-clock-history"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@ViewBag.AuditCount24h</div>
+                <div class="adm-kpi-card__label">Aktionen (24 h)</div>
+            </div>
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
+    </section>
+
+    @* ══════════════════════════════════════════════════════════════════
+       MAIN CONTENT GRID  (left: Ligen  |  right: Stream + EA-Logs)
+    ══════════════════════════════════════════════════════════════════ *@
+    <div class="adm-content-grid">
+
+        @* ── LEFT: Ligen ──────────────────────────────────────────── *@
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-trophy-fill me-2" style="color:var(--sig-amber);"></i>Ligen
+                    <span class="adm-badge ms-2">@Model.Count</span>
+                </span>
+            </div>
+
+            <div class="adm-panel__body">
+                <form asp-action="CreateLeague" method="post" class="adm-league-form">
+                    @Html.AntiForgeryToken()
+                    <input class="form-control form-control-sm" name="id" placeholder="ID (z.B. pro)" required />
+                    <input class="form-control form-control-sm" name="name" placeholder="Name" required />
+                    <input class="form-control form-control-sm" name="description" placeholder="Beschreibung (optional)" />
+                    <button class="btn btn-sm btn-primary adm-league-form__submit" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Anlegen
+                    </button>
+                </form>
+
+                @if (Model.Count == 0)
+                {
+                    <div class="adm-empty">
+                        <i class="bi bi-trophy adm-empty__icon"></i>
+                        <span>Noch keine Ligen vorhanden.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="adm-league-table">
+                        <div class="adm-league-table__header">
+                            <span>ID</span>
+                            <span>Name</span>
+                            <span>Beschreibung</span>
+                            <span></span>
+                        </div>
+                        @foreach (var league in Model)
+                        {
+                            <div class="adm-league-table__row">
+                                <code class="adm-league-table__id">@league.Id</code>
+                                <span class="adm-league-table__name fw-semibold">@league.Name</span>
+                                <span class="adm-league-table__desc">@(league.Description ?? "—")</span>
+                                <div class="adm-league-table__actions">
+                                    <a class="btn btn-xs btn-outline-secondary" asp-action="EditLeague" asp-route-id="@league.Id" title="Bearbeiten">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <form asp-action="DeleteLeague" method="post" class="d-inline"
+                                          onsubmit="return confirm('Liga &quot;@league.Name&quot; wirklich löschen?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@league.Id" />
+                                        <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* ── RIGHT COLUMN ─────────────────────────────────────────── *@
+        <div class="adm-right-col">
+
+            @* Nächster Stream *@
+            <div class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__head-title">
+                        <i class="bi bi-broadcast-pin me-2" style="color:var(--sig-cyan);"></i>Nächster Stream
+                    </span>
+                    <a class="adm-panel__head-action" asp-controller="AdminCommunity" asp-action="StreamSchedules">
+                        Verwalten <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="adm-panel__body">
+                    @if (nextStream is not null)
+                    {
+                        <div class="adm-stream-card">
+                            <div class="adm-stream-card__title">@nextStream.Title</div>
+                            <div class="adm-stream-card__meta">
+                                <span><i class="bi bi-calendar3 me-1"></i>@nextStream.StartAt.ToLocalTime().ToString("ddd, dd.MM.yyyy")</span>
+                                <span><i class="bi bi-clock me-1"></i>@nextStream.StartAt.ToLocalTime().ToString("HH:mm") Uhr</span>
+                                <span><i class="bi bi-stopwatch me-1"></i>@nextStream.DurationMinutes min</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(nextStream.Url))
+                            {
+                                <a href="@nextStream.Url" target="_blank" rel="noopener" class="btn btn-sm btn-outline-cyan mt-2">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Stream öffnen
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="adm-empty">
+                            <i class="bi bi-calendar-x adm-empty__icon"></i>
+                            <span>Kein Stream geplant.</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* EA-Name Änderungen *@
+            <div class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__head-title">
+                        <i class="bi bi-person-badge me-2" style="color:***REMOVED***b95cff;"></i>EA-Namen Änderungen
+                    </span>
+                    <a class="adm-panel__head-action" asp-action="AuditLogs">
+                        Alle <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                @if (recentEaNameChanges.Count > 0)
+                {
+                    <div class="adm-log-list">
+                        @foreach (var log in recentEaNameChanges)
+                        {
+                            <div class="adm-log-item">
+                                <div class="adm-log-item__body">
+                                    <span class="adm-log-item__id">@log.EntityId</span>
+                                    <span class="adm-log-item__detail">@log.Details</span>
+                                </div>
+                                <span class="adm-log-item__time">@log.CreatedAt.ToLocalTime().ToString("dd.MM. HH:mm")</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="adm-panel__body">
+                        <div class="adm-empty">
+                            <i class="bi bi-check2-all adm-empty__icon"></i>
+                            <span>Keine Änderungen in letzter Zeit.</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    @* ══════════════════════════════════════════════════════════════════
+       SYSTEM ACTIONS
+    ══════════════════════════════════════════════════════════════════ *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-gear-fill me-2" style="color:var(--ink-3);"></i>System
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <div class="adm-system-actions">
+
+                <div class="adm-system-action-group">
+                    <div class="adm-system-action-group__label">Statistiken</div>
+                    <form asp-action="RebuildAllStats" method="post">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-warning" type="submit"
+                                onclick="return confirm('Alle Statistiken neu berechnen?');">
+                            <i class="bi bi-arrow-repeat me-1"></i>Stats neu berechnen
+                        </button>
+                    </form>
+                </div>
+
+                <div class="adm-system-action-group">
+                    <div class="adm-system-action-group__label">Ewige Liste importieren</div>
+                    <form asp-action="UploadEwigeListe" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+                        @Html.AntiForgeryToken()
+                        <input class="form-control form-control-sm" type="file" name="workbook" accept=".xlsx" required style="max-width:260px" />
+                        <button class="btn btn-sm btn-danger" type="submit">
+                            <i class="bi bi-upload me-1"></i>Hochladen
+                        </button>
+                    </form>
+                </div>
+
+                <div class="adm-system-action-group">
+                    <div class="adm-system-action-group__label">Protokoll</div>
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="AuditLogs">
+                        <i class="bi bi-journal-text me-1"></i>Audit Logs
+                    </a>
+                </div>
+
+                <div class="adm-system-action-group">
+                    <div class="adm-system-action-group__label">Race-Kalender</div>
+                    <a class="btn btn-sm btn-outline-info"
+                       asp-controller="Home" asp-action="RaceCalendar" asp-route-preview="1"
+                       target="_blank" rel="noopener"
+                       title="Öffnet die Discord-Vorschau (Vollbild ohne Nav/Footer) in einem neuen Tab.">
+                        <i class="bi bi-image me-1"></i>Discord-Vorschau öffnen
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>

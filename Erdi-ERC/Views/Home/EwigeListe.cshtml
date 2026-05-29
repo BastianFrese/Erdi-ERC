@@ -1,0 +1,223 @@
+@model <OWNER_HANDLE>_ERC.Models.EwigeListeViewModel
+@{
+    ViewData["Title"] = "Ewige Liste";
+    Layout = "_Layout";
+    var totalDataRows = Model.Sheets.Sum(s => Math.Max(0, s.Rows.Count - 1));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/ewige-liste.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow = "<OWNER_HANDLE>'s Racing Community · Archiv",
+    Title = "Ewige",
+    Highlight = "Liste",
+    Lead = "Das komplette Archiv der <OWNER_HANDLE>'s Racing Community – alle Saisons, Ligen und Ergebnisse auf einen Blick.",
+    GhostText = "ARCHIVE",
+    Actions = new() {
+        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10","Home")! },
+        new F1ButtonVm { Label = "Ergebnisse", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("Results","Home")! }
+    }
+})" />
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="empty-state reveal">
+        <span class="icon-chip is-amber"><i class="bi bi-exclamation-octagon-fill"></i></span>
+        <div class="empty-state__title">Fehler beim Laden</div>
+        <p class="empty-state__lead">@Model.ErrorMessage</p>
+    </div>
+}
+else if (Model.Sheets.Count == 0)
+{
+    <div class="empty-state reveal">
+        <span class="icon-chip is-cyan"><i class="bi bi-table"></i></span>
+        <div class="empty-state__title">Keine Tabellenblätter gefunden</div>
+        <p class="empty-state__lead">Sobald Live-Daten oder eine Excel-Datei verfügbar sind, erscheinen sie hier.</p>
+    </div>
+}
+else
+{
+    <div class="f1-stat-grid reveal mb-4">
+        <partial name="_F1StatTile" model="@(new F1StatTileVm {
+            IconLucide = "layers",
+            Label = "Blätter",
+            Value = Model.Sheets.Count.ToString("00"),
+            Sub = "Tabellenblätter gesamt"
+        })" />
+        <partial name="_F1StatTile" model="@(new F1StatTileVm {
+            IconLucide = "database",
+            Label = "Datensätze",
+            Value = totalDataRows.ToString(),
+            Sub = "Archivierte Einträge"
+        })" />
+    </div>
+
+    <div class="f1-ewige-tabs reveal" id="ewigeTabs" role="tablist">
+        @for (int i = 0; i < Model.Sheets.Count; i++)
+        {
+            var s = Model.Sheets[i];
+            <button class="f1-ewige-tabs__tab @(i == 0 ? "is-active" : "")"
+                    id="sheet-tab-@i"
+                    data-bs-toggle="tab"
+                    data-bs-target="***REMOVED***sheet-pane-@i"
+                    type="button"
+                    role="tab"
+                    aria-controls="sheet-pane-@i"
+                    aria-selected="@(i == 0 ? "true" : "false")">
+                @s.Name
+            </button>
+        }
+    </div>
+
+    <div class="tab-content" id="ewigeTabContent">
+        @for (int i = 0; i < Model.Sheets.Count; i++)
+        {
+            var s = Model.Sheets[i];
+            var active = i == 0 ? "show active" : "";
+            var tableId = $"ewige-table-{i}";
+            var searchId = $"ewige-search-{i}";
+            var countId = $"ewige-count-{i}";
+
+            var hiddenColumnIndexes = s.Rows.Count > 0
+                ? s.Rows[0]
+                    .Select((header, index) => new { header, index })
+                    .Where(x => string.Equals((x.header ?? string.Empty).Trim(), "Reserve For", StringComparison.OrdinalIgnoreCase))
+                    .Select(x => x.index)
+                    .ToHashSet()
+                : new HashSet<int>();
+
+            <div class="tab-pane fade @active" id="sheet-pane-@i" role="tabpanel" aria-labelledby="sheet-tab-@i">
+                <div class="f1-ewige-card reveal">
+                    <div class="f1-ewige-card__telemetry" aria-hidden="true"></div>
+                    <div class="f1-ewige-card__corner" aria-hidden="true"></div>
+
+                    <div class="f1-ewige-toolbar">
+                        <div class="f1-ewige-toolbar__search">
+                            <i class="f1-icon" data-lucide="search"></i>
+                            <input id="@searchId"
+                                   class="f1-ewige-toolbar__input ewige-search"
+                                   data-table-id="@tableId"
+                                   data-count-id="@countId"
+                                   type="search"
+                                   placeholder="In diesem Tabellenblatt suchen…"
+                                   autocomplete="off" />
+                        </div>
+                        <button class="f1-ewige-toolbar__export ewige-export" type="button"
+                                data-table-id="@tableId"
+                                data-sheet-name="@s.Name">
+                            <i class="f1-icon" data-lucide="download"></i> CSV
+                        </button>
+                        <span id="@countId" class="f1-ewige-toolbar__count"></span>
+                    </div>
+
+                    @if (s.Rows.Count == 0)
+                    {
+                        <div class="p-4 text-mute text-tech" style="font-size:.82rem;"><i class="bi bi-info-circle me-2"></i>Keine Daten in diesem Tabellenblatt.</div>
+                    }
+                    else
+                    {
+                        <div class="f1-ewige-table-wrap">
+                            <table id="@tableId" class="f1-ewige-table">
+                                <thead>
+                                    <tr>
+                                        @for (int c = 0; c < s.Rows[0].Count; c++)
+                                        {
+                                            if (hiddenColumnIndexes.Contains(c)) continue;
+                                            <th>@s.Rows[0][c]</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int r = 1; r < s.Rows.Count; r++)
+                                    {
+                                        <tr>
+                                            @for (int c = 0; c < s.Rows[r].Count; c++)
+                                            {
+                                                if (hiddenColumnIndexes.Contains(c)) continue;
+                                                <td>@s.Rows[r][c]</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            // Sync custom active class with Bootstrap tab events
+            document.querySelectorAll('.f1-ewige-tabs__tab').forEach(btn => {
+                btn.addEventListener('shown.bs.tab', () => {
+                    document.querySelectorAll('.f1-ewige-tabs__tab').forEach(b => b.classList.remove('is-active'));
+                    btn.classList.add('is-active');
+                });
+            });
+
+            const escapeCsv = (value) => {
+                const text = (value ?? '').toString().replace(/\r?\n|\r/g, ' ').trim();
+                return /[";,]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+            };
+
+            const updateCount = (table, countEl) => {
+                if (!table || !countEl) return;
+                const rows = Array.from(table.tBodies[0]?.rows ?? []);
+                const visible = rows.filter(r => r.style.display !== 'none').length;
+                countEl.textContent = `${visible} / ${rows.length}`;
+            };
+
+            document.querySelectorAll('.ewige-search').forEach(input => {
+                const table = document.getElementById(input.dataset.tableId);
+                const countEl = document.getElementById(input.dataset.countId);
+                updateCount(table, countEl);
+
+                input.addEventListener('input', () => {
+                    if (!table || !table.tBodies.length) return;
+                    const query = input.value.trim().toLowerCase();
+                    const rows = Array.from(table.tBodies[0].rows);
+                    rows.forEach(row => {
+                        if (!query) { row.style.display = ''; return; }
+                        const txt = Array.from(row.cells).map(c => c.innerText.toLowerCase()).join(' ');
+                        row.style.display = txt.includes(query) ? '' : 'none';
+                    });
+                    updateCount(table, countEl);
+                });
+            });
+
+            document.querySelectorAll('.ewige-export').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const table = document.getElementById(btn.dataset.tableId);
+                    if (!table) return;
+                    const rows = [];
+                    const headerCells = Array.from(table.tHead?.rows[0]?.cells ?? []);
+                    if (headerCells.length > 0) rows.push(headerCells.map(c => escapeCsv(c.innerText)).join(';'));
+                    const bodyRows = Array.from(table.tBodies[0]?.rows ?? [])
+                        .filter(r => r.style.display !== 'none')
+                        .map(r => Array.from(r.cells).map(c => escapeCsv(c.innerText)).join(';'));
+                    rows.push(...bodyRows);
+
+                    const blob = new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    const safeName = (btn.dataset.sheetName || 'ewige-liste').replace(/[^a-zA-Z0-9-_]+/g, '_');
+                    a.href = url;
+                    a.download = `${safeName}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+            });
+        })();
+    </script>
+}

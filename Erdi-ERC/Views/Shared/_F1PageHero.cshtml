@@ -1,0 +1,59 @@
+@model <OWNER_HANDLE>_ERC.Models.UiComponents.F1PageHeroVm
+@*
+    F1 Page Hero — Broadcast-Style Hero-Block.
+    Verwendet bestehende CSS-Klassen aus pages/home-index.css (.f1-hero*).
+    Optional FX-Layer (Ghost-Text) braucht pages/home-index-fx.css.
+*@
+<section class="f1-hero">
+    @if (Model.Telemetry)
+    {
+        <div class="f1-hero__telemetry" aria-hidden="true"></div>
+    }
+    @if (Model.Chequer)
+    {
+        <div class="f1-hero__chequer" aria-hidden="true"></div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
+    {
+        <span class="f1-hero__eyebrow">
+            @if (Model.LiveDot) { <span class="f1-pulse-dot" aria-hidden="true"></span> }
+            @Model.Eyebrow
+        </span>
+    }
+
+    <h1 class="f1-hero__title">
+        @Model.Title
+        @if (!string.IsNullOrWhiteSpace(Model.Highlight))
+        {
+            <em>@Model.Highlight</em>
+        }
+    </h1>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Lead))
+    {
+        <p class="f1-hero__lead">@Html.Raw(Model.Lead)</p>
+    }
+
+    @if (Model.Actions is { Count: > 0 })
+    {
+        <div class="f1-hero__actions">
+            @foreach (var a in Model.Actions)
+            {
+                <a class="btn f1-btn f1-btn--@a.Variant" href="@a.Href"
+                   @(string.IsNullOrEmpty(a.Target) ? "" : $"target=\"{a.Target}\" rel=\"noopener\"")>
+                    @if (!string.IsNullOrWhiteSpace(a.IconLucide))
+                    {
+                        <i class="f1-icon" data-lucide="@a.IconLucide"></i>
+                    }
+                    @a.Label
+                </a>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.GhostText))
+    {
+        <span class="f1-hero__ghost" aria-hidden="true">@Model.GhostText</span>
+    }
+</section>

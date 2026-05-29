@@ -1,0 +1,322 @@
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    var _title  = ViewData["HeroTitle"]    as string ?? ViewData["Title"] as string ?? "Admin";
+    var _kicker = ViewData["Kicker"]       as string ?? string.Empty;
+
+    var _ctrl   = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var _action = ViewContext.RouteData.Values["action"]?.ToString()     ?? "";
+
+    string Nav(string ctrl, string act)
+        => string.Equals(_ctrl, ctrl, StringComparison.OrdinalIgnoreCase)
+           && string.Equals(_action, act, StringComparison.OrdinalIgnoreCase)
+            ? "adm-nav-link is-active"
+            : "adm-nav-link";
+
+    var _adminMsg   = TempData["AdminMessage"]   as string;
+    var _profileMsg = TempData["ProfileMessage"] as string;
+
+    bool isSuperAdmin = User.HasClaim("erdi:superadmin", "true");
+    bool HasPerm(string p) => isSuperAdmin
+        || User.Claims.Any(c => c.Type == "erdi:perm" && c.Value == p);
+    bool HasAnyPerm(params string[] keys) => keys.Any(k => HasPerm(k));
+
+    // Granulare Checks pro Seite
+    bool canAppView     = HasAnyPerm(AdminPermissions.ApplicationsView,    AdminPermissions.Applications);
+    bool canAppManage   = HasAnyPerm(AdminPermissions.ApplicationsManage,  AdminPermissions.Applications);
+    bool canAppMetrics  = HasAnyPerm(AdminPermissions.ApplicationsMetrics, AdminPermissions.Applications);
+    bool canApplications = canAppView || canAppManage || canAppMetrics;
+
+    bool canLeagueStandings = HasAnyPerm(AdminPermissions.LeagueStandings, AdminPermissions.System);
+    bool canLeagueRaces     = HasAnyPerm(AdminPermissions.LeagueRaces,     AdminPermissions.System);
+    bool canLeague           = canLeagueStandings || canLeagueRaces;
+
+    bool canComHub        = HasAnyPerm(AdminPermissions.CommunityHub,        AdminPermissions.Community);
+    bool canComEvents     = HasAnyPerm(AdminPermissions.CommunityEvents,     AdminPermissions.Community);
+    bool canComStreams     = HasAnyPerm(AdminPermissions.CommunityStreams,    AdminPermissions.Community);
+    bool canComStewarding = HasAnyPerm(AdminPermissions.CommunityStewarding, AdminPermissions.Community);
+    bool canCommunity     = canComHub || canComEvents || canComStreams || canComStewarding;
+
+    bool canDrvAchievements = HasAnyPerm(AdminPermissions.DriversAchievements, AdminPermissions.Drivers);
+    bool canDrvDefinitions  = HasAnyPerm(AdminPermissions.DriversDefinitions,  AdminPermissions.Drivers);
+    bool canDrivers          = canDrvAchievements || canDrvDefinitions;
+
+    bool canSysMusic      = HasAnyPerm(AdminPermissions.SystemMusic,      AdminPermissions.System);
+    bool canSysSetups     = HasAnyPerm(AdminPermissions.SystemSetups,     AdminPermissions.System);
+    bool canSysAudit      = HasAnyPerm(AdminPermissions.SystemAuditLogs,  AdminPermissions.System);
+    bool canSysWebhooks   = HasAnyPerm(AdminPermissions.SystemWebhooks,   AdminPermissions.System);
+    bool canSysAboutMe    = isSuperAdmin;
+    bool canSysAdmins     = isSuperAdmin;
+    bool canSysRegelwerk  = HasAnyPerm(AdminPermissions.SystemRegelwerk,  AdminPermissions.System);
+    bool canSystem        = canSysMusic || canSysSetups || canSysAudit || canSysAdmins || canSysWebhooks || canSysAboutMe || canSysRegelwerk;
+}
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Admin · @_title · <OWNER_HANDLE>'s Racing Community</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="adm-body">
+
+<div class="adm-sidebar-overlay" id="admOverlay"></div>
+
+<div class="adm-shell">
+
+    @* ===== SIDEBAR ===== *@
+    <aside class="adm-sidebar" id="admSidebar">
+
+        <div class="adm-sidebar__brand">
+            <span class="adm-sidebar__brand-mark">
+                <i class="bi bi-shield-lock-fill" style="font-size:.82rem;"></i>
+            </span>
+            <span class="adm-sidebar__brand-text">ERC&nbsp;Admin</span>
+        </div>
+
+        <nav class="adm-sidebar__nav" aria-label="Admin Navigation">
+
+            <div class="adm-nav-group">
+                <a class="@Nav("Admin","Index")" asp-controller="Admin" asp-action="Index">
+                    <i class="bi bi-grid-fill"></i> Dashboard
+                </a>
+            </div>
+
+            @if (canApplications)
+            {
+                <div class="adm-nav-group">
+                    <span class="adm-nav-group__label">Bewerbungen</span>
+                    @if (canAppView || canAppManage)
+                    {
+                        <a class="@Nav("AdminApplications","Dashboard")" asp-controller="AdminApplications" asp-action="Dashboard">
+                            <i class="bi bi-clipboard-check"></i> Übersicht
+                        </a>
+                    }
+                    @if (canAppManage)
+                    {
+                        <a class="@Nav("AdminApplications","Open")" asp-controller="AdminApplications" asp-action="Open">
+                            <i class="bi bi-inbox"></i> Offen
+                        </a>
+                        <a class="@Nav("AdminApplications","Accepted")" asp-controller="AdminApplications" asp-action="Accepted">
+                            <i class="bi bi-check-circle"></i> Angenommen
+                        </a>
+                    }
+                    @if (canAppView || canAppManage)
+                    {
+                        <a class="@Nav("AdminApplications","List")" asp-controller="AdminApplications" asp-action="List">
+                            <i class="bi bi-list-ul"></i> Alle Bewerbungen
+                        </a>
+                    }
+                    @if (canAppMetrics)
+                    {
+                        <a class="@Nav("AdminApplications","Metrics")" asp-controller="AdminApplications" asp-action="Metrics">
+                            <i class="bi bi-bar-chart-line"></i> Metriken
+                        </a>
+                    }
+                </div>
+            }
+
+            @if (canLeague)
+            {
+                <div class="adm-nav-group">
+                    <span class="adm-nav-group__label">Liga</span>
+                    @if (canLeagueStandings)
+                    {
+                        <a class="@Nav("Admin","Index")" asp-controller="Admin" asp-action="Index">
+                            <i class="bi bi-list-ol"></i> Tabellen
+                        </a>
+                    }
+                    @if (canLeagueRaces)
+                    {
+                        <a class="@Nav("Admin","Index")" asp-controller="Admin" asp-action="Index">
+                            <i class="bi bi-trophy-fill"></i> Rennergebnisse
+                        </a>
+                    }
+                    <a class="@Nav("AdminRaceCalendar","Index")" asp-controller="AdminRaceCalendar" asp-action="Index">
+                        <i class="bi bi-calendar3"></i> Race Calendar
+                    </a>
+                </div>
+            }
+
+            @if (canCommunity)
+            {
+                <div class="adm-nav-group">
+                    <span class="adm-nav-group__label">Community</span>
+                    @if (canComHub)
+                    {
+                        <a class="@Nav("AdminCommunity","Hub")" asp-controller="AdminCommunity" asp-action="Hub">
+                            <i class="bi bi-people-fill"></i> Community Hub
+                        </a>
+                    }
+                    @if (canComEvents)
+                    {
+                        <a class="@Nav("AdminCommunity","Events")" asp-controller="AdminCommunity" asp-action="Events">
+                            <i class="bi bi-calendar-event"></i> Events
+                        </a>
+                    }
+                    @if (canComStreams)
+                    {
+                        <a class="@Nav("AdminCommunity","StreamSchedules")" asp-controller="AdminCommunity" asp-action="StreamSchedules">
+                            <i class="bi bi-broadcast-pin"></i> Streams
+                        </a>
+                    }
+                    @if (canComStewarding)
+                    {
+                        <a class="@Nav("AdminCommunity","Stewarding")" asp-controller="AdminCommunity" asp-action="Stewarding">
+                            <i class="bi bi-shield-fill-exclamation"></i> Stewarding
+                        </a>
+                    }
+                </div>
+            }
+
+            @if (canDrivers)
+            {
+                <div class="adm-nav-group">
+                    <span class="adm-nav-group__label">Fahrer</span>
+                    @if (canDrvAchievements)
+                    {
+                        <a class="@Nav("AdminAchievements","Index")" asp-controller="AdminAchievements" asp-action="Index">
+                            <i class="bi bi-trophy"></i> Achievements
+                        </a>
+                    }
+                    @if (canDrvDefinitions)
+                    {
+                        <a class="@Nav("AdminAchievements","Definitions")" asp-controller="AdminAchievements" asp-action="Definitions">
+                            <i class="bi bi-list-check"></i> Definitionen
+                        </a>
+                    }
+                </div>
+            }
+
+            @if (canSystem)
+            {
+                <div class="adm-nav-group">
+                    <span class="adm-nav-group__label">System</span>
+                    @if (canSysAdmins)
+                    {
+                        <a class="@Nav("Admin","Admins")" asp-controller="Admin" asp-action="Admins">
+                            <i class="bi bi-shield-lock"></i> Admins
+                        </a>
+                    }
+                    @if (canSysAudit)
+                    {
+                        <a class="@Nav("Admin","AuditLogs")" asp-controller="Admin" asp-action="AuditLogs">
+                            <i class="bi bi-clock-history"></i> Audit Logs
+                        </a>
+                    }
+                    @if (canSysMusic)
+                    {
+                        <a class="@Nav("AdminMedia","BackgroundMusic")" asp-controller="AdminMedia" asp-action="BackgroundMusic">
+                            <i class="bi bi-music-note-list"></i> Hintergrundmusik
+                        </a>
+                    }
+                    @if (canSysSetups)
+                    {
+                        <a class="@Nav("Admin","TrackSetups")" asp-controller="Admin" asp-action="TrackSetups">
+                            <i class="bi bi-sliders2"></i> Track Setups
+                        </a>
+                    }
+                    @if (canSysWebhooks)
+                    {
+                        <a class="@Nav("AdminWebhooks","Index")" asp-controller="AdminWebhooks" asp-action="Index">
+                            <i class="bi bi-discord"></i> Discord Webhooks
+                        </a>
+                        <a class="@Nav("AdminWebhookAutomation","Index")" asp-controller="AdminWebhookAutomation" asp-action="Index">
+                            <i class="bi bi-lightning-charge-fill"></i> Webhook-Automation
+                        </a>
+                    }
+                    @if (canSysAboutMe)
+                    {
+                        <a class="@Nav("AdminAbout","Index")" asp-controller="AdminAbout" asp-action="Index">
+                            <i class="bi bi-person-lines-fill"></i> Über-mich-Seiten
+                        </a>
+                    }
+                    @if (canSysRegelwerk)
+                    {
+                        <a class="@Nav("AdminRegelwerk","Index")" asp-controller="AdminRegelwerk" asp-action="Index">
+                            <i class="bi bi-file-earmark-text"></i> Regelwerk
+                        </a>
+                    }
+                </div>
+            }
+
+        </nav>
+
+        <div class="adm-sidebar__footer">
+            <a class="adm-exit-link" href="/">
+                <i class="bi bi-arrow-left-circle"></i> Zur Website
+            </a>
+        </div>
+
+    </aside>
+
+    @* ===== MAIN ===== *@
+    <div class="adm-main">
+
+        <header class="adm-topbar">
+            <button class="adm-topbar__toggle" id="admToggle" type="button" aria-label="Navigation öffnen">
+                <i class="bi bi-list"></i>
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(_kicker))
+            {
+                <span class="adm-topbar__kicker">@_kicker</span>
+                <span class="adm-topbar__sep">/</span>
+            }
+            <span class="adm-topbar__title">@_title</span>
+
+            <span class="adm-topbar__spacer"></span>
+
+            <span class="adm-topbar__user">
+                <i class="bi bi-person-circle"></i>
+                @User.Identity?.Name
+            </span>
+            <a class="adm-topbar__exit-btn d-none d-md-inline-flex" href="/">
+                <i class="bi bi-box-arrow-left"></i> Website
+            </a>
+        </header>
+
+        <main class="adm-content">
+
+            @if (!string.IsNullOrWhiteSpace(_adminMsg))
+            {
+                <div class="adm-alert"><i class="bi bi-info-circle-fill"></i> @_adminMsg</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_profileMsg))
+            {
+                <div class="adm-alert"><i class="bi bi-info-circle-fill"></i> @_profileMsg</div>
+            }
+
+            @RenderBody()
+
+        </main>
+    </div>
+
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
+<script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+<script>
+    (function () {
+        var sidebar = document.getElementById('admSidebar');
+        var overlay = document.getElementById('admOverlay');
+        var toggle  = document.getElementById('admToggle');
+        if (!sidebar || !toggle) return;
+        function open()  { sidebar.classList.add('is-open');    overlay.classList.add('is-visible'); }
+        function close() { sidebar.classList.remove('is-open'); overlay.classList.remove('is-visible'); }
+        toggle.addEventListener('click', function () { sidebar.classList.contains('is-open') ? close() : open(); });
+        overlay.addEventListener('click', close);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    })();
+</script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
