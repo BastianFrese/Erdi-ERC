@@ -33,7 +33,9 @@ namespace <OWNER_HANDLE>_ERC.Services
             string? divisionFilter = null,
             bool? acceptedFilter = null,
             int pageSize = 100,
-            int pageNumber = 1)
+            int pageNumber = 1,
+            bool excludeRejected = false,
+            string? sort = null)
         {
             var query = _db.ApplicationForms.AsQueryable();
 
@@ -43,16 +45,29 @@ namespace <OWNER_HANDLE>_ERC.Services
             if (acceptedFilter.HasValue)
                 query = query.Where(x => x.IsAccepted == acceptedFilter.Value);
 
-            return await query
-                .OrderBy(x =>
-                    x.Division == "Main Division 1" ? 0 :
-                    x.Division == "Second Crossplay Division 2" ? 1 :
-                    x.Division == "Rookie Crossplay Division 3" ? 2 :
-                    x.Division == "Community Crossplay Event" ? 3 : 99)
-                .ThenBy(x =>
-                    x.Role == "Stammfahrer" ? 0 :
-                    x.Role == "Ersatzfahrer" ? 1 : 99)
-                .ThenByDescending(x => x.SubmittedAt)
+            if (excludeRejected)
+                query = query.Where(x => !x.IsRejected);
+
+            // "newest"/"oldest" = reine Sortierung nach Eingangszeit (was zuletzt/zuerst kam).
+            // Default (null) behält die Triage-Gruppierung nach Division → Rolle → neueste zuerst.
+            IOrderedQueryable<ApplicationForm> ordered = sort switch
+            {
+                "newest" => query.OrderByDescending(x => x.SubmittedAt),
+                "oldest" => query.OrderBy(x => x.SubmittedAt),
+                _ => query
+                    .OrderBy(x =>
+                        x.Division == "Main Division 1" ? 0 :
+                        x.Division == "Second Crossplay Division 2" ? 1 :
+                        x.Division == "Rookie Crossplay Division 3" ? 2 :
+                        x.Division == "Community Crossplay Event" ? 3 : 99)
+                    .ThenBy(x => x.Division)
+                    .ThenBy(x =>
+                        x.Role == "Stammfahrer" ? 0 :
+                        x.Role == "Ersatzfahrer" ? 1 : 99)
+                    .ThenByDescending(x => x.SubmittedAt)
+            };
+
+            return await ordered
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -64,6 +79,7 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             var total = await q.CountAsync();
             var accepted = await q.CountAsync(x => x.IsAccepted);
+            var rejected = await q.CountAsync(x => x.IsRejected);
 
             var byDivision = await q
                 .GroupBy(x => x.Division)
@@ -82,8 +98,9 @@ namespace <OWNER_HANDLE>_ERC.Services
             return new ApplicationStatistics
             {
                 TotalApplications = total,
-                OpenApplications = total - accepted,
+                OpenApplications = total - accepted - rejected,
                 AcceptedApplications = accepted,
+                RejectedApplications = rejected,
                 ApplicationsByDivision = byDivision.ToDictionary(x => x.Key, x => x.Count),
                 ApplicationsByRole = byRole.ToDictionary(x => x.Key, x => x.Count),
                 LastApplicationTime = lastTime
@@ -115,13 +132,13 @@ namespace <OWNER_HANDLE>_ERC.Services
                     Details = x.Details
                 }).ToList(),
                 Status = status,
-                StatusReason = app.IsAccepted ? "Accepted" : "Pending"
+                StatusReason = app.IsAccepted ? "Accepted" : app.IsRejected ? "Rejected" : "Pending"
             };
         }
 
         // ---- Workflow ----
 
-        public async Task<ApplicationActionResult> AcceptApplicationAsync(int id, string actorId)
+        public async Task<ApplicationActionResult> AcceptApplicationAsync(int id, string actorId, string? overrideLeagueId = null)
         {
             var app = await _db.ApplicationForms.FindAsync(id);
             if (app is null)
@@ -129,6 +146,14 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             if (app.IsAccepted)
                 return ApplicationActionResult.ErrorResult("Bewerbung bereits akzeptiert", "ALREADY_ACCEPTED");
+
+            // Ziel-Liga auflösen: explizite Admin-Auswahl schlägt die beworbene Liga.
+            var targetLeagueId = !string.IsNullOrWhiteSpace(overrideLeagueId) ? overrideLeagueId : app.AppliedLeagueId;
+            League? league = null;
+            if (!string.IsNullOrWhiteSpace(targetLeagueId))
+            {
+                league = await _db.Leagues.FirstOrDefaultAsync(l => l.Id == targetLeagueId && !l.IsArchived);
+            }
 
             try
             {
@@ -155,7 +180,25 @@ namespace <OWNER_HANDLE>_ERC.Services
                 {
                     app.IsAccepted = true;
                     app.AcceptedAt = DateTime.UtcNow;
+                    // Eine zuvor abgelehnte Bewerbung gilt nach Annahme nicht mehr als abgelehnt.
+                    app.IsRejected = false;
+                    app.RejectedAt = null;
+                    if (league is not null)
+                    {
+                        // Division als Liga-Name pflegen (Anzeige, Sortierung, Webhooks).
+                        app.Division = league.Name;
+                    }
                     await _db.SaveChangesAsync();
+
+                    // Fahrer direkt in die Ziel-Liga eintragen, damit er in Standings
+                    // und Autofill auftaucht. Läuft in derselben Transaktion.
+                    if (league is not null)
+                    {
+                        var driverName = ResolveDriverName(profile.DisplayName, app.GamingName);
+                        var isReserve = IsReserveRole(app.AssignedRole ?? app.Role);
+                        await EnsureStandingAsync(league, driverName, isReserve, id);
+                    }
+
                     await tx.CommitAsync();
                 }
                 catch (DbUpdateConcurrencyException dex)
@@ -189,7 +232,10 @@ namespace <OWNER_HANDLE>_ERC.Services
                     ["Actor"]       = actorId
                 });
 
-                return ApplicationActionResult.SuccessResult("Bewerbung akzeptiert und Profil erstellt", app);
+                var successMessage = league is not null
+                    ? $"Bewerbung akzeptiert, Profil erstellt und Liga \"{league.Name}\" zugewiesen"
+                    : "Bewerbung akzeptiert und Profil erstellt";
+                return ApplicationActionResult.SuccessResult(successMessage, app);
             }
             catch (Exception ex)
             {
@@ -209,7 +255,13 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             try
             {
-                _db.ApplicationForms.Remove(app);
+                // Bewerbung als abgelehnt markieren + Grund an die Review-Notiz anhängen.
+                app.IsAccepted = false;
+                app.IsRejected = true;
+                app.RejectedAt = DateTime.UtcNow;
+                app.ReviewNote = string.IsNullOrWhiteSpace(app.ReviewNote) ? reason : app.ReviewNote + "\n" + reason;
+
+                _db.ApplicationForms.Update(app);
                 await _db.SaveChangesAsync();
 
                 await _audit.LogAsync("RejectApplication", "ApplicationForm", id.ToString(),
@@ -248,15 +300,25 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             try
             {
+                // Use a transaction to make the unaccept operation atomic
+                await using var tx = await _db.Database.BeginTransactionAsync();
+
                 app.IsAccepted = false;
                 app.AcceptedAt = null;
+                // Clear assigned role
+                app.AssignedRole = null;
+                // Append audit note
+                app.ReviewNote = string.IsNullOrWhiteSpace(app.ReviewNote) ? reason : app.ReviewNote + "\n" + reason;
+
+                // Ensure EF marks the entity as modified
+                _db.Entry(app).State = EntityState.Modified;
                 await _db.SaveChangesAsync();
+                await tx.CommitAsync();
 
                 await _audit.LogAsync("UnacceptApplication", "ApplicationForm", id.ToString(),
                     $"Reason={reason}, Actor={actorId}");
 
-                // Bewusst kein Webhook-Event für Unaccept – interne Korrektur, keine
-                // Community-relevante Information. Audit-Log reicht.
+                // No webhook for unaccept
 
                 return ApplicationActionResult.SuccessResult("Akzeptanz rückgängig gemacht", app);
             }
@@ -267,6 +329,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             }
             catch (Exception ex)
             {
+                await _audit.LogAsync("UnacceptApplicationError", "ApplicationForm", id.ToString(), ex.Message);
                 return ApplicationActionResult.ErrorResult($"Fehler beim Rückgängigmachen: {ex.Message}", "UNACCEPT_ERROR");
             }
         }
@@ -440,6 +503,9 @@ namespace <OWNER_HANDLE>_ERC.Services
                 return ApplicationStatus.Accepted;
             }
 
+            if (app.IsRejected)
+                return ApplicationStatus.Rejected;
+
             return ApplicationStatus.Pending;
         }
 
@@ -453,6 +519,152 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             return value;
         }
+
+        // ── Liga-Zuweisung ───────────────────────────────────────────────────────
+
+        public async Task<ApplicationActionResult> AssignToLeagueAsync(int id, string leagueId, string? assignedRole, string actorId)
+        {
+            var app = await _db.ApplicationForms.FindAsync(id);
+            if (app is null)
+                return ApplicationActionResult.ErrorResult("Bewerbung nicht gefunden", "NOT_FOUND");
+
+            var league = await _db.Leagues.FirstOrDefaultAsync(l => l.Id == leagueId && !l.IsArchived);
+            if (league is null)
+                return ApplicationActionResult.ErrorResult("Liga nicht gefunden oder archiviert", "LEAGUE_NOT_FOUND");
+
+            try
+            {
+                var driverName = await ResolveDriverNameAsync(app);
+                var isReserve = IsReserveRole(assignedRole ?? app.AssignedRole ?? app.Role);
+                var previousDivision = app.Division;
+
+                await EnsureStandingAsync(league, driverName, isReserve, id);
+                await RemoveEmptyStandingsElsewhereAsync(app, league.Id, previousDivision, driverName);
+
+                app.Division = league.Name;
+                _db.ApplicationForms.Update(app);
+                await _db.SaveChangesAsync();
+
+                await _audit.LogAsync("AssignApplicationToLeague", "ApplicationForm", id.ToString(),
+                    $"League={league.Id} ({league.Name}), Driver={driverName}, Actor={actorId}");
+
+                return ApplicationActionResult.SuccessResult($"Liga \"{league.Name}\" zugewiesen", app);
+            }
+            catch (DbUpdateConcurrencyException dex)
+            {
+                await _audit.LogAsync("AssignLeagueConcurrency", "ApplicationForm", id.ToString(), dex.Message);
+                return ApplicationActionResult.ErrorResult("Konflikt bei der Liga-Zuweisung. Bitte Seite neu laden und erneut versuchen.", "CONCURRENCY_CONFLICT");
+            }
+            catch (Exception ex)
+            {
+                await _audit.LogAsync("AssignLeagueError", "ApplicationForm", id.ToString(), ex.Message);
+                return ApplicationActionResult.ErrorResult($"Fehler bei der Liga-Zuweisung: {ex.Message}", "ASSIGN_LEAGUE_ERROR");
+            }
+        }
+
+        /// <summary>Trägt den Fahrer in die Liga ein, falls er dort noch nicht steht.</summary>
+        private async Task<bool> EnsureStandingAsync(League league, string driverName, bool isReserve, int applicationId)
+        {
+            var normalized = driverName.Trim();
+            if (normalized.Length == 0)
+                return false;
+
+            var normalizedLower = normalized.ToLowerInvariant();
+            var exists = await _db.DriverStandings
+                .AnyAsync(s => s.LeagueId == league.Id
+                    && s.Driver != null
+                    && s.Driver.Trim().ToLower() == normalizedLower);
+            if (exists)
+                return false;
+
+            var standing = new DriverStanding
+            {
+                LeagueId = league.Id,
+                Driver = normalized,
+                Team = string.Empty,
+                DriverNumber = null,
+                Position = 0,
+                Points = 0,
+                Wins = 0,
+                IsReserveDriver = isReserve,
+                ReserveForDriver = null,
+                ReserveStarts = 0,
+                ReservePointsForMain = 0
+            };
+
+            _db.DriverStandings.Add(standing);
+            await _db.SaveChangesAsync();
+
+            await _audit.LogAsync("AdminAction", "DriverStanding", standing.RowId.ToString(),
+                $"Added standing for driver={standing.Driver} in league={league.Id} via application***REMOVED***{applicationId}");
+
+            return true;
+        }
+
+        /// <summary>
+        /// Entfernt leere Auto-Einträge (0 Punkte/Siege/Position) des Fahrers aus der
+        /// ursprünglich beworbenen bzw. zuvor zugewiesenen Liga, wenn der Admin ihn
+        /// in eine andere Liga packt. Einträge mit echten Ergebnissen bleiben unangetastet.
+        /// </summary>
+        private async Task RemoveEmptyStandingsElsewhereAsync(ApplicationForm app, string targetLeagueId, string? previousDivision, string driverName)
+        {
+            var candidateLeagueIds = new List<string>();
+            if (!string.IsNullOrWhiteSpace(app.AppliedLeagueId))
+                candidateLeagueIds.Add(app.AppliedLeagueId);
+
+            if (!string.IsNullOrWhiteSpace(previousDivision))
+            {
+                var previousLeagueId = await _db.Leagues
+                    .Where(l => l.Name == previousDivision)
+                    .Select(l => l.Id)
+                    .FirstOrDefaultAsync();
+                if (previousLeagueId is not null)
+                    candidateLeagueIds.Add(previousLeagueId);
+            }
+
+            candidateLeagueIds = candidateLeagueIds
+                .Where(x => !string.Equals(x, targetLeagueId, StringComparison.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (candidateLeagueIds.Count == 0)
+                return;
+
+            var normalizedLower = driverName.Trim().ToLowerInvariant();
+            var staleStandings = await _db.DriverStandings
+                .Where(s => candidateLeagueIds.Contains(s.LeagueId)
+                    && s.Driver != null
+                    && s.Driver.Trim().ToLower() == normalizedLower
+                    && s.Points == 0 && s.Wins == 0 && s.Position == 0)
+                .ToListAsync();
+            if (staleStandings.Count == 0)
+                return;
+
+            _db.DriverStandings.RemoveRange(staleStandings);
+            await _db.SaveChangesAsync();
+
+            foreach (var stale in staleStandings)
+            {
+                await _audit.LogAsync("AdminAction", "DriverStanding", stale.RowId.ToString(),
+                    $"Removed empty standing for driver={stale.Driver} in league={stale.LeagueId} after league reassignment of application***REMOVED***{app.Id}");
+            }
+        }
+
+        /// <summary>Ermittelt den Anzeigenamen des Fahrers über das Profil, sonst den EA-Namen.</summary>
+        private async Task<string> ResolveDriverNameAsync(ApplicationForm app)
+        {
+            DriverProfile? profile = null;
+            if (!string.IsNullOrWhiteSpace(app.DiscordId))
+                profile = await _driverProfiles.GetByDiscordIdAsync(app.DiscordId);
+            profile ??= await _driverProfiles.FindByDriverNameAsync(app.GamingName);
+
+            return ResolveDriverName(profile?.DisplayName, app.GamingName);
+        }
+
+        private static string ResolveDriverName(string? displayName, string gamingName)
+            => !string.IsNullOrWhiteSpace(displayName) ? displayName.Trim() : gamingName.Trim();
+
+        private static bool IsReserveRole(string? role)
+            => string.Equals(role, "Ersatzfahrer", StringComparison.OrdinalIgnoreCase);
 
         // ── Neue Methoden: Review-Workflow & Rollen ──────────────────────────────
         public async Task<ApplicationForm?> GetApplicationByIdAsync(int id)

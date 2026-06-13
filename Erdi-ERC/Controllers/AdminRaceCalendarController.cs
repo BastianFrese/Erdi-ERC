@@ -123,7 +123,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             }
 
             RaceWeekend? weekend = id.HasValue
-                ? await _db.RaceWeekends.Include(w => w.Legs).FirstOrDefaultAsync(w => w.Id == id.Value)
+                ? await _db.RaceWeekends.AsTracking().Include(w => w.Legs).FirstOrDefaultAsync(w => w.Id == id.Value)
                 : null;
             var isNew = weekend is null;
             if (weekend is null)
@@ -196,7 +196,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         // ── Helpers ──────────────────────────────────────────────────────────────
         private async Task<RaceCalendarSettings> GetOrCreateSettingsAsync()
         {
-            var settings = await _db.RaceCalendarSettings.FirstOrDefaultAsync();
+            var settings = await _db.RaceCalendarSettings.AsTracking().FirstOrDefaultAsync();
             if (settings is null)
             {
                 settings = new RaceCalendarSettings { Id = 1, UpdatedAt = DateTime.UtcNow };

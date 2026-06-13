@@ -39,6 +39,9 @@
     <None Include="wwwroot\uploads\events\.gitkeep">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
+    <None Include="wwwroot\uploads\drivers\.gitkeep">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
   </ItemGroup>
 
   <!-- Background Music: Songs ins Publish-Verzeichnis kopieren -->

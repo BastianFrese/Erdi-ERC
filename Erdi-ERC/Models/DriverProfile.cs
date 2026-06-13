@@ -25,6 +25,9 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string? FavoriteTrack { get; set; }
 
         [MaxLength(64)]
+        public string? FavoriteTeam { get; set; }
+
+        [MaxLength(64)]
         public string? InputDevice { get; set; }
 
         [MaxLength(64)]
@@ -47,6 +50,11 @@ namespace <OWNER_HANDLE>_ERC.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public List<DriverGamerTag> GamerTags { get; set; } = new();
+
+        // Akzeptanz der Widerrufsbelehrung / ausdrückliche Zustimmung, bevor exklusive
+        // Subscriber-Setups angezeigt werden.
+        public bool HasAcceptedExclusiveSetupTerms { get; set; } = false;
+        public DateTime? ExclusiveSetupTermsAcceptedAt { get; set; }
     }
 
     /// <summary>Plattform-spezifischer Gamer-Tag eines Driver-Profils.</summary>

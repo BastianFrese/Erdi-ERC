@@ -52,6 +52,7 @@
         }
         .status--pending { background: rgba(255, 193, 7, 0.1); color: ***REMOVED***ffc107; }
         .status--accepted { background: rgba(76, 175, 80, 0.1); color: ***REMOVED***4caf50; }
+        .status--rejected { background: rgba(244, 67, 54, 0.1); color: ***REMOVED***f44336; }
         .pagination { display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: center; }
         .pagination a, .pagination span { 
             padding: 0.5rem 0.75rem; 
@@ -102,7 +103,7 @@
                 <label>Division:</label>
                 <select name="division" class="filter-select" onchange="this.form.submit()">
                     @Html.Raw("<option value=\"\">Alle</option>")
-                    @foreach (var div in new[] { "Main Division 1", "Second Crossplay Division 2", "Rookie Crossplay Division 3", "Community Crossplay Event" })
+                    @foreach (var div in Model.AvailableDivisions)
                     {
                         @Html.Raw($"<option value=\"{div}\"{(Model.CurrentDivision == div ? " selected" : "")}>{div}</option>")
                     }
@@ -114,6 +115,14 @@
                     @Html.Raw("<option value=\"\">Alle</option>")
                     @Html.Raw($"<option value=\"false\"{(Model.CurrentAcceptedFilter == false ? " selected" : "")}>Offen</option>")
                     @Html.Raw($"<option value=\"true\"{(Model.CurrentAcceptedFilter == true ? " selected" : "")}>Akzeptiert</option>")
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sortierung:</label>
+                <select name="sort" class="filter-select" onchange="this.form.submit()">
+                    @Html.Raw("<option value=\"\">Standard (Division)</option>")
+                    @Html.Raw($"<option value=\"newest\"{(Model.CurrentSort == "newest" ? " selected" : "")}>Neueste zuerst</option>")
+                    @Html.Raw($"<option value=\"oldest\"{(Model.CurrentSort == "oldest" ? " selected" : "")}>Älteste zuerst</option>")
                 </select>
             </div>
         </form>
@@ -143,8 +152,8 @@
                 <tbody>
                     @foreach (var app in Model.Applications)
                     {
-                        var statusClass = app.IsAccepted ? "status--accepted" : "status--pending";
-                        var statusText = app.IsAccepted ? "Akzeptiert" : "Offen";
+                        var statusClass = app.IsAccepted ? "status--accepted" : app.IsRejected ? "status--rejected" : "status--pending";
+                        var statusText = app.IsAccepted ? "Akzeptiert" : app.IsRejected ? "Abgelehnt" : "Offen";
 
                         <tr>
                             <td><strong>@app.DiscordName</strong></td>
@@ -170,14 +179,14 @@
             <div class="pagination">
                 @if (Model.CurrentPage > 1)
                 {
-                    <a href="@Url.Action("List", "AdminApplications", new { page = Model.CurrentPage - 1, division = Model.CurrentDivision })">
+                    <a href="@Url.Action("List", "AdminApplications", new { page = Model.CurrentPage - 1, division = Model.CurrentDivision, accepted = Model.CurrentAcceptedFilter, sort = Model.CurrentSort })">
                         <i class="bi bi-chevron-left"></i> Zurück
                     </a>
                 }
                 <span class="active">Seite @Model.CurrentPage</span>
                 @if (Model.Applications.Count >= 50)
                 {
-                    <a href="@Url.Action("List", "AdminApplications", new { page = Model.CurrentPage + 1, division = Model.CurrentDivision })">
+                    <a href="@Url.Action("List", "AdminApplications", new { page = Model.CurrentPage + 1, division = Model.CurrentDivision, accepted = Model.CurrentAcceptedFilter, sort = Model.CurrentSort })">
                         Weiter <i class="bi bi-chevron-right"></i>
                     </a>
                 }

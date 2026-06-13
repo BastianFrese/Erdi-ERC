@@ -46,20 +46,14 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         // ── Save (Create + Edit) POST ────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(AboutMeProfile model, IFormFile? avatarFile, IFormFile? bannerFile, IFormFile? backgroundFile)
+        public async Task<IActionResult> Save(AboutMeProfile model, IFormFile? avatarFile, IFormFile? backgroundFile)
         {
-            // File uploads take priority over URL fields
+            // File uploads take priority (only uploads allowed; URL fields removed in UI)
             if (avatarFile is { Length: > 0 })
             {
                 var url = await _media.SaveAboutImageAsync(avatarFile, "avatar");
                 if (url != null) model.AvatarUrl = url;
                 else ModelState.AddModelError("AvatarUrl", "Ungültiges Bild (max. 10 MB, jpg/png/webp).");
-            }
-            if (bannerFile is { Length: > 0 })
-            {
-                var url = await _media.SaveAboutImageAsync(bannerFile, "banner");
-                if (url != null) model.BannerUrl = url;
-                else ModelState.AddModelError("BannerUrl", "Ungültiges Bild (max. 10 MB, jpg/png/webp).");
             }
             if (backgroundFile is { Length: > 0 })
             {
@@ -100,10 +94,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 existing.Slug            = model.Slug;
                 existing.DisplayName     = model.DisplayName;
                 existing.Tagline         = model.Tagline;
-                existing.AvatarUrl       = model.AvatarUrl;
-                existing.BannerUrl       = model.BannerUrl;
-                existing.ShowBanner      = model.ShowBanner;
-                existing.BackgroundUrl   = model.BackgroundUrl;
+                // Only update AvatarUrl/BackgroundUrl if a file upload provided; do not accept URL fields anymore
+                if (!string.IsNullOrWhiteSpace(model.AvatarUrl)) existing.AvatarUrl = model.AvatarUrl;
+                if (!string.IsNullOrWhiteSpace(model.BackgroundUrl)) existing.BackgroundUrl = model.BackgroundUrl;
                 existing.Bio             = model.Bio;
                 existing.ShortBio        = model.ShortBio;
                 existing.DiscordUsername = model.DiscordUsername;

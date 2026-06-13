@@ -41,6 +41,7 @@
     </div>
 
 
+
     <div class="setup-admin-status-grid">
         <div class="setup-admin-status-card">
             <div class="setup-admin-status-label">Guild Konfiguration</div>
@@ -192,6 +193,13 @@
                             <option value="5">Twitch Sub Tier 3 (Tier 5)</option>
                         </select>
                     </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="setupGameYearInput" name="gameYear" data-default-year="@((ViewBag.F1GameYear as string) ?? String.Empty)">
+                            <option value="" selected="@((ViewBag.F1GameYear as string) == null)">Jahr</option>
+                            <option value="26" selected="@(string.Equals((ViewBag.F1GameYear as string) ?? string.Empty, "26", System.StringComparison.OrdinalIgnoreCase))">F1 26</option>
+                            <option value="25" selected="@(string.Equals((ViewBag.F1GameYear as string) ?? string.Empty, "25", System.StringComparison.OrdinalIgnoreCase))">F1 25</option>
+                        </select>
+                    </div>
                     <div class="col-md-4">
                         <input class="form-control" id="setupRoleLabelInput" name="requiredRoleLabel" placeholder="Optionales Anzeige-Label (leer = Mapping Label)" />
                     </div>
@@ -320,7 +328,7 @@
                                 <button class="btn btn-outline-info btn-sm" type="button" data-preset="wet">Wet</button>
                             </div>
                             <div class="d-flex flex-wrap gap-2 align-items-center" id="setupStrategyBar">
-                                <span class="small text-muted me-1">F1 26 Distanz:</span>
+                                <span class="small text-muted me-1">F1 @_f1Year Distanz:</span>
                                 @foreach (var strategy in editorConfig.RaceStrategies)
                                 {
                                     <button class="btn btn-outline-warning btn-sm js-setup-strategy"
@@ -390,6 +398,7 @@
                                                 data-title="@setup.Title"
                                                 data-tier="@setup.RequiredAccessTier"
                                                 data-role-label="@setup.RequiredRoleLabel"
+                                                data-game-year="@setup.GameYear"
                                                 data-setup-text="@setup.SetupText"
                                                 data-setup-info="@setup.SetupInfo">
                                             Bearbeiten
@@ -428,6 +437,7 @@
             const titleInput = document.getElementById('setupTitleInput');
             const tierInput = document.getElementById('setupTierInput');
             const roleLabelInput = document.getElementById('setupRoleLabelInput');
+            const gameYearInput = document.getElementById('setupGameYearInput');
             const setupInfoInput = document.getElementById('setupInfoInput');
             const editButtons = Array.from(document.querySelectorAll('.js-setup-edit'));
             const strategyInput = document.getElementById('setupStrategyInput');
@@ -692,6 +702,7 @@
                 if (titleInput) titleInput.value = '';
                 if (tierInput) tierInput.value = '0';
                 if (roleLabelInput) roleLabelInput.value = '';
+                if (gameYearInput) gameYearInput.value = gameYearInput.defaultValue || '';
                 if (setupInfoInput) setupInfoInput.value = '';
                 defaults.forEach(def => setValue(def.key, def.value));
                 setActiveStrategy('');
@@ -765,6 +776,7 @@
                     const setupTitle = button.getAttribute('data-title') || '';
                     const setupTier = button.getAttribute('data-tier') || '0';
                     const setupRoleLabel = button.getAttribute('data-role-label') || '';
+                    const setupGameYear = button.getAttribute('data-game-year') || '';
                     const setupInfo = button.getAttribute('data-setup-info') || '';
                     const setupText = button.getAttribute('data-setup-text') || '';
 
@@ -776,6 +788,12 @@
                     if (titleInput) titleInput.value = setupTitle;
                     if (tierInput) tierInput.value = setupTier;
                     if (roleLabelInput) roleLabelInput.value = setupRoleLabel;
+                    if (gameYearInput) {
+                        // set select value; if value not in options, set to empty
+                        const val = setupGameYear || '';
+                        const opt = Array.from(gameYearInput.options).find(o => o.value === val);
+                        gameYearInput.value = opt ? val : '';
+                    }
                     if (setupInfoInput) setupInfoInput.value = setupInfo;
 
                     const payload = (() => {

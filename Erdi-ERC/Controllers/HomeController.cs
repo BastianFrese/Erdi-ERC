@@ -198,8 +198,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         public IActionResult Privacy() => View();
         public IActionResult Impressum() => View();
+        public IActionResult Widerruf() => View();
         public IActionResult Faq() => View();
         public IActionResult Regelwerk() => View();
+        public IActionResult Maintenance() => View("Maintenance");
 
         public async Task<IActionResult> Events()
         {
@@ -274,6 +276,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             });
         }
 
+        /// <summary>Ligen, die aktuell Bewerbungen annehmen (Admin-Schalter, nicht archiviert).</summary>
+        private Task<List<League>> GetLeaguesOpenForApplicationsAsync() =>
+            _db.Leagues
+                .Where(l => !l.IsArchived && l.IsOpenForApplications)
+                .OrderBy(l => l.Name)
+                .ToListAsync();
+
         [HttpGet]
         public async Task<IActionResult> Apply()
         {
@@ -282,6 +291,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 ViewBag.ReturnUrl = Url.Action(nameof(Apply));
                 return View("LoginRequired");
             }
+
+            ViewBag.OpenLeagues = await GetLeaguesOpenForApplicationsAsync();
 
             var model = new ApplicationForm
             {
@@ -333,6 +344,23 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             ModelState.Remove(nameof(model.DiscordId));
             ModelState.Remove(nameof(model.JoinedCommunityDiscord));
             ModelState.Remove(nameof(model.JoinedLeagueDiscord));
+
+            // Beworbene Liga server-seitig gegen die offenen Ligen validieren —
+            // niemand soll sich auf geschlossene oder archivierte Ligen bewerben können.
+            var openLeagues = await GetLeaguesOpenForApplicationsAsync();
+            ViewBag.OpenLeagues = openLeagues;
+
+            var appliedLeague = openLeagues.FirstOrDefault(l => l.Id == model.AppliedLeagueId);
+            if (appliedLeague is null)
+            {
+                ModelState.AddModelError(nameof(model.AppliedLeagueId), "Bitte wähle eine Liga aus.");
+            }
+            else
+            {
+                // Division als Name-Snapshot der Liga pflegen (Anzeige & Sortierung).
+                model.Division = appliedLeague.Name;
+                ModelState.Remove(nameof(model.Division));
+            }
 
             model.GamingName = model.GamingName?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(model.GamingName))
@@ -387,6 +415,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                     ["DiscordId"]   = model.DiscordId ?? "",
                     ["GamingName"]  = model.GamingName,
                     ["Role"]        = model.Role,
+                    ["Division"]    = model.Division,
                     ["SubmittedAt"] = model.SubmittedAt.ToString("dd.MM.yyyy HH:mm"),
                 });
                 return RedirectToAction(nameof(Apply));
@@ -1273,17 +1302,46 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> TrackSetups(string? track = null)
+        public async Task<IActionResult> TrackSetups(string? track = null, string? gameYear = null)
         {
             var normalizedTrack = track?.Trim();
             var selectedTrack = string.IsNullOrWhiteSpace(normalizedTrack)
                 ? null
                 : normalizedTrack;
 
+            var normalizedGameYear = gameYear?.Trim();
+            var selectedGameYear = string.IsNullOrWhiteSpace(normalizedGameYear)
+                ? null
+                : normalizedGameYear;
+
             var tracks = await _db.TrackSetups
                 .Select(x => x.Track)
                 .Distinct()
                 .OrderBy(x => x)
+                .ToListAsync();
+
+            var availableGameYears = await _db.TrackSetups
+                .Where(x => x.GameYear != null && x.GameYear != "")
+                .Select(x => x.GameYear!)
+                .Distinct()
+                .OrderByDescending(x => x)
+                .ToListAsync();
+
+            // "Frisch eingetroffen": Setups der letzten Tage, gruppiert nach Strecke + Spieljahr.
+            // Bewusst ungefiltert (über alle Strecken), damit die Übersicht immer vollständig ist.
+            var newSinceUtc = DateTime.UtcNow.AddDays(-SetupNewsGroup.WindowDays);
+            var newSetupGroups = await _db.TrackSetups
+                .Where(x => x.UpdatedAt >= newSinceUtc)
+                .GroupBy(x => new { x.Track, x.GameYear })
+                .Select(g => new SetupNewsGroup
+                {
+                    Track = g.Key.Track,
+                    GameYear = g.Key.GameYear,
+                    NewCount = g.Count(x => x.CreatedAt >= newSinceUtc),
+                    UpdatedCount = g.Count(x => x.CreatedAt < newSinceUtc),
+                    LatestUtc = g.Max(x => x.UpdatedAt)
+                })
+                .OrderByDescending(x => x.LatestUtc)
                 .ToListAsync();
 
             var setupTierClaim = User.FindFirst("erdi:setup-tier")?.Value;
@@ -1300,6 +1358,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             if (!string.IsNullOrWhiteSpace(selectedTrack))
             {
                 query = query.Where(x => x.Track == selectedTrack);
+            }
+            if (!string.IsNullOrWhiteSpace(selectedGameYear))
+            {
+                query = query.Where(x => x.GameYear == selectedGameYear);
             }
 
             var setups = await query
@@ -1321,6 +1383,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             ViewBag.SetupTracks = tracks;
             ViewBag.SelectedTrack = selectedTrack;
+            ViewBag.SelectedGameYear = selectedGameYear;
+            ViewBag.AvailableGameYears = availableGameYears;
+            ViewBag.NewSetupGroups = newSetupGroups;
+            ViewBag.NewSetupSinceUtc = newSinceUtc;
             ViewBag.SetupTier = currentTier;
             ViewBag.SetupRole = setupRoleClaim;
             ViewBag.IsOnCommunityGuild = isOnCommunityGuild;
@@ -1329,8 +1395,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             ViewBag.TenureRequiredDays = _setupAccessOptions.MinGuildTenureDays;
             ViewBag.VisibleSetups = visibleSetups;
             ViewBag.HiddenSetups = setups.Where(x => !_trackSetupAccessPolicy.CanView(x, currentTier, setupRoleClaim)).ToList();
-            ViewBag.SetupCategoryNames = SetupGameSpec.GetCategoryDisplayNames();
-            ViewBag.SetupFieldNames = SetupGameSpec.GetFieldDisplayNames();
             ViewBag.SetupEditorConfig = SetupGameSpec.GetEditorConfig();
             ViewBag.SetupMetricConfig = SetupGameSpec.GetMetricConfig();
             ViewBag.SetupComments = comments
@@ -1344,7 +1408,59 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .Select(x => x.TrackSetupId)
                 .ToHashSet();
 
+            // Determine if current user has accepted exclusive setup terms
+            bool userHasAcceptedExclusiveTerms = false;
+            if (!string.IsNullOrWhiteSpace(currentDiscordId))
+            {
+                var profile = await _db.DriverProfiles.FindAsync(currentDiscordId);
+                userHasAcceptedExclusiveTerms = profile?.HasAcceptedExclusiveSetupTerms ?? false;
+            }
+            ViewBag.UserHasAcceptedExclusiveSetupTerms = userHasAcceptedExclusiveTerms;
+
             return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AcceptExclusiveSetupTerms(int setupId, bool accept = false)
+        {
+            var discordId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var discordName = User.Identity?.Name ?? "Community User";
+            if (string.IsNullOrWhiteSpace(discordId)) return Forbid();
+
+            if (!accept)
+            {
+                // User cancelled or did not check the box
+                return RedirectToAction(nameof(TrackSetups));
+            }
+
+            var profile = await _db.DriverProfiles.FindAsync(discordId);
+            if (profile is null)
+            {
+                profile = new <OWNER_HANDLE>_ERC.Models.DriverProfile
+                {
+                    DiscordId = discordId,
+                    DiscordName = discordName,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    HasAcceptedExclusiveSetupTerms = true,
+                    ExclusiveSetupTermsAcceptedAt = DateTime.UtcNow
+                };
+                _db.DriverProfiles.Add(profile);
+            }
+            else
+            {
+                profile.HasAcceptedExclusiveSetupTerms = true;
+                profile.ExclusiveSetupTermsAcceptedAt = DateTime.UtcNow;
+                profile.UpdatedAt = DateTime.UtcNow;
+                _db.DriverProfiles.Update(profile);
+            }
+
+            await _db.SaveChangesAsync();
+
+            // Redirect back to TrackSetups so the setups are visible
+            return RedirectToAction(nameof(TrackSetups));
         }
 
         [HttpGet]
@@ -1397,7 +1513,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         [Authorize]
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddSetupComment(int setupId, string message, string? track = null)
+        public async Task<IActionResult> AddSetupComment(int setupId, string message, string? track = null, string? gameYear = null)
         {
             var discordId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var discordName = User.Identity?.Name ?? "Community User";
@@ -1417,12 +1533,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 await _db.SaveChangesAsync();
             }
 
-            return RedirectToAction(nameof(TrackSetups), new { track });
+            // Fragment ***REMOVED***setup-{id}: nach dem Post zur betroffenen Karte springen statt an den Seitenanfang.
+            return RedirectToAction(nameof(TrackSetups), "Home", new { track, gameYear }, $"setup-{setupId}");
         }
 
         [Authorize]
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleSetupLike(int setupId, string? track = null)
+        public async Task<IActionResult> ToggleSetupLike(int setupId, string? track = null, string? gameYear = null)
         {
             var discordId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var discordName = User.Identity?.Name ?? "Community User";
@@ -1445,7 +1562,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             }
 
             await _db.SaveChangesAsync();
-            return RedirectToAction(nameof(TrackSetups), new { track });
+            // Fragment ***REMOVED***setup-{id}: nach dem Post zur betroffenen Karte springen statt an den Seitenanfang.
+            return RedirectToAction(nameof(TrackSetups), "Home", new { track, gameYear }, $"setup-{setupId}");
         }
 
         [HttpGet]

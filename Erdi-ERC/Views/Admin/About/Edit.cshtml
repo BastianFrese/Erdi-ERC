@@ -161,23 +161,25 @@
     overflow: hidden;
 }
 .abe-pv-banner {
-    height: 90px;
+    /* banner removed for real page; keep minimal spacer for preview */
+    height: 0px;
     background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
     background-size: cover;
     background-position: center;
     position: relative;
 }
 .abe-pv-banner-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.6));
+    display: none;
 }
 .abe-pv-avatar {
     width: 64px; height: 64px;
     border-radius: 50%;
     border: 3px solid var(--surface-1);
     object-fit: cover;
-    position: absolute;
-    bottom: -32px; left: 1.1rem;
+    /* place avatar inline (not absolute) so spacing matches live page without banner */
+    position: relative;
+    margin-top: 1rem;
+    margin-left: 1.1rem;
     background: var(--surface-2);
 }
 .abe-pv-avatar-fb {
@@ -187,10 +189,11 @@
     background: var(--surface-3);
     display: flex; align-items: center; justify-content: center;
     font-size: 1.8rem;
-    position: absolute;
-    bottom: -32px; left: 1.1rem;
+    position: relative;
+    margin-top: 1rem;
+    margin-left: 1.1rem;
 }
-.abe-pv-body { padding: 2.5rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: .4rem; }
+.abe-pv-body { padding: 1.5rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: .4rem; }
 .abe-pv-name {
     font-family: var(--ff-tech);
     font-weight: 700;
@@ -288,7 +291,7 @@
 
 @if (!ViewData.ModelState.IsValid)
 {
-    <div class="adm-alert adm-alert--error">
+    <div class="adm-alert adm-alert--danger">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <div>
             @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
@@ -349,16 +352,9 @@
                     <div class="abe-field">
                         <label class="abe-label">Profilbild</label>
                         <div class="abe-img-tabs" id="avatarTabs">
-                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('avatar','url',this)"><i class="bi bi-link-45deg"></i> URL</button>
-                            <button type="button" class="abe-imgtab" onclick="switchImgTab('avatar','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
+                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('avatar','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
                         </div>
-                        <div id="avatarUrlPane">
-                            <input class="abe-input" asp-for="AvatarUrl" id="AvatarUrl"
-                                   placeholder="https://cdn.discordapp.com/... oder https://i.imgur.com/..."
-                                   type="text" oninput="updatePreview()" />
-                            <span class="abe-hint">Discord CDN, Imgur, oder direkte Bild-URL</span>
-                        </div>
-                        <div id="avatarUploadPane" style="display:none;">
+                        <div id="avatarUploadPane">
                             <input class="abe-input" type="file" name="avatarFile" id="avatarFile"
                                    accept=".jpg,.jpeg,.png,.webp,.gif,.avif"
                                    onchange="previewLocalImage(this,'AvatarUrl','pvAvatar')" />
@@ -366,45 +362,13 @@
                         </div>
                     </div>
 
-                    @* Banner *@
-                    <div class="abe-field">
-                        <label class="abe-label">Banner</label>
-                        <div class="abe-img-tabs" id="bannerTabs">
-                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('banner','url',this)"><i class="bi bi-link-45deg"></i> URL</button>
-                            <button type="button" class="abe-imgtab" onclick="switchImgTab('banner','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
-                        </div>
-                        <div id="bannerUrlPane">
-                            <input class="abe-input" asp-for="BannerUrl" id="BannerUrl"
-                                   placeholder="https://cdn.discordapp.com/... oder https://i.imgur.com/..."
-                                   type="text" oninput="updatePreview()" />
-                            <span class="abe-hint">Discord CDN, Imgur, oder direkte Bild-URL · Empfohlen: 1200 × 300 px</span>
-                        </div>
-                        <div id="bannerUploadPane" style="display:none;">
-                            <input class="abe-input" type="file" name="bannerFile" id="bannerFile"
-                                   accept=".jpg,.jpeg,.png,.webp,.gif,.avif"
-                                   onchange="previewLocalImage(this,'BannerUrl','pvBanner')" />
-                            <span class="abe-hint">jpg / png / webp · max. 10 MB · Empfohlen: 1200 × 300 px</span>
-                        </div>
-                        <div class="abe-toggle-row" style="margin-top:.4rem;">
-                            <input type="checkbox" class="abe-toggle" asp-for="ShowBanner" id="ShowBanner" onchange="updateBannerVisibility()" />
-                            <label for="ShowBanner">Banner auf der Seite anzeigen</label>
-                        </div>
-                    </div>
-
                     @* Seitenhintergrund *@
                     <div class="abe-field">
                         <label class="abe-label">Seitenhintergrund</label>
                         <div class="abe-img-tabs" id="backgroundTabs">
-                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('background','url',this)"><i class="bi bi-link-45deg"></i> URL</button>
-                            <button type="button" class="abe-imgtab" onclick="switchImgTab('background','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
+                            <button type="button" class="abe-imgtab active" onclick="switchImgTab('background','upload',this)"><i class="bi bi-upload"></i> Hochladen</button>
                         </div>
-                        <div id="backgroundUrlPane">
-                            <input class="abe-input" asp-for="BackgroundUrl" id="BackgroundUrl"
-                                   placeholder="https://cdn.discordapp.com/... oder https://i.imgur.com/..."
-                                   type="text" oninput="updatePreview()" />
-                            <span class="abe-hint">Hintergrundbild hinter dem gesamten Seiteninhalt · Empfohlen: 1920 × 1080 px</span>
-                        </div>
-                        <div id="backgroundUploadPane" style="display:none;">
+                        <div id="backgroundUploadPane">
                             <input class="abe-input" type="file" name="backgroundFile" id="backgroundFile"
                                    accept=".jpg,.jpeg,.png,.webp,.gif,.avif"
                                    onchange="previewLocalImage(this,'BackgroundUrl',null)" />
@@ -594,14 +558,11 @@
 function g(id){ return document.getElementById(id); }
 function tv(el,show){ if(el) el.style.display=show?'':'none'; }
 
-// ── Image tab switching ─────────────────────────────────────────────
+// Init: ensure upload panes visible by default
 function switchImgTab(field, mode, btn) {
-    var isUpload = mode === 'upload';
-    tv(g(field+'UrlPane'),    !isUpload);
-    tv(g(field+'UploadPane'),  isUpload);
-    // Clear only the file input when switching back to URL mode
-    if (!isUpload) { var f = g(field+'File'); if(f) f.value=''; }
-    // Update tab button styles
+    var isUpload = true; // only upload mode supported now
+    tv(g(field+'UrlPane'),    false);
+    tv(g(field+'UploadPane'),  true);
     var tabs = btn.closest('.abe-img-tabs');
     if (tabs) tabs.querySelectorAll('.abe-imgtab').forEach(function(t){ t.classList.toggle('active', t===btn); });
     updatePreview();
@@ -705,14 +666,6 @@ function normalizeSlug(){
     updatePreview();
 }
 
-window.updateBannerVisibility = function(){
-    var show = g('ShowBanner') && g('ShowBanner').checked;
-    var pv = g('pvBanner');
-    if (pv) pv.style.opacity = show ? '1' : '0.25';
-    var label = g('pvBannerHidden');
-    if (label) label.style.display = show ? 'none' : '';
-};
-
 window.setAccent = function(hex){
     g('accentSwatch').value = hex;
     g('accentHex').value    = hex;
@@ -731,7 +684,6 @@ window.hexChanged = function(val){
 
 // Init
 setAccent(g('AccentColor').value||'***REMOVED***e10600');
-updateBannerVisibility();
 updatePreview();
 
 g('Slug').addEventListener('input', normalizeSlug);

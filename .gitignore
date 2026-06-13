@@ -52,3 +52,4 @@ secrets.json
 
 ***REMOVED*** --- Migration Bootstrap (enthält ggf. sensible Daten) ---
 ***REMOVED*** migration_bootstrap.sql  ***REMOVED*** optional auskommentieren falls du es behalten willst
+.aider*

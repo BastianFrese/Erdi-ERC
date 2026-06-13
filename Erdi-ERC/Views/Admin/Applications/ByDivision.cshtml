@@ -143,8 +143,8 @@
                 <div class="app-card-info">
                     <h3>@app.DiscordName</h3>
                     <div class="app-card-meta">
-                        <span style="padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: @(app.IsAccepted ? "rgba(76, 175, 80, 0.1)" : "rgba(255, 193, 7, 0.1)"); color: @(app.IsAccepted ? "***REMOVED***4caf50" : "***REMOVED***ffc107");">
-                            @(app.IsAccepted ? "✓ Akzeptiert" : "Offen")
+                        <span style="padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: @(app.IsAccepted ? "rgba(76, 175, 80, 0.1)" : app.IsRejected ? "rgba(244, 67, 54, 0.1)" : "rgba(255, 193, 7, 0.1)"); color: @(app.IsAccepted ? "***REMOVED***4caf50" : app.IsRejected ? "***REMOVED***f44336" : "***REMOVED***ffc107");">
+                            @(app.IsAccepted ? "✓ Akzeptiert" : app.IsRejected ? "✕ Abgelehnt" : "Offen")
                         </span>
                         <span>@app.GamingName <span class="text-mute small">(@app.Platform)</span></span>
                         <span>@app.AiLevel</span>
@@ -171,8 +171,8 @@
                 <div class="app-card-info">
                     <h3>@app.DiscordName</h3>
                     <div class="app-card-meta">
-                        <span style="padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: @(app.IsAccepted ? "rgba(76, 175, 80, 0.1)" : "rgba(255, 193, 7, 0.1)"); color: @(app.IsAccepted ? "***REMOVED***4caf50" : "***REMOVED***ffc107");">
-                            @(app.IsAccepted ? "✓ Akzeptiert" : "Offen")
+                        <span style="padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: @(app.IsAccepted ? "rgba(76, 175, 80, 0.1)" : app.IsRejected ? "rgba(244, 67, 54, 0.1)" : "rgba(255, 193, 7, 0.1)"); color: @(app.IsAccepted ? "***REMOVED***4caf50" : app.IsRejected ? "***REMOVED***f44336" : "***REMOVED***ffc107");">
+                            @(app.IsAccepted ? "✓ Akzeptiert" : app.IsRejected ? "✕ Abgelehnt" : "Offen")
                         </span>
                         <span>@app.GamingName <span class="text-mute small">(@app.Platform)</span></span>
                         <span>@app.AiLevel</span>

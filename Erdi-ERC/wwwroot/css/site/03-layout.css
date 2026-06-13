@@ -103,6 +103,20 @@
 .navbar .nav-link:hover .nav-ico { opacity:1; transform:translateY(-1px); }
 .navbar .nav-link.active .nav-ico { opacity:1; color:var(--accent); filter:drop-shadow(0 0 6px var(--accent-glow)); }
 
+/* "!"-Hinweis am Navlink (z. B. neue Setups), WhatsApp-Style: klein, rot, oben rechts */
+.nav-alert-badge {
+    position:absolute; top:-2px; right:-4px;
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:14px; height:14px; padding:0 3px;
+    border-radius:999px;
+    background:var(--sig-red, ***REMOVED***e10600);
+    color:***REMOVED***fff;
+    font:800 .58rem/1 var(--ff-body);
+    box-shadow:0 0 8px rgba(225,6,0,.55), 0 0 0 2px rgba(6,7,10,.85);
+    animation:brand-pulse 2.4s ease-in-out infinite;
+    pointer-events:none;
+}
+
 .navbar-auth-user {
     display:inline-flex; align-items:center; gap:.5rem;
     color:var(--ink-2);

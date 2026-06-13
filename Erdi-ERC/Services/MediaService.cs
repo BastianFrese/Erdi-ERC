@@ -218,6 +218,50 @@ namespace <OWNER_HANDLE>_ERC.Services
             catch { /* best effort */ }
         }
 
+        // ---- Driver Profile Photos ----
+        public async Task<string?> SaveDriverPhotoAsync(IFormFile image, string discordId)
+        {
+            if (image is null || image.Length <= 0)
+                return null;
+
+            if (image.Length > MaxImageSizeBytes)
+                return null;
+
+            var ext = Path.GetExtension(image.FileName)?.ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(ext) || !_allowedImageExtensions.Contains(ext))
+                return null;
+
+            // Discord-Id nur als Datei-Präfix; alles Nicht-Alphanumerische raus (kein Path-Traversal).
+            var safeId = string.Concat((discordId ?? "driver").Where(char.IsLetterOrDigit));
+            if (string.IsNullOrWhiteSpace(safeId)) safeId = "driver";
+
+            var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "drivers");
+            Directory.CreateDirectory(uploadDir);
+
+            // Dateiname immer als GUID erzeugen – nie den Originalname übernehmen.
+            var fileName = $"{safeId}-{Guid.NewGuid():N}{ext}";
+            var fullPath = Path.Combine(uploadDir, fileName);
+
+            await using var fs = new FileStream(fullPath, FileMode.CreateNew);
+            await image.CopyToAsync(fs);
+
+            await _audit.LogAsync("UploadDriverPhoto", "DriverProfile", discordId ?? safeId, $"File=/uploads/drivers/{fileName}, Size={image.Length}");
+            return $"/uploads/drivers/{fileName}";
+        }
+
+        public void TryDeleteDriverPhoto(string url)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(url) || !url.StartsWith("/uploads/drivers/"))
+                    return;
+                var full = Path.Combine(_env.WebRootPath, url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                if (System.IO.File.Exists(full))
+                    System.IO.File.Delete(full);
+            }
+            catch { /* best effort */ }
+        }
+
         // ---- Ewige Liste ----
         public async Task<bool> UploadEwigeListeAsync(IFormFile? workbook)
         {

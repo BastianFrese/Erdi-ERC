@@ -21,7 +21,8 @@ namespace <OWNER_HANDLE>_ERC.Services
             WinnerCarPrimaryLight: "***REMOVED***ff2a1f",
             WinnerCarPrimaryDark: "***REMOVED***7a0300",
             WinnerCarSecondary: "***REMOVED***ffffff",
-            ActiveStream: null);
+            ActiveStream: null,
+            LatestSetupActivityUtc: null);
 
         private readonly AppDbContext _db;
         private readonly IMemoryCache _cache;
@@ -145,13 +146,29 @@ namespace <OWNER_HANDLE>_ERC.Services
                 activeStream = null;
             }
 
+            // Jüngste Setup-Aktivität (UpdatedAt deckt auch neu angelegte Setups ab,
+            // da beide Timestamps beim Anlegen gesetzt werden). Speist das "!"-Badge
+            // am Setups-Navlink; läuft über denselben 30s-Cache wie der Rest.
+            DateTime? latestSetupActivity = null;
+            try
+            {
+                latestSetupActivity = await _db.TrackSetups
+                    .AsNoTracking()
+                    .MaxAsync(x => (DateTime?)x.UpdatedAt, ct);
+            }
+            catch
+            {
+                latestSetupActivity = null;
+            }
+
             return new LayoutData(
                 WinnerTeamKey: winnerTeamKey,
                 WinnerCarPrimary: primary,
                 WinnerCarPrimaryLight: primaryLight,
                 WinnerCarPrimaryDark: primaryDark,
                 WinnerCarSecondary: secondary,
-                ActiveStream: activeStream);
+                ActiveStream: activeStream,
+                LatestSetupActivityUtc: latestSetupActivity);
         }
 
         private static (string primary, string primaryLight, string primaryDark, string secondary) ResolveColors(string? teamKey)

@@ -1,0 +1,29 @@
+@model int
+@{
+    // model = TrackSetup.Id
+    var setupId = Model;
+}
+
+<div class="exclusive-consent-overlay" data-setup-consent>
+    <div class="exclusive-consent-card">
+        <h4>Vor Abruf exklusiver Setups</h4>
+        <p>Bevor du das exklusive Setup einsehen kannst, bestätige bitte, dass du über den Wegfall deines Widerrufsrechts informiert wurdest.</p>
+        <form method="post" asp-action="AcceptExclusiveSetupTerms" class="d-flex flex-column gap-2" data-accept-setup-form>
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="setupId" value="@setupId" />
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acceptExclusiveTerms" name="accept" value="true" />
+                <label class="form-check-label" for="acceptExclusiveTerms">Ich willige ausdrücklich ein, dass mit der Bereitstellung der exklusiven Sub-Setups sofort begonnen wird. Mir ist bekannt, dass mein Widerrufsrecht für diesen digitalen Inhalt erlischt, sobald ich die exklusiven Setups abrufe/einsehe.</label>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="f1-btn f1-btn--primary" type="submit">Bestätigen</button>
+                <button class="f1-btn f1-btn--ghost" type="button" data-consent-cancel>Abbrechen</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.exclusive-consent-overlay { position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999 }
+.exclusive-consent-card { background:var(--surface-1);padding:1.25rem;border-radius:8px;max-width:680px;width:100%;box-shadow:var(--sh-3) }
+</style>

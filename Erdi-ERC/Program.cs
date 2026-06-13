@@ -81,6 +81,7 @@ builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
 builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<DatabaseTransactionHelper>();
 builder.Services.Configure<DiscordSetupAccessOptions>(builder.Configuration.GetSection("Discord:SetupAccess"));
 builder.Services.Configure<DiscordGuildOptions>(builder.Configuration.GetSection(DiscordGuildOptions.SectionName));
 builder.Services.Configure<DriverMatchingOptions>(builder.Configuration.GetSection(DriverMatchingOptions.SectionName));
@@ -728,7 +729,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 // Additionally configure uploads directory to be served with proper cache headers
 var uploadsPath = Path.Combine(app.Environment.WebRootPath, "uploads");
-if (Directory.Exists(uploadsPath))
+// Ensure uploads directory exists so we can register a StaticFiles middleware for it
+Directory.CreateDirectory(uploadsPath);
 {
     var provider = new FileExtensionContentTypeProvider();
     // Ensure common image types are included

@@ -1,7 +1,11 @@
 @using <OWNER_HANDLE>_ERC.Models
+@using Microsoft.EntityFrameworkCore
+@inject <OWNER_HANDLE>_ERC.Data.AppDbContext _layoutDb
 @{
     var _title  = ViewData["HeroTitle"]    as string ?? ViewData["Title"] as string ?? "Admin";
     var _kicker = ViewData["Kicker"]       as string ?? string.Empty;
+    int _openApplications = 0;
+    try { _openApplications = await _layoutDb.ApplicationForms.CountAsync(x => !x.IsAccepted); } catch { }
 
     var _ctrl   = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var _action = ViewContext.RouteData.Values["action"]?.ToString()     ?? "";
@@ -103,6 +107,10 @@
                     {
                         <a class="@Nav("AdminApplications","Open")" asp-controller="AdminApplications" asp-action="Open">
                             <i class="bi bi-inbox"></i> Offen
+                            @if (_openApplications > 0)
+                            {
+                                <span class="adm-nav-badge">@_openApplications</span>
+                            }
                         </a>
                         <a class="@Nav("AdminApplications","Accepted")" asp-controller="AdminApplications" asp-action="Accepted">
                             <i class="bi bi-check-circle"></i> Angenommen
@@ -127,18 +135,16 @@
             {
                 <div class="adm-nav-group">
                     <span class="adm-nav-group__label">Liga</span>
-                    @if (canLeagueStandings)
-                    {
-                        <a class="@Nav("Admin","Index")" asp-controller="Admin" asp-action="Index">
-                            <i class="bi bi-list-ol"></i> Tabellen
-                        </a>
+                    @{
+                        // "Liga verwalten" zeigt auf Admin/Index — aber nur aktiv markieren
+                        // wenn wir auf einer Edit-/Liga-Unterseite sind, nicht auf dem Dashboard.
+                        var ligaNavClass = (_ctrl == "Admin" && (_action == "EditLeague" || _action == "EnterRace"))
+                            ? "adm-nav-link is-active"
+                            : "adm-nav-link";
                     }
-                    @if (canLeagueRaces)
-                    {
-                        <a class="@Nav("Admin","Index")" asp-controller="Admin" asp-action="Index">
-                            <i class="bi bi-trophy-fill"></i> Rennergebnisse
-                        </a>
-                    }
+                    <a class="@ligaNavClass" asp-controller="Admin" asp-action="Index">
+                        <i class="bi bi-trophy-fill"></i> Liga verwalten
+                    </a>
                     <a class="@Nav("AdminRaceCalendar","Index")" asp-controller="AdminRaceCalendar" asp-action="Index">
                         <i class="bi bi-calendar3"></i> Race Calendar
                     </a>

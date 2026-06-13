@@ -1,66 +1,190 @@
 @model <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel
 @using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Helpers
 @{
     var profile = ViewBag.Profile as DriverProfile;
-    var photo = profile?.PhotoUrl ?? "/images/placeholder-driver.png";
-    var age = profile?.Age?.ToString() ?? "--";
-    var number = "94";
-    if (Model != null)
-    {
-        try
-        {
-            var prop = Model.GetType().GetProperty("DriverNumber");
-            var val = prop?.GetValue(Model);
-            if (val != null) number = val.ToString() ?? "94";
-        }
-        catch { /* ignore reflection failures, fallback to default */ }
-    }
+
+    var photo    = profile?.PhotoUrl;
+    var hasPhoto = !string.IsNullOrWhiteSpace(photo);
+    var age      = profile?.Age?.ToString();
+    var number   = Model?.DriverNumber?.ToString();
+
+    // Initialen aus dem Gamertag — Unterstriche & Co. wirken als Wortgrenzen, nicht als Zeichen.
+    var initials = DriverInitialsHelper.FromGamertag(Model?.Driver);
+
+    var favTeam  = F1TeamsHelper.GetTeamByName(profile?.FavoriteTeam);
+    var team     = favTeam ?? F1TeamsHelper.GetTeamByName(Model?.Team);
+    var teamLogo = team is not null ? $"/images/teams/{team.LogoKey}.svg" : null;
+    var teamName = team?.Name ?? (string.IsNullOrWhiteSpace(Model?.Team) ? null : Model!.Team);
+    var accent   = team?.PrimaryColor ?? "***REMOVED***e10600";
+
+    var hardware     = SimHardwareHelper.Resolve(profile?.InputDevice);
+    var hardwareLogo = hardware is not null ? $"/images/logos/{hardware.Key}.svg" : null;
+
+    var favTrack     = RaceFlagHelper.ResolveTrack(profile?.FavoriteTrack);
+    var trackOutline = favTrack is not null ? $"/images/tracks/{favTrack.Key}.svg" : null;
+    var trackName    = favTrack is not null
+        ? (favTrack.Key switch { "lasvegas" => "Las Vegas", "abudhabi" => "Abu Dhabi", _ => favTrack.Country })
+        : (string.IsNullOrWhiteSpace(profile?.FavoriteTrack) ? null : profile!.FavoriteTrack!.Trim());
+
+    // Nation: echte Flagge (wenn SVG vorhanden) + bulletproof 3-Buchstaben-Code als Fallback.
+    var natCode = RaceFlagHelper.ResolveCountryCode(profile?.Nationality);
+    var natIso2 = RaceFlagHelper.ResolveCountryIso2(profile?.Nationality);
+    var natFlag = natIso2 is not null ? $"/images/flags/{natIso2}.svg" : null;
+
+    // Stats für die FIFA-Karte (ohne Foto).
+    var totalRaces    = Model?.Races?.Count ?? 0;
+    var finishedRaces = Model?.Races?.Count(r => r.Position > 0) ?? 0;
+    var winRate       = finishedRaces > 0 ? (int)Math.Round(100.0 * (Model?.Wins ?? 0) / finishedRaces) : 0;
+    var bestFinish    = Model?.BestFinish is int bf && bf > 0 ? $"P{bf}" : "–";
 }
-<div class="driver-card-root">
-    <div class="driver-card__inner">
-        <div class="driver-card__top">
-            <div class="driver-card__age-tile">
-                <div class="age-number">@age</div>
-                <div class="age-label">ALTER</div>
-            </div>
-            <div class="driver-card__logo">
-                <img src="/images/erc-logo.png" alt="ERC League Racing" />
-            </div>
-        </div>
 
-        <div class="driver-card__flag">
-            <img src="/images/flags/de.png" alt="Deutschland" />
-        </div>
+@if (hasPhoto)
+{
+    @* ── Layout A: Foto-Poster ─────────────────────────────────── *@
+    <div class="erc-card erc-card--photo" style="--dc-accent:@accent;">
+        <div class="erc-card__shell">
+            <div class="erc-card__wash"></div>
+            <div class="erc-photo"><img src="@photo" alt="@Model?.Driver" /></div>
+            @if (number is not null)
+            {
+                <div class="erc-bignum">@number</div>
+            }
 
-        <div class="driver-card__photo-wrap">
-            <img class="driver-photo" src="@photo" alt="Fahrerfoto" />
-        </div>
-
-        <div class="driver-card__name">
-            <div class="driver-name">@Model.Driver</div>
-            <div class="driver-community"><img src="/images/erc-logo-small.png" alt="ERC"/> ERDI´s RACING COMMUNITY</div>
-        </div>
-
-        <div class="driver-card__carbon">
-            <div class="carbon-inner">
-                <div class="sponsor left"><img src="/images/logos/aston-martin.png" alt="Aston Martin"/></div>
-                <div class="sponsor middle">
-                    <img class="track-outline" src="/images/tracks/monaco-outline.png" alt="Monaco"/>
-                    <div class="track-label">MONACO</div>
+            <div class="erc-card__brand">
+                <div class="erc-brand__mark">
+                    <span class="erc-brand__erc">ERC</span>
+                    <span class="erc-brand__sub">League Racing</span>
                 </div>
-                <div class="sponsor right">
-                    <img src="/images/logos/fanatec.png" alt="Fanatec"/>
-                    <img src="/images/logos/moza.png" alt="Moza Racing"/>
+                <div class="erc-chips">
+                    @if (natCode is not null)
+                    {
+                        <span class="erc-chip"><span class="erc-nation">
+                            @if (natFlag is not null)
+                            {
+                                <img class="erc-nation__flag" src="@natFlag" alt="" onerror="this.style.display='none'" />
+                            }
+                            <span class="erc-nation__code">@natCode</span>
+                        </span></span>
+                    }
+                    @if (age is not null)
+                    {
+                        <span class="erc-chip"><span class="erc-chip__val">@age</span><span class="erc-chip__lbl">Alter</span></span>
+                    }
                 </div>
             </div>
-        </div>
 
-        <div class="driver-card__footer">
-            <img src="/images/logos/ea-sports-white.png" alt="EA Sports" />
-            <img src="/images/logos/f1-white.png" alt="F1 25/26" />
-            <img src="/images/logos/f1-licensed-white.png" alt="Licensed" />
+            <div class="erc-info">
+                <div class="erc-info__name">@Model?.Driver</div>
+                <div class="erc-info__accent"></div>
+                <div class="erc-meta">
+                    @if (teamName is not null)
+                    {
+                        <div class="erc-meta__cell">
+                            <span class="erc-meta__lbl">Team</span>
+                            <span class="erc-meta__val">
+                                @if (teamLogo is not null)
+                                {
+                                    <img class="erc-meta__logo" src="@teamLogo" alt="@teamName" onerror="this.style.display='none'" />
+                                }
+                                else
+                                {
+                                    @teamName
+                                }
+                            </span>
+                        </div>
+                    }
+                    @if (trackName is not null)
+                    {
+                        <div class="erc-meta__cell">
+                            <span class="erc-meta__lbl">Strecke</span>
+                            <span class="erc-meta__val">
+                                @if (trackOutline is not null)
+                                {
+                                    <img class="erc-meta__track-svg" src="@trackOutline" alt="" aria-hidden="true" onerror="this.style.display='none'" />
+                                }
+                                @trackName
+                            </span>
+                        </div>
+                    }
+                    @if (hardwareLogo is not null)
+                    {
+                        <div class="erc-meta__cell">
+                            <span class="erc-meta__lbl">Hardware</span>
+                            <span class="erc-meta__val"><img class="erc-meta__logo" src="@hardwareLogo" alt="@hardware!.Name" onerror="this.style.display='none'" /></span>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-
-        <div class="driver-card__big-number">***REMOVED***@number</div>
     </div>
-</div>
+}
+else
+{
+    @* ── Layout B: FIFA-Stats-Karte (ohne Foto) ────────────────── *@
+    <div class="erc-card erc-card--stats" style="--dc-accent:@accent;">
+        <div class="erc-card__shell">
+            <div class="erc-card__wash"></div>
+
+            <div class="erc-card__brand">
+                <div class="erc-brand__mark">
+                    <span class="erc-brand__erc">ERC</span>
+                    <span class="erc-brand__sub">League Racing</span>
+                </div>
+                <div class="erc-chips">
+                    @if (age is not null)
+                    {
+                        <span class="erc-chip"><span class="erc-chip__val">@age</span><span class="erc-chip__lbl">Alter</span></span>
+                    }
+                </div>
+            </div>
+
+            <div class="erc-tower">
+                @if (number is not null)
+                {
+                    <div class="erc-tower__num">@number</div>
+                }
+                @if (natCode is not null)
+                {
+                    <div class="erc-nation">
+                        @if (natFlag is not null)
+                        {
+                            <img class="erc-nation__flag" src="@natFlag" alt="" onerror="this.style.display='none'" />
+                        }
+                        <span class="erc-nation__code">@natCode</span>
+                    </div>
+                }
+                @if (team is not null)
+                {
+                    <div class="erc-tower__rule"></div>
+                    <div class="erc-tower__team"><img src="@teamLogo" alt="@team.Name" onerror="this.style.display='none'" /></div>
+                }
+            </div>
+
+            <div class="erc-monogram"><span class="erc-monogram__txt">@initials</span></div>
+
+            <div class="erc-sname">
+                <div class="erc-sname__name">@Model?.Driver</div>
+                <div class="erc-sname__rule"></div>
+            </div>
+
+            <div class="erc-stats-eyebrow">Saison-Bilanz</div>
+            <div class="erc-stats">
+                <div class="erc-stat"><span class="erc-stat__val">@totalRaces</span><span class="erc-stat__lbl">Rennen</span></div>
+                <div class="erc-stat"><span class="erc-stat__val">@Model?.Wins</span><span class="erc-stat__lbl">Siege</span></div>
+                <div class="erc-stat"><span class="erc-stat__val">@Model?.Podiums</span><span class="erc-stat__lbl">Podien</span></div>
+                <div class="erc-stat"><span class="erc-stat__val">@bestFinish</span><span class="erc-stat__lbl">Best&nbsp;Finish</span></div>
+                <div class="erc-stat"><span class="erc-stat__val">@Model?.TotalPoints</span><span class="erc-stat__lbl">Punkte</span></div>
+                <div class="erc-stat"><span class="erc-stat__val">@(winRate)%</span><span class="erc-stat__lbl">Win-Rate</span></div>
+            </div>
+
+            @if (hardwareLogo is not null)
+            {
+                <div class="erc-card__hw">
+                    <span class="erc-hw__lbl">Hardware</span>
+                    <img src="@hardwareLogo" alt="@hardware!.Name" onerror="this.style.display='none'" />
+                </div>
+            }
+        </div>
+    </div>
+}

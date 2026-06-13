@@ -757,6 +757,21 @@
     width:3px; border-radius:0 2px 2px 0;
     background:var(--accent); box-shadow:0 0 8px var(--accent-glow);
 }
+.adm-nav-badge {
+    margin-left:auto; min-width:18px; height:18px;
+    padding:0 5px; border-radius:9px;
+    background:***REMOVED***e10600; color:***REMOVED***fff;
+    font-size:.65rem; font-weight:700; line-height:18px;
+    text-align:center; flex-shrink:0;
+}
+.adm-status-chip {
+    display:inline-flex; align-items:center;
+    padding:.15rem .5rem; border-radius:99px;
+    font-size:.65rem; font-weight:600; line-height:1.4;
+    margin-right:.35rem; vertical-align:middle;
+}
+.adm-status-chip--green  { background:rgba(57,255,20,.12); color:***REMOVED***39ff14; }
+.adm-status-chip--muted  { background:rgba(255,255,255,.06); color:var(--ink-3); }
 .adm-sidebar__footer {
     flex-shrink:0; padding:.6rem;
     border-top:1px solid var(--stroke-1);

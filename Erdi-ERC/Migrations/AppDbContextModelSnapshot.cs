@@ -303,6 +303,10 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<string>("AppliedLeagueId")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
                     b.Property<string>("AssignedRole")
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
@@ -328,6 +332,9 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.Property<bool>("IsAccepted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("IsRejected")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<bool>("JoinedCommunityDiscord")
                         .HasColumnType("tinyint(1)");
 
@@ -338,12 +345,12 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("ReviewNote")
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)");
-
-                    b.Property<int>("ReviewStatus")
-                        .HasColumnType("int");
 
                     b.Property<string>("Role")
                         .HasMaxLength(64)
@@ -358,6 +365,8 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AppliedLeagueId");
 
                     b.HasIndex("SubmittedAt");
 
@@ -664,9 +673,19 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
+                    b.Property<DateTime?>("ExclusiveSetupTermsAcceptedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("FavoriteTeam")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
                     b.Property<string>("FavoriteTrack")
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
+
+                    b.Property<bool>("HasAcceptedExclusiveSetupTerms")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("InputDevice")
                         .HasMaxLength(64)
@@ -802,6 +821,10 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<string>("ApplicationInfo")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
                     b.Property<DateTime?>("ArchivedAt")
                         .HasColumnType("datetime(6)");
 
@@ -810,11 +833,13 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasColumnType("varchar(128)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("varchar(1024)");
 
                     b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsOpenForApplications")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
@@ -1536,6 +1561,10 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("GameYear")
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
                     b.Property<int>("RequiredAccessTier")
                         .HasColumnType("int");
 
@@ -1568,7 +1597,7 @@ namespace <OWNER_HANDLE>_ERC.Migrations
 
                     b.HasIndex("UpdatedAt");
 
-                    b.HasIndex("Track", "RequiredAccessTier");
+                    b.HasIndex("Track", "GameYear", "RequiredAccessTier");
 
                     b.ToTable("TrackSetups");
                 });
@@ -1668,6 +1697,14 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .IsRequired();
 
                     b.Navigation("AdminUser");
+                });
+
+            modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.ApplicationForm", b =>
+                {
+                    b.HasOne("<OWNER_HANDLE>_ERC.Models.League", null)
+                        .WithMany()
+                        .HasForeignKey("AppliedLeagueId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.CommunityVoteOption", b =>

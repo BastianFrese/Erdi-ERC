@@ -15,14 +15,16 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IDriverProfileService _profiles;
         private readonly IAdminAuditService _audit;
         private readonly IStaticDataCache _staticCache;
+        private readonly IMediaService _media;
         private readonly ILogger<ProfileController> _logger;
 
-        public ProfileController(AppDbContext db, IDriverProfileService profiles, IAdminAuditService audit, IStaticDataCache staticCache, ILogger<ProfileController> logger)
+        public ProfileController(AppDbContext db, IDriverProfileService profiles, IAdminAuditService audit, IStaticDataCache staticCache, IMediaService media, ILogger<ProfileController> logger)
         {
             _db = db;
             _profiles = profiles;
             _audit = audit;
             _staticCache = staticCache;
+            _media = media;
             _logger = logger;
         }
 
@@ -59,6 +61,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var races = new List<DriverRaceEntry>();
             int wins = 0, podiums = 0, fastest = 0, totalPoints = 0;
             string? team = null;
+            int? driverNumber = null;
 
             foreach (var l in leagues)
             {
@@ -67,6 +70,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 {
                     totalPoints += standing.Points;
                     team ??= standing.Team;
+                    driverNumber ??= standing.DriverNumber;
                 }
 
                 foreach (var r in l.Races)
@@ -101,6 +105,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             {
                 Driver = profile.DisplayName ?? profile.DiscordName,
                 Team = team ?? string.Empty,
+                DriverNumber = driverNumber,
                 TotalPoints = totalPoints,
                 Wins = wins,
                 Podiums = podiums,
@@ -194,11 +199,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 existingEaTag.LinkedByDiscordId = discordId;
             }
 
-            if (string.IsNullOrWhiteSpace(profile.DisplayName)
-                || string.Equals(profile.DisplayName.Trim(), previousEaName, StringComparison.OrdinalIgnoreCase))
-            {
-                profile.DisplayName = normalizedEaName;
-            }
+            profile.DisplayName = normalizedEaName;
 
             if (string.IsNullOrWhiteSpace(profile.PreferredPlatform))
             {
@@ -235,7 +236,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         [Authorize]
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProfileMeta(string favoriteTrack, string inputDevice, string preferredPlatform, string nationality, string? bio)
+        public async Task<IActionResult> UpdateProfileMeta(string favoriteTrack, string? favoriteTeam, string inputDevice, string preferredPlatform, string nationality, string? bio, int? age = null)
         {
             var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(discordId))
@@ -250,11 +251,20 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 return NotFound();
             }
 
-            profile.FavoriteTrack = string.IsNullOrWhiteSpace(favoriteTrack) ? null : favoriteTrack.Trim()[..Math.Min(favoriteTrack.Trim().Length, 128)];
+            var trackKey = string.IsNullOrWhiteSpace(favoriteTrack) ? null : favoriteTrack.Trim().ToLowerInvariant();
+            profile.FavoriteTrack = trackKey is not null && <OWNER_HANDLE>_ERC.Models.F1RaceCatalog.FindTrack(trackKey) is not null
+                ? trackKey
+                : null;
+            var teamKey = string.IsNullOrWhiteSpace(favoriteTeam) ? null : favoriteTeam.Trim().ToLowerInvariant();
+            profile.FavoriteTeam = teamKey is not null && <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.Teams.Any(t => t.CssKey == teamKey)
+                ? teamKey
+                : null;
             profile.InputDevice = string.IsNullOrWhiteSpace(inputDevice) ? null : inputDevice.Trim()[..Math.Min(inputDevice.Trim().Length, 64)];
             profile.PreferredPlatform = string.IsNullOrWhiteSpace(preferredPlatform) ? null : preferredPlatform.Trim()[..Math.Min(preferredPlatform.Trim().Length, 64)];
             profile.Nationality = string.IsNullOrWhiteSpace(nationality) ? null : nationality.Trim()[..Math.Min(nationality.Trim().Length, 64)];
             profile.Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim()[..Math.Min(bio.Trim().Length, 512)];
+            // Alter nur im plausiblen Bereich übernehmen, sonst löschen.
+            profile.Age = age is >= 14 and <= 99 ? age : null;
             profile.UpdatedAt = DateTime.UtcNow;
 
             try
@@ -268,6 +278,95 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 return RedirectToAction(nameof(Index), new { discordId });
             }
             TempData["ProfileMessage"] = "Profil-Infos aktualisiert.";
+            return RedirectToAction(nameof(Index), new { discordId });
+        }
+
+        [Authorize]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("forms")]
+        public async Task<IActionResult> UploadProfilePhoto(IFormFile? photo)
+        {
+            var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(discordId))
+            {
+                return Forbid();
+            }
+
+            if (photo is null || photo.Length == 0)
+            {
+                TempData["ProfileMessage"] = "Bitte ein Bild auswählen.";
+                return RedirectToAction(nameof(Index), new { discordId });
+            }
+
+            var profile = await _db.DriverProfiles.AsTracking()
+                .FirstOrDefaultAsync(p => p.DiscordId == discordId);
+            if (profile is null)
+            {
+                return NotFound();
+            }
+
+            var url = await _media.SaveDriverPhotoAsync(photo, discordId);
+            if (url is null)
+            {
+                TempData["ProfileMessage"] = "Ungültiges Bild (max. 10 MB; jpg, png, webp, gif oder avif).";
+                return RedirectToAction(nameof(Index), new { discordId });
+            }
+
+            var previousPhoto = profile.PhotoUrl;
+            profile.PhotoUrl = url;
+            profile.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fehler beim Speichern des Profilbilds für {DiscordId}", discordId);
+                _media.TryDeleteDriverPhoto(url); // gerade geschriebene Datei wieder entfernen
+                TempData["ProfileMessage"] = "Fehler beim Speichern. Bitte versuche es erneut.";
+                return RedirectToAction(nameof(Index), new { discordId });
+            }
+
+            // Altes Bild erst nach erfolgreichem Speichern entfernen.
+            if (!string.IsNullOrWhiteSpace(previousPhoto))
+            {
+                _media.TryDeleteDriverPhoto(previousPhoto);
+            }
+
+            await _audit.LogAsync("UploadProfilePhoto", "DriverProfile", discordId, $"Photo={url}");
+            TempData["ProfileMessage"] = "Profilbild aktualisiert.";
+            return RedirectToAction(nameof(Index), new { discordId });
+        }
+
+        [Authorize]
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveProfilePhoto()
+        {
+            var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(discordId))
+            {
+                return Forbid();
+            }
+
+            var profile = await _db.DriverProfiles.AsTracking()
+                .FirstOrDefaultAsync(p => p.DiscordId == discordId);
+            if (profile is null)
+            {
+                return NotFound();
+            }
+
+            var previousPhoto = profile.PhotoUrl;
+            profile.PhotoUrl = null;
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            if (!string.IsNullOrWhiteSpace(previousPhoto))
+            {
+                _media.TryDeleteDriverPhoto(previousPhoto);
+            }
+
+            TempData["ProfileMessage"] = "Profilbild entfernt.";
             return RedirectToAction(nameof(Index), new { discordId });
         }
 

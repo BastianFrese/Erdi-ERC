@@ -217,12 +217,15 @@
         const originalCategories = JSON.parse(JSON.stringify(categories));
 
         const root = card.querySelector('[data-setup-root]');
-        if (root) {
-            root.hidden = true;
-            buildEditor(root, categories);
-        }
+        if (root) root.hidden = true;
 
+        // Metriken sofort (billig: nur Rechnen) — aber den schweren Slider-Editor NICHT
+        // beim Laden bauen. Sonst blockiert pro Karte das Aufbauen des DOM den Main-Thread,
+        // genau wenn man nach dem Laden zu scrollen beginnt. Der Editor wird beim ersten
+        // Aufklappen lazy gebaut (siehe ensureEditor()).
         renderMetrics(card, calcScores(categories));
+
+        let editorBuilt = false;
 
         // ── Helpers ──────────────────────────────────────────────────────
         const updateFill = (slider) => {
@@ -261,8 +264,8 @@
             renderMetrics(card, calcScores(readCategoriesFromDom()));
         };
 
-        // ── Live-Updates direkt verdrahten ───────────────────────────────
-        if (root) {
+        // ── Live-Updates verdrahten (erst nach dem Bauen des Editors) ─────
+        const wireRows = () => {
             root.querySelectorAll('.setup-ingame-row[data-key]').forEach(row => {
                 const slider = row.querySelector('input[type="range"]');
                 const number = row.querySelector('input[type="number"]');
@@ -287,38 +290,59 @@
                     });
                 }
             });
-        }
-
-        // Reset-Button in der Card verdrahten
-        const resetBtn = card.querySelector('[data-sandbox-reset]');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', ev => { ev.stopPropagation(); resetCard(); });
-        }
-
-        // ── Card expand/collapse (standard) ─────────────────────────────
-        card.classList.add('setup-card--collapsible');
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        card.setAttribute('aria-expanded', 'false');
-
-        const toggle = (force) => {
-            if (!root) return;
-            const expand = typeof force === 'boolean' ? force : !card.classList.contains('is-expanded');
-            card.classList.toggle('is-expanded', expand);
-            card.setAttribute('aria-expanded', expand ? 'true' : 'false');
-            root.hidden = !expand;
         };
 
-        card.addEventListener('click', (ev) => {
-            const interactive = ev.target.closest('a, button, input, select, textarea, .setup-ingame-tab');
-            if (interactive && card.contains(interactive)) return;
-            toggle();
-        });
+        // Editor (Slider-DOM + Wiring) genau einmal bei Bedarf bauen.
+        const ensureEditor = () => {
+            if (editorBuilt || !root) return;
+            buildEditor(root, categories);
+            wireRows();
+            editorBuilt = true;
+        };
 
-        card.addEventListener('keydown', (ev) => {
-            if (ev.key !== 'Enter' && ev.key !== ' ') return;
-            if (ev.target !== card) return;
-            ev.preventDefault();
+        // Reset-Button: nur sinnvoll, wenn der Editor schon gebaut wurde (vorher nichts verändert).
+        const resetBtn = card.querySelector('[data-sandbox-reset]');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', ev => {
+                ev.stopPropagation();
+                if (editorBuilt) resetCard();
+            });
+        }
+
+        // ── Expand/Collapse ──────────────────────────────────────────────
+        // A11y: Die Karte ist KEIN role="button" mehr — sie enthält Formulare,
+        // Slider und verschachtelte Buttons, und ein Button-Role um interaktive
+        // Inhalte ist ein ARIA-Antipattern. Stattdessen steuert ein dedizierter,
+        // fokussierbarer Toggle-Button die Sichtbarkeit; der Klick auf die
+        // Kartenfläche bleibt als reine Maus-Bequemlichkeit erhalten.
+        card.classList.add('setup-card--collapsible');
+
+        const toggleBtn = card.querySelector('[data-setup-toggle]');
+        const toggleLabel = toggleBtn?.querySelector('[data-toggle-label]');
+
+        const setExpanded = (expand) => {
+            if (!root) return;
+            if (expand) ensureEditor();   // Slider-Editor lazy bauen, bevor er sichtbar wird
+            card.classList.toggle('is-expanded', expand);
+            root.hidden = !expand;
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', expand ? 'true' : 'false');
+            if (toggleLabel) toggleLabel.textContent = expand ? 'Regler ausblenden' : 'Regler anzeigen';
+        };
+
+        const toggle = (force) => {
+            const expand = typeof force === 'boolean' ? force : !card.classList.contains('is-expanded');
+            setExpanded(expand);
+        };
+
+        // Dedizierter Button = barrierefreie Bedienung (Tastatur/Screenreader).
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggle(); });
+        }
+
+        // Klick auf die Kartenfläche (außerhalb interaktiver Elemente) togglet ebenfalls — Maus-Komfort.
+        card.addEventListener('click', (ev) => {
+            const interactive = ev.target.closest('a, button, input, select, textarea, label, .setup-ingame-tab, .setup-card__tools, [data-no-toggle]');
+            if (interactive && card.contains(interactive)) return;
             toggle();
         });
     });

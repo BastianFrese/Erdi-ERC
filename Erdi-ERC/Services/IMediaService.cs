@@ -13,6 +13,10 @@ namespace <OWNER_HANDLE>_ERC.Services
         Task<string?> SaveAboutImageAsync(IFormFile image, string slot);
         void TryDeleteAboutImage(string fileName);
 
+        // Driver Profile Photos (vom Profil-Besitzer selbst hochgeladen)
+        Task<string?> SaveDriverPhotoAsync(IFormFile image, string discordId);
+        void TryDeleteDriverPhoto(string url);
+
         // Event Images
         Task<string?> SaveEventImageAsync(IFormFile image);
         void TryDeleteEventImage(string fileName);

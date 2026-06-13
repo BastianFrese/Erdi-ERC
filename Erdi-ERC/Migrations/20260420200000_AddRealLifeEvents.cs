@@ -11,28 +11,11 @@ namespace <OWNER_HANDLE>_ERC.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "RealLifeEvents",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Title = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Date = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    Location = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Description = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    ImageFileName = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    IsUpcoming = table.Column<bool>(type: "tinyint(1)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RealLifeEvents", x => x.Id);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
+            // Hinweis: Das ursprüngliche CreateTable wurde entfernt — die Tabelle
+            // RealLifeEvents wird bereits von InitialCreate (20260420183736) angelegt.
+            // Das Duplikat ließ jeden Schema-Aufbau auf einer frischen Datenbank
+            // scheitern ("Table 'RealLifeEvents' already exists"). Auf bestehenden
+            // Datenbanken ist diese Migration längst in der History und läuft nie erneut.
 
             // ── Seed: alle Real-Life-Events aus der Community-Geschichte ──────────────
             migrationBuilder.InsertData(

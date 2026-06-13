@@ -1,4 +1,4 @@
-﻿namespace <OWNER_HANDLE>_ERC.Helpers
+namespace <OWNER_HANDLE>_ERC.Helpers
 {
     public static class F1TeamsHelper
     {
@@ -15,7 +15,7 @@
             new("Williams",          "williams",   "***REMOVED***64C4FF", "***REMOVED***FFFFFF", "williams",        new[] { "Alex Albon",        "Carlos Sainz" }),
             new("Haas",              "haas",       "***REMOVED***B6BABD", "***REMOVED***E8002D", "haas",            new[] { "Esteban Ocon",      "Oliver Bearman" }),
             new("Racing Bulls",      "racingbulls","***REMOVED***6692FF", "***REMOVED***CC1E4A", "rb",              new[] { "Isack Hadjar",      "Liam Lawson" }),
-            new("Kick Sauber",       "sauber",     "***REMOVED***52E252", "***REMOVED***FFFFFF", "kick-sauber",     new[] { "Nico Hülkenberg",   "Gabriel Bortoleto" }),
+            new("Audi",              "audi",       "***REMOVED***8A9597", "***REMOVED***FFFFFF", "audi",            new[] { "Nico Hülkenberg",   "Gabriel Bortoleto" }),
         };
 
         private static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> TeamAliases =
@@ -28,10 +28,13 @@
                 ["racing bulls"] = "racingbulls",
                 ["visa cash app rb"] = "racingbulls",
                 ["alphatauri"] = "racingbulls",
-                ["sauber"] = "sauber",
-                ["kick sauber"] = "sauber",
-                ["stake sauber"] = "sauber",
-                ["alfa romeo"] = "sauber"
+                // Sauber wurde 2026 zu Audi (gleicher Konstrukteurs-Eintrag) → Legacy-Teamnamen
+                // auf das Audi-Team mappen, damit alte Standings-Daten weiterhin Farbe/Logo bekommen.
+                ["sauber"] = "audi",
+                ["audi"] = "audi",
+                ["stake sauber"] = "audi",
+                ["kick sauber"] = "audi",
+                ["alfa romeo"] = "audi"
             };
 
         public static readonly System.Collections.Generic.IReadOnlyDictionary<string, F1Team> DriverToTeam =

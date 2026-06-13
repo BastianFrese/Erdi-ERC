@@ -62,10 +62,25 @@ public sealed class SetupNormalizationResult
     public bool Migrated { get; init; }
 }
 
+/// <summary>
+/// Aggregierte, in EINEM Parse-Durchlauf gelesene Payload-Infos für die Setup-Karte.
+/// Ersetzt mehrere separate <see cref="System.Text.Json.JsonDocument"/>.Parse-Aufrufe pro Karte.
+/// </summary>
+public readonly record struct SetupCardData(
+    bool HasPayload,
+    int Version,
+    string? StrategyKey,
+    string? TrackKey,
+    string? LengthKey,
+    string? StrategyPlan);
+
 public static class SetupGameSpec
 {
     private const int StrictValidationFromVersion = 2;
     private const string PayloadSourcePrefix = "f1-ingame-style-editor-v";
+
+    /// <summary>Bekannte F1-Spieljahre (neueste zuerst); Fallback für die Jahr-Auswahl.</summary>
+    public static readonly IReadOnlyList<string> KnownGameYears = new[] { "26", "25" };
 
     private static readonly SetupEditorConfig EditorConfig = new()
     {
@@ -592,5 +607,77 @@ public static class SetupGameSpec
         {
             return (null, null, null);
         }
+    }
+
+    /// <summary>
+    /// Liest alle für eine Setup-Karte benötigten Payload-Infos in EINEM Parse-Durchlauf:
+    /// ob ein anzeigbares Editor-Payload vorliegt, die Version, den Strategie-Key sowie den
+    /// Strategie-Kontext (Strecke/Distanz/Plan). Ersetzt 4 separate Parses pro Karte und ist
+    /// verhaltensgleich zu ReadPayloadVersion + ReadStrategyKey + ReadStrategyContext.
+    /// </summary>
+    public static SetupCardData ReadCardData(string? rawPayload)
+    {
+        if (string.IsNullOrWhiteSpace(rawPayload))
+        {
+            return new SetupCardData(false, 1, null, null, null, null);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(rawPayload);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return new SetupCardData(false, 1, null, null, null, null);
+            }
+
+            var version = 1;
+            if (root.TryGetProperty("version", out var versionElement)
+                && versionElement.ValueKind == JsonValueKind.Number)
+            {
+                var value = versionElement.GetInt32();
+                version = value > 0 ? value : 1;
+            }
+
+            return new SetupCardData(
+                HasAnyCategoryValue(root),
+                version,
+                ReadStrategyKey(root),
+                ReadStringField(root, "trackKey"),
+                ReadStringField(root, "lengthKey"),
+                ReadStringField(root, "strategyPlan", 4000));
+        }
+        catch
+        {
+            return new SetupCardData(false, 1, null, null, null, null);
+        }
+    }
+
+    /// <summary>
+    /// Spiegelt die ursprüngliche View-Logik (ParseSetupPayload): ein anzeigbares Payload liegt
+    /// vor, wenn das Wurzelobjekt ein "categories"-Objekt mit mindestens einer Kategorie enthält,
+    /// die mindestens einen Wert trägt.
+    /// </summary>
+    private static bool HasAnyCategoryValue(JsonElement root)
+    {
+        if (!root.TryGetProperty("categories", out var categories) || categories.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        foreach (var category in categories.EnumerateObject())
+        {
+            if (category.Value.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            foreach (var _ in category.Value.EnumerateObject())
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

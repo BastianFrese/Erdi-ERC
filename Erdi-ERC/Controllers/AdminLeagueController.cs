@@ -27,7 +27,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveStanding(int? rowId, string leagueId, int position, string driver, string? team, int? driverNumber, int points, int wins, bool isReserveDriver = false, string? reserveForDriver = null)
         {
-            DriverStanding? entity = rowId.HasValue ? await _db.DriverStandings.FindAsync(rowId.Value) : null;
+            DriverStanding? entity = rowId.HasValue
+                ? await _db.DriverStandings.AsTracking().FirstOrDefaultAsync(x => x.RowId == rowId.Value)
+                : null;
             if (entity is null)
             {
                 entity = new DriverStanding { LeagueId = leagueId };
@@ -43,6 +45,20 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 && normalizedDriver.Equals(normalizedReserveFor, StringComparison.OrdinalIgnoreCase))
             {
                 TempData["AdminMessage"] = "Ein Reservefahrer kann nicht für sich selbst eingetragen werden.";
+                return RedirectToAction("EditLeague", "Admin", new { id = leagueId });
+            }
+
+            var normalizedDriverLower = normalizedDriver.ToLowerInvariant();
+            var duplicateNameExists = await _db.DriverStandings.AnyAsync(x =>
+                x.LeagueId == leagueId
+                && x.RowId != entity.RowId
+                && !x.IsReserveDriver
+                && x.Driver != null
+                && x.Driver.Trim().ToLower() == normalizedDriverLower);
+
+            if (!isReserveDriver && duplicateNameExists)
+            {
+                TempData["AdminMessage"] = $"Stammfahrer '{normalizedDriver}' ist in dieser Liga bereits eingetragen.";
                 return RedirectToAction("EditLeague", "Admin", new { id = leagueId });
             }
 
@@ -106,10 +122,39 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DriverSuggestions(string q)
+        public async Task<IActionResult> DriverSuggestions(string q, string? leagueId)
         {
-            var matches = await _driverProfiles.SuggestAsync(q ?? string.Empty);
-            return Json(matches.Select(m => new
+            var query = q ?? string.Empty;
+
+            // First gather league-specific suggestions from DriverStandings (if leagueId provided)
+            var results = new List<DriverNameSuggestion>();
+            if (!string.IsNullOrWhiteSpace(leagueId) && !string.IsNullOrWhiteSpace(query))
+            {
+                var fromStandings = await _db.DriverStandings
+                    .Where(s => s.LeagueId == leagueId && !string.IsNullOrWhiteSpace(s.Driver) && s.Driver.Contains(query))
+                    .OrderBy(s => s.Driver)
+                    .Select(s => new DriverNameSuggestion(
+                        DiscordId: string.Empty,
+                        Platform: string.Empty,
+                        GamerTag: s.Driver,
+                        DiscordName: s.Driver,
+                        Distance: 0,
+                        ExactMatch: true))
+                    .Take(10)
+                    .ToListAsync();
+
+                results.AddRange(fromStandings);
+            }
+
+            // Then add profile suggestions (fuzzy + tags)
+            var profileMatches = await _driverProfiles.SuggestAsync(query);
+            foreach (var m in profileMatches)
+            {
+                if (!results.Any(r => string.Equals(r.GamerTag, m.GamerTag, StringComparison.OrdinalIgnoreCase)))
+                    results.Add(m);
+            }
+
+            return Json(results.Select(m => new
             {
                 discordId = m.DiscordId,
                 platform = m.Platform,
@@ -255,14 +300,16 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveRace(int rowId, string leagueId, DateTime date, string track)
+        public async Task<IActionResult> SaveRace(int rowId, string leagueId, DateTime date, string track, string? winner = null, string? fastestLap = null)
         {
-            var race = await _db.RaceResults.FindAsync(rowId);
+            var race = await _db.RaceResults.AsTracking().FirstOrDefaultAsync(x => x.RowId == rowId);
             if (race is null) return NotFound();
             race.Date = date;
             race.Track = track?.Trim() ?? race.Track;
+            race.Winner = string.IsNullOrWhiteSpace(winner) ? race.Winner : winner.Trim();
+            race.FastestLap = fastestLap?.Trim() ?? string.Empty;
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("SaveRace", "RaceResult", rowId.ToString(), $"League={leagueId}, Track={track}");
+            await _audit.LogAsync("SaveRace", "RaceResult", rowId.ToString(), $"League={leagueId}, Track={race.Track}, Winner={race.Winner}");
             return RedirectToAction("EditLeague", "Admin", new { id = leagueId });
         }
 
@@ -285,17 +332,18 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UndoDeleteRace(int rowId, string leagueId)
+        public async Task<IActionResult> UndoDeleteRace(int undoId)
         {
             var undo = await _db.RaceUndoEntries.AsTracking()
-                .FirstOrDefaultAsync(x => x.OriginalRaceId == rowId && x.LeagueId == leagueId && !x.IsUsed);
+                .FirstOrDefaultAsync(x => x.Id == undoId && !x.IsUsed);
 
             if (undo is null)
             {
-                TempData["AdminMessage"] = "Kein Undo-Eintrag gefunden.";
-                return RedirectToAction("EditLeague", "Admin", new { id = leagueId });
+                TempData["AdminMessage"] = "Kein Undo-Eintrag gefunden oder bereits verwendet.";
+                return RedirectToAction("Index", "Admin");
             }
 
+            var leagueId = undo.LeagueId;
             undo.IsUsed = true;
             await _db.SaveChangesAsync();
             await _audit.LogAsync("UndoDeleteRace", "RaceUndoEntry", undo.Id.ToString(), $"League={leagueId}");

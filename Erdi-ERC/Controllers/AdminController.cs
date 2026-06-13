@@ -151,15 +151,32 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateLeague(string id, string name, string? description)
+        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, string? applicationInfo, bool isOpenForApplications = false)
         {
             var league = await _db.Leagues.FindAsync(id);
             if (league is null) return NotFound();
+
             league.Name = name?.Trim() ?? league.Name;
             league.Description = description?.Trim() ?? "";
-            await _db.SaveChangesAsync();
-            _staticCache.InvalidateLeagues();
-            await _audit.LogAsync("UpdateLeague", "League", id, $"Name={league.Name}");
+            league.ApplicationInfo = applicationInfo?.Trim();
+            league.IsOpenForApplications = isOpenForApplications;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+
+                // Lade die Liga erneut, um sicherzustellen, dass der neue Zustand gespeichert wurde
+                _db.Entry(league).Reload();
+
+                _staticCache.InvalidateLeagues();
+                await _audit.LogAsync("UpdateLeague", "League", id, $"Name={league.Name}, OpenForApplications={league.IsOpenForApplications}");
+                TempData["AdminMessage"] = $"Liga '{league.Name}' aktualisiert. Bewerbungen offen: {league.IsOpenForApplications}. IsArchived: {league.IsArchived}";
+            }
+            catch (Exception ex)
+            {
+                TempData["AdminMessage"] = $"Fehler beim Speichern: {ex.Message}";
+            }
+
             return RedirectToAction(nameof(EditLeague), new { id });
         }
 
@@ -191,6 +208,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             league.IsArchived = true;
             league.ArchivedName = normalizedArchivedName;
             league.ArchivedAt = DateTime.UtcNow;
+            // Archivierte Ligen nehmen keine Bewerbungen mehr an.
+            league.IsOpenForApplications = false;
             await _db.SaveChangesAsync();
             _staticCache.InvalidateLeagues();
 
@@ -617,22 +636,35 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             ViewBag.SetupAccessGuildConfigured = !string.IsNullOrWhiteSpace(setupOptions["GuildId"]);
             ViewBag.SetupAccessMappingsReady = true;
             ViewBag.SetupAccessMappingsCount = await _db.SetupAccessRoleMappings.CountAsync();
-            ViewBag.SetEditorConfig = <OWNER_HANDLE>_ERC.Models.SetupGameSpec.GetEditorConfig();
             ViewBag.SetupMetricConfig = <OWNER_HANDLE>_ERC.Models.SetupGameSpec.GetMetricConfig();
             ViewBag.F1Tracks = <OWNER_HANDLE>_ERC.Models.F1RaceCatalog.Tracks;
             ViewBag.F1RaceLengths = <OWNER_HANDLE>_ERC.Models.F1RaceCatalog.Lengths;
 
+            // Current game year setting for admin editor (short form, e.g. "26")
+            var appOpts = _config.GetSection("Application");
+            ViewBag.F1GameYear = appOpts["F1GameYearShort"] ?? "26";
             return View(setups);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveTrackSetup(int? id, string track, string title, int requiredAccessTier, string? requiredRoleLabel, string? setupInfo, string setupText, string? strategy)
+        public async Task<IActionResult> SaveTrackSetup(int? id, string track, string title, int requiredAccessTier, string? requiredRoleLabel, string? setupInfo, string setupText, string? strategy, string? gameYear)
         {
             if (string.IsNullOrWhiteSpace(track) || string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(setupText))
             {
                 TempData["AdminMessage"] = "Strecke, Titel und Setup-Daten sind Pflicht.";
                 return RedirectToAction(nameof(TrackSetups));
             }
+
+            // Debug: prefer explicit form value if provided (some clients may not bind the parameter)
+            string? formGameYear = null;
+            try
+            {
+                if (Request?.Form != null && Request.Form.ContainsKey("gameYear"))
+                {
+                    formGameYear = Request.Form["gameYear"].ToString();
+                }
+            }
+            catch { formGameYear = null; }
 
             TrackSetup? entity = id.HasValue && id.Value > 0
                 ? await _db.TrackSetups.FindAsync(id.Value)
@@ -646,6 +678,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             entity.Track = track.Trim();
             entity.Title = title.Trim();
+            // Prefer explicit form value if present, otherwise use bound parameter
+            var chosenYear = !string.IsNullOrWhiteSpace(formGameYear) ? formGameYear : gameYear;
+            entity.GameYear = string.IsNullOrWhiteSpace(chosenYear) ? null : chosenYear.Trim();
             entity.RequiredAccessTier = requiredAccessTier;
             entity.RequiredRoleLabel = string.IsNullOrWhiteSpace(requiredRoleLabel) ? null : requiredRoleLabel.Trim();
             entity.SetupInfo = string.IsNullOrWhiteSpace(setupInfo) ? null : setupInfo.Trim();
@@ -653,8 +688,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("SaveTrackSetup", "TrackSetup", entity.Id.ToString(), $"Track={entity.Track}, Tier={entity.RequiredAccessTier}");
-            TempData["AdminMessage"] = "Setup gespeichert.";
+            await _audit.LogAsync("SaveTrackSetup", "TrackSetup", entity.Id.ToString(), $"Track={entity.Track}, Tier={entity.RequiredAccessTier}, GameYear={entity.GameYear}");
+
+            TempData["AdminMessage"] = $"Setup gespeichert. Spieljahr: {(entity.GameYear ?? "(leer)")}";
             return RedirectToAction(nameof(TrackSetups));
         }
 
@@ -772,5 +808,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             TempData["AdminMessage"] = "Ewige Liste erfolgreich aktualisiert.";
             return RedirectToAction(nameof(Index));
         }
+
     }
 }
