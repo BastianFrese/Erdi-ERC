@@ -26,10 +26,12 @@ namespace <OWNER_HANDLE>_ERC.Services
                 Action = action,
                 EntityType = entityType,
                 EntityId = entityId,
-                Details = details
+                Details = details,
+                CreatedAt = DateTime.UtcNow
             });
 
-            await _db.SaveChangesAsync();
+            // NOTE: Caller is responsible for SaveChangesAsync() to keep audit log
+            // in same transaction as the operation being audited
         }
     }
 }

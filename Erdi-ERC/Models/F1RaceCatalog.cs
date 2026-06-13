@@ -101,7 +101,8 @@ public static class F1RaceCatalog
         new F1Track { Key = "brazil",        Name = "Autódromo José Carlos Pace (Interlagos)", Country = "Brasilien", FullRaceLaps = 71, TyreWear = "medium", PitLossSeconds = 22.0, PreferredCompounds = "Medium → Hard" },
         new F1Track { Key = "lasvegas",      Name = "Las Vegas Strip Circuit",         Country = "USA",           FullRaceLaps = 50, TyreWear = "low",    PitLossSeconds = 21.0, PreferredCompounds = "Medium → Hard" },
         new F1Track { Key = "qatar",         Name = "Lusail International Circuit",    Country = "Katar",         FullRaceLaps = 57, TyreWear = "high",   PitLossSeconds = 22.0, PreferredCompounds = "Medium → Hard → Hard" },
-        new F1Track { Key = "abudhabi",      Name = "Yas Marina Circuit",              Country = "UAE",           FullRaceLaps = 58, TyreWear = "medium", PitLossSeconds = 22.0, PreferredCompounds = "Medium → Hard" }
+        new F1Track { Key = "abudhabi",      Name = "Yas Marina Circuit",              Country = "UAE",           FullRaceLaps = 58, TyreWear = "medium", PitLossSeconds = 22.0, PreferredCompounds = "Medium → Hard" },
+        new F1Track { Key = "madrid",         Name = "Circuito de Madrid",              Country = "Spanien",       FullRaceLaps = 57, TyreWear = "medium", PitLossSeconds = 22.0, PreferredCompounds = "Medium → Hard" }
     ];
 
     // Renn-Längen wie sie im F1 25 Spielmenü zur Auswahl stehen.

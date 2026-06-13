@@ -143,55 +143,37 @@
     {
         <div class="alert alert-danger mb-3">@TempData["Error"]</div>
     }
-    @{
-        var _err = TempData["Error"] as string;
-        if (!string.IsNullOrEmpty(_err) && _err.IndexOf("Konflikt", System.StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            <div class="alert alert-warning mb-3">
-                <strong>Konflikt erkannt:</strong> Die Bewerbung wurde zwischenzeitlich von jemand anderem geändert.
-                <div style="margin-top:.5rem; display:flex; gap:.5rem;">
-                    <button type="button" class="btn btn-sm btn-primary" onclick="if(confirm('Seite neu laden und lokale Aktion verwerfen?')) { window.location.href='@Url.Action("Detail","AdminApplications", new { id = Model.Application.Id })'; }">Neu laden und Änderungen verwerfen</button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload();">Seite neu laden</button>
-                </div>
-            </div>
-        }
-    }
+
     <!-- Header mit Status -->
     <div class="detail-header">
         <div>
             <div class="applicant-info">
-                <div class="applicant-avatar">
-                    @(string.IsNullOrEmpty(Model.Application.DiscordName) ? '?' : Model.Application.DiscordName[0])
-                </div>
+                <div class="applicant-avatar">@(string.IsNullOrEmpty(Model.Application.DiscordName) ? '?' : Model.Application.DiscordName[0])</div>
                 <div class="applicant-meta">
                     <h2>@Model.Application.DiscordName</h2>
-                    <p>
-                        <strong>EA-Name:</strong> @Model.Application.GamingName
-                        <span class="text-mute small ms-2">(@Model.Application.Platform)</span>
-                    </p>
-                    <p>
-                        <strong>Alter:</strong> @Model.Application.Age Jahre
-                    </p>
+                    <p><strong>EA-Name:</strong> @Model.Application.GamingName <span class="text-mute small ms-2">(@Model.Application.Platform)</span></p>
+                    <p><strong>Alter:</strong> @Model.Application.Age Jahre</p>
                     <div style="margin-top: 0.75rem;">
-                        @{
+                        @{ 
                             var (badgeClass, badgeText) = Model.Status switch
                             {
                                 <OWNER_HANDLE>_ERC.Services.ApplicationStatus.Expired => ("status-large--expired", "⏰ Abgelaufen"),
-                                _ => Model.Application.ReviewStatus switch
-                                {
-                                    <OWNER_HANDLE>_ERC.Models.ApplicationReviewStatus.Accepted => ("status-large--accepted", "✓ Akzeptiert"),
-                                    <OWNER_HANDLE>_ERC.Models.ApplicationReviewStatus.Rejected => ("status-large--rejected", "✗ Abgelehnt"),
-                                    <OWNER_HANDLE>_ERC.Models.ApplicationReviewStatus.InReview => ("status-large--review",   "🔍 In Review"),
-                                    _ => Model.Application.IsAccepted
-                                        ? ("status-large--accepted", "✓ Akzeptiert")
-                                        : ("status-large--pending",  "⏳ Offen")
-                                }
+                                <OWNER_HANDLE>_ERC.Services.ApplicationStatus.Rejected => ("status-large--rejected", "✕ Abgelehnt"),
+                                _ => Model.Application.IsAccepted ? ("status-large--accepted", "✓ Akzeptiert") : ("status-large--pending", "⏳ Offen")
                             };
                         }
                         <span class="status-large @badgeClass">@badgeText</span>
                     </div>
                 </div>
             </div>
+
+            @if (string.IsNullOrEmpty(Model.Application.AppliedLeagueId))
+            {
+                <div style="margin-top:.75rem;padding:.5rem .75rem;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);border-radius:var(--r-1);font-size:.8rem;color:***REMOVED***ffc107;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Keine Liga-Zuordnung — beim Akzeptieren bitte Liga auswählen.
+                </div>
+            }
 
             <div class="info-grid">
                 <div class="info-item">
@@ -233,14 +215,7 @@
                     <i class="bi bi-arrow-counterclockwise"></i> Akzeptanz rückgängig
                 </button>
             }
-            <button class="btn-action btn-action--secondary" onclick="showModal('reviewStatusModal')"
-                    title="Review-Status (Open/InReview/Accepted/Rejected) setzen">
-                <i class="bi bi-diagram-3"></i> Review-Status
-                @if (Model.Application.ReviewStatus != <OWNER_HANDLE>_ERC.Models.ApplicationReviewStatus.Open)
-                {
-                    <span class="badge bg-secondary ms-1" style="font-size:.65rem;">@Model.Application.ReviewStatus</span>
-                }
-            </button>
+
             <button class="btn-action btn-action--secondary" onclick="showModal('assignRoleModal')"
                     title="Finale Fahrer-Rolle nach Annahme zuweisen">
                 <i class="bi bi-person-check"></i> Rolle zuweisen
@@ -308,7 +283,38 @@
         <h3 class="app-modal-title">Bewerbung akzeptieren</h3>
         <form method="post" action="@Url.Action("Accept", "AdminApplications", new { id = Model.Application.Id })">
             @Html.AntiForgeryToken()
-            <p>Sind Sie sicher, dass Sie diese Bewerbung akzeptieren möchten?</p>
+            @{
+                var acceptLeagues = ViewData["Leagues"] as List<<OWNER_HANDLE>_ERC.Models.League>;
+                var hasLeague = !string.IsNullOrEmpty(Model.Application.AppliedLeagueId);
+            }
+            @if (!hasLeague)
+            {
+                <p style="color:***REMOVED***ffc107;margin-bottom:.75rem;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Diese Bewerbung hat keine Liga-Zuordnung. Bitte eine Liga auswählen.
+                </p>
+            }
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Liga</label>
+                <select name="leagueId" class="app-modal-input" @(!hasLeague ? "required" : "")>
+                    @if (hasLeague)
+                    {
+                        <option value="">– Beworbene Liga verwenden –</option>
+                    }
+                    else
+                    {
+                        <option value="">– Liga auswählen –</option>
+                    }
+                    @if (acceptLeagues != null)
+                    {
+                        foreach (var l in acceptLeagues)
+                        {
+                            var isApplied = l.Id == Model.Application.AppliedLeagueId;
+                            <option value="@l.Id" selected="@isApplied">@l.Name@(isApplied ? " (beworben)" : "")</option>
+                        }
+                    }
+                </select>
+            </div>
             <button type="submit" class="btn-action btn-action--success" style="width: 100%;">
                 <i class="bi bi-check-circle"></i> Ja, akzeptieren
             </button>
@@ -373,77 +379,52 @@
     </div>
 </div>
 
-@* ── Review-Status Modal ────────────────────────────────────────────── *@
-<div id="reviewStatusModal" class="app-modal-backdrop">
-    <div class="app-modal">
-        <span class="app-modal-close" onclick="closeModal('reviewStatusModal')">&times;</span>
-        <h3 class="app-modal-title">Review-Status setzen</h3>
-        <form method="post" action="@Url.Action("SetReviewStatus", "AdminApplications", new { id = Model.Application.Id })">
-            @Html.AntiForgeryToken()
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Status</label>
-                <select name="status" class="app-modal-input" required>
-                    @foreach (var s in Enum.GetValues<<OWNER_HANDLE>_ERC.Models.ApplicationReviewStatus>())
-                    {
-                        if (Model.Application.ReviewStatus == s)
-                        {
-                            <option value="@((int)s)" selected>@s</option>
-                        }
-                        else
-                        {
-                            <option value="@((int)s)">@s</option>
-                        }
-                    }
-                </select>
-            </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Notiz (optional)</label>
-                <textarea name="note" class="app-modal-input" rows="2" placeholder="Interne Notiz...">@Model.Application.ReviewNote</textarea>
-            </div>
-            <button type="submit" class="btn-action btn-action--primary" style="width:100%;">
-                <i class="bi bi-check2-circle"></i> Status speichern
-            </button>
-            <button type="button" class="btn-action btn-action--secondary" style="width:100%;margin-top:.5rem;" onclick="closeModal('reviewStatusModal')">Abbrechen</button>
-        </form>
-    </div>
-</div>
-
 @* ── Rollen-Zuweisung Modal ─────────────────────────────────────────── *@
 <div id="assignRoleModal" class="app-modal-backdrop">
     <div class="app-modal">
         <span class="app-modal-close" onclick="closeModal('assignRoleModal')">&times;</span>
         <h3 class="app-modal-title">Fahrer-Rolle zuweisen</h3>
-        @if (Model.Application.ReviewStatus != <OWNER_HANDLE>_ERC.Models.ApplicationReviewStatus.Accepted)
-        {
-            <p style="color:var(--sig-amber);font-size:.85rem;"><i class="bi bi-exclamation-triangle me-1"></i>Bewerbung muss zuerst angenommen werden.</p>
-        }
-        else
-        {
-            <form method="post" action="@Url.Action("AssignRole", "AdminApplications", new { id = Model.Application.Id })">
-                @Html.AntiForgeryToken()
-                <div style="margin-bottom:1rem;">
-                    <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Rolle</label>
-                    <select name="assignedRole" class="app-modal-input" required>
-                        <option value="">– Rolle wählen –</option>
-                        @foreach (var role in new[]{ "Stammfahrer", "Ersatzfahrer", "Academy" })
+        <form method="post" action="@Url.Action("AssignRole", "AdminApplications", new { id = Model.Application.Id })">
+            @Html.AntiForgeryToken()
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Liga</label>
+                <select name="leagueId" class="app-modal-input">
+                    <option value="">– Keine Auswahl –</option>
+                    @{
+                        var leagues = ViewData["Leagues"] as List<<OWNER_HANDLE>_ERC.Models.League>;
+                        if (leagues != null)
                         {
-                            if (Model.Application.AssignedRole == role)
+                            foreach (var l in leagues)
                             {
-                                <option value="@role" selected>@role</option>
-                            }
-                            else
-                            {
-                                <option value="@role">@role</option>
+                                var isApplied = l.Id == Model.Application.AppliedLeagueId;
+                                <option value="@l.Id" selected="@isApplied">@l.Name@(isApplied ? " (beworben)" : "")</option>
                             }
                         }
-                    </select>
-                </div>
-                <button type="submit" class="btn-action btn-action--primary" style="width:100%;">
-                    <i class="bi bi-person-check"></i> Rolle zuweisen
-                </button>
-                <button type="button" class="btn-action btn-action--secondary" style="width:100%;margin-top:.5rem;" onclick="closeModal('assignRoleModal')">Abbrechen</button>
-            </form>
-        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Rolle</label>
+                <select name="assignedRole" class="app-modal-input" required>
+                    <option value="">– Rolle wählen –</option>
+                    @foreach (var role in new[]{ "Stammfahrer", "Ersatzfahrer", "Academy" })
+                    {
+                        if (Model.Application.AssignedRole == role)
+                        {
+                            <option value="@role" selected>@role</option>
+                        }
+                        else
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    }
+                </select>
+            </div>
+            <button type="submit" class="btn-action btn-action--primary" style="width:100%;">
+                <i class="bi bi-person-check"></i> Rolle &amp; Liga zuweisen und akzeptieren
+            </button>
+            <button type="button" class="btn-action btn-action--secondary" style="width:100%;margin-top:.5rem;" onclick="closeModal('assignRoleModal')">Abbrechen</button>
+        </form>
     </div>
 </div>
 <script>

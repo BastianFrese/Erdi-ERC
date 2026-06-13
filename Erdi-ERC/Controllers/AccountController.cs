@@ -52,6 +52,18 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 {
                     identity.AddClaim(new Claim("erdi:admin", "true"));
                 }
+
+                var freshDiscordName = identity.FindFirst(ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrWhiteSpace(freshDiscordName))
+                {
+                    var profile = await _db.DriverProfiles.AsTracking()
+                        .FirstOrDefaultAsync(p => p.DiscordId == discordId);
+                    if (profile is not null && !string.Equals(profile.DiscordName, freshDiscordName, StringComparison.Ordinal))
+                    {
+                        profile.DiscordName = freshDiscordName;
+                        await _db.SaveChangesAsync();
+                    }
+                }
             }
 
             var accessToken = result.Properties?.GetTokenValue("access_token");

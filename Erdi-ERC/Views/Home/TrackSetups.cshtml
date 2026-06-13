@@ -1,10 +1,13 @@
 @using System.Text.Json
 @using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Helpers
 @{
     ViewData["Title"] = "F1 Setups";
 
     var tracks = (ViewBag.SetupTracks as List<string>) ?? new List<string>();
     var selectedTrack = ViewBag.SelectedTrack as string;
+    var newSetupGroups = (ViewBag.NewSetupGroups as List<SetupNewsGroup>) ?? new List<SetupNewsGroup>();
+    var newSetupSinceUtc = ViewBag.NewSetupSinceUtc is DateTime nsu ? nsu : DateTime.UtcNow.AddDays(-SetupNewsGroup.WindowDays);
     var visibleSetups = (ViewBag.VisibleSetups as List<<OWNER_HANDLE>_ERC.Models.TrackSetup>) ?? new List<<OWNER_HANDLE>_ERC.Models.TrackSetup>();
     var hiddenSetups = (ViewBag.HiddenSetups as List<<OWNER_HANDLE>_ERC.Models.TrackSetup>) ?? new List<<OWNER_HANDLE>_ERC.Models.TrackSetup>();
     var setupTier = ViewBag.SetupTier is int t ? t : 0;
@@ -16,8 +19,6 @@
     var tenureUnlockAt = guildJoinedAt?.AddDays(tenureRequiredDays);
     var tenureRemaining = tenureUnlockAt.HasValue ? tenureUnlockAt.Value - DateTimeOffset.UtcNow : (TimeSpan?)null;
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var categoryNames = (ViewBag.SetupCategoryNames as IReadOnlyDictionary<string, string>) ?? SetupGameSpec.GetCategoryDisplayNames();
-    var fieldNames = (ViewBag.SetupFieldNames as IReadOnlyDictionary<string, string>) ?? SetupGameSpec.GetFieldDisplayNames();
     var editorConfig = ViewBag.SetupEditorConfig as SetupEditorConfig ?? SetupGameSpec.GetEditorConfig();
     var metricConfig = ViewBag.SetupMetricConfig as IReadOnlyList<SetupMetricConfig> ?? SetupGameSpec.GetMetricConfig();
     var setupComments = (ViewBag.SetupComments as Dictionary<int, List<SetupComment>>) ?? new Dictionary<int, List<SetupComment>>();
@@ -53,49 +54,6 @@
         _ => "tier-badge"
     };
 
-    static string NormalizeLabel(string key)
-    {
-        if (string.IsNullOrWhiteSpace(key)) return "Wert";
-        var withSpaces = System.Text.RegularExpressions.Regex.Replace(key, "([a-z])([A-Z])", "$1 $2");
-        withSpaces = withSpaces.Replace("_", " ").Replace("-", " ");
-        return char.ToUpper(withSpaces[0]) + withSpaces[1..];
-    }
-
-    List<(string Category, List<(string Label, string Value)> Values)> ParseSetupPayload(string raw)
-    {
-        var parsed = new List<(string Category, List<(string Label, string Value)> Values)>();
-        if (string.IsNullOrWhiteSpace(raw)) return parsed;
-        try
-        {
-            using var doc = JsonDocument.Parse(raw);
-            if (!doc.RootElement.TryGetProperty("categories", out var categories) || categories.ValueKind != JsonValueKind.Object)
-                return parsed;
-
-            foreach (var cat in categories.EnumerateObject())
-            {
-                var values = new List<(string Label, string Value)>();
-                if (cat.Value.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var item in cat.Value.EnumerateObject())
-                    {
-                        var text = item.Value.ValueKind switch
-                        {
-                            JsonValueKind.Number => item.Value.GetRawText(),
-                            JsonValueKind.String => item.Value.GetString() ?? string.Empty,
-                            _ => item.Value.GetRawText()
-                        };
-                        var fieldLabel = fieldNames.TryGetValue(item.Name, out var mappedField) ? mappedField : NormalizeLabel(item.Name);
-                        values.Add((Label: fieldLabel, Value: text));
-                    }
-                }
-                var categoryName = categoryNames.TryGetValue(cat.Name, out var mapped) ? mapped : NormalizeLabel(cat.Name);
-                if (values.Count > 0) parsed.Add((Category: categoryName, Values: values));
-            }
-        }
-        catch { }
-        return parsed;
-    }
-
     static (string Cls, string Label, string Title) TireCompound(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
     {
         var hay = ((s.Title ?? string.Empty) + " " + (s.SetupInfo ?? string.Empty)).ToLowerInvariant();
@@ -110,44 +68,10 @@
         return ("tire--medium", "Medium", "Race / Medium Compound");
     }
 
-    SetupRaceStrategyConfig? StrategyFor(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
-    {
-        var key = SetupGameSpec.ReadStrategyKey(s.SetupText);
-        if (string.IsNullOrWhiteSpace(key)) return null;
-        return editorConfig.RaceStrategies.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
-    }
-
-    (string? TrackName, string? LengthLabel, string? Plan) StrategyPlanFor(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
-    {
-        var ctx = SetupGameSpec.ReadStrategyContext(s.SetupText);
-        var track = F1RaceCatalog.FindTrack(ctx.TrackKey);
-        var length = F1RaceCatalog.FindLength(ctx.LengthKey);
-        return (track?.Name, length?.Label, ctx.StrategyPlan);
-    }
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <style>
-        .tier-badge {
-            display:inline-flex;align-items:center;gap:.35rem;
-            padding:.28rem .6rem;border-radius:999px;
-            font:600 .72rem/1 var(--ff-body);letter-spacing:.02em;
-            border:1px solid var(--stroke-1);
-            background:var(--surface-2);color:var(--ink-2);
-            white-space:nowrap;
-        }
-        .tier-badge i { font-size:.85rem; }
-        .tier-badge--public    { background:rgba(120,140,160,.12); color:***REMOVED***a8b6c4; border-color:rgba(120,140,160,.35); }
-        .tier-badge--community { background:rgba(88,101,242,.14);  color:***REMOVED***a4adff; border-color:rgba(88,101,242,.45); }
-        .tier-badge--t1        { background:rgba(34,211,238,.12);  color:***REMOVED***67e8f9; border-color:rgba(34,211,238,.45); }
-        .tier-badge--t2      { background:rgba(245,158,11,.14);  color:***REMOVED***fbbf24; border-color:rgba(245,158,11,.50); }
-        .tier-badge--t3      {
-            background:linear-gradient(135deg,rgba(244,63,94,.18),rgba(217,70,239,.14));
-            color:***REMOVED***fda4af;border-color:rgba(244,63,94,.55);
-            box-shadow:0 0 0 1px rgba(244,63,94,.10) inset;
-        }
-    </style>
 }
 
 <div class="f1-home-backdrop" aria-hidden="true"></div>
@@ -223,6 +147,43 @@
     </div>
 </section>
 
+@if (newSetupGroups.Any())
+{
+    <!-- ═══════════════════════════════════════════════════ FRISCH EINGETROFFEN -->
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip    = "Neu",
+            Title   = "Frisch eingetroffen",
+            SubText = $"letzte {SetupNewsGroup.WindowDays} Tage"
+        })" />
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var group in newSetupGroups)
+            {
+                <a class="setup-news-chip"
+                   asp-action="TrackSetups"
+                   asp-route-track="@group.Track"
+                   asp-route-gameYear="@group.GameYear"
+                   title="Setups für @group.Track anzeigen">
+                    <span aria-hidden="true">@RaceFlagHelper.Resolve(group.Track)</span>
+                    <strong>@group.Track</strong>
+                    @if (!string.IsNullOrWhiteSpace(group.GameYear))
+                    {
+                        <span class="chip-year">F1 @group.GameYear</span>
+                    }
+                    @if (group.NewCount > 0)
+                    {
+                        <span class="setup-freshness setup-freshness--new">@group.NewCount NEU</span>
+                    }
+                    @if (group.UpdatedCount > 0)
+                    {
+                        <span class="setup-freshness setup-freshness--updated">@group.UpdatedCount UPDATE</span>
+                    }
+                </a>
+            }
+        </div>
+    </section>
+}
+
 <!-- ═══════════════════════════════════════════════════ FILTER -->
 <section class="f1-section reveal">
     <form method="get" asp-action="TrackSetups" class="d-flex gap-2 align-items-end flex-wrap">
@@ -236,10 +197,23 @@
                 }
             </select>
         </div>
+        <div style="min-width:160px;">
+            <label for="gameYear" class="form-label mb-1">Spieljahr</label>
+            <select id="gameYear" name="gameYear" class="form-select" onchange="this.form.submit()">
+                <option value="" selected="@(ViewBag.SelectedGameYear == null)">Alle Jahre</option>
+                @{
+                    var years = ViewBag.AvailableGameYears as List<string> ?? SetupGameSpec.KnownGameYears.ToList();
+                    foreach (var y in years)
+                    {
+                        <option value="@y" selected="@(string.Equals(ViewBag.SelectedGameYear as string, y, StringComparison.OrdinalIgnoreCase))">F1 @y</option>
+                    }
+                }
+            </select>
+        </div>
         <button class="f1-btn f1-btn--primary" type="submit">
             <i class="f1-icon" data-lucide="filter"></i> Filtern
         </button>
-        @if (!string.IsNullOrWhiteSpace(selectedTrack))
+        @if (!string.IsNullOrWhiteSpace(selectedTrack) || !string.IsNullOrWhiteSpace(ViewBag.SelectedGameYear as string))
         {
             <a class="f1-btn f1-btn--ghost" asp-action="TrackSetups">
                 <i class="f1-icon" data-lucide="x"></i> Reset
@@ -266,11 +240,26 @@
 
 @if (!visibleSetups.Any() && !hiddenSetups.Any())
 {
-    <div class="empty-state reveal">
-        <span class="icon-chip is-amber"><i class="bi bi-tools"></i></span>
-        <div class="empty-state__title">Keine Setups hinterlegt</div>
-        <p class="empty-state__lead">Sobald Setups verfügbar sind, erscheinen sie hier.</p>
-    </div>
+    var hasActiveFilter = !string.IsNullOrWhiteSpace(selectedTrack) || !string.IsNullOrWhiteSpace(ViewBag.SelectedGameYear as string);
+    if (hasActiveFilter)
+    {
+        <div class="empty-state reveal">
+            <span class="icon-chip is-amber"><i class="bi bi-search"></i></span>
+            <div class="empty-state__title">Keine Setups für diesen Filter</div>
+            <p class="empty-state__lead">Für die gewählte Strecke/Spieljahr-Kombination gibt es aktuell keine Setups. Setz den Filter zurück, um alle zu sehen.</p>
+            <a class="f1-btn f1-btn--primary mt-2" asp-action="TrackSetups">
+                <i class="f1-icon" data-lucide="rotate-ccw"></i> Filter zurücksetzen
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state reveal">
+            <span class="icon-chip is-amber"><i class="bi bi-tools"></i></span>
+            <div class="empty-state__title">Keine Setups hinterlegt</div>
+            <p class="empty-state__lead">Sobald Setups verfügbar sind, erscheinen sie hier.</p>
+        </div>
+    }
 }
 else
 {
@@ -284,19 +273,34 @@ else
         <div class="row g-3">
             @foreach (var setup in visibleSetups)
             {
-                var parsed = ParseSetupPayload(setup.SetupText);
-                var hasPayload = parsed.Count > 0;
-                var payloadVersion = SetupGameSpec.ReadPayloadVersion(setup.SetupText);
+                // Einmaliger Parse pro Karte (ersetzt 4 separate JsonDocument.Parse-Durchläufe).
+                var cardData = SetupGameSpec.ReadCardData(setup.SetupText);
+                var hasPayload = cardData.HasPayload;
+                var payloadVersion = cardData.Version;
                 var compound = TireCompound(setup);
-                var strategy = StrategyFor(setup);
+                var strategy = string.IsNullOrWhiteSpace(cardData.StrategyKey)
+                    ? null
+                    : editorConfig.RaceStrategies.FirstOrDefault(x => string.Equals(x.Key, cardData.StrategyKey, StringComparison.OrdinalIgnoreCase));
+                var userHasAccepted = ViewBag.UserHasAcceptedExclusiveSetupTerms is bool accAccepted && accAccepted;
+                // Exklusive (Tier-3) Setups: Werte erst nach protokollierter Widerrufs-Zustimmung ins HTML geben.
+                // Vorher NICHTS emittieren (auch kein data-setup-json), sonst wäre die Zustimmung per DevTools umgehbar.
+                var needsConsent = setup.RequiredAccessTier >= 3 && isAuthenticated && !userHasAccepted;
                 <div class="col-12 col-xl-6">
-                    <article class="setup-card h-100" data-setup-json="@(hasPayload ? setup.SetupText : string.Empty)">
+                    <article id="setup-@setup.Id" class="setup-card h-100" data-setup-json="@((hasPayload && !needsConsent) ? setup.SetupText : string.Empty)">
                         <div class="setup-card__head">
                             <span class="icon-chip is-accent"><i class="bi bi-tools"></i></span>
                             <div class="flex-fill min-w-0">
                                 <div class="setup-card__sub"><i class="bi bi-geo-alt-fill"></i> @setup.Track</div>
                                 <div class="setup-card__title">@setup.Title</div>
                                 <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                    @if (setup.CreatedAt >= newSetupSinceUtc)
+                                    {
+                                        <span class="setup-freshness setup-freshness--new">NEU</span>
+                                    }
+                                    else if (setup.UpdatedAt >= newSetupSinceUtc)
+                                    {
+                                        <span class="setup-freshness setup-freshness--updated">UPDATE</span>
+                                    }
                                     <span class="tire @compound.Cls" title="@compound.Title">@compound.Label</span>
                                     @if (strategy is not null)
                                     {
@@ -317,9 +321,11 @@ else
                                 <p class="text-mute small mb-3">@setup.SetupInfo</p>
                             }
                             @{
-                                var planInfo = StrategyPlanFor(setup);
+                                var planTrack = F1RaceCatalog.FindTrack(cardData.TrackKey);
+                                var planLength = F1RaceCatalog.FindLength(cardData.LengthKey);
+                                var planInfo = (TrackName: planTrack?.Name, LengthLabel: planLength?.Label, Plan: cardData.StrategyPlan);
                             }
-                            @if (!string.IsNullOrWhiteSpace(planInfo.Plan))
+                            @if (!needsConsent && !string.IsNullOrWhiteSpace(planInfo.Plan))
                             {
                                 <div class="setup-strategy-block mb-3 p-2 rounded border border-warning-subtle bg-dark-subtle">
                                     <div class="small text-warning fw-semibold mb-1">
@@ -329,9 +335,27 @@ else
                                 </div>
                             }
 
-                            @if (hasPayload)
+                            @if (needsConsent)
                             {
-                                <div class="setup-user-playground" data-setup-root></div>
+                                <div class="setup-locked-teaser p-3 rounded border border-warning-subtle bg-dark-subtle text-center">
+                                    <i class="bi bi-shield-lock-fill text-warning" style="font-size:1.6rem"></i>
+                                    <p class="text-mute small mb-0 mt-2">Exklusives Setup — bitte zuerst die Widerrufsbelehrung unten bestätigen, um die Setup-Werte einzusehen.</p>
+                                </div>
+                            }
+                            else if (hasPayload)
+                            {
+                                <div class="setup-card__tools" data-no-toggle>
+                                    <button type="button" class="setup-toggle-btn" data-setup-toggle
+                                            aria-expanded="false" aria-controls="setup-playground-@setup.Id">
+                                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                                        <span data-toggle-label>Regler anzeigen</span>
+                                    </button>
+                                    <button type="button" class="setup-reset-btn" data-sandbox-reset
+                                            title="Setup-Regler zurücksetzen">
+                                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset
+                                    </button>
+                                </div>
+                                <div class="setup-user-playground" id="setup-playground-@setup.Id" data-setup-root></div>
                                 <div class="setup-user-metrics mt-3">
                                     <div class="setup-user-metric" data-metric="topSpeed"><span>Top Speed</span><div><i></i></div><strong>0</strong></div>
                                     <div class="setup-user-metric" data-metric="traction"><span>Traktion</span><div><i></i></div><strong>0</strong></div>
@@ -349,15 +373,6 @@ else
                                 <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
                                     <h6 class="mb-0"><i class="bi bi-chat-left-dots"></i> Community Meinung</h6>
                                     <div class="d-flex align-items-center gap-2">
-                                        @if (hasPayload)
-                                        {
-                                            <button type="button"
-                                                    class="setup-reset-btn"
-                                                    data-sandbox-reset
-                                                    title="Setup-Regler zurücksetzen">
-                                                <i class="bi bi-arrow-counterclockwise"></i> Reset
-                                            </button>
-                                        }
                                         <span class="text-mute small"><i class="bi bi-heart-fill text-danger"></i> @(setupLikeCounts.TryGetValue(setup.Id, out var lc) ? lc : 0)</span>
                                         @if (isAuthenticated)
                                         {
@@ -365,6 +380,7 @@ else
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="setupId" value="@setup.Id" />
                                                 <input type="hidden" name="track" value="@selectedTrack" />
+                                            <input type="hidden" name="gameYear" value="@(ViewBag.SelectedGameYear as string)" />
                                                 <button class="f1-btn @(likedSetupIds.Contains(setup.Id) ? "f1-btn--primary" : "f1-btn--ghost") btn-sm" type="submit">
                                                     <i class="bi bi-heart-fill"></i> @(likedSetupIds.Contains(setup.Id) ? "Geliked" : "Liken")
                                                 </button>
@@ -379,6 +395,7 @@ else
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="setupId" value="@setup.Id" />
                                         <input type="hidden" name="track" value="@selectedTrack" />
+                                        <input type="hidden" name="gameYear" value="@(ViewBag.SelectedGameYear as string)" />
                                         <textarea class="form-control form-control-sm" name="message" rows="2" maxlength="600" placeholder="z.B. für Regen top / gutes Race Trim / stabile Hinterachse" required></textarea>
                                         <div class="d-flex justify-content-end">
                                             <button class="f1-btn f1-btn--ghost" type="submit">Kommentar posten</button>
@@ -386,10 +403,18 @@ else
                                     </form>
                                 }
 
-                                @if (setupComments.TryGetValue(setup.Id, out var comments) && comments.Any())
+                                @if (needsConsent)
+                                {
+                                    <partial name="_ExclusiveSetupConsentPartial" model="setup.Id" />
+                                }
+
+                                @{
+                                    setupComments.TryGetValue(setup.Id, out var commentsForSetup);
+                                }
+                                @if (commentsForSetup != null && commentsForSetup.Any())
                                 {
                                     <div class="d-flex flex-column gap-2">
-                                        @foreach (var comment in comments.Take(5))
+                                        @foreach (var comment in commentsForSetup.Take(5))
                                         {
                                             <div class="surface-glass p-2 rounded">
                                                 <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-1">
@@ -400,6 +425,12 @@ else
                                             </div>
                                         }
                                     </div>
+                                    @if (commentsForSetup.Count > 5)
+                                    {
+                                        <div class="text-mute small mt-2">
+                                            <i class="bi bi-three-dots"></i> @(commentsForSetup.Count - 5) weitere Kommentar@(commentsForSetup.Count - 5 == 1 ? "" : "e")
+                                        </div>
+                                    }
                                 }
                             </div>
                         </div>
@@ -446,10 +477,150 @@ else
     }
 }
 
+@section BodyOverlays {
+    @if (newSetupGroups.Any())
+    {
+        var introGroups = newSetupGroups.Take(6).ToList();
+        var introMoreCount = newSetupGroups.Count - introGroups.Count;
+        var introLatestIso = newSetupGroups.Max(g => g.LatestUtc).ToString("O");
+        <div class="setup-intro" id="setupIntro" hidden
+             data-latest="@introLatestIso"
+             role="dialog" aria-modal="true" aria-labelledby="setupIntroTitle">
+            <div class="setup-intro__panel" tabindex="-1">
+                <div class="setup-intro__head">
+                    <div class="setup-intro__eyebrow"><i class="bi bi-broadcast"></i> Race Engineer · Setup Library</div>
+                    <div class="setup-intro__title" id="setupIntroTitle">Box, Box — neue Setups!</div>
+                    <div class="setup-intro__sub">Frisch eingetroffen in den letzten @SetupNewsGroup.WindowDays Tagen:</div>
+                </div>
+                <div class="setup-intro__rows">
+                    @for (var i = 0; i < introGroups.Count; i++)
+                    {
+                        var g = introGroups[i];
+                        <a class="setup-intro__row" style="animation-delay:@(400 + i * 90)ms"
+                           asp-action="TrackSetups"
+                           asp-route-track="@g.Track"
+                           asp-route-gameYear="@g.GameYear"
+                           title="Setups für @g.Track anzeigen">
+                            <span class="flag" aria-hidden="true">@RaceFlagHelper.Resolve(g.Track)</span>
+                            <span class="track">
+                                @g.Track
+                                @if (!string.IsNullOrWhiteSpace(g.GameYear))
+                                {
+                                    <span class="year">F1 @g.GameYear</span>
+                                }
+                            </span>
+                            @if (g.NewCount > 0)
+                            {
+                                <span class="setup-freshness setup-freshness--new">@g.NewCount NEU</span>
+                            }
+                            @if (g.UpdatedCount > 0)
+                            {
+                                <span class="setup-freshness setup-freshness--updated">@g.UpdatedCount UPDATE</span>
+                            }
+                        </a>
+                    }
+                    @if (introMoreCount > 0)
+                    {
+                        <div class="setup-intro__more" style="animation-delay:@(400 + introGroups.Count * 90)ms">
+                            + @introMoreCount weitere Strecke@(introMoreCount == 1 ? "" : "n") mit Updates
+                        </div>
+                    }
+                </div>
+                <div class="setup-intro__foot">
+                    <span class="setup-intro__hint">Strecke anklicken, um direkt zu filtern.</span>
+                    <button type="button" class="f1-btn f1-btn--ghost" data-intro-close>Weiter zur Library</button>
+                    <div class="setup-intro__progress" aria-hidden="true"><i></i></div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
 @section Scripts {
     <script>
         window.erdiSetupEditorConfig = @Html.Raw(JsonSerializer.Serialize(editorConfig));
         window.erdiSetupMetricConfig = @Html.Raw(JsonSerializer.Serialize(metricConfig));
     </script>
     <script src="~/js/track-setups.js" asp-append-version="true"></script>
+    @* F1-Intro für neue Setups: zeigt sich nur bei ungelesener Aktivität.
+       Läuft VOR dem Badge-Script im Layout, das den Gelesen-Status setzt. *@
+    <script>
+        (function () {
+            const intro = document.getElementById('setupIntro');
+            if (!intro) return;
+            const KEY = 'erc-setups-seen-at';
+            const latest = intro.getAttribute('data-latest') || '';
+            let show = false;
+            try {
+                const seen = localStorage.getItem(KEY);
+                show = !!latest && (!seen || Date.parse(latest) > Date.parse(seen));
+                // Gleich als gelesen markieren (max-Semantik), damit Reload das Intro nicht wiederholt.
+                if (show) localStorage.setItem(KEY, latest);
+            } catch { show = false; /* localStorage blockiert → Intro aus, sonst käme es bei jedem Besuch */ }
+            if (show && window.matchMedia('(prefers-reduced-motion: reduce)').matches) show = false;
+            if (!show) { intro.remove(); return; }
+
+            const AUTO_CLOSE_MS = 8000;
+            const panel = intro.querySelector('.setup-intro__panel');
+            document.body.classList.add('setup-intro-lock');
+            intro.hidden = false;
+            panel?.focus({ preventScroll: true });
+
+            let closed = false;
+            let remaining = AUTO_CLOSE_MS;
+            let startedAt = Date.now();
+            let timer = setTimeout(close, remaining);
+
+            function close() {
+                if (closed) return;
+                closed = true;
+                clearTimeout(timer);
+                document.body.classList.remove('setup-intro-lock');
+                document.removeEventListener('keydown', onKey);
+                intro.classList.add('is-closing');
+                setTimeout(() => intro.remove(), 320);
+            }
+            function focusableInPanel() {
+                if (!panel) return [];
+                return Array.from(panel.querySelectorAll('a[href], button:not([disabled])'))
+                    .filter(el => el.offsetParent !== null);
+            }
+            // Escape schließt; Tab wird im Panel gefangen (Focus-Trap für aria-modal="true").
+            function onKey(e) {
+                if (e.key === 'Escape') { close(); return; }
+                if (e.key !== 'Tab') return;
+                const items = focusableInPanel();
+                if (items.length === 0) return;
+                const first = items[0];
+                const last = items[items.length - 1];
+                const active = document.activeElement;
+                if (e.shiftKey) {
+                    if (active === first || active === panel || !panel.contains(active)) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else if (active === last || active === panel || !panel.contains(active)) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+
+            document.addEventListener('keydown', onKey);
+            // Hover pausiert den Auto-Close (Progress-Bar pausiert via CSS synchron).
+            panel?.addEventListener('mouseenter', () => {
+                clearTimeout(timer);
+                remaining -= Date.now() - startedAt;
+            });
+            panel?.addEventListener('mouseleave', () => {
+                if (closed) return;
+                startedAt = Date.now();
+                timer = setTimeout(close, Math.max(remaining, 1500));
+            });
+            intro.addEventListener('click', (e) => {
+                if (e.target.closest('[data-intro-close]')) { close(); return; }
+                if (e.target.closest('a')) { close(); return; }            // Track-Link: navigieren + aufräumen
+                if (!e.target.closest('.setup-intro__panel')) close();      // Klick auf Backdrop
+            });
+        })();
+    </script>
 }

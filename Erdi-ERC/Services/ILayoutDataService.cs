@@ -13,5 +13,6 @@ namespace <OWNER_HANDLE>_ERC.Services
         string WinnerCarPrimaryLight,
         string WinnerCarPrimaryDark,
         string WinnerCarSecondary,
-        StreamSchedule? ActiveStream);
+        StreamSchedule? ActiveStream,
+        DateTime? LatestSetupActivityUtc);
 }

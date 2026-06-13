@@ -42,14 +42,16 @@ namespace <OWNER_HANDLE>_ERC.Models
         [MaxLength(128)]
         public string Division { get; set; } = string.Empty;
 
+        /// <summary>Liga, für die sich der Bewerber beworben hat (bleibt als Bewerbungs-Historie unverändert).</summary>
+        [MaxLength(64)]
+        public string? AppliedLeagueId { get; set; }
+
         public bool IsAccepted { get; set; }
         public DateTime? AcceptedAt { get; set; }
 
-        /// <summary>
-        /// Review-Status des Bewerbungs-Workflows.
-        /// Open → InReview → Accepted / Rejected
-        /// </summary>
-        public ApplicationReviewStatus ReviewStatus { get; set; } = ApplicationReviewStatus.Open;
+        /// <summary>Vom Admin abgelehnt — abgelehnte Bewerbungen verschwinden aus der "offen"-Liste.</summary>
+        public bool IsRejected { get; set; }
+        public DateTime? RejectedAt { get; set; }
 
         /// <summary>Zugewiesene Fahrer-Rolle nach Annahme (Stammfahrer, Ersatzfahrer, Academy).</summary>
         [MaxLength(64)]
@@ -63,14 +65,5 @@ namespace <OWNER_HANDLE>_ERC.Models
 
         [Timestamp]
         public byte[]? RowVersion { get; set; }
-    }
-
-    /// <summary>Status einer Bewerbung im Review-Workflow.</summary>
-    public enum ApplicationReviewStatus
-    {
-        Open = 0,
-        InReview = 1,
-        Accepted = 2,
-        Rejected = 3
     }
 }

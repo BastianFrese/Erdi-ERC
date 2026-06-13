@@ -7,6 +7,13 @@
     var currentEaTag = profile?.GamerTags?.FirstOrDefault(t => string.Equals(t.Platform, "EA", StringComparison.OrdinalIgnoreCase))?.GamerTag ?? string.Empty;
     var wallMessages = (ViewBag.ProfileWall as List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>) ?? new List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>();
 
+    var selectedTrackKey = RaceFlagHelper.ResolveTrack(profile?.FavoriteTrack)?.Key ?? string.Empty;
+    var selectedTeamCssKey = profile?.FavoriteTeam ?? string.Empty;
+    var profileFavTeam = F1TeamsHelper.GetTeamByName(profile?.FavoriteTeam);
+    var profileHardware = SimHardwareHelper.Resolve(profile?.InputDevice);
+    var currentInputDevice = profile?.InputDevice?.Trim() ?? string.Empty;
+    var hwOptions = new[] { "Fanatec", "MOZA Racing", "Logitech G", "Thrustmaster", "Gamepad", "Tastatur & Maus" };
+
     var featured = DriverAchievementsHelper.GetFeatured(Model.Achievements);
     var totalRaces = Model.Races.Count;
     var finishedRaces = Model.Races.Count(r => r.Position > 0);
@@ -118,11 +125,33 @@
             <div class="profile-card__body d-flex flex-column gap-2">
                 <div class="surface-glass p-2">
                     <div class="text-mute small">Lieblingsstrecke</div>
-                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.FavoriteTrack) ? "-" : profile!.FavoriteTrack)</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.FavoriteTrack) ? "-" : (F1RaceCatalog.FindTrack(profile!.FavoriteTrack)?.Name ?? profile!.FavoriteTrack))</div>
                 </div>
                 <div class="surface-glass p-2">
-                    <div class="text-mute small">Input</div>
-                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(profile?.InputDevice) ? "-" : profile!.InputDevice)</div>
+                    <div class="text-mute small">Lieblingsteam</div>
+                    <div class="fw-semibold d-flex align-items-center gap-2">
+                        @if (profileFavTeam is not null)
+                        {
+                            <img src="/images/teams/@(profileFavTeam.LogoKey).svg" @* alt="@profileFavTeam.Name" *@
+                                 style="height:18px;width:auto;" onerror="this.style.display='none';" />
+                            @* <span>@profileFavTeam.Name</span> *@
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </div>
+                </div>
+                <div class="surface-glass p-2">
+                    <div class="text-mute small">Input / Hardware</div>
+                    <div class="fw-semibold d-flex align-items-center gap-2">
+                        @if (profileHardware is not null)
+                        {
+                            <img src="/images/logos/@(profileHardware.Key).svg" @* alt="@profileHardware.Name" *@
+                                 style="height:15px;width:auto;opacity:.92;" onerror="this.style.display='none';" />
+                        }
+                        <span>@(string.IsNullOrWhiteSpace(profile?.InputDevice) ? "-" : profile!.InputDevice)</span>
+                    </div>
                 </div>
                 <div class="surface-glass p-2">
                     <div class="text-mute small">Plattform</div>
@@ -141,6 +170,25 @@
 
         @if (canEditEaName)
         {
+            <div class="profile-card mt-4">
+                <div class="profile-card__head"><i class="bi bi-image" style="color:var(--sig-cyan);"></i> Fahrer-Foto</div>
+                <div class="profile-card__body d-flex flex-column gap-3">
+                    <div class="text-mute small">Lade ein eigenes Foto für deine Fahrer-Karte hoch (optional). Max. 10&nbsp;MB – jpg, png, webp, gif oder avif.</div>
+                    <form asp-action="UploadProfilePhoto" method="post" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                        @Html.AntiForgeryToken()
+                        <input class="form-control" type="file" name="photo" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" required />
+                        <button class="f1-btn f1-btn--ghost" type="submit">Foto hochladen</button>
+                    </form>
+                    @if (!string.IsNullOrWhiteSpace(profile?.PhotoUrl))
+                    {
+                        <form asp-action="RemoveProfilePhoto" method="post" onsubmit="return confirm('Profilbild wirklich entfernen?');">
+                            @Html.AntiForgeryToken()
+                            <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:***REMOVED***ef4444;color:***REMOVED***ef4444;">Foto entfernen</button>
+                        </form>
+                    }
+                </div>
+            </div>
+
             <div class="profile-card mt-4" style="border-color:var(--text-amber,***REMOVED***f59e0b);">
                 <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> EA-Namen ändern</div>
                 <div class="profile-card__body d-flex flex-column gap-3">
@@ -171,19 +219,64 @@
                         @Html.AntiForgeryToken()
                         <div class="col-12">
                             <label class="form-label mb-0">Lieblingsstrecke</label>
-                            <input class="form-control" name="favoriteTrack" maxlength="128" value="@profile?.FavoriteTrack" />
+                            <select class="form-select" name="favoriteTrack">
+                                <option value="">– keine Angabe –</option>
+                                @foreach (var track in F1RaceCatalog.Tracks)
+                                {
+                                    var trackFlag = RaceFlagHelper.ResolveCountry(track.Country) ?? "";
+                                    var isSelected = string.Equals(selectedTrackKey, track.Key, StringComparison.OrdinalIgnoreCase);
+                                    <option value="@track.Key" selected="@isSelected">@trackFlag @track.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-0">Lieblingsteam</label>
+                            <select class="form-select" name="favoriteTeam">
+                                <option value="">– keine Angabe –</option>
+                                @foreach (var t in F1TeamsHelper.Teams)
+                                {
+                                    var isTeamSel = string.Equals(selectedTeamCssKey, t.CssKey, StringComparison.OrdinalIgnoreCase);
+                                    <option value="@t.CssKey" selected="@isTeamSel">@t.Name</option>
+                                }
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label mb-0">Lenkrad / Pad</label>
-                            <input class="form-control" name="inputDevice" maxlength="64" value="@profile?.InputDevice" placeholder="Wheel / Pad" />
+                            <select class="form-select" name="inputDevice">
+                                <option value="">– keine Angabe –</option>
+                                @if (!string.IsNullOrEmpty(currentInputDevice) && !hwOptions.Any(o => string.Equals(o, currentInputDevice, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    <option value="@currentInputDevice" selected>@currentInputDevice</option>
+                                }
+                                @foreach (var o in hwOptions)
+                                {
+                                    var hwSel = string.Equals(o, currentInputDevice, StringComparison.OrdinalIgnoreCase);
+                                    <option value="@o" selected="@hwSel">@o</option>
+                                }
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label mb-0">Plattform</label>
                             <input class="form-control" name="preferredPlatform" maxlength="64" value="@profile?.PreferredPlatform" placeholder="EA / Steam / Xbox / Playstation" />
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label mb-0">Nationalität / Flagge</label>
-                            <input class="form-control" name="nationality" maxlength="64" value="@profile?.Nationality" placeholder="z.B. Deutschland" />
+                            <select class="form-select" name="nationality">
+                                <option value="">– keine Angabe –</option>
+                                @if (!string.IsNullOrWhiteSpace(profile?.Nationality) && !RaceFlagHelper.Countries.Any(c => string.Equals(c, profile.Nationality, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    <option value="@profile.Nationality" selected>@profile.Nationality</option>
+                                }
+                                @foreach (var c in RaceFlagHelper.Countries)
+                                {
+                                    var isSel = string.Equals(c, profile?.Nationality, StringComparison.OrdinalIgnoreCase);
+                                    <option value="@c" selected="@isSel">@RaceFlagHelper.ResolveCountry(c) @c</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-0">Alter</label>
+                            <input class="form-control" type="number" name="age" min="14" max="99" value="@(profile?.Age)" placeholder="z.B. 24" />
                         </div>
                         <div class="col-12">
                             <label class="form-label mb-0">Kurze Bio</label>

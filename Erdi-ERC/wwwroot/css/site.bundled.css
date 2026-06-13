@@ -264,6 +264,19 @@ background:var(--accent); border-radius:2px; box-shadow:0 0 12px var(--accent-gl
 @media (min-width:1600px) { .nav-ico { display:inline-block; } }
 .navbar .nav-link:hover .nav-ico { opacity:1; transform:translateY(-1px); }
 .navbar .nav-link.active .nav-ico { opacity:1; color:var(--accent); filter:drop-shadow(0 0 6px var(--accent-glow)); }
+/* "!"-Hinweis am Navlink (z. B. neue Setups), WhatsApp-Style: klein, rot, oben rechts */
+.nav-alert-badge {
+position:absolute; top:-2px; right:-4px;
+display:inline-flex; align-items:center; justify-content:center;
+min-width:14px; height:14px; padding:0 3px;
+border-radius:999px;
+background:var(--sig-red, ***REMOVED***e10600);
+color:***REMOVED***fff;
+font:800 .58rem/1 var(--ff-body);
+box-shadow:0 0 8px rgba(225,6,0,.55), 0 0 0 2px rgba(6,7,10,.85);
+animation:brand-pulse 2.4s ease-in-out infinite;
+pointer-events:none;
+}
 .navbar-auth-user {
 display:inline-flex; align-items:center; gap:.5rem;
 color:var(--ink-2);
@@ -2072,6 +2085,21 @@ content:""; position:absolute; left:0; top:4px; bottom:4px;
 width:3px; border-radius:0 2px 2px 0;
 background:var(--accent); box-shadow:0 0 8px var(--accent-glow);
 }
+.adm-nav-badge {
+margin-left:auto; min-width:18px; height:18px;
+padding:0 5px; border-radius:9px;
+background:***REMOVED***e10600; color:***REMOVED***fff;
+font-size:.65rem; font-weight:700; line-height:18px;
+text-align:center; flex-shrink:0;
+}
+.adm-status-chip {
+display:inline-flex; align-items:center;
+padding:.15rem .5rem; border-radius:99px;
+font-size:.65rem; font-weight:600; line-height:1.4;
+margin-right:.35rem; vertical-align:middle;
+}
+.adm-status-chip--green  { background:rgba(57,255,20,.12); color:***REMOVED***39ff14; }
+.adm-status-chip--muted  { background:rgba(255,255,255,.06); color:var(--ink-3); }
 .adm-sidebar__footer {
 flex-shrink:0; padding:.6rem;
 border-top:1px solid var(--stroke-1);
@@ -4015,6 +4043,173 @@ flex-direction: column;
 grid-template-columns: 1fr;
 }
 }
+/* Anker-Sprung (***REMOVED***setup-{id}) nach Like/Kommentar: Karte nicht unter den Sticky-Header schieben. */
+.setup-card {
+scroll-margin-top: 84px;
+}
+/* ── Toolbar über dem In-Game-Editor: barrierefreier Toggle + Reset ───────── */
+.setup-card__tools {
+display: flex;
+align-items: center;
+gap: .5rem;
+flex-wrap: wrap;
+margin-bottom: .45rem;
+}
+.setup-toggle-btn {
+display: inline-flex;
+align-items: center;
+gap: .4rem;
+background: rgba(255,255,255,.04);
+border: 1px solid var(--stroke-1);
+border-radius: 6px;
+color: var(--ink-2);
+cursor: pointer;
+font: 600 .74rem/1 var(--ff-body);
+letter-spacing: .04em;
+padding: .34rem .7rem;
+transition: color .18s, border-color .18s, background .18s;
+}
+.setup-toggle-btn:hover,
+.setup-toggle-btn[aria-expanded="true"] {
+color: var(--ink);
+border-color: var(--accent);
+}
+.setup-toggle-btn:hover {
+background: var(--accent-soft);
+}
+.setup-toggle-btn i {
+font-size: .85rem;
+}
+/* =====================================================================
+Setup-Seite: Tier-Badges, "Frisch eingetroffen"-Chips & Broadcast-Intro
+(aus der View ausgelagert, damit es im gebündelten/gecachten CSS landet
+statt bei jedem Render inline mitzukommen)
+===================================================================== */
+.tier-badge {
+display:inline-flex;align-items:center;gap:.35rem;
+padding:.28rem .6rem;border-radius:999px;
+font:600 .72rem/1 var(--ff-body);letter-spacing:.02em;
+border:1px solid var(--stroke-1);
+background:var(--surface-2);color:var(--ink-2);
+white-space:nowrap;
+}
+.tier-badge i { font-size:.85rem; }
+.tier-badge--public    { background:rgba(120,140,160,.12); color:***REMOVED***a8b6c4; border-color:rgba(120,140,160,.35); }
+.tier-badge--community { background:rgba(88,101,242,.14);  color:***REMOVED***a4adff; border-color:rgba(88,101,242,.45); }
+.tier-badge--t1        { background:rgba(34,211,238,.12);  color:***REMOVED***67e8f9; border-color:rgba(34,211,238,.45); }
+.tier-badge--t2      { background:rgba(245,158,11,.14);  color:***REMOVED***fbbf24; border-color:rgba(245,158,11,.50); }
+.tier-badge--t3      {
+background:linear-gradient(135deg,rgba(244,63,94,.18),rgba(217,70,239,.14));
+color:***REMOVED***fda4af;border-color:rgba(244,63,94,.55);
+box-shadow:0 0 0 1px rgba(244,63,94,.10) inset;
+}
+/* "Frisch eingetroffen"-Chips: klickbar, setzen direkt den Filter */
+.setup-news-chip {
+display:inline-flex;align-items:center;gap:.5rem;
+padding:.5rem .85rem;border-radius:999px;
+background:var(--surface-2);border:1px solid var(--stroke-1);
+color:var(--ink-2);text-decoration:none;
+font:600 .8rem/1 var(--ff-body);
+transition:border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.setup-news-chip:hover {
+color:var(--ink);border-color:var(--accent);transform:translateY(-1px);
+}
+.setup-news-chip .chip-year { color:var(--ink-3);font-weight:500; }
+.setup-freshness {
+display:inline-flex;align-items:center;gap:.3rem;
+padding:.2rem .5rem;border-radius:999px;
+font:800 .6rem/1 var(--ff-body);letter-spacing:.06em;
+}
+.setup-freshness--new {
+background:rgba(225,6,0,.16);color:***REMOVED***ff6b63;border:1px solid rgba(225,6,0,.5);
+}
+.setup-freshness--updated {
+background:rgba(245,158,11,.14);color:***REMOVED***fbbf24;border:1px solid rgba(245,158,11,.5);
+}
+/* ───── F1-Broadcast-Intro: stellt neue Setups einmalig vor (localStorage = gelesen) ───── */
+.setup-intro {
+position:fixed;inset:0;z-index:2000;
+display:flex;align-items:center;justify-content:center;
+padding:1rem;
+}
+.setup-intro[hidden] { display:none; }
+.setup-intro::before {
+content:"";position:absolute;inset:0;
+background:rgba(5,8,14,.72);
+-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+animation:setupIntroFade .35s ease both;
+}
+body.setup-intro-lock { overflow:hidden; }
+.setup-intro__panel {
+position:relative;width:min(560px,100%);
+background:var(--surface-1);border:1px solid var(--stroke-1);
+border-radius:var(--r-3);box-shadow:var(--sh-2),0 0 48px var(--accent-soft);
+overflow:hidden;outline:none;
+animation:setupIntroPanel .45s .1s cubic-bezier(.22,.9,.3,1) both;
+}
+/* statische Speed-Lines im Hintergrund — bewusst ohne Animation */
+.setup-intro__panel::before {
+content:"";position:absolute;inset:0;pointer-events:none;
+background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px);
+}
+.setup-intro__head { position:relative;padding:1.1rem 1.25rem .9rem;border-bottom:1px solid var(--stroke-1); }
+.setup-intro__head::before {
+content:"";position:absolute;left:0;top:0;height:3px;width:100%;
+background:linear-gradient(90deg,var(--accent),var(--accent-2) 55%,transparent 92%);
+box-shadow:0 0 12px var(--accent-glow);
+transform-origin:left;animation:setupIntroSweep .6s .25s cubic-bezier(.22,.9,.3,1) both;
+}
+.setup-intro__eyebrow {
+display:flex;align-items:center;gap:.5rem;
+font:800 .66rem/1 var(--ff-body);letter-spacing:.28em;text-transform:uppercase;
+color:var(--accent-2);
+}
+.setup-intro__title {
+margin:.45rem 0 .15rem;
+font:900 1.6rem/1.15 var(--ff-display);font-style:italic;letter-spacing:-.02em;
+color:var(--ink);
+}
+.setup-intro__sub { font:500 .8rem/1.3 var(--ff-body);color:var(--ink-3); }
+.setup-intro__rows { position:relative;display:flex;flex-direction:column;gap:.35rem;padding:.65rem; }
+.setup-intro__row {
+display:flex;align-items:center;gap:.75rem;
+padding:.6rem .75rem;border-radius:calc(var(--r-3) - 6px);
+background:var(--surface-2);border:1px solid var(--stroke-1);border-left:3px solid var(--accent);
+text-decoration:none;color:var(--ink-2);
+animation:setupIntroRow .4s cubic-bezier(.22,.9,.3,1) both;
+transition:border-color .15s ease,transform .15s ease;
+}
+.setup-intro__row:hover { color:var(--ink);border-color:var(--accent);transform:translateX(3px); }
+.setup-intro__row .flag { font-size:1.25rem;line-height:1; }
+.setup-intro__row .track {
+flex:1;min-width:0;display:flex;align-items:baseline;gap:.5rem;
+font:800 .95rem/1.1 var(--ff-display);font-style:italic;color:var(--ink);
+}
+.setup-intro__row .year { font:600 .68rem/1 var(--ff-body);font-style:normal;letter-spacing:.06em;color:var(--ink-3); }
+.setup-intro__more { padding:.35rem 0 .15rem;text-align:center;font:600 .75rem/1 var(--ff-body);color:var(--ink-3);animation:setupIntroRow .4s both; }
+.setup-intro__foot {
+position:relative;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;
+padding:.75rem 1.25rem .9rem;border-top:1px solid var(--stroke-1);
+}
+.setup-intro__hint { font:500 .72rem/1.3 var(--ff-body);color:var(--ink-3); }
+.setup-intro__progress { position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--stroke-1); }
+.setup-intro__progress i {
+position:absolute;inset:0;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);
+transform-origin:left;animation:setupIntroProgress 7.4s linear .6s both;
+}
+/* Hover pausiert Auto-Close (JS-Timer pausiert synchron) */
+.setup-intro__panel:hover .setup-intro__progress i { animation-play-state:paused; }
+.setup-intro.is-closing { pointer-events:none; }
+.setup-intro.is-closing::before { animation:setupIntroFadeOut .3s ease both; }
+.setup-intro.is-closing .setup-intro__panel { animation:setupIntroPanelOut .3s ease both; }
+@keyframes setupIntroFade     { from { opacity:0; } to { opacity:1; } }
+@keyframes setupIntroFadeOut  { from { opacity:1; } to { opacity:0; } }
+@keyframes setupIntroPanel    { from { opacity:0;transform:translateY(26px) scale(.97); } to { opacity:1;transform:none; } }
+@keyframes setupIntroPanelOut { from { opacity:1;transform:none; } to { opacity:0;transform:translateY(14px) scale(.985); } }
+@keyframes setupIntroSweep    { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@keyframes setupIntroRow      { from { opacity:0;transform:translateX(-22px); } to { opacity:1;transform:none; } }
+@keyframes setupIntroProgress { from { transform:scaleX(1); } to { transform:scaleX(0); } }
 .community-shell {
 display: flex;
 flex-direction: column;

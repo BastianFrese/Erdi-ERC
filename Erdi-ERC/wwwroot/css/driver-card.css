@@ -1,20 +1,469 @@
-/* Driver card styles (highly custom, card/sleeve layout) */
-.driver-card-root { width:360px; height:640px; position:relative; font-family:var(--ff-body); }
-.driver-card__inner { position:relative; width:100%; height:100%; border-radius:20px; padding:18px; box-sizing:border-box; border:6px solid ***REMOVED***ff1d1d; background:linear-gradient(135deg,***REMOVED***110000 10%, ***REMOVED***9a2b00 35%, ***REMOVED***ffd24a 95%); overflow:hidden; }
-.driver-card__top { display:flex; align-items:flex-start; gap:12px; }
-.driver-card__age-tile { background:***REMOVED***0f0f0f; padding:12px 14px; border-radius:8px; display:flex; flex-direction:column; align-items:flex-start; box-shadow:0 4px 18px rgba(0,0,0,.6); border-right:4px solid rgba(255,255,255,.03); }
-.driver-card__age-tile .age-number { font-size:36px; font-weight:800; color:***REMOVED***fff; }
-.driver-card__age-tile .age-label { font-size:12px; color:***REMOVED***fff; letter-spacing:.18em; margin-top:4px; }
-.driver-card__logo img { height:58px; }
-.driver-card__flag img { position:absolute; left:16px; top:110px; width:56px; border-radius:8px; border:2px solid ***REMOVED***fff; }
-.driver-card__photo-wrap { position:absolute; left:80px; top:60px; width:220px; height:310px; display:flex; align-items:center; justify-content:center; overflow:visible; }
-.driver-photo { width:220px; height:310px; object-fit:cover; border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,.6); }
-.driver-card__name { position:absolute; left:18px; bottom:180px; color:***REMOVED***fff; }
-.driver-card__name .driver-name { font-size:36px; font-weight:800; }
-.driver-card__name .driver-community { display:flex; align-items:center; gap:8px; font-size:12px; color:***REMOVED***fff; margin-top:6px; }
-.driver-card__carbon { position:absolute; left:12px; right:12px; bottom:70px; height:110px; background:linear-gradient(180deg,***REMOVED***0b0b0b,***REMOVED***1c1c1c); border-radius:12px; border:3px solid rgba(255,255,255,.04); display:flex; align-items:center; justify-content:center; }
-.carbon-inner { width:96%; display:flex; align-items:center; justify-content:space-between; }
-.carbon-inner .sponsor img { max-height:44px; display:block; }
-.driver-card__footer { position:absolute; left:12px; right:12px; bottom:12px; height:44px; display:flex; align-items:center; justify-content:flex-start; gap:18px; }
-.driver-card__footer img { height:28px; filter:brightness(1) invert(1); }
-.driver-card__big-number { position:absolute; right:8px; top:40px; font-size:160px; color:rgba(255,160,0,.12); -webkit-text-stroke:1px rgba(0,0,0,.3); transform:translateY(20px); }
+/* ═══════════════════════════════════════════════════════════════
+   ERC Driver Card — two layouts (photo poster + FIFA-style stats)
+   Rendered by Views/Shared/_DriverCard.cshtml (switch on hasPhoto).
+   ═══════════════════════════════════════════════════════════════ */
+
+.erc-card {
+  --dc-accent: ***REMOVED***e10600;          /* team color, set inline per card */
+  --dc-edge:   ***REMOVED***e10600;          /* ERC signature red edge          */
+  width: 360px;
+  height: 640px;
+  position: relative;
+  font-family: var(--ff-body, 'Inter', system-ui, sans-serif);
+  color: ***REMOVED***fff;
+  flex: 0 0 auto;
+}
+
+/* ── Shell: solid black, red signature glow edge ─────────────── */
+.erc-card__shell {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: radial-gradient(120% 80% at 50% 0%, ***REMOVED***15171c 0%, ***REMOVED***0a0b0e 46%, ***REMOVED***050507 100%);
+  overflow: hidden;
+  box-shadow:
+    inset 0 4px 0 0 var(--dc-edge),
+    inset -4px 0 0 0 var(--dc-edge),
+    0 10px 40px rgba(0,0,0,.6),
+    8px 0 34px rgba(225,6,0,.32),
+    0 -8px 34px rgba(225,6,0,.30),
+    0 0 0 1px rgba(255,255,255,.06);
+}
+
+/* Diagonal carbon weave, very subtle */
+.erc-card__shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(-45deg,
+    rgba(255,255,255,.015) 0, rgba(255,255,255,.015) 1px,
+    transparent 1px, transparent 13px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Team-color wash bleeding from the top corners */
+.erc-card__wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 38% at 84% 6%, color-mix(in srgb, var(--dc-accent) 40%, transparent) 0%, transparent 60%),
+    radial-gradient(60% 30% at 12% 4%, color-mix(in srgb, var(--dc-accent) 22%, transparent) 0%, transparent 55%);
+  opacity: .8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Brand strip (shared) ────────────────────────────────────── */
+.erc-card__brand {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.erc-brand__mark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.erc-brand__erc {
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 26px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: .06em;
+  background: linear-gradient(160deg, ***REMOVED***b07020 0%, ***REMOVED***f0cc5a 38%, ***REMOVED***ffe898 56%, ***REMOVED***c88a2a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(210,150,30,.4));
+}
+.erc-brand__sub {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .34em;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* Nation + age chips (top-right cluster) */
+.erc-chips {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.erc-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 6px;
+  background: rgba(0,0,0,.5);
+  border: 1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(3px);
+}
+.erc-chip__val {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: ***REMOVED***fff;
+}
+.erc-chip__lbl {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.5);
+}
+
+/* Nation badge: real flag + 3-letter F1 code, bulletproof on Windows */
+.erc-nation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.erc-nation__flag {
+  width: 22px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.25), 0 1px 3px rgba(0,0,0,.6);
+  display: block;
+}
+.erc-nation__code {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: ***REMOVED***fff;
+}
+
+/* ════════════════════════════════════════════════════════════
+   LAYOUT A — PHOTO POSTER
+   ════════════════════════════════════════════════════════════ */
+.erc-card--photo .erc-photo {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 470px;
+  z-index: 1;
+  overflow: hidden;
+}
+.erc-card--photo .erc-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+/* Scrim so the bottom panel reads cleanly */
+.erc-card--photo .erc-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(5,5,7,.5) 0%, transparent 18%, transparent 52%, rgba(5,5,7,.75) 84%, ***REMOVED***050507 100%);
+}
+
+/* Big poster number — vertical, team color, readable */
+.erc-card--photo .erc-bignum {
+  position: absolute;
+  top: 206px;
+  right: 14px;
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 116px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: .8;
+  color: var(--dc-accent);
+  -webkit-text-stroke: 1.5px rgba(255,255,255,.9);
+  text-shadow: 0 6px 24px rgba(0,0,0,.55);
+  letter-spacing: -.05em;
+  z-index: 2;
+  pointer-events: none;
+  opacity: .95;
+}
+
+/* Bottom info panel over the scrim */
+.erc-card--photo .erc-info {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  z-index: 5;
+}
+.erc-card--photo .erc-info__name {
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 30px;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  line-height: .98;
+  text-shadow: 0 3px 16px rgba(0,0,0,.95);
+}
+.erc-card--photo .erc-info__accent {
+  width: 54px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--dc-accent);
+  margin: 9px 0 11px;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--dc-accent) 70%, transparent);
+}
+
+/* One consolidated meta row: team | track | hardware */
+.erc-meta {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+.erc-meta__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.erc-meta__cell + .erc-meta__cell {
+  padding-left: 10px;
+  border-left: 1px solid rgba(255,255,255,.14);
+}
+.erc-meta__lbl {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+}
+.erc-meta__val {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: rgba(255,255,255,.92);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.erc-meta__logo {
+  height: 16px;
+  width: auto;
+  max-width: 60px;
+  filter: brightness(0) invert(1);
+  opacity: .92;
+}
+.erc-meta__track-svg {
+  height: 17px;
+  width: auto;
+  opacity: .9;
+  filter: brightness(1.15);
+}
+
+/* ════════════════════════════════════════════════════════════
+   LAYOUT B — FIFA-STYLE STATS CARD (no photo)
+   ════════════════════════════════════════════════════════════ */
+
+/* Top-left identity tower: big number, nation, team (FIFA OVR cluster) */
+.erc-card--stats .erc-tower {
+  position: absolute;
+  top: 58px;
+  left: 20px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 78px;
+}
+.erc-tower__num {
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 56px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: .82;
+  color: ***REMOVED***fff;
+  letter-spacing: -.04em;
+  text-shadow: 0 2px 14px rgba(0,0,0,.6);
+}
+.erc-tower__num small { font-size: 22px; opacity: .7; vertical-align: super; }
+.erc-tower__rule {
+  width: 40px;
+  height: 2px;
+  background: var(--dc-accent);
+  border-radius: 2px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--dc-accent) 75%, transparent);
+}
+.erc-tower__team img {
+  height: 30px;
+  width: auto;
+  max-width: 64px;
+  filter: brightness(0) invert(1);
+  opacity: .92;
+}
+
+/* Central identity: initials monogram instead of a photo */
+.erc-card--stats .erc-monogram {
+  position: absolute;
+  top: 86px;
+  left: 0;
+  right: 0;
+  height: 178px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.erc-card--stats .erc-monogram::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--dc-accent) 30%, transparent) 0%, transparent 66%);
+  filter: blur(6px);
+}
+.erc-monogram__txt {
+  position: relative;
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 118px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -.04em;
+  line-height: 1;
+  background: linear-gradient(160deg, ***REMOVED***b07020 0%, ***REMOVED***f0cc5a 36%, ***REMOVED***ffe898 55%, ***REMOVED***c88a2a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 6px 26px rgba(210,150,30,.32));
+}
+
+/* Name band */
+.erc-card--stats .erc-sname {
+  position: absolute;
+  top: 270px;
+  left: 20px;
+  right: 20px;
+  text-align: center;
+  z-index: 5;
+}
+.erc-sname__name {
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 28px;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,.8);
+}
+.erc-sname__rule {
+  width: 64px;
+  height: 4px;
+  margin: 10px auto 0;
+  border-radius: 2px;
+  background: var(--dc-accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--dc-accent) 70%, transparent);
+}
+
+/* Section eyebrow above the stat grid */
+.erc-card--stats .erc-stats-eyebrow {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 192px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.42);
+}
+.erc-card--stats .erc-stats-eyebrow::before,
+.erc-card--stats .erc-stats-eyebrow::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+}
+
+/* Stat grid — FIFA 2×3 */
+.erc-card--stats .erc-stats {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 54px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 21px;
+  column-gap: 14px;
+}
+.erc-card--stats .erc-stats::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.16) 14%, rgba(255,255,255,.16) 86%, transparent);
+}
+.erc-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.erc-stat__val {
+  font-family: var(--ff-display, 'Inter', sans-serif);
+  font-size: 29px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  color: ***REMOVED***fff;
+  min-width: 46px;
+  text-align: right;
+}
+.erc-stat__lbl {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  line-height: 1.15;
+}
+
+/* Footer hardware (shared, bottom-centered for stats / left for photo) */
+.erc-card__hw {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 18px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.erc-card__hw .erc-hw__lbl {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+.erc-card__hw img {
+  height: 18px;
+  width: auto;
+  max-width: 100px;
+  filter: brightness(0) invert(1);
+  opacity: .85;
+}

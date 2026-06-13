@@ -32,7 +32,7 @@
                     <a class="btn btn-outline-secondary" asp-action="Index">← Zurück zum Dashboard</a>
                     <form asp-controller="AdminLeague" asp-action="ValidateReserveData" method="post" class="d-inline" onsubmit="return confirm('Reservefahrer-Daten dieser Liga prüfen?');">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="leagueId" value="@Model.Id" />
                         <button class="btn btn-outline-info w-100" type="submit">Reserve-Daten prüfen</button>
                     </form>
                     <form asp-action="RebuildLeagueStats" method="post" class="d-inline" onsubmit="return confirm('Stats für diese Liga neu berechnen?');">
@@ -99,16 +99,26 @@
     <div class="card mb-4 shadow-sm league-page-surface">
         <div class="card-header"><strong>Liga-Details</strong></div>
         <div class="card-body">
-            <form asp-action="UpdateLeague" method="post" class="row g-2">
+            <form asp-controller="Admin" asp-action="UpdateLeague" method="post" class="row g-2" id="updateLeagueForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
                 <div class="col-md-4">
                     <label class="form-label">Name</label>
                     <input class="form-control" name="name" value="@Model.Name" required />
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-8">
                     <label class="form-label">Beschreibung</label>
                     <input class="form-control" name="description" value="@Model.Description" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Bewerbungs-Info <span class="text-muted small">(Untertitel im Bewerbungsformular, z.B. "Freitags 20:00 · KI bis 105")</span></label>
+                    <input class="form-control" name="applicationInfo" value="@Model.ApplicationInfo" maxlength="256" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="isOpenForApplications" value="true" id="leagueOpenForApps" @(Model.IsOpenForApplications ? "checked" : "") />
+                        <label class="form-check-label" for="leagueOpenForApps">Bewerbungen offen (im Formular sichtbar)</label>
+                    </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" type="submit">Speichern</button>
@@ -436,4 +446,7 @@
     </div>
 </div>
 
+
+    </div>
+</div>
 

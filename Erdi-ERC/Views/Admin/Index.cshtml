@@ -29,20 +29,22 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ffb800;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminRaceCalendar" asp-action="Index" style="--kpi-color:***REMOVED***ffb800;">
             <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.TotalRaces</div>
                 <div class="adm-kpi-card__label">Rennen gesamt</div>
             </div>
-        </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***b95cff;">
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminAchievements" asp-action="Index" style="--kpi-color:***REMOVED***b95cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.TotalDrivers</div>
                 <div class="adm-kpi-card__label">Stammplätze</div>
             </div>
-        </div>
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
         <a class="adm-kpi-card text-decoration-none" asp-action="AuditLogs" style="--kpi-color:***REMOVED***00e5ff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-clock-history"></i></div>
             <div class="adm-kpi-card__body">
@@ -99,7 +101,21 @@
                             <div class="adm-league-table__row">
                                 <code class="adm-league-table__id">@league.Id</code>
                                 <span class="adm-league-table__name fw-semibold">@league.Name</span>
-                                <span class="adm-league-table__desc">@(league.Description ?? "—")</span>
+                                <span class="adm-league-table__desc">
+                                    @if (league.IsArchived)
+                                    {
+                                        <span class="adm-status-chip adm-status-chip--muted" title="Archiviert">
+                                            <i class="bi bi-archive-fill me-1"></i>Archiviert
+                                        </span>
+                                    }
+                                    else if (league.IsOpenForApplications)
+                                    {
+                                        <span class="adm-status-chip adm-status-chip--green" title="Bewerbungen offen">
+                                            <i class="bi bi-inbox-fill me-1"></i>Offen
+                                        </span>
+                                    }
+                                    @(league.Description ?? "—")
+                                </span>
                                 <div class="adm-league-table__actions">
                                     <a class="btn btn-xs btn-outline-secondary" asp-action="EditLeague" asp-route-id="@league.Id" title="Bearbeiten">
                                         <i class="bi bi-pencil-square"></i>

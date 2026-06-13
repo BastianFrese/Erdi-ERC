@@ -36,6 +36,8 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string Title { get; set; } = string.Empty;
         public string? SetupInfo { get; set; }
         public string SetupText { get; set; } = string.Empty;
+        // Spieljahr / Kurzlabel, z.B. "26" oder "25". Wird verwendet, um Setups nach F1-Version zu unterscheiden.
+        public string? GameYear { get; set; } = null;
         /// <summary>
         /// 0 = öffentlich, 1 = Login + Community-Guild, 3 = Twitch Sub T1, 4 = Twitch Sub T2, 5 = Twitch Sub T3.
         /// Wert 2 ist deprecated (früher "Discord Rolle") und wird zur Laufzeit wie 1 behandelt.
@@ -53,18 +55,6 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string RoleId { get; set; } = string.Empty;
         public string? Label { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    }
-
-    public class League
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public bool IsArchived { get; set; }
-        public string? ArchivedName { get; set; }
-        public DateTime? ArchivedAt { get; set; }
-        public List<DriverStanding> Standings { get; set; } = new();
-        public List<RaceResult> Races { get; set; } = new();
     }
 
     public class DriverStanding
@@ -95,7 +85,6 @@ namespace <OWNER_HANDLE>_ERC.Models
         public List<RaceReserveAssignment> ReserveAssignments { get; set; } = new();
     }
 
-    /// <summary>Stores each driver's finishing position for a single race.</summary>
     public class RaceFinish
     {
         public int Id { get; set; }
@@ -206,6 +195,8 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string LeagueName { get; set; } = string.Empty;
         public string Driver { get; set; } = string.Empty;
         public string Team { get; set; } = string.Empty;
+        /// <summary>Startnummer aus den Standings (für die Fahrer-Karte). Null, wenn nicht vergeben.</summary>
+        public int? DriverNumber { get; set; }
         public bool IsReserveDriver { get; set; }
         public string? ReserveForDriver { get; set; }
         public int TotalPoints { get; set; }
@@ -258,32 +249,16 @@ namespace <OWNER_HANDLE>_ERC.Models
     public class StreamSchedule
     {
         public int Id { get; set; }
-        public DateTime StartAt { get; set; }
-        public int DurationMinutes { get; set; }
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; }
         public string? Url { get; set; }
-        public bool IsRecurring { get; set; }
-        public int? DayOfWeek { get; set; }
         public TimeSpan? TimeOfDay { get; set; }
+        public DateTime StartAt { get; set; } = DateTime.UtcNow;
+        public bool IsRecurring { get; set; }
+        // Use nullable int to match usage in views/controllers (values 0..6 or null)
+        public int? DayOfWeek { get; set; }
+        public int DurationMinutes { get; set; } = 120;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
-    /// <summary>
-    /// Manuell vom Admin vergebene Achievements für einzelne Fahrer.
-    /// Werden zusätzlich zu den automatisch berechneten (DriverAchievementsHelper) angezeigt.
-    /// </summary>
-    public class CustomAchievement
-    {
-        public int Id { get; set; }
-        public string? LeagueId { get; set; }
-        public string Driver { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Icon { get; set; } = "bi-award-fill";
-        public string Tone { get; set; } = "amber";
-        public string Tier { get; set; } = "gold";
-        public string Category { get; set; } = "Spezial";
-        public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
-    }
 }
 

@@ -63,7 +63,8 @@
     }
     .abp-identity--no-banner {
         margin-top: 0;
-        padding-top: 2rem;
+        /* increase top padding to ensure header does not overlap avatar */
+        padding-top: 6rem;
         align-items: center;
     }
     .abp-avatar {
@@ -275,20 +276,7 @@
 }
 else
 {
-    @* ── Hero Banner ──────────────────────────────────────────────────── *@
-    @if (p.ShowBanner)
-    {
-    <div class="abp-hero" style="@(!string.IsNullOrEmpty(p.BannerUrl) ? $"background-image:url('{p.BannerUrl}');" : "")">
-        <div class="abp-hero__overlay"></div>
-        @if (!string.IsNullOrEmpty(p.RacingNumber))
-        {
-            <div class="abp-hero__number">***REMOVED***@p.RacingNumber</div>
-        }
-        <div class="abp-hero__accent"></div>
-    </div>
-    }
-
-    <div class="container" style="padding-top:0; padding-bottom:3rem;">
+    <div class="container" style="padding-top:@(string.IsNullOrEmpty(p?.BannerUrl) || !p.ShowBanner ? "6rem" : "0"); padding-bottom:3rem;">
 
         @* ── Identity row ──────────────────────────────────────────────── *@
         <div class="abp-identity @(!p.ShowBanner ? "abp-identity--no-banner" : "")">

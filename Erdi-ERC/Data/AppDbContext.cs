@@ -56,6 +56,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Name).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Description).HasMaxLength(1024);
                 b.Property(x => x.ArchivedName).HasMaxLength(128);
+                b.Property(x => x.ApplicationInfo).HasMaxLength(256);
 
                 b.HasMany(x => x.Standings)
                     .WithOne()
@@ -77,8 +78,16 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Division).HasMaxLength(128).IsRequired(false);
                 b.Property(x => x.Role).HasMaxLength(64).IsRequired(false);
                 b.Property(x => x.ReviewNote).HasMaxLength(1000).IsRequired(false);
+                b.Property(x => x.AppliedLeagueId).HasMaxLength(64).IsRequired(false);
                 b.Property(x => x.RowVersion).IsRowVersion();
                 b.HasIndex(x => x.SubmittedAt);
+
+                // Bewerbung referenziert die beworbene Liga; beim Löschen der Liga bleibt
+                // die Bewerbung erhalten (Referenz wird genullt).
+                b.HasOne<League>()
+                    .WithMany()
+                    .HasForeignKey(x => x.AppliedLeagueId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<DriverStanding>(b =>
@@ -244,10 +253,11 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Track).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Title).HasMaxLength(256).IsRequired();
+                b.Property(x => x.GameYear).HasMaxLength(16).IsRequired(false);
                 b.Property(x => x.SetupInfo).HasMaxLength(1024);
                 b.Property(x => x.SetupText).HasColumnType("LONGTEXT").IsRequired();
                 b.Property(x => x.RequiredRoleLabel).HasMaxLength(128);
-                b.HasIndex(x => new { x.Track, x.RequiredAccessTier });
+                b.HasIndex(x => new { x.Track, x.GameYear, x.RequiredAccessTier });
                 b.HasIndex(x => x.UpdatedAt);
             });
 

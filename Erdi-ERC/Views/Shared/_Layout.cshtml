@@ -31,7 +31,7 @@
                 if (_teamInfo != null)
                 {
                     _winnerTeamKey = _overrideKey;
-                    _winnerCarPrimary = _teamInfo.PrimaryColor;
+                    _winnerCarPrimary = $"";
                     _winnerCarSecondary = _teamInfo.SecondaryColor;
                     string Shade(string hex, double factor)
                     {
@@ -59,6 +59,15 @@
         if (actions.Length == 0) return "active";
         return actions.Any(a => string.Equals(currentAction, a, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
     }
+
+    // "!"-Badge am Setups-Navlink: nur emittieren, wenn die letzte Setup-Aktivität
+    // im News-Fenster liegt. Sichtbarkeit entscheidet der Client per localStorage
+    // (Besuch der Setup-Seite = "gelesen", wie WhatsApp).
+    var _latestSetupActivityIso = _layoutData.LatestSetupActivityUtc is DateTime _lsa
+        && _lsa >= DateTime.UtcNow.AddDays(-<OWNER_HANDLE>_ERC.Models.SetupNewsGroup.WindowDays)
+        ? _lsa.ToString("O")
+        : null;
+    var _isOnSetupsPage = IsActive("Home", "TrackSetups") == "active";
 }
 <!DOCTYPE html>
 <html lang="de" data-bs-theme="dark">
@@ -250,19 +259,25 @@
                                 <i class="bi bi-speedometer2 nav-ico" aria-hidden="true"></i>Racing&nbsp;Hub
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "Results", "LeagueResults")" asp-controller="Home" asp-action="Results">
-                                <i class="bi bi-trophy-fill nav-ico" aria-hidden="true"></i>Results
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @((IsActive("Home", "Results", "LeagueResults") == "active" || IsActive("Home", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="***REMOVED***" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-flag-fill nav-ico" aria-hidden="true"></i>ERC Liga
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "AllRaces", "RaceDetail")" asp-controller="Home" asp-action="AllRaces">
-                                <i class="bi bi-flag-fill nav-ico" aria-hidden="true"></i>Alle&nbsp;Rennen
-                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="racesDropdown">
+                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Results"><i class="bi bi-trophy-fill me-2"></i>Results</a></li>
+                                <li><a class="dropdown-item" asp-controller="Home" asp-action="AllRaces"><i class="bi bi-flag-fill me-2"></i>Alle Rennen</a></li>
+                            </ul>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @IsActive("Home", "TrackSetups")" asp-controller="Home" asp-action="TrackSetups">
                                 <i class="bi bi-sliders2 nav-ico" aria-hidden="true"></i>Setups
+                                @if (_latestSetupActivityIso != null)
+                                {
+                                    <span class="nav-alert-badge" id="setupNewsBadge"
+                                          data-latest="@_latestSetupActivityIso"
+                                          data-on-setups="@(_isOnSetupsPage ? "true" : "false")"
+                                          hidden role="status" aria-label="Neue Setups verfügbar">!</span>
+                                }
                             </a>
                         </li>
                         <li class="nav-item">
@@ -275,11 +290,11 @@
                                 <i class="bi bi-calendar2-event-fill nav-ico" aria-hidden="true"></i>Events
                             </a>
                         </li>
-                        <li class="nav-item">
+@*                         <li class="nav-item">
                             <a class="nav-link @IsActive("Home", "CommunityNews")" asp-controller="Home" asp-action="CommunityNews">
                                 <i class="bi bi-megaphone-fill nav-ico" aria-hidden="true"></i>News
                             </a>
-                        </li>
+                        </li> *@
                         <li class="nav-item">
                             <a class="nav-link @IsActive("Home", "RaceCalendar")" asp-controller="Home" asp-action="RaceCalendar">
                                 <i class="bi bi-calendar-check-fill nav-ico" aria-hidden="true"></i>Kalender
@@ -301,6 +316,7 @@
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="moreDropdown">
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="EwigeListe" data-race-lights="force" data-race-lights-text="Hall of Fame · Lights out…" data-race-lights-go="WELCOME TO THE HALL OF FAME">Ewige Liste</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="HallOfFame">Hall of Fame</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Teams">Teams</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="ReserveExchange">Reservefahrer-Börse</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="CommunityVotes">Community-Votings</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Highlights">Highlights</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="DriverLevels">Fahrerlevel / XP</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Stewarding">Stewarding</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Faq">FAQ</a></li>
+                                <li><a class="dropdown-item" href="/about/erdi10">Über mich</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Impressum">Impressum</a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -394,6 +410,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="~/lib/lucide/lucide.min.js" asp-append-version="true" defer></script>
     <script src="~/js/site.js" asp-append-version="true" defer></script>
+    <script src="~/js/exclusive-consent.js" asp-append-version="true" defer></script>
     <script>
         (function () {
             // ---------- Lucide-Icons aktivieren (data-lucide -> SVG) ----------
@@ -409,21 +426,35 @@
             // ---------- Scroll progress + sticky nav state ----------
             const nav = document.getElementById('mainNav');
             const bar = document.getElementById('scrollProgress');
-            const onScroll = () => {
+            // rAF-gedrosselt: höchstens ein Style-Write pro Frame statt bei jedem Scroll-Tick
+            // (verhindert Layout-Thrash und hält das Scrollen flüssig).
+            let scrollTicking = false;
+            const applyScroll = () => {
+                scrollTicking = false;
                 const h = document.documentElement;
                 const scrolled = (h.scrollTop || document.body.scrollTop);
                 const max = (h.scrollHeight - h.clientHeight) || 1;
                 if (bar) bar.style.width = ((scrolled / max) * 100) + '%';
                 if (nav) nav.classList.toggle('is-scrolled', scrolled > 12);
             };
+            const onScroll = () => {
+                if (scrollTicking) return;
+                scrollTicking = true;
+                requestAnimationFrame(applyScroll);
+            };
             document.addEventListener('scroll', onScroll, { passive: true });
-            onScroll();
+            applyScroll();
 
             // ---------- Reveal on scroll ----------
             if ('IntersectionObserver' in window) {
+                // threshold:0 + rootMargin statt threshold:0.12 — sonst blenden Sections, die
+                // höher als ~8× Viewport sind (z.B. die volle Setup-Liste ohne Filter), NIE ein:
+                // 12% der Section sind dann nie gleichzeitig sichtbar -> is-visible wird nie gesetzt
+                // -> opacity:0 bleibt. So triggert das Einblenden, sobald die Section in den unteren
+                // Viewport-Rand kommt, unabhängig von ihrer Höhe.
                 const io = new IntersectionObserver((entries) => {
                     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
-                }, { threshold: 0.12 });
+                }, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
                 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
             } else {
                 document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
@@ -881,9 +912,39 @@
         })();
     </script>
 
+    @* ---------- "!"-Badge am Setups-Navlink (localStorage = gelesen-Status) ---------- *@
+    <script>
+        (function () {
+            const badge = document.getElementById('setupNewsBadge');
+            if (!badge) return;
+            const KEY = 'erc-setups-seen-at';
+            const latest = badge.getAttribute('data-latest');
+            if (!latest) return;
+            try {
+                const seen = localStorage.getItem(KEY);
+                if (badge.getAttribute('data-on-setups') === 'true') {
+                    // Besuch der Setup-Seite gilt als "gelesen" – Badge verschwindet überall.
+                    // Max-Semantik: Das Setup-Intro (TrackSetups) schreibt ggf. einen frischeren
+                    // Zeitstempel als der 30s-Layout-Cache liefert — nie zurückdrehen.
+                    if (!seen || Date.parse(latest) > Date.parse(seen)) localStorage.setItem(KEY, latest);
+                    return;
+                }
+                if (!seen || Date.parse(latest) > Date.parse(seen)) badge.hidden = false;
+            } catch { /* localStorage blockiert (z. B. Private Mode) → Badge bleibt aus */ }
+        })();
+    </script>
+
 
     </body>
     </html>
+
+
+
+
+
+
+
+
 
 
 

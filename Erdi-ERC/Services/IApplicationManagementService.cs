@@ -16,7 +16,9 @@ namespace <OWNER_HANDLE>_ERC.Services
             string? divisionFilter = null,
             bool? acceptedFilter = null,
             int pageSize = 100,
-            int pageNumber = 1);
+            int pageNumber = 1,
+            bool excludeRejected = false,
+            string? sort = null);
 
         /// <summary>
         /// Ruft Bewerbungsstatistiken ab (offene, akzeptierte, pro Division).
@@ -30,9 +32,17 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         // ---- Workflow ----
         /// <summary>
-        /// Akzeptiert eine Bewerbung und erstellt das Fahrer-Profil.
+        /// Akzeptiert eine Bewerbung, erstellt das Fahrer-Profil und trägt den Fahrer
+        /// in die beworbene Liga ein. Über <paramref name="overrideLeagueId"/> kann der
+        /// Admin stattdessen eine andere Liga wählen.
         /// </summary>
-        Task<ApplicationActionResult> AcceptApplicationAsync(int id, string actorId);
+        Task<ApplicationActionResult> AcceptApplicationAsync(int id, string actorId, string? overrideLeagueId = null);
+
+        /// <summary>
+        /// Weist eine bereits angenommene Bewerbung einer (anderen) Liga zu.
+        /// Entfernt dabei leere Auto-Einträge aus der zuvor zugewiesenen Liga.
+        /// </summary>
+        Task<ApplicationActionResult> AssignToLeagueAsync(int id, string leagueId, string? assignedRole, string actorId);
 
         /// <summary>
         /// Lehnt eine Bewerbung ab (mit Grund).

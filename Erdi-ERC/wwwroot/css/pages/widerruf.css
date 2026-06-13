@@ -1,0 +1,14 @@
+/* Styles for Widerrufsbelehrung page */
+.doc-card__head { display:flex; align-items:center; gap:.6rem; font-weight:700; font-size:1rem; }
+.doc-card__body h3 { margin-top:0; font-size:1.25rem; color:var(--sig-cyan); }
+.doc-card__body h4 { margin-top:1rem; font-size:1.05rem; color:var(--ink); }
+.doc-card__body p { color:var(--ink-2); line-height:1.6; }
+.doc-card__body pre.text-mono { background:var(--surface-2); padding:1rem; border-radius:6px; overflow:auto; }
+.doc-card { padding:0; }
+.doc-card__head { padding:.9rem 1rem; border-bottom:1px solid var(--stroke-1); }
+.doc-card__body { padding:1.25rem; }
+
+/* Responsive tweaks */
+@media (min-width: 768px) {
+    .doc-card__body { padding:1.75rem; }
+}

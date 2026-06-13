@@ -32,9 +32,11 @@
                 <div class="doc-card__body">
                     <p class="mb-1">Verantwortlich für den Betrieb dieser Website ist:</p>
                     <p class="mb-0">
-                        <strong><OWNER_HANDLE>'s Racing Community</strong><br />
-                        Betrieben durch: <strong><OWNER_HANDLE>10</strong><br />
-                        Kontakt: <a class="text-cyan" href="https://twitch.tv/erdi10" target="_blank" rel="noopener">twitch.tv/erdi10</a>
+                        <strong>Pascal Kordes</strong><br />
+                        Emsdettener Str. 10<br />
+                        48268 Greven<br />
+                        Deutschland<br />
+                        Kontakt: <a class="text-cyan" href="mailto:Pascal-kordes@gmx.de">Pascal-kordes@gmx.de</a>
                         &middot; <a class="text-cyan" href="https://erdi-erc.de">erdi-erc.de</a>
                         &middot; <a class="text-cyan" asp-controller="Home" asp-action="Impressum">Impressum</a>
                     </p>
@@ -50,12 +52,14 @@
                     <ul class="mb-3">
                         <li><strong>Discord-User-ID</strong> (Snowflake) &ndash; eine numerische, öffentlich sichtbare ID deines Discord-Kontos</li>
                         <li><strong>Discord-Anzeigename</strong> (Username) &ndash; dein aktuell eingestellter Discord-Benutzername</li>
+                        <li><strong>Discord-Server-Rollen</strong> &ndash; die Liste der Rollen‑IDs, die der Nutzer auf dem Community‑Guild besitzt (wird verwendet, um Sub‑Rollen zu prüfen)</li>
                     </ul>
                     <p class="mb-0">
                         Diese Daten werden ausschließlich gespeichert, wenn du als Admin in der Datenbank hinterlegt bist
                         oder manuell durch den Betreiber eingetragen wirst. Reguläre Besucher ohne Admin-Rolle werden
                         <strong class="text-accent">nicht</strong> in der Datenbank gespeichert.
                     </p>
+                    <p class="mt-2 text-mute small">Wir speichern außerdem, wenn du der Widerrufsbelehrung für exklusive Setups zugestimmt hast (<code class="text-mono">HasAcceptedExclusiveSetupTerms</code>) und den Zeitstempel der Zustimmung (<code class="text-mono">ExclusiveSetupTermsAcceptedAt</code>) zur Nachweisführung.</p>
                 </div>
             </div>
         </div>
@@ -98,6 +102,7 @@
                         <li><strong>Auth-Cookie</strong> &ndash; enthält deine verschlüsselte Login-Session. Läuft nach 14 Tagen ab (Sliding Expiration). Wird beim Logout sofort gelöscht.</li>
                         <li><strong>OAuth-Correlation-Cookie</strong> &ndash; temporäres Cookie während des Discord-Login-Flows. Wird nach Abschluss automatisch entfernt.</li>
                     </ul>
+                    <p class="mt-2 text-mute small">Serverseitige Cookie‑Konfiguration: HttpOnly, Secure, SameSite=Lax und SlidingExpiration werden empfohlen. (Programmatisch in Program.cs / ConfigureApplicationCookie setzen.)</p>
                 </div>
             </div>
         </div>
@@ -107,9 +112,9 @@
                 <div class="doc-card__head"><i class="bi bi-plug-fill" style="color:var(--sig-cyan);"></i> 6. Drittdienste</div>
                 <div class="doc-card__body">
                     <ul class="mb-0">
-                        <li><strong>Discord OAuth2</strong> &ndash; für die Authentifizierung. Es gilt die <a class="text-cyan" href="https://discord.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Discord</a>.</li>
-                        <li><strong>Twitch Player / Chat</strong> &ndash; eingebettet auf der Racing-Hub-Seite. Es gilt die <a class="text-cyan" href="https://www.twitch.tv/p/de-de/legal/privacy-notice/" target="_blank" rel="noopener">Datenschutzerklärung von Twitch</a>.</li>
-                        <li><strong>Google Fonts</strong> &ndash; Schriftarten werden von Google-Servern geladen. Es gilt die <a class="text-cyan" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>.</li>
+                        <li><strong>Discord OAuth2</strong> &ndash; für die Authentifizierung. Es gilt die <a class="text-cyan" href="https://discord.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Discord</a>. Es werden nur die minimal notwendigen Scopes angefordert.</li>
+                        <li><strong>Twitch Player / Chat</strong> &ndash; eingebettet auf der Racing-Hub-Seite. Es gilt die <a class="text-cyan" href="https://www.twitch.tv/p/de-de/legal/privacy-notice/" target="_blank" rel="noopener">Datenschutzerklärung von Twitch</a>. Inhalte von Twitch können zur Anzeige Dritt‑Cookies auslösen.</li>
+                        <li><strong>Google Fonts</strong> &ndash; Schriftarten werden von Google-Servern geladen. Es gilt die <a class="text-cyan" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>. Empfehlung: Fonts lokal hosten, um IP‑Übermittlungen an Drittanbieter zu vermeiden.</li>
                     </ul>
                 </div>
             </div>
@@ -129,6 +134,7 @@
                         <a class="text-cyan" href="https://twitch.tv/erdi10" target="_blank" rel="noopener">twitch.tv/erdi10</a>
                         oder über den Discord-Server der <OWNER_HANDLE>'s Racing Community.
                     </p>
+                    <p class="mt-2 text-mute small">Hinweis: Wenn du Produkte oder digitalen Content über die Seite erwirbst, steht Verbrauchern ein gesetzliches Widerrufsrecht zu. Eine ausführliche Widerrufsbelehrung findest du <a class="text-cyan" asp-controller="Home" asp-action="Widerruf">hier</a>.</p>
                 </div>
             </div>
         </div>
