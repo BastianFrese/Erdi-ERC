@@ -28,7 +28,6 @@
     Title     = "Alle",
     Highlight = "Rennen",
     Lead      = "Alle gefahrenen Rennen der ERC – mit Sieger, Podium und Bestzeit.",
-    GhostText = "ARCHIVE",
     Actions   = new() {
         new F1ButtonVm { Label="Startseite", Variant="ghost", IconLucide="arrow-left", Href=Url.Action("Index","Home")! }
     }
@@ -67,10 +66,11 @@
 }
 else
 {
+    <div class="f1-stagger">
     @foreach (var league in Model.Leagues)
     {
-        var leagueDetailUrl = Url.Action("LeagueResults", "Home", new { leagueId = league.LeagueId })!;
-        <section class="f1-section reveal">
+        var leagueDetailUrl = Url.Action("LeagueResults", "Races", new { leagueId = league.LeagueId })!;
+        <section class="f1-section">
             <partial name="_F1Section" model="@(new F1SectionVm {
                 Chip    = "Liga",
                 Title   = league.LeagueName,
@@ -102,7 +102,7 @@ else
                         <tbody>
                             @foreach (var race in league.Races)
                             {
-                                var raceUrl    = Url.Action("RaceDetail", "Home", new { leagueId = league.LeagueId, raceId = race.RaceId });
+                                var raceUrl    = Url.Action("RaceDetail", "Races", new { leagueId = league.LeagueId, raceId = race.RaceId });
                                 var winnerTeam = F1TeamsHelper.GetTeamByName(F1TeamsHelper.GetCssKeyForDriver(race.Winner) ?? "");
                                 var winnerColor = winnerTeam?.PrimaryColor ?? "var(--ink-3)";
                                 <tr style="cursor:pointer;"
@@ -153,4 +153,5 @@ else
             </div>
         </section>
     }
+    </div>
 }

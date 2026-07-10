@@ -3,15 +3,6 @@
    Namespace: .f1-* / .hud-*  -- aendert nichts global.
    ===================================================================== */
 
-/* -------- Lucide-Icon Defaults -------- */
-.f1-icon {
-    width: 1em;
-    height: 1em;
-    stroke-width: 2;
-    vertical-align: -.125em;
-    flex-shrink: 0;
-}
-
 /* -------- Page-Backdrop (nur aktiv wenn Page-CSS geladen ist) -------- */
 .f1-home-backdrop {
     position: fixed;
@@ -167,62 +158,6 @@
     gap: .6rem;
     margin-top: .25rem;
 }
-
-/* -------- F1-Buttons -------- */
-.btn.f1-btn, .f1-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    padding: .7rem 1.15rem;
-    font: 700 .82rem/1 var(--ff-tech);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    border-radius: var(--r-2);
-    border: 1px solid transparent;
-    transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast), color var(--t-fast);
-    position: relative;
-    overflow: hidden;
-}
-.btn.f1-btn--primary, .f1-btn--primary {
-    background: var(--g-accent);
-    color: ***REMOVED***fff;
-    box-shadow: 0 8px 22px -10px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,.18);
-}
-.btn.f1-btn--primary:hover, .f1-btn--primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 30px -10px var(--accent-glow), 0 0 0 1px rgba(255,255,255,.2);
-    color: ***REMOVED***fff;
-}
-.btn.f1-btn--ghost, .f1-btn--ghost {
-    background: rgba(255,255,255,.03);
-    color: var(--ink);
-    border-color: var(--stroke-2);
-}
-.btn.f1-btn--ghost:hover, .f1-btn--ghost:hover {
-    background: rgba(255,255,255,.07);
-    border-color: var(--stroke-3);
-    color: ***REMOVED***fff;
-}
-.btn.f1-btn--outline, .f1-btn--outline {
-    background: transparent;
-    color: var(--ink);
-    border-color: var(--stroke-2);
-}
-.btn.f1-btn--outline:hover, .f1-btn--outline:hover {
-    background: rgba(255,255,255,.05);
-    color: ***REMOVED***fff;
-}
-.btn.f1-btn::after, .f1-btn::after {
-    /* Sektor-Sweep on hover */
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.12) 50%, transparent 100%);
-    transform: translateX(-110%);
-    transition: transform .55s var(--ease-overtake);
-    pointer-events: none;
-}
-.btn.f1-btn:hover::after, .f1-btn:hover::after { transform: translateX(110%); }
 
 /* -------- Logo-Block (rechts im Hero) -------- */
 .f1-hero__brand {

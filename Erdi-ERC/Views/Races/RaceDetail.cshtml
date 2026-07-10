@@ -54,10 +54,10 @@
     Eyebrow   = $"{Model.League.Name} · Grand Prix",
     Title     = Model.Race.Track,
     Lead      = $"Round <strong>{raceNumber}</strong> von {raceTotal} · {Model.Race.Date.ToString("dd. MMMM yyyy")}",
-    GhostText = "RACE",
+
     Actions   = new() {
-        new F1ButtonVm { Label="Zur Liga", Variant="primary", IconLucide="arrow-left", Href=Url.Action("LeagueResults","Home", new { leagueId=Model.League.Id })! },
-        new F1ButtonVm { Label="Hub",      Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10","Home")! }
+        new F1ButtonVm { Label="Zur Liga", Variant="primary", IconLucide="arrow-left", Href=Url.Action("LeagueResults", "Races", new { leagueId=Model.League.Id })! },
+        new F1ButtonVm { Label="Hub",      Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10", "Stats")! }
     }
 })" />
 

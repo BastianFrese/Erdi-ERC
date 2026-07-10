@@ -1,0 +1,156 @@
+@model List<(<OWNER_HANDLE>_ERC.Models.DriverProfile Profile, <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel CardData)>
+@using <OWNER_HANDLE>_ERC.Models
+@{
+    ViewData["Title"] = "Fahrerkarten";
+    ViewData["Kicker"] = "Fahrer";
+    ViewData["HeroTitle"] = "Fahrerkarten";
+
+    bool canEdit = ViewBag.CanEditNames == true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
+    <style>
+        .dc-admin-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding: 1.5rem 0;
+        }
+
+        .dc-admin-item {
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+            align-items: center;
+        }
+
+        .dc-edit-panel {
+            width: 360px;
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            padding: .75rem 1rem;
+        }
+
+        .dc-edit-panel__label {
+            font-size: .7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--ink-3, ***REMOVED***888);
+            margin-bottom: .4rem;
+        }
+
+        .dc-edit-panel__meta {
+            font-size: .72rem;
+            color: var(--ink-3, ***REMOVED***888);
+            margin-bottom: .55rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .dc-edit-panel__row {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
+
+        .dc-edit-panel__input {
+            flex: 1;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 8px;
+            color: ***REMOVED***fff;
+            font-size: .82rem;
+            padding: .35rem .65rem;
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        .dc-edit-panel__input:focus { border-color: ***REMOVED***5b8cff; }
+
+        .dc-edit-panel__btn {
+            background: ***REMOVED***5b8cff;
+            color: ***REMOVED***fff;
+            border: none;
+            border-radius: 8px;
+            font-size: .8rem;
+            font-weight: 600;
+            padding: .35rem .8rem;
+            cursor: pointer;
+            transition: background .15s;
+            white-space: nowrap;
+        }
+
+        .dc-edit-panel__btn:hover { background: ***REMOVED***4070e8; }
+
+        .dc-empty {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: var(--ink-3, ***REMOVED***888);
+        }
+
+        .dc-kpi {
+            color: var(--ink-2, ***REMOVED***aaa);
+            margin-bottom: 1.5rem;
+        }
+
+        .dc-kpi strong {
+            color: ***REMOVED***5b8cff;
+            font-size: 1.3rem;
+        }
+    </style>
+}
+
+<div class="adm-dashboard">
+
+    <p class="dc-kpi">
+        <strong>@Model.Count</strong> aktive Fahrer mit verknüpftem Profil
+    </p>
+
+    @if (Model.Count == 0)
+    {
+        <div class="dc-empty">
+            <i class="bi bi-person-x" style="font-size:2.5rem;display:block;margin-bottom:.75rem;"></i>
+            Keine aktiven Fahrer mit verknüpftem Profil gefunden.
+        </div>
+    }
+    else
+    {
+        <div class="dc-admin-grid">
+            @foreach (var (profile, card) in Model)
+            {
+                <div class="dc-admin-item" id="card-@profile.DiscordId">
+                    @{
+                        ViewBag.Profile = profile;
+                    }
+                    <partial name="~/Views/Shared/_DriverCard.cshtml" model="card" />
+
+                    @if (canEdit)
+                    {
+                        var currentName = profile.DisplayName?.Trim() ?? "";
+
+                        <div class="dc-edit-panel">
+                            <div class="dc-edit-panel__label">Ingame-Name</div>
+                            <div class="dc-edit-panel__meta">Discord: @profile.DiscordName</div>
+                            <form asp-controller="AdminDriverCards" asp-action="UpdateDisplayName" method="post"
+                                  class="dc-edit-panel__row">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="discordId" value="@profile.DiscordId" />
+                                <input class="dc-edit-panel__input"
+                                       type="text"
+                                       name="displayName"
+                                       value="@currentName"
+                                       placeholder="Ingame-Name"
+                                       maxlength="128" />
+                                <button type="submit" class="dc-edit-panel__btn">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

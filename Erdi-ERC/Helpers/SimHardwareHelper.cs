@@ -17,12 +17,12 @@ namespace <OWNER_HANDLE>_ERC.Helpers
                 new("MOZA Racing",  "moza",         new[] { "moza" }),
                 new("Logitech G",   "logitech",     new[] { "logitech", "logi", "driving force", "g29", "g920", "g923", "g25", "g27" }),
                 new("Thrustmaster", "thrustmaster", new[] { "thrustmaster", "tmx", "t300", "t248", "t150", "t-gt", "ts-xw", "ts-pc", "t500" }),
+                new("Gamepad",      "gamepad",      new[] { "gamepad", "controller", "pad", "dualsense", "dualshock", "dual sense", "dual shock", "xbox controller", "ps controller" }),
             };
 
         /// <summary>
         /// Findet die Hardware-Marke zu einem frei eingegebenen Text (z.B. "Fanatec CSL DD",
-        /// "Moza R9", "Logitech G923"). Gibt null zurück, wenn nichts Passendes erkannt wird
-        /// (z.B. "Gamepad", "Tastatur").
+        /// "Moza R9", "Logitech G923", "Gamepad"). Gibt null zurück, wenn nichts Passendes erkannt wird.
         /// </summary>
         public static SimBrand? Resolve(string? input)
         {

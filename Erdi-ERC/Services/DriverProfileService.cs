@@ -38,6 +38,9 @@ namespace <OWNER_HANDLE>_ERC.Services
                     DiscordId = discordId,
                     DiscordName = app.DiscordName,
                     DisplayName = app.GamingName,
+                    PreferredPlatform = app.Platform?.Trim(),
+                    InputDevice = string.IsNullOrWhiteSpace(app.SimHardware) ? null : app.SimHardware.Trim(),
+                    FavoriteTeam = string.IsNullOrWhiteSpace(app.PreferredTeam) ? null : app.PreferredTeam.Trim(),
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -48,9 +51,15 @@ namespace <OWNER_HANDLE>_ERC.Services
                 profile.DiscordName = app.DiscordName;
                 profile.UpdatedAt = DateTime.UtcNow;
                 if (string.IsNullOrWhiteSpace(profile.DisplayName))
-                {
                     profile.DisplayName = app.GamingName;
-                }
+                if (string.IsNullOrWhiteSpace(profile.PreferredPlatform))
+                    profile.PreferredPlatform = app.Platform?.Trim();
+                // Hardware/Wunsch-Team aus der Bewerbung nur ergänzen, nie ein bestehendes
+                // (vom Admin/Fahrer gepflegtes) Profilfeld überschreiben.
+                if (string.IsNullOrWhiteSpace(profile.InputDevice) && !string.IsNullOrWhiteSpace(app.SimHardware))
+                    profile.InputDevice = app.SimHardware.Trim();
+                if (string.IsNullOrWhiteSpace(profile.FavoriteTeam) && !string.IsNullOrWhiteSpace(app.PreferredTeam))
+                    profile.FavoriteTeam = app.PreferredTeam.Trim();
             }
 
             if (!string.IsNullOrWhiteSpace(app.Platform) && !string.IsNullOrWhiteSpace(app.GamingName))
@@ -162,6 +171,135 @@ namespace <OWNER_HANDLE>_ERC.Services
             return await _db.DriverProfiles
                 .Include(p => p.GamerTags)
                 .FirstOrDefaultAsync(p => p.DisplayName == n, ct);
+        }
+
+        public Task<int> RenameEaNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default)
+            => RenameIngameNameAsync(discordId, newName, actorDiscordId, ct);
+
+        public async Task<int> RenameIngameNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default)
+        {
+            var profile = await _db.DriverProfiles
+                .AsTracking()
+                .Include(p => p.GamerTags)
+                .FirstOrDefaultAsync(p => p.DiscordId == discordId, ct)
+                ?? throw new InvalidOperationException($"DriverProfile {discordId} not found.");
+
+            var normalized = newName.Trim();
+            var platform = !string.IsNullOrWhiteSpace(profile.PreferredPlatform)
+                ? profile.PreferredPlatform.Trim()
+                : "EA";
+
+            var existingTag = profile.GamerTags
+                .FirstOrDefault(t => string.Equals(t.Platform, platform, StringComparison.OrdinalIgnoreCase));
+
+            // All names this driver may currently appear as in standings/finishes.
+            // Every linked gamer tag counts — not only the preferred platform — plus the
+            // display and Discord names, so a rename propagates regardless of which alias
+            // a given result was originally entered under.
+            var oldAliases = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var tag in profile.GamerTags)
+                if (!string.IsNullOrWhiteSpace(tag.GamerTag)) oldAliases.Add(tag.GamerTag.Trim());
+            if (!string.IsNullOrWhiteSpace(profile.DisplayName)) oldAliases.Add(profile.DisplayName.Trim());
+            if (!string.IsNullOrWhiteSpace(profile.DiscordName)) oldAliases.Add(profile.DiscordName.Trim());
+            oldAliases.Remove(normalized);
+
+            if (existingTag is null)
+            {
+                profile.GamerTags.Add(new DriverGamerTag
+                {
+                    DiscordId = discordId,
+                    Platform = platform,
+                    GamerTag = normalized,
+                    IsPrimary = profile.GamerTags.Count == 0,
+                    LinkedAt = DateTime.UtcNow,
+                    LinkedByDiscordId = actorDiscordId
+                });
+            }
+            else
+            {
+                existingTag.GamerTag = normalized;
+                existingTag.LinkedAt = DateTime.UtcNow;
+                existingTag.LinkedByDiscordId = actorDiscordId;
+                existingTag.IsPrimary = true;
+            }
+
+            profile.DisplayName = normalized;
+            if (string.IsNullOrWhiteSpace(profile.PreferredPlatform))
+                profile.PreferredPlatform = platform;
+            profile.UpdatedAt = DateTime.UtcNow;
+
+            var changed = 0;
+            foreach (var oldName in oldAliases)
+                changed += await RenameReferencesAsync(profile, oldName, normalized, ct);
+
+            await _db.SaveChangesAsync(ct);
+            return changed;
+        }
+
+        private async Task<int> RenameReferencesAsync(DriverProfile profile, string oldName, string newName, CancellationToken ct)
+        {
+            var changed = 0;
+
+            // Match trim- and case-insensitively: standings/results are often entered by
+            // hand, so a stored name can differ from the profile alias only by casing or
+            // stray whitespace. An exact (ordinal) compare would silently miss those rows
+            // and leave the old name on the public results page.
+            var oldLower = oldName.Trim().ToLowerInvariant();
+            bool Matches(string? value) =>
+                value != null && string.Equals(value.Trim(), oldName.Trim(), StringComparison.OrdinalIgnoreCase);
+
+            var standings = await _db.DriverStandings.AsTracking()
+                .Where(x => (x.Driver != null && x.Driver.Trim().ToLower() == oldLower)
+                         || (x.ReserveForDriver != null && x.ReserveForDriver.Trim().ToLower() == oldLower))
+                .ToListAsync(ct);
+            foreach (var s in standings)
+            {
+                if (Matches(s.Driver))           { s.Driver = newName; changed++; }
+                if (Matches(s.ReserveForDriver)) { s.ReserveForDriver = newName; changed++; }
+            }
+
+            var raceResults = await _db.RaceResults.AsTracking()
+                .Where(x => (x.Winner != null && x.Winner.Trim().ToLower() == oldLower)
+                         || (x.FastestLap != null && x.FastestLap.Trim().ToLower() == oldLower))
+                .ToListAsync(ct);
+            foreach (var r in raceResults)
+            {
+                if (Matches(r.Winner))     { r.Winner = newName; changed++; }
+                if (Matches(r.FastestLap)) { r.FastestLap = newName; changed++; }
+            }
+
+            var finishes = await _db.RaceFinishes.AsTracking()
+                .Where(x => x.Driver != null && x.Driver.Trim().ToLower() == oldLower)
+                .ToListAsync(ct);
+            foreach (var f in finishes) { f.Driver = newName; changed++; }
+
+            var reserves = await _db.RaceReserveAssignments.AsTracking()
+                .Where(x => (x.ReserveDriver != null && x.ReserveDriver.Trim().ToLower() == oldLower)
+                         || (x.MainDriver != null && x.MainDriver.Trim().ToLower() == oldLower))
+                .ToListAsync(ct);
+            foreach (var a in reserves)
+            {
+                if (Matches(a.ReserveDriver)) { a.ReserveDriver = newName; changed++; }
+                if (Matches(a.MainDriver))    { a.MainDriver = newName; changed++; }
+            }
+
+            var penalties = await _db.LeaguePenalties.AsTracking()
+                .Where(x => x.Driver != null && x.Driver.Trim().ToLower() == oldLower)
+                .ToListAsync(ct);
+            foreach (var p in penalties) { p.Driver = newName; changed++; }
+
+            var achievements = await _db.CustomAchievements.AsTracking()
+                .Where(x => x.Driver != null && x.Driver.Trim().ToLower() == oldLower)
+                .ToListAsync(ct);
+            foreach (var a in achievements) { a.Driver = newName; changed++; }
+
+            var applications = await _db.ApplicationForms.AsTracking()
+                .Where(x => x.GamingName != null && x.GamingName.Trim().ToLower() == oldLower
+                    && ((x.DiscordId != null && x.DiscordId == profile.DiscordId) || x.DiscordName == profile.DiscordName))
+                .ToListAsync(ct);
+            foreach (var a in applications) { a.GamingName = newName; changed++; }
+
+            return changed;
         }
 
         private static int Levenshtein(string a, string b)

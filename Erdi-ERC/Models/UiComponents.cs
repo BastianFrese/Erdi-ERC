@@ -10,7 +10,6 @@ namespace <OWNER_HANDLE>_ERC.Models.UiComponents
         public List<F1ButtonVm> Actions { get; set; } = new();
         public bool Chequer { get; set; } = true;
         public bool Telemetry { get; set; } = true;
-        public string? GhostText { get; set; }
     }
 
     public class F1ButtonVm

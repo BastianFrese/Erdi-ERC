@@ -1,0 +1,47 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@{
+    ViewData["Title"] = "<OWNER_HANDLE> hat da was vorbereitet";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/troll.css" asp-append-version="true" />
+}
+
+<div class="f1-home-backdrop" aria-hidden="true"></div>
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Eyebrow   = "<OWNER_HANDLE> · ERC · Boxenstopp",
+    Title     = "Moment mal,",
+    Highlight = "<OWNER_HANDLE> will was von dir",
+    Lead      = "Bevor du reinkommst, hat sich <strong class=\"text-accent\"><OWNER_HANDLE>/strong> noch eine Kleinigkeit überlegt …",
+
+})" />
+
+<section class="f1-section reveal">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
+            <div class="troll-card" data-gag="@Model.Gag.Key">
+                @await Html.PartialAsync(Model.PartialName, Model)
+
+                @* Geteiltes Feedback für alle Pflicht-Gags (Mathe/Quiz/Captcha). *@
+                @if (Model.ShowWrongAnswer)
+                {
+                    <p class="troll-wrong" role="alert">
+                        @(Model.MercyOffered ? "<OWNER_HANDLE> verdreht die Augen. So langsam wird's peinlich." : "<OWNER_HANDLE> schüttelt den Kopf. Nochmal.")
+                    </p>
+                }
+                @if (Model.MercyOffered)
+                {
+                    <a asp-controller="Troll" asp-action="Continue" class="troll-mercy">
+                        <OWNER_HANDLE> ist heute gnädig — reinlassen →
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/troll.js" asp-append-version="true" defer></script>
+}

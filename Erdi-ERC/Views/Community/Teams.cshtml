@@ -15,7 +15,7 @@
     Title     = "Team",
     Highlight = "seiten",
     Lead      = "Eigene Teamprofile mit Fahrern, Punkten, Erfolgen und schneller Übersicht.",
-    GhostText = "TEAMS"
+
 })" />
 
 <div class="f1-stat-grid reveal mb-4">
@@ -54,7 +54,7 @@
             @foreach (var team in Model.Teams)
             {
                 <div class="col-md-6 col-xl-4">
-                    <a class="text-decoration-none" asp-controller="Home" asp-action="Team" asp-route-name="@team.TeamName">
+                    <a class="text-decoration-none" asp-controller="Community" asp-action="Team" asp-route-name="@team.TeamName">
                         <article class="community-card h-100" style="border-top: 3px solid @team.PrimaryColor;">
                             <div class="community-card__body">
                                 <div class="d-flex justify-content-between align-items-center gap-2 mb-3">

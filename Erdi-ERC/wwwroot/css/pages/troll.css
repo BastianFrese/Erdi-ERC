@@ -1,0 +1,221 @@
+/* ============================================================
+   <OWNER_HANDLE>-Troll-System – Login-Pranks (Gate-Seite)
+   Nutzt bestehende F1-Design-Tokens (--surface-1, --stroke-1, …)
+   mit defensiven Fallbacks, falls ein Token mal anders heißt.
+   ============================================================ */
+
+.troll-card {
+    position: relative;
+    background: var(--surface-1, ***REMOVED***11141b);
+    border: 1px solid var(--stroke-1, rgba(255, 255, 255, .08));
+    border-radius: var(--r-3, 18px);
+    box-shadow: var(--sh-2, 0 20px 60px rgba(0, 0, 0, .45));
+    padding: clamp(1.5rem, 4vw, 2.75rem);
+    text-align: center;
+    overflow: hidden;
+}
+
+.troll-gag { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+
+.troll-eyebrow {
+    font: 700 .72rem/1 var(--ff-tech, 'JetBrains Mono', monospace);
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--accent, ***REMOVED***e10600);
+}
+
+.troll-title {
+    font: 800 clamp(1.3rem, 3.4vw, 2rem)/1.15 var(--ff-heading, 'Orbitron', sans-serif);
+    color: var(--ink, ***REMOVED***f4f6fb);
+    margin: 0;
+}
+.troll-title em { color: var(--accent, ***REMOVED***e10600); font-style: normal; }
+
+.troll-lead { color: var(--text-mute, ***REMOVED***9aa3b2); margin: 0; max-width: 48ch; }
+
+/* ---- Mathe ---- */
+.troll-math__problem {
+    font: 800 clamp(2rem, 7vw, 3.4rem)/1 var(--ff-heading, 'Orbitron', sans-serif);
+    color: var(--ink, ***REMOVED***f4f6fb);
+    letter-spacing: .04em;
+    display: flex; align-items: baseline; gap: .3em; justify-content: center;
+}
+.troll-math__q { color: var(--accent, ***REMOVED***e10600); }
+
+.troll-form { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; width: 100%; }
+.troll-input {
+    background: rgba(0, 0, 0, .35);
+    border: 1px solid var(--stroke-1, rgba(255, 255, 255, .12));
+    border-radius: 12px;
+    color: var(--ink, ***REMOVED***fff);
+    font: 700 1.2rem var(--ff-heading, sans-serif);
+    padding: .7rem 1rem; text-align: center; width: min(220px, 60vw);
+}
+.troll-input:focus { outline: 2px solid var(--accent, ***REMOVED***e10600); outline-offset: 1px; }
+
+/* ---- Quiz / Choices ---- */
+.troll-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; width: 100%; }
+.troll-choice {
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--stroke-1, rgba(255, 255, 255, .12));
+    border-radius: 12px;
+    color: var(--ink, ***REMOVED***fff);
+    font: 600 .98rem var(--ff-body, sans-serif);
+    padding: .85rem 1rem; cursor: pointer;
+    transition: transform .12s, border-color .12s, background .12s;
+}
+.troll-choice:hover { transform: translateY(-2px); border-color: var(--accent, ***REMOVED***e10600); background: rgba(225, 6, 0, .08); }
+
+/* ---- Feedback ---- */
+.troll-wrong { color: var(--accent, ***REMOVED***e10600); font-weight: 700; margin: 1rem 0 0; }
+.troll-mercy {
+    display: inline-block; margin-top: .85rem;
+    color: var(--text-mute, ***REMOVED***9aa3b2);
+    text-decoration: underline; text-underline-offset: 3px;
+}
+.troll-mercy:hover { color: var(--ink, ***REMOVED***fff); }
+
+/* ---- Fake loading ---- */
+.troll-progress {
+    width: min(420px, 80vw); height: 12px; border-radius: 99px;
+    background: rgba(255, 255, 255, .08); overflow: hidden;
+}
+.troll-progress__bar {
+    height: 100%; width: 0; border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent, ***REMOVED***e10600), ***REMOVED***ff6a3d);
+    transition: width .25s ease;
+}
+.troll-progress__label { font: 700 .9rem var(--ff-tech, monospace); color: var(--text-mute, ***REMOVED***9aa3b2); }
+
+/* ---- Fake terms ---- */
+.troll-terms { color: var(--text-mute, ***REMOVED***c2c8d2); line-height: 1.7; }
+.troll-terms__actions, .troll-gag__actions { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; }
+
+/* ---- Reaction light ---- */
+.troll-light {
+    border: none; border-radius: 16px; width: min(320px, 80vw); height: 120px;
+    font: 800 1.3rem var(--ff-heading, sans-serif); color: ***REMOVED***fff; cursor: pointer;
+    background: ***REMOVED***c0392b; transition: background .1s; letter-spacing: .04em;
+}
+.troll-light.is-go { background: ***REMOVED***1faa59; }
+.troll-light.is-early { background: ***REMOVED***b5891f; }
+.troll-reaction__result { font: 700 1rem var(--ff-tech, monospace); color: var(--ink, ***REMOVED***fff); min-height: 1.2em; }
+
+/* ---- Captcha ---- */
+.troll-captcha { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; width: min(360px, 86vw); }
+.troll-captcha__tile {
+    aspect-ratio: 1; font-size: clamp(1.8rem, 7vw, 2.6rem); cursor: pointer;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--stroke-1, rgba(255, 255, 255, .12));
+    border-radius: 14px; transition: transform .12s, border-color .12s;
+}
+.troll-captcha__tile:hover { transform: scale(1.06); border-color: var(--accent, ***REMOVED***e10600); }
+
+/* ---- Runaway ---- */
+.troll-runaway__field { position: relative; width: 100%; min-height: 96px; display: flex; align-items: center; justify-content: center; }
+.troll-runaway { transition: transform .12s ease; }
+
+/* ---- Wheel / Dice ---- */
+.troll-spinner { font-size: clamp(3rem, 12vw, 5rem); line-height: 1; }
+.troll-spinner.is-spinning { animation: troll-spin .6s linear infinite; }
+.troll-result { font: 700 1.05rem var(--ff-body, sans-serif); color: var(--ink, ***REMOVED***fff); min-height: 1.3em; max-width: 46ch; }
+.troll-fortune { font: 600 italic 1.15rem/1.6 var(--ff-body, sans-serif); color: var(--ink, ***REMOVED***f4f6fb); max-width: 46ch; }
+
+/* ---- Oath (Treueschwur) ---- */
+.troll-oath {
+    font: 700 italic 1.15rem/1.5 var(--ff-body, sans-serif);
+    color: var(--ink, ***REMOVED***f4f6fb);
+    background: rgba(255, 255, 255, .04);
+    border-left: 3px solid var(--accent, ***REMOVED***e10600);
+    border-radius: 8px;
+    padding: .7rem 1rem; max-width: 44ch;
+}
+.troll-input--wide { width: min(420px, 84vw); font-size: 1.05rem; }
+
+/* ---- Bluescreen ---- */
+.troll-bsod {
+    background: ***REMOVED***0a4bcc; color: ***REMOVED***fff;
+    margin: -.5rem; padding: clamp(1.2rem, 4vw, 2.4rem); border-radius: 12px;
+    align-items: flex-start; text-align: left; gap: .8rem;
+}
+.troll-bsod__face { font: 800 3rem/1 var(--ff-heading, sans-serif); }
+.troll-bsod__title { font: 800 1.3rem var(--ff-tech, monospace); margin: 0; letter-spacing: .02em; }
+.troll-bsod__text { color: rgba(255, 255, 255, .9); margin: 0; max-width: 52ch; }
+.troll-bsod__code { font: 600 .85rem var(--ff-tech, monospace); color: rgba(255, 255, 255, .7); margin: 0; }
+.troll-bsod .f1-btn { margin-top: .4rem; }
+
+/* ---- Fake update ---- */
+.troll-update__warn { font: 700 .85rem var(--ff-tech, monospace); color: ***REMOVED***ffb454; margin: 0; }
+
+/* ---- Hold button (3s gedrückt halten) ---- */
+.troll-hold__btn {
+    position: relative; overflow: hidden;
+    border: 1px solid var(--stroke-1, rgba(255, 255, 255, .14));
+    border-radius: 16px; width: min(320px, 80vw); height: 92px;
+    background: rgba(255, 255, 255, .05); color: var(--ink, ***REMOVED***fff);
+    font: 800 1.1rem var(--ff-heading, sans-serif); cursor: pointer;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.troll-hold__fill {
+    position: absolute; inset: 0 auto 0 0; width: 0; z-index: 0;
+    background: linear-gradient(90deg, var(--accent, ***REMOVED***e10600), ***REMOVED***ff6a3d);
+}
+.troll-hold__label { position: relative; z-index: 1; }
+
+/* ---- Whack-a-<OWNER_HANDLE> ---- */
+.troll-whack__field {
+    position: relative; width: min(420px, 86vw); height: 220px;
+    background: rgba(0, 0, 0, .25);
+    border: 1px solid var(--stroke-1, rgba(255, 255, 255, .1));
+    border-radius: 14px; overflow: hidden;
+}
+.troll-whack__target {
+    position: absolute; top: 0; left: 0;
+    width: 56px; height: 56px; font-size: 2rem; line-height: 56px;
+    border: none; background: transparent; cursor: pointer;
+    transition: top .12s ease, left .12s ease;
+}
+.troll-whack__target:hover { transform: scale(1.1); }
+
+/* ---- Roter Knopf ---- */
+.troll-red__btn {
+    border: none; border-radius: 14px; width: min(300px, 80vw); height: 90px;
+    background: radial-gradient(circle at 50% 35%, ***REMOVED***ff4136, ***REMOVED***b5160c);
+    color: ***REMOVED***fff; font: 800 1.3rem var(--ff-heading, sans-serif);
+    letter-spacing: .08em; cursor: pointer;
+    box-shadow: 0 8px 0 ***REMOVED***7a0f08, 0 12px 24px rgba(0, 0, 0, .4);
+    transition: transform .06s, box-shadow .06s;
+}
+.troll-red__btn:hover { transform: translateY(-1px); }
+.troll-red__btn.is-pressed, .troll-red__btn:active {
+    transform: translateY(6px); box-shadow: 0 2px 0 ***REMOVED***7a0f08, 0 4px 10px rgba(0, 0, 0, .4);
+}
+.troll-red__btn:disabled { filter: grayscale(.5); cursor: default; }
+
+/* ---- 8-Ball / Münze ---- */
+.troll-8ball, .troll-coin { font-size: clamp(3rem, 12vw, 5rem); line-height: 1; }
+.troll-8ball.is-spinning, .troll-coin.is-spinning { animation: troll-spin .6s linear infinite; }
+
+/* ---- Horoskop ---- */
+.troll-horo__sign { color: var(--text-mute, ***REMOVED***9aa3b2); margin: 0; font: 600 .95rem var(--ff-body, sans-serif); }
+.troll-horo__sign strong { color: var(--accent, ***REMOVED***e10600); }
+
+/* ---- helpers ---- */
+.troll-hidden { display: none !important; }
+.troll-shake { animation: troll-shake .5s ease; }
+
+@keyframes troll-spin { to { transform: rotate(360deg); } }
+@keyframes troll-shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .troll-spinner.is-spinning { animation: none; }
+    .troll-8ball.is-spinning, .troll-coin.is-spinning { animation: none; }
+    .troll-shake { animation: none; }
+    .troll-runaway { transition: none; }
+    .troll-whack__target { transition: none; }
+}

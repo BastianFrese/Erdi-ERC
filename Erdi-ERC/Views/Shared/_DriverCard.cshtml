@@ -37,6 +37,15 @@
     var finishedRaces = Model?.Races?.Count(r => r.Position > 0) ?? 0;
     var winRate       = finishedRaces > 0 ? (int)Math.Round(100.0 * (Model?.Wins ?? 0) / finishedRaces) : 0;
     var bestFinish    = Model?.BestFinish is int bf && bf > 0 ? $"P{bf}" : "–";
+
+    // Autofit-Skript nur einmal pro Request einbinden, egal wie viele Karten gerendert werden.
+    var emitFitScript = !Context.Items.ContainsKey("__ercCardFitEmitted");
+    if (emitFitScript) { Context.Items["__ercCardFitEmitted"] = true; }
+}
+
+@if (emitFitScript)
+{
+    <script src="~/js/driver-card-fit.js" asp-append-version="true" defer></script>
 }
 
 @if (hasPhoto)
@@ -75,7 +84,13 @@
             </div>
 
             <div class="erc-info">
-                <div class="erc-info__name">@Model?.Driver</div>
+                <div class="erc-info__name">
+                    @if (natFlag is not null)
+                    {
+                        <img class="erc-name__flag" src="@natFlag" alt="" onerror="this.style.display='none'" />
+                    }
+                    @Model?.Driver
+                </div>
                 <div class="erc-info__accent"></div>
                 <div class="erc-meta">
                     @if (teamName is not null)
@@ -87,10 +102,7 @@
                                 {
                                     <img class="erc-meta__logo" src="@teamLogo" alt="@teamName" onerror="this.style.display='none'" />
                                 }
-                                else
-                                {
-                                    @teamName
-                                }
+                                <span>@teamName</span>
                             </span>
                         </div>
                     }
@@ -111,7 +123,10 @@
                     {
                         <div class="erc-meta__cell">
                             <span class="erc-meta__lbl">Hardware</span>
-                            <span class="erc-meta__val"><img class="erc-meta__logo" src="@hardwareLogo" alt="@hardware!.Name" onerror="this.style.display='none'" /></span>
+                            <span class="erc-meta__val">
+                                <img class="erc-meta__logo" src="@hardwareLogo" alt="@hardware!.Name" onerror="this.style.display='none'" />
+                                <span>@hardware!.Name</span>
+                            </span>
                         </div>
                     }
                 </div>
@@ -157,14 +172,23 @@ else
                 @if (team is not null)
                 {
                     <div class="erc-tower__rule"></div>
-                    <div class="erc-tower__team"><img src="@teamLogo" alt="@team.Name" onerror="this.style.display='none'" /></div>
+                    <div class="erc-tower__team">
+                        <img src="@teamLogo" alt="@team.Name" onerror="this.style.display='none'" />
+                        <span class="erc-tower__team-lbl">@team.Name</span>
+                    </div>
                 }
             </div>
 
             <div class="erc-monogram"><span class="erc-monogram__txt">@initials</span></div>
 
             <div class="erc-sname">
-                <div class="erc-sname__name">@Model?.Driver</div>
+                <div class="erc-sname__name">
+                    @if (natFlag is not null)
+                    {
+                        <img class="erc-name__flag" src="@natFlag" alt="" onerror="this.style.display='none'" />
+                    }
+                    @Model?.Driver
+                </div>
                 <div class="erc-sname__rule"></div>
             </div>
 
@@ -183,6 +207,7 @@ else
                 <div class="erc-card__hw">
                     <span class="erc-hw__lbl">Hardware</span>
                     <img src="@hardwareLogo" alt="@hardware!.Name" onerror="this.style.display='none'" />
+                    <span class="erc-hw__name">@hardware!.Name</span>
                 </div>
             }
         </div>

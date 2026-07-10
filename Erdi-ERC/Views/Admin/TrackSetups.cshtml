@@ -7,6 +7,8 @@
     ViewData["Title"] = "Track Setups";
     var _f1Year = _adminAppOpts.Value.F1GameYear;
     var roleMappings = (ViewBag.RoleMappings as List<<OWNER_HANDLE>_ERC.Models.SetupAccessRoleMapping>) ?? new List<<OWNER_HANDLE>_ERC.Models.SetupAccessRoleMapping>();
+    var manualGrantsList = (ViewBag.ManualSetupGrants as List<<OWNER_HANDLE>_ERC.Models.DriverProfile>) ?? new List<<OWNER_HANDLE>_ERC.Models.DriverProfile>();
+    var blockedUsersList = (ViewBag.SetupBlockedUsers as List<<OWNER_HANDLE>_ERC.Models.SetupBlockedUser>) ?? new List<<OWNER_HANDLE>_ERC.Models.SetupBlockedUser>();
     var guildId = ViewBag.SetupAccessGuildId as string;
     var guildConfigured = ViewBag.SetupAccessGuildConfigured is bool gc && gc;
     var mappingsReady = ViewBag.SetupAccessMappingsReady is bool mr && mr;
@@ -34,7 +36,7 @@
 <div class="setup-admin-page">
     <div class="setup-admin-head">
         <div>
-            <a class="btn btn-link ps-0" asp-action="Index">&larr; Zur&uuml;ck zum Dashboard</a>
+            <a class="btn btn-link ps-0" asp-controller="Admin" asp-action="Index">&larr; Zur&uuml;ck zum Dashboard</a>
             <h2 class="mb-0">Track Setups Control</h2>
             <p class="text-muted mb-0">Setup-Management im F1-Style mit Access-Tiers und Live-Status</p>
         </div>
@@ -86,13 +88,129 @@
         </div>
     </div>
 
+    <section class="setup-admin-surface mb-4">
+        <div class="setup-admin-surface__head">Setup-Zugänge verschenken</div>
+        <div class="setup-admin-surface__body">
+            <p class="text-muted mb-3">Vergib einem Fahrer manuell einen Setup-Zugangs-Tier. Der Tier gilt beim nächsten Login und überschreibt den Discord-Rollen-Tier, wenn er höher ist.</p>
+
+            <form asp-controller="AdminSetups" asp-action="GrantSetupAccess" method="post" class="row g-2 mb-4">
+                @Html.AntiForgeryToken()
+                <div class="col-md-4">
+                    <label class="form-label small mb-1">Discord-ID des Fahrers</label>
+                    <input class="form-control" name="discordId" placeholder="z.B. 123456789012345678" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Tier</label>
+                    <select class="form-select" name="tier" required>
+                        <option value="3">Tier 3 (Sub T1)</option>
+                        <option value="4">Tier 4 (Sub T2)</option>
+                        <option value="5">Tier 5 (Sub T3)</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" type="submit">Vergeben</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Discord-Name</th>
+                            <th>Discord-ID</th>
+                            <th>Manueller Tier</th>
+                            <th style="width:130px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grant in manualGrantsList)
+                        {
+                            <tr>
+                                <td>@grant.DiscordName</td>
+                                <td><code>@grant.DiscordId</code></td>
+                                <td><span class="badge text-bg-warning">Tier @grant.ManualSetupTier</span></td>
+                                <td>
+                                    <form asp-controller="AdminSetups" asp-action="RevokeSetupAccess" method="post" class="d-inline" onsubmit="return confirm('Manuellen Setup-Zugang entziehen?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="discordId" value="@grant.DiscordId" />
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">Entziehen</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (!manualGrantsList.Any())
+                        {
+                            <tr><td colspan="4" class="text-muted small">Keine manuellen Zugänge vergeben.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="setup-admin-surface mb-4">
+        <div class="setup-admin-surface__head">Setup-Sperrliste</div>
+        <div class="setup-admin-surface__body">
+            <p class="text-muted mb-3">Gesperrte Discord-IDs haben keinen Zugriff auf Setups – unabhängig von Tier oder Rollen-Mapping.</p>
+
+            <form asp-controller="AdminSetups" asp-action="BlockSetupUser" method="post" class="row g-2 mb-4">
+                @Html.AntiForgeryToken()
+                <div class="col-md-4">
+                    <label class="form-label small mb-1">Discord-ID sperren</label>
+                    <input class="form-control" name="discordId" placeholder="z.B. 123456789012345678" required />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small mb-1">Grund (optional)</label>
+                    <input class="form-control" name="reason" placeholder="z.B. Regelverstoß" maxlength="256" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-danger w-100" type="submit">Sperren</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Discord-ID</th>
+                            <th>Grund</th>
+                            <th>Gesperrt am</th>
+                            <th style="width:130px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var blocked in blockedUsersList)
+                        {
+                            <tr>
+                                <td><code>@blocked.DiscordId</code></td>
+                                <td>@(string.IsNullOrWhiteSpace(blocked.Reason) ? "-" : blocked.Reason)</td>
+                                <td>@blocked.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <form asp-controller="AdminSetups" asp-action="UnblockSetupUser" method="post" class="d-inline" onsubmit="return confirm('Sperre aufheben?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="discordId" value="@blocked.DiscordId" />
+                                        <button class="btn btn-sm btn-outline-success" type="submit">Entsperren</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (!blockedUsersList.Any())
+                        {
+                            <tr><td colspan="4" class="text-muted small">Keine gesperrten Discord-IDs.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <div class="setup-admin-layout-grid">
         <section class="setup-admin-surface">
             <div class="setup-admin-surface__head">Discord Rollen-Mapping (Tier 3-5)</div>
             <div class="setup-admin-surface__body">
                 <p class="text-muted mb-3">Hier hinterlegst du Role IDs aus dem konfigurierten Guild-Server (für Twitch-Sub-Tiers). Höhere Tier-Rolle schaltet automatisch niedrigere Tier-Setups frei.</p>
 
-                <form asp-controller="Admin" asp-action="SaveSetupAccessRoleMapping" method="post" class="row g-2 mb-3">
+                <form asp-controller="AdminSetups" asp-action="SaveSetupAccessRoleMapping" method="post" class="row g-2 mb-3">
                     @Html.AntiForgeryToken()
                     <div class="col-md-2">
                         <input class="form-control" name="id" type="number" placeholder="ID (optional)" />
@@ -143,7 +261,7 @@
                                         <td><code>@map.RoleId</code></td>
                                         <td>@(string.IsNullOrWhiteSpace(map.Label) ? TierLabel(map.Tier, null) : map.Label)</td>
                                         <td>
-                                            <form asp-controller="Admin" asp-action="DeleteSetupAccessRoleMapping" method="post" class="d-inline" onsubmit="return confirm('Mapping wirklich löschen?');">
+                                            <form asp-controller="AdminSetups" asp-action="DeleteSetupAccessRoleMapping" method="post" class="d-inline" onsubmit="return confirm('Mapping wirklich löschen?');">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="id" value="@map.Id" />
                                                 <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
@@ -167,7 +285,7 @@
                     <br/><strong>Login</strong> setzt voraus, dass der User eingeloggt <em>und</em> auf dem Community-Discord ist.
                 </div>
                 <div class="small text-muted mb-2 setup-editor-state" id="setupEditState">Neues Setup erstellen.</div>
-                <form asp-controller="Admin" asp-action="SaveTrackSetup" method="post" class="row g-2 setup-editor-form" id="setupEditorForm">
+                <form asp-controller="AdminSetups" asp-action="SaveTrackSetup" method="post" class="row g-2 setup-editor-form" id="setupEditorForm">
                     @Html.AntiForgeryToken()
                     <div class="col-md-2">
                         <input class="form-control" id="setupIdInput" name="id" type="number" placeholder="ID (optional)" />
@@ -403,7 +521,7 @@
                                                 data-setup-info="@setup.SetupInfo">
                                             Bearbeiten
                                         </button>
-                                        <form asp-controller="Admin" asp-action="DeleteTrackSetup" method="post" class="d-inline" onsubmit="return confirm('Setup wirklich löschen?');">
+                                        <form asp-controller="AdminSetups" asp-action="DeleteTrackSetup" method="post" class="d-inline" onsubmit="return confirm('Setup wirklich löschen?');">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@setup.Id" />
                                             <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
@@ -447,7 +565,7 @@
             const f1PlanText = document.getElementById('setupF1StrategyPlan');
             const f1PlanMeta = document.getElementById('setupF1StrategyMeta');
             const f1GenerateBtn = document.getElementById('setupF1StrategyGenerate');
-            const strategyEndpoint = '@Url.Action("TrackSetupStrategy", "Admin")';
+            const strategyEndpoint = '@Url.Action("TrackSetupStrategy", "AdminSetups")';
             if (!root || !form) return;
 
             const setActiveStrategy = (key) => {

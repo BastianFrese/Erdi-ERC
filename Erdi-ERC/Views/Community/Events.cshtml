@@ -38,7 +38,7 @@
     Title     = "Real-Life",
     Highlight = "Events",
     Lead      = "Kart-Events, LAN-Treffen und alles, was die ERC-Community offline zusammenbringt. Hier findest du unsere bisherigen Events &ndash; und alles, was als Nächstes ansteht.",
-    GhostText = "IRL"
+
 })" />
 
 @if (nextUpcoming != null)
@@ -87,7 +87,7 @@ else
             SubText = "Neueste Events oben"
         })" />
 
-        <div class="event-timeline">
+        <div class="event-timeline f1-stagger">
             @foreach (var ev in timelineEvents)
             {
                 var embedUrl = ToEmbedUrl(ev.YouTubeUrl);
@@ -96,7 +96,7 @@ else
                     : (ev.Images.FirstOrDefault() is { } galleryImage ? $"/uploads/events/{galleryImage.FileName}" : null);
                 var hasPreviewImage = !string.IsNullOrWhiteSpace(previewImage);
 
-                <article class="event-timeline__item reveal">
+                <article class="event-timeline__item">
                     <div class="event-timeline__rail">
                         <div class="event-timeline__date">
                             <span class="event-timeline__date-day">@ev.Date.ToString("dd.MM.")</span>
@@ -145,7 +145,7 @@ else
                                     </div>
                                 }
 
-                                <a class="f1-btn f1-btn--ghost" asp-controller="Home" asp-action="EventDetail" asp-route-id="@ev.Id">
+                                <a class="f1-btn f1-btn--ghost" asp-controller="Community" asp-action="EventDetail" asp-route-id="@ev.Id">
                                     Mehr anzeigen
                                     <i class="f1-icon" data-lucide="arrow-right" style="width:14px;height:14px;"></i>
                                 </a>

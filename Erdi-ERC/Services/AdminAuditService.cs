@@ -31,7 +31,14 @@ namespace <OWNER_HANDLE>_ERC.Services
             });
 
             // NOTE: Caller is responsible for SaveChangesAsync() to keep audit log
-            // in same transaction as the operation being audited
+            // in same transaction as the operation being audited. Use LogAndSaveAsync
+            // when the audited operation has already been committed.
+        }
+
+        public async Task LogAndSaveAsync(string action, string entityType, string entityId, string details)
+        {
+            await LogAsync(action, entityType, entityId, details);
+            await _db.SaveChangesAsync();
         }
     }
 }

@@ -286,25 +286,6 @@
 }
 
 /* =====================================================================
-   STAGGER-EINGANGSANIMATIONEN
-   Jede Karte in einem Grid verzögert sich um 80ms.
-   ===================================================================== */
-.f1-stagger > * {
-    opacity: 0;
-    transform: translateY(22px) scale(.97);
-    transition:
-        opacity .6s var(--ease-launch),
-        transform .6s var(--ease-launch);
-}
-.f1-stagger.is-visible > * { opacity: 1; transform: translateY(0) scale(1); }
-.f1-stagger.is-visible > *:nth-child(1) { transition-delay: .00s; }
-.f1-stagger.is-visible > *:nth-child(2) { transition-delay: .08s; }
-.f1-stagger.is-visible > *:nth-child(3) { transition-delay: .16s; }
-.f1-stagger.is-visible > *:nth-child(4) { transition-delay: .24s; }
-.f1-stagger.is-visible > *:nth-child(5) { transition-delay: .32s; }
-.f1-stagger.is-visible > *:nth-child(6) { transition-delay: .40s; }
-
-/* =====================================================================
    NEON-GLOW TITLES
    ===================================================================== */
 .f1-neon {
@@ -340,19 +321,8 @@
 }
 
 /* =====================================================================
-   F1-CHIP (DRS / FASTEST LAP / etc.)
+   F1-CHIP FX overrides (animation layer on top of global base)
    ===================================================================== */
-.f1-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    padding: .22rem .6rem;
-    font: 800 .6rem/1 var(--ff-tech);
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    border-radius: 2px;
-    white-space: nowrap;
-}
 .f1-chip--drs {
     background: var(--sector-green);
     color: ***REMOVED***000;
@@ -363,49 +333,11 @@
     0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(57,255,20,.5); }
     50%      { opacity: .75; box-shadow: 0 0 20px rgba(57,255,20,.8); }
 }
-.f1-chip--fastest {
-    background: var(--sector-purple);
-    color: ***REMOVED***fff;
-    box-shadow: 0 0 14px rgba(185,92,255,.55);
-}
-.f1-chip--pit {
-    background: var(--sig-amber);
-    color: ***REMOVED***000;
-    box-shadow: 0 0 12px rgba(255,184,0,.45);
-}
 .f1-chip--live {
     background: var(--accent);
     color: ***REMOVED***fff;
     box-shadow: 0 0 14px var(--accent-glow);
     animation: f1DrsFlash 1.4s ease-in-out infinite;
-}
-
-/* =====================================================================
-   RACE-CONTROL BAR (neue dramatische Sektion-Trenner)
-   ===================================================================== */
-.f1-rc-bar {
-    display: flex;
-    align-items: center;
-    gap: .7rem;
-    padding: .45rem .9rem;
-    margin: 2.5rem 0 -.5rem;
-    background:
-        linear-gradient(90deg, var(--accent-soft) 0%, transparent 100%);
-    border-left: 3px solid var(--accent);
-    border-radius: 0 var(--r-2) var(--r-2) 0;
-    font: 800 .68rem/1 var(--ff-tech);
-    letter-spacing: .3em;
-    text-transform: uppercase;
-    color: var(--ink-2);
-}
-.f1-rc-bar::before {
-    content: "";
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent-glow);
-    animation: f1Pulse 1.4s ease-in-out infinite;
-    flex-shrink: 0;
 }
 
 /* =====================================================================

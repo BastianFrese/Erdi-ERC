@@ -1,26 +1,44 @@
 /* =====================================================================
    04 · COMPONENTS
    ===================================================================== */
+/* Chamfered F1 broadcast panel — the signature shape, site-wide.
+   NOTE: clip-path also clips box-shadow (outset + inset), so depth here
+   comes from the crisp border, bg tint and telemetry stripe, not glows. */
 .card, .panel, .surface {
     position:relative;
     background:var(--surface-1);
-    border:1px solid color-mix(in srgb, var(--accent) 24%, var(--stroke-1));
-    border-radius:8px;
+    border:1px solid color-mix(in srgb, var(--accent) 26%, var(--stroke-1));
+    border-radius:0;
+    clip-path:var(--clip-chamfer);
     backdrop-filter:blur(6px) saturate(120%);
     -webkit-backdrop-filter:blur(6px) saturate(120%);
-    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 18px 40px -24px rgba(0,0,0,.9);
     color:var(--ink);
     overflow:hidden;
-    transition:transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+    transition:transform var(--t-base), border-color var(--t-base), background-color var(--t-base);
     background-image:
         linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), rgba(255,255,255,0)),
         var(--f1-grid);
 }
+/* Telemetry stripe across the top edge — broadcast panel cue */
+.card::before, .panel::before, .surface::before {
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background:var(--telemetry-stripe);
+    z-index:1; pointer-events:none;
+}
 .card:hover, .panel:hover, .surface:hover {
     transform:translateY(-3px);
-    box-shadow:var(--sh-3), 0 0 0 1px color-mix(in srgb, var(--accent) 52%, transparent);
-    border-color:color-mix(in srgb, var(--accent) 55%, var(--stroke-2));
+    border-color:color-mix(in srgb, var(--accent) 58%, var(--stroke-2));
+    background-color:color-mix(in srgb, var(--accent) 7%, var(--surface-1));
 }
+/* Escape hatch: rounded, shadowed, no stripe — for overflow-sensitive
+   or visually quiet cards. Add class="... no-chamfer" to opt out. */
+.no-chamfer {
+    clip-path:none;
+    border-radius:8px;
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 18px 40px -24px rgba(0,0,0,.9);
+}
+.no-chamfer::before { display:none; }
 .card-header,.card-footer {
     background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
     border-color:color-mix(in srgb, var(--accent) 28%, var(--stroke-1));
@@ -258,7 +276,8 @@ select option:focus,
     border-collapse:separate; border-spacing:0;
     background:var(--surface-1);
     border:1px solid var(--stroke-1);
-    border-radius:var(--r-3);
+    border-radius:0;
+    clip-path:var(--clip-chamfer-sm);
     overflow:hidden;
     backdrop-filter:var(--glass-blur-sm);
     -webkit-backdrop-filter:var(--glass-blur-sm);

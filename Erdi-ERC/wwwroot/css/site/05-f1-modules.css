@@ -518,3 +518,199 @@
         repeating-linear-gradient(90deg, transparent 0 56px, rgba(255,255,255,.02) 56px 57px),
         linear-gradient(180deg, rgba(20,24,32,.88), rgba(8,10,15,.95));
 }
+
+/* =====================================================================
+   F1 BROADCAST LANGUAGE — Global
+   Core components so every page has access to the F1 design language
+   without manually including page-specific stylesheets.
+   ===================================================================== */
+
+/* Lucide icon sizing baseline */
+.f1-icon {
+    width:1em; height:1em;
+    stroke-width:2;
+    vertical-align:-.125em;
+    flex-shrink:0;
+}
+
+/* --- F1 Button System --- */
+.f1-btn {
+    display:inline-flex; align-items:center; gap:.5rem;
+    padding:.7rem 1.15rem;
+    font:700 .82rem/1 var(--ff-tech);
+    letter-spacing:.14em; text-transform:uppercase;
+    border-radius:var(--r-2);
+    border:1px solid transparent;
+    cursor:pointer; text-decoration:none;
+    transition:transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast), color var(--t-fast);
+    position:relative; overflow:hidden;
+}
+.f1-btn--primary {
+    background:var(--g-accent); color:***REMOVED***fff;
+    box-shadow:0 8px 22px -10px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.f1-btn--primary:hover {
+    transform:translateY(-1px);
+    box-shadow:0 12px 30px -10px var(--accent-glow), 0 0 0 1px rgba(255,255,255,.2);
+    color:***REMOVED***fff;
+}
+.f1-btn--ghost {
+    background:rgba(255,255,255,.03); color:var(--ink);
+    border-color:var(--stroke-2);
+}
+.f1-btn--ghost:hover { background:rgba(255,255,255,.07); border-color:var(--stroke-3); color:***REMOVED***fff; }
+.f1-btn--outline { background:transparent; color:var(--ink); border-color:var(--stroke-2); }
+.f1-btn--outline:hover { background:rgba(255,255,255,.05); color:***REMOVED***fff; }
+.f1-btn::after {
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.12) 50%, transparent);
+    transform:translateX(-110%);
+    transition:transform .55s var(--ease-overtake, cubic-bezier(.7,0,.2,1));
+    pointer-events:none;
+}
+.f1-btn:hover::after { transform:translateX(110%); }
+
+/* --- F1 Chip / Broadcast Tag Badge --- */
+.f1-chip {
+    display:inline-flex; align-items:center; gap:.35rem;
+    padding:.25rem .65rem;
+    font:800 .6rem/1 var(--ff-tech);
+    letter-spacing:.2em; text-transform:uppercase;
+    border-radius:2px; white-space:nowrap;
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--stroke-1);
+    color:var(--ink-2);
+}
+.f1-chip--drs    { background:var(--sig-green); color:***REMOVED***000; box-shadow:0 0 12px rgba(57,255,20,.5); }
+.f1-chip--fastest{ background:var(--sig-magenta); color:***REMOVED***fff; box-shadow:0 0 14px rgba(185,92,255,.55); }
+.f1-chip--pit    { background:var(--sig-amber); color:***REMOVED***000; box-shadow:0 0 12px rgba(255,184,0,.45); }
+.f1-chip--live   { background:var(--accent); color:***REMOVED***fff; box-shadow:0 0 14px var(--accent-glow); }
+.f1-chip--cyan   { background:rgba(0,229,255,.12); color:var(--sig-cyan); border-color:rgba(0,229,255,.32); }
+.f1-chip--amber  { background:rgba(255,184,0,.12); color:var(--sig-amber); border-color:rgba(255,184,0,.32); }
+.f1-chip--green  { background:rgba(57,255,20,.10); color:var(--sig-green); border-color:rgba(57,255,20,.32); }
+
+/* --- F1 Eyebrow label (red left strip) --- */
+.f1-eyebrow {
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.3rem .8rem;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--stroke-1);
+    border-left:3px solid var(--accent);
+    color:var(--ink-2);
+    font:600 .7rem/1 var(--ff-tech);
+    letter-spacing:.28em; text-transform:uppercase;
+    border-radius:2px;
+}
+
+/* --- F1 Pulse Dot (live status indicator) --- */
+.f1-pulse-dot {
+    display:inline-block;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 10px var(--accent-glow);
+    animation:f1GlobalPulse 1.6s ease-in-out infinite;
+}
+@keyframes f1GlobalPulse {
+    0%,100% { transform:scale(1); opacity:1; }
+    50%      { transform:scale(1.3); opacity:.55; }
+}
+
+/* --- Race Control Bar (dramatic section dividers) --- */
+.f1-rc-bar {
+    display:flex; align-items:center; gap:.7rem;
+    padding:.45rem .9rem;
+    margin:2.5rem 0 -.5rem;
+    background:linear-gradient(90deg, var(--accent-soft) 0%, transparent 100%);
+    border-left:3px solid var(--accent);
+    border-radius:0 var(--r-2) var(--r-2) 0;
+    font:800 .68rem/1 var(--ff-tech);
+    letter-spacing:.3em; text-transform:uppercase;
+    color:var(--ink-2);
+}
+.f1-rc-bar::before {
+    content:"";
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 12px var(--accent-glow);
+    animation:f1GlobalPulse 1.4s ease-in-out infinite;
+    flex-shrink:0;
+}
+
+/* --- Stagger entrance animation for card grids --- */
+.f1-stagger > * {
+    opacity:0;
+    transform:translateY(20px) scale(.97);
+    transition:
+        opacity .6s var(--ease-launch, cubic-bezier(.16,.84,.34,1)),
+        transform .6s var(--ease-launch, cubic-bezier(.16,.84,.34,1));
+}
+.f1-stagger.is-visible > *,
+.reveal.is-visible .f1-stagger > * { opacity:1; transform:none; }
+.f1-stagger > *:nth-child(1) { transition-delay:.00s; }
+.f1-stagger > *:nth-child(2) { transition-delay:.08s; }
+.f1-stagger > *:nth-child(3) { transition-delay:.16s; }
+.f1-stagger > *:nth-child(4) { transition-delay:.24s; }
+.f1-stagger > *:nth-child(5) { transition-delay:.32s; }
+.f1-stagger > *:nth-child(6) { transition-delay:.40s; }
+
+/* =====================================================================
+   F1 PANEL — Chamfered broadcast data panel (signature element)
+   Chamfered corners (top-left / bottom-right) + telemetry stripe top.
+   Mirrors the F1 timing tower panel and lower-third aesthetic.
+   ===================================================================== */
+.f1-panel {
+    position:relative;
+    padding:1.1rem 1.2rem 1.15rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 55%),
+        var(--surface-1);
+    border:1px solid var(--stroke-1);
+    clip-path:var(--clip-chamfer, polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px));
+    isolation:isolate;
+}
+.f1-panel::before {
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0; height:2px;
+    background:var(--telemetry-stripe, linear-gradient(90deg, var(--sig-cyan), var(--accent-2), var(--sig-magenta)));
+    box-shadow:0 0 14px rgba(225,6,0,.45);
+    z-index:1; pointer-events:none;
+}
+.f1-panel--strip::after {
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0; width:3px;
+    background:var(--accent);
+    box-shadow:0 0 14px var(--accent-glow);
+    z-index:1; pointer-events:none;
+}
+.f1-panel--accent {
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+        var(--surface-1);
+    border-color:color-mix(in srgb, var(--accent) 35%, var(--stroke-1));
+}
+.f1-chamfer {
+    clip-path:var(--clip-chamfer-sm, polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px));
+    border-radius:0;
+}
+.f1-panel__label {
+    font:700 .62rem/1 var(--ff-tech);
+    letter-spacing:.28em; text-transform:uppercase;
+    color:var(--ink-3); margin-bottom:.5rem;
+}
+.f1-panel__value {
+    font:800 clamp(1.6rem, 3vw, 2.4rem)/1 var(--ff-tech);
+    letter-spacing:-.01em; color:***REMOVED***fff;
+}
+.f1-panel__sub {
+    margin-top:.4rem;
+    font:500 .78rem/1.35 var(--ff-body); color:var(--ink-3);
+}
+
+@media (prefers-reduced-motion:reduce) {
+    .f1-pulse-dot,
+    .f1-rc-bar::before { animation:none !important; }
+    .f1-stagger > * { transition:none !important; opacity:1; transform:none; }
+    .f1-btn::after { display:none; }
+}

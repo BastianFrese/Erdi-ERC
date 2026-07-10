@@ -1,6 +1,7 @@
 @using System.Text.Json
 @using <OWNER_HANDLE>_ERC.Models
 @using <OWNER_HANDLE>_ERC.Helpers
+@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.ApplicationOptions> _adminAppOpts
 @{
     ViewData["Title"] = "F1 Setups";
 
@@ -81,7 +82,7 @@
     Title     = "F1 Setup",
     Highlight = "Library",
     Lead      = "Setups für jede Strecke – schnell finden, vergleichen und ins Spiel übernehmen.",
-    GhostText = "SETUPS"
+
 })" />
 
 <div class="d-flex align-items-center gap-2 mb-4 reveal flex-wrap">
@@ -230,7 +231,7 @@
         <div class="alert alert-warning mt-3">
             <strong>Setups gesperrt:</strong> Du musst Mitglied auf dem <OWNER_HANDLE> Community Discord sein, damit dir die Setups angezeigt werden.
             <div class="mt-2">
-                <a class="f1-btn f1-btn--ghost" href="https://discord.gg/VyhjtDXYYV" target="_blank" rel="noopener">
+                <a class="f1-btn f1-btn--ghost" href="@_adminAppOpts.Value.DiscordInviteCommunity" target="_blank" rel="noopener">
                     <i class="bi bi-discord"></i> Community Discord beitreten
                 </a>
             </div>

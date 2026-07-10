@@ -1,0 +1,84 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@*
+    Kategorie „Fake-System-Pranks" – alle wegklickbar (Continue), kein Server-Check.
+*@
+@switch (Model.Gag.Key)
+{
+    case "fake-loading":
+        <div class="troll-gag" data-troll-loading>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Telemetrie</div>
+            <h2 class="troll-title">Analysiere deine Fahrkünste …</h2>
+            <p class="troll-lead" data-troll-loading-status>Lade neuronales Talent-Modell …</p>
+            <div class="troll-progress"><div class="troll-progress__bar" data-troll-bar></div></div>
+            <div class="troll-progress__label"><span data-troll-loading-pct>0</span> %</div>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-loading-done>
+                Trotzdem reinlassen →
+            </a>
+        </div>
+        break;
+
+    case "fake-demotion":
+        <div class="troll-gag" data-troll-reveal>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Liga-Verwaltung</div>
+            <h2 class="troll-title troll-shake">Du wurdest zum <em>Reservefahrer</em> degradiert.</h2>
+            <p class="troll-lead troll-hidden" data-troll-reveal-text>… war nur Spaß. <strong>Oder?</strong> <OWNER_HANDLE> überlegt noch.</p>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-reveal-btn>
+                Puh. Reinlassen →
+            </a>
+        </div>
+        break;
+
+    case "fake-terms":
+        <div class="troll-gag">
+            <div class="troll-eyebrow"><OWNER_HANDLE> · AGB §1</div>
+            <h2 class="troll-title">Aktualisierte Nutzungsbedingungen</h2>
+            <p class="troll-terms">
+                §1 — <OWNER_HANDLE> hat immer Recht.<br>
+                §2 — Sollte <OWNER_HANDLE> einmal nicht Recht haben, tritt automatisch §1 in Kraft.
+            </p>
+            <div class="troll-terms__actions">
+                <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Akzeptieren</a>
+                <button type="button" class="f1-btn troll-runaway" data-troll-dodge>Ablehnen</button>
+            </div>
+        </div>
+        break;
+
+    case "bluescreen":
+        <div class="troll-gag troll-bsod">
+            <div class="troll-bsod__face">:(</div>
+            <h2 class="troll-bsod__title">ERDI_STOP_ERROR</h2>
+            <p class="troll-bsod__text">
+                Auf deinem Talent ist ein Problem aufgetreten. <OWNER_HANDLE> sammelt jetzt ein paar
+                Fehlerinformationen und macht sich danach über dich lustig.
+            </p>
+            <p class="troll-bsod__code">Stop-Code: 0xERDI_2FAST4U</p>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Neu starten →</a>
+        </div>
+        break;
+
+    case "fake-update":
+        <div class="troll-gag" data-troll-update>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · System-Update</div>
+            <h2 class="troll-title"><OWNER_HANDLE> installiert wichtige Updates …</h2>
+            <p class="troll-lead">Update <span data-troll-update-n>1</span> von 4000 wird installiert …</p>
+            <div class="troll-progress"><div class="troll-progress__bar" data-troll-update-bar></div></div>
+            <p class="troll-update__warn">Schalte deinen Rechner nicht aus. <OWNER_HANDLE> merkt sich sowas.</p>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-update-done>
+                Updates später (für immer) →
+            </a>
+        </div>
+        break;
+
+    case "fake-ban":
+        <div class="troll-gag" data-troll-ban>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Renndirektion</div>
+            <h2 class="troll-title troll-shake" data-troll-ban-title>Du wurdest <em>permanent gebannt</em>.</h2>
+            <p class="troll-lead" data-troll-ban-text>
+                Grund: zu langsam. Rauswurf in <strong data-troll-ban-count>3</strong> …
+            </p>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-ban-done>
+                Puh … doch reinlassen →
+            </a>
+        </div>
+        break;
+}

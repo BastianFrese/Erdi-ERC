@@ -9,282 +9,219 @@ using System.Security.Claims;
 namespace <OWNER_HANDLE>_ERC.Controllers
 {
     /// <summary>
-    /// Verwaltung des Bewerbungs-Workflows mit strukturierter, benutzerfreundlicher Navigation.
+    /// Admin-Verwaltung des Bewerbungs-Workflows: Dashboard, EINE gefilterte Liste
+    /// und Detail mit einheitlicher Aktionsleiste. Annehmen nimmt Liga und Rolle
+    /// immer zusammen entgegen — es gibt keinen zweiten Annahme-Pfad mehr.
     /// </summary>
     [Route("admin/applications")]
     [Authorize(Policy = "Admin.Applications")]
     public class AdminApplicationsController : Controller
     {
-        private readonly IApplicationManagementService _appService;
+        private readonly IApplicationWorkflowService _workflow;
+        private readonly IApplicationQueryService _queries;
         private readonly IAdminAuditService _audit;
-        private readonly ILogger<AdminApplicationsController> _logger;
         private readonly AppDbContext _db;
+        private readonly ILogger<AdminApplicationsController> _logger;
 
         public AdminApplicationsController(
-            IApplicationManagementService appService,
+            IApplicationWorkflowService workflow,
+            IApplicationQueryService queries,
             IAdminAuditService audit,
-            ILogger<AdminApplicationsController> logger,
-            AppDbContext db)
+            AppDbContext db,
+            ILogger<AdminApplicationsController> logger)
         {
-            _appService = appService;
+            _workflow = workflow;
+            _queries = queries;
             _audit = audit;
-            _logger = logger;
             _db = db;
+            _logger = logger;
         }
 
         private string GetCurrentUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "System";
 
-        // ---- Dashboard & Übersicht ----
+        private Task<List<League>> GetActiveLeaguesAsync() =>
+            _db.Leagues
+                .AsNoTracking()
+                .Where(l => !l.IsArchived)
+                .OrderBy(l => l.SortOrder).ThenBy(l => l.Name)
+                .ToListAsync();
 
-        /// <summary>
-        /// Bewerbungs-Dashboard mit Statistiken und schnellen Aktionen.
-        /// </summary>
+        // ── Dashboard ────────────────────────────────────────────────────────────
+
+        /// <summary>Dashboard: Statistiken, Metriken, Kapazitäten und neueste offene Bewerbungen.</summary>
         [HttpGet("")]
         [HttpGet("dashboard")]
         public async Task<IActionResult> Dashboard(string? sort = null)
         {
-            var stats = await _appService.GetStatisticsAsync();
-            var metrics = await _appService.GetMetricsAsync();
-            var openApps = await _appService.GetAllApplicationsAsync(acceptedFilter: false, excludeRejected: true, pageSize: 10, sort: sort);
+            var openApps = await _queries.SearchAsync(new ApplicationSearchFilter
+            {
+                Status = ApplicationStatus.Open,
+                Sort = sort,
+                PageSize = 10
+            });
 
             var viewModel = new ApplicationDashboardViewModel
             {
-                Statistics = stats,
-                Metrics = metrics,
-                RecentApplications = openApps,
-                CurrentSort = sort
+                Statistics = await _queries.GetStatisticsAsync(),
+                Metrics = await _queries.GetMetricsAsync(),
+                RecentApplications = openApps.Items,
+                CurrentSort = sort,
+                Capacities = await _queries.GetLeagueCapacitiesAsync()
             };
 
             return View("~/Views/Admin/Applications/Dashboard.cshtml", viewModel);
         }
 
-        /// <summary>
-        /// Vollständige Liste aller Bewerbungen (mit Pagination und Filterung).
-        /// </summary>
-        [HttpGet("list")]
-        public async Task<IActionResult> List(string? division = null, bool? accepted = null, int page = 1, string? sort = null)
-        {
-            var apps = await _appService.GetAllApplicationsAsync(division, accepted, pageSize: 50, pageNumber: page, sort: sort);
-            var stats = await _appService.GetStatisticsAsync();
+        // ── Liste (ersetzt Open/Accepted/ByDivision/Duplicates) ──────────────────
 
-            // Filter-Optionen: alle Divisionen aus vorhandenen Bewerbungen plus alle aktiven Ligen,
-            // damit auch frisch angelegte Ligen (ohne Bewerbung) filterbar sind.
-            var appDivisions = await _db.ApplicationForms.Select(a => a.Division).Distinct().ToListAsync();
-            var leagueNames = await _db.Leagues.Where(l => !l.IsArchived).Select(l => l.Name).ToListAsync();
-            var availableDivisions = appDivisions
-                .Concat(leagueNames)
-                .Where(d => !string.IsNullOrWhiteSpace(d))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(d => d, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+        /// <summary>Die eine Bewerbungsliste: Status-, Liga-, Flag-, Duplikat-Filter + Suche.</summary>
+        [HttpGet("list")]
+        public async Task<IActionResult> List(
+            ApplicationStatus? status = null,
+            string? leagueId = null,
+            string? search = null,
+            string? sort = null,
+            bool flagged = false,
+            bool duplicates = false,
+            bool withoutLeague = false,
+            int page = 1)
+        {
+            var filter = new ApplicationSearchFilter
+            {
+                Status = status,
+                LeagueId = leagueId,
+                Search = search,
+                Sort = sort,
+                FlaggedOnly = flagged,
+                DuplicatesOnly = duplicates,
+                WithoutLeagueOnly = withoutLeague,
+                Page = Math.Max(1, page),
+                PageSize = 50
+            };
 
             var viewModel = new ApplicationListViewModel
             {
-                Applications = apps,
-                Statistics = stats,
-                CurrentDivision = division,
-                CurrentAcceptedFilter = accepted,
-                CurrentPage = page,
-                CurrentSort = sort,
-                AvailableDivisions = availableDivisions
+                Result = await _queries.SearchAsync(filter),
+                Statistics = await _queries.GetStatisticsAsync(),
+                Leagues = await GetActiveLeaguesAsync(),
+                Filter = filter
             };
 
             return View("~/Views/Admin/Applications/List.cshtml", viewModel);
         }
 
-        // ---- Filterte Ansichten ----
+        // ── Legacy-Redirects (alte Bookmarks/Links) ──────────────────────────────
 
-        /// <summary>
-        /// Bewerbungen nach Division (Main, Second, Rookie, Community).
-        /// </summary>
-        [HttpGet("by-division/{division}")]
-        public async Task<IActionResult> ByDivision(string division, int page = 1)
-        {
-            var apps = await _appService.GetAllApplicationsAsync(division, pageSize: 50, pageNumber: page);
-            var stats = await _appService.GetStatisticsAsync();
-
-            var viewModel = new ApplicationListViewModel
-            {
-                Applications = apps,
-                Statistics = stats,
-                CurrentDivision = division,
-                CurrentPage = page
-            };
-
-            return View("~/Views/Admin/Applications/ByDivision.cshtml", viewModel);
-        }
-
-        /// <summary>
-        /// Nur offene (nicht akzeptierte) Bewerbungen.
-        /// </summary>
         [HttpGet("open")]
-        public async Task<IActionResult> Open(int page = 1, string? sort = null)
-        {
-            var apps = await _appService.GetAllApplicationsAsync(acceptedFilter: false, excludeRejected: true, pageSize: 50, pageNumber: page, sort: sort);
-            var stats = await _appService.GetStatisticsAsync();
+        public IActionResult Open() => RedirectToAction(nameof(List), new { status = ApplicationStatus.Open });
 
-            var viewModel = new ApplicationListViewModel
-            {
-                Applications = apps,
-                Statistics = stats,
-                CurrentPage = page,
-                CurrentSort = sort
-            };
-
-            return View("~/Views/Admin/Applications/Open.cshtml", viewModel);
-        }
-
-        /// <summary>
-        /// Nur akzeptierte Bewerbungen (für Audit und Rückgängigmachung).
-        /// </summary>
         [HttpGet("accepted")]
-        public async Task<IActionResult> Accepted(int page = 1)
+        public IActionResult Accepted() => RedirectToAction(nameof(List), new { status = ApplicationStatus.Accepted });
+
+        [HttpGet("duplicates")]
+        public IActionResult Duplicates() => RedirectToAction(nameof(List), new { duplicates = true });
+
+        [HttpGet("metrics")]
+        public IActionResult Metrics() => RedirectToAction(nameof(Dashboard));
+
+        [HttpGet("by-division/{division}")]
+        public async Task<IActionResult> ByDivision(string division)
         {
-            var apps = await _appService.GetAllApplicationsAsync(acceptedFilter: true, pageSize: 50, pageNumber: page);
-            var stats = await _appService.GetStatisticsAsync();
-
-            var viewModel = new ApplicationListViewModel
-            {
-                Applications = apps,
-                Statistics = stats,
-                CurrentPage = page
-            };
-
-            return View("~/Views/Admin/Applications/Accepted.cshtml", viewModel);
+            // Alte Namens-URLs auf den Liga-Filter mappen, wo möglich.
+            var leagueId = await _db.Leagues
+                .Where(l => l.Name == division)
+                .Select(l => l.Id)
+                .FirstOrDefaultAsync();
+            return leagueId is null
+                ? RedirectToAction(nameof(List), new { search = division })
+                : RedirectToAction(nameof(List), new { leagueId });
         }
 
-        // ---- Detail-Ansicht ----
+        // ── Detail ───────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Detailansicht einer Bewerbung mit vollem Audit-Trail.
-        /// Liefert außerdem die verfügbaren Ligen für das Rollen-Zuweisungs-Modal.
-        /// </summary>
+        /// <summary>Detailansicht mit Audit-Verlauf und den verfügbaren Ligen für die Aktionsleiste.</summary>
         [HttpGet("detail/{id}")]
         public async Task<IActionResult> Detail(int id)
         {
-            var appWithHistory = await _appService.GetApplicationWithHistoryAsync(id);
+            var appWithHistory = await _queries.GetWithHistoryAsync(id);
             if (appWithHistory is null)
                 return NotFound();
 
-            // Load leagues for dropdown (archivierte Ligen sind keine gültigen Ziele)
-            var leagues = await _db.Leagues
-                .Where(l => !l.IsArchived)
-                .OrderBy(l => l.Name)
-                .ToListAsync();
-            ViewData["Leagues"] = leagues;
-
+            ViewData["Leagues"] = await GetActiveLeaguesAsync();
             return View("~/Views/Admin/Applications/Detail.cshtml", appWithHistory);
         }
 
-        // ---- Workflow-Aktionen ----
+        // ── Workflow-Aktionen ────────────────────────────────────────────────────
 
         /// <summary>
-        /// Akzeptiert eine Bewerbung und erstellt das Fahrer-Profil.
+        /// Nimmt die Bewerbung an — Liga und Rolle kommen zusammen aus dem Formular.
+        /// Ohne Liga-Auswahl greift die beworbene Liga.
         /// </summary>
         [HttpPost("accept/{id}")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Accept(int id, string? leagueId = null)
+        public async Task<IActionResult> Accept(int id, string? leagueId, string? assignedRole)
         {
-            var result = await _appService.AcceptApplicationAsync(id, GetCurrentUserId(), overrideLeagueId: leagueId);
-
-            if (result.Success)
-            {
-                await _audit.LogAsync("AdminAction", "ApplicationForm", id.ToString(),
-                    $"Accepted application");
-                TempData["Success"] = result.Message;
-            }
-            else
-            {
-                TempData["Error"] = result.Message;
-            }
-
-            return RedirectToAction("Detail", new { id });
+            var result = await _workflow.AcceptAsync(id, leagueId, assignedRole, GetCurrentUserId());
+            SetResultMessage(result);
+            return RedirectToAction(nameof(Detail), new { id });
         }
 
-        /// <summary>
-        /// Lehnt eine Bewerbung ab (mit Grund optional).
-        /// </summary>
+        /// <summary>Lehnt die Bewerbung ab (Grund optional).</summary>
         [HttpPost("reject/{id}")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(int id, string? reason)
         {
-            // Make reason optional to simplify the rejection flow
-            if (string.IsNullOrWhiteSpace(reason))
-            {
-                reason = "Keine Angabe";
-            }
-
-            var result = await _appService.RejectApplicationAsync(id, reason, GetCurrentUserId());
-
-            if (result.Success)
-            {
-                TempData["Success"] = result.Message;
-                return RedirectToAction("Open");
-            }
-
-            TempData["Error"] = result.Message;
-            return RedirectToAction("Detail", new { id });
+            var result = await _workflow.RejectAsync(id, string.IsNullOrWhiteSpace(reason) ? "Keine Angabe" : reason, GetCurrentUserId());
+            SetResultMessage(result);
+            return result.Success
+                ? RedirectToAction(nameof(List), new { status = ApplicationStatus.Open })
+                : RedirectToAction(nameof(Detail), new { id });
         }
 
-        /// <summary>
-        /// Macht die Akzeptanz einer Bewerbung rückgängig und entfernt zugewiesene Rolle.
-        /// </summary>
-        [HttpPost("unaccept/{id}")]
+        /// <summary>Setzt eine angenommene oder abgelehnte Bewerbung zurück auf "offen".</summary>
+        [HttpPost("reopen/{id}")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Unaccept(int id, string? reason)
+        public async Task<IActionResult> Reopen(int id, string? note)
         {
-            // Accept unaccept without requiring reason to simplify admin flow
-            if (string.IsNullOrWhiteSpace(reason))
-                reason = "Keine Angabe";
-
-            _logger.LogInformation("Unaccept called for Application {Id} by {User}. Reason: {Reason}", id, GetCurrentUserId(), reason);
-
-            var result = await _appService.UnacceptApplicationAsync(id, reason, GetCurrentUserId());
-
-            if (result.Success)
-            {
-                await _audit.LogAsync("AdminAction", "ApplicationForm", id.ToString(),
-                    $"Unaccepted application");
-                TempData["Success"] = result.Message;
-                _logger.LogInformation("Unaccept succeeded for Application {Id}", id);
-            }
-            else
-            {
-                _logger.LogWarning("Unaccept failed for Application {Id}: {Message}", id, result.Message);
-                TempData["Error"] = result.Message;
-            }
-
-            return RedirectToAction("Detail", new { id });
+            var result = await _workflow.ReopenAsync(id, note, GetCurrentUserId());
+            SetResultMessage(result);
+            return RedirectToAction(nameof(Detail), new { id });
         }
 
-        /// <summary>
-        /// Löscht eine Bewerbung.
-        /// </summary>
+        /// <summary>Zieht einen angenommenen Fahrer in eine andere Liga um.</summary>
+        [HttpPost("move-league/{id}")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MoveLeague(int id, string? leagueId, string? assignedRole)
+        {
+            if (string.IsNullOrWhiteSpace(leagueId))
+            {
+                TempData["Error"] = "Bitte eine Liga auswählen.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
+
+            var result = await _workflow.MoveToLeagueAsync(id, leagueId, assignedRole, GetCurrentUserId());
+            SetResultMessage(result);
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+
+        /// <summary>Löscht die Bewerbung endgültig.</summary>
         [HttpPost("delete/{id}")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _appService.DeleteApplicationAsync(id, GetCurrentUserId());
-
-            if (result.Success)
-            {
-                await _audit.LogAsync("AdminAction", "ApplicationForm", id.ToString(),
-                    $"Deleted application");
-                TempData["Success"] = result.Message;
-                return RedirectToAction("Open");
-            }
-
-            TempData["Error"] = result.Message;
-            return RedirectToAction("Detail", new { id });
+            var result = await _workflow.DeleteAsync(id, GetCurrentUserId());
+            SetResultMessage(result);
+            return result.Success
+                ? RedirectToAction(nameof(List))
+                : RedirectToAction(nameof(Detail), new { id });
         }
 
-        /// <summary>
-        /// Kennzeichnet eine Bewerbung zur Überprüfung.
-        /// </summary>
+        /// <summary>Markiert die Bewerbung zur Überprüfung.</summary>
         [HttpPost("flag/{id}")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
@@ -293,72 +230,79 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             if (string.IsNullOrWhiteSpace(reason))
             {
                 TempData["Error"] = "Grund erforderlich";
-                return RedirectToAction("Detail", new { id });
+                return RedirectToAction(nameof(Detail), new { id });
             }
 
-            var result = await _appService.FlagForReviewAsync(id, reason, GetCurrentUserId());
-
-            if (result.Success)
-            {
-                TempData["Success"] = result.Message;
-            }
-            else
-            {
-                TempData["Error"] = result.Message;
-            }
-
-            return RedirectToAction("Detail", new { id });
+            var result = await _workflow.FlagAsync(id, reason, GetCurrentUserId());
+            SetResultMessage(result);
+            return RedirectToAction(nameof(Detail), new { id });
         }
 
-        // ---- Batch-Operationen ----
-
-        /// <summary>
-        /// Akzeptiert mehrere Bewerbungen gleichzeitig.
-        /// </summary>
-        [HttpPost("accept-multiple")]
+        /// <summary>Hebt die Überprüfungs-Markierung auf.</summary>
+        [HttpPost("unflag/{id}")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AcceptMultiple(int[] applicationIds)
+        public async Task<IActionResult> Unflag(int id)
         {
-            if (applicationIds is null || applicationIds.Length == 0)
-            {
-                TempData["Error"] = "Keine Bewerbungen ausgewählt";
-                return RedirectToAction("Open");
-            }
-
-            var result = await _appService.AcceptMultipleAsync(applicationIds, GetCurrentUserId());
-
-            TempData["Success"] = $"Verarbeitet: {result.SuccessCount} erfolgreich, {result.FailureCount} Fehler";
-            return RedirectToAction("Open");
+            var result = await _workflow.UnflagAsync(id, GetCurrentUserId());
+            SetResultMessage(result);
+            return RedirectToAction(nameof(Detail), new { id });
         }
 
-        // ---- Automatisierung ----
+        /// <summary>Setzt oder beendet die Probezeit.</summary>
+        [HttpPost("trial/{id}")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetTrial(int id, bool onTrial, int? days)
+        {
+            var result = await _workflow.SetTrialAsync(id, onTrial, days, GetCurrentUserId());
+            SetResultMessage(result);
+            return RedirectToAction(nameof(Detail), new { id });
+        }
 
-        /// <summary>
-        /// Entfernt abgelaufene Bewerbungen (über 48h nach Akzeptanz).
-        /// </summary>
+        /// <summary>Fügt eine zeitgestempelte Kontakt-/Review-Notiz hinzu (erscheint im Verlauf).</summary>
+        [HttpPost("note/{id}")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddNote(int id, string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                TempData["Error"] = "Notiz darf nicht leer sein.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
+
+            if (!await _db.ApplicationForms.AnyAsync(a => a.Id == id)) return NotFound();
+
+            var trimmed = text.Trim();
+            if (trimmed.Length > 1000) trimmed = trimmed[..1000];
+
+            await _audit.LogAndSaveAsync("Notiz", "ApplicationForm", id.ToString(), trimmed);
+            TempData["Success"] = "Notiz hinzugefügt.";
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+
+        // ── Housekeeping & Export ────────────────────────────────────────────────
+
+        /// <summary>Entfernt abgelehnte Bewerbungen, die älter als 30 Tage sind.</summary>
         [HttpPost("cleanup-expired")]
         [Authorize(Policy = "Admin.Applications.Manage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CleanupExpired()
         {
-            var removed = await _appService.RemoveExpiredApplicationsAsync();
+            var removed = await _workflow.CleanupExpiredAsync(GetCurrentUserId());
             TempData["Success"] = $"{removed} abgelaufene Bewerbungen entfernt";
-            return RedirectToAction("Dashboard");
+            return RedirectToAction(nameof(Dashboard));
         }
 
-        // ---- Reporting & Export ----
-
-        /// <summary>
-        /// Exportiert Bewerbungen als CSV.
-        /// </summary>
+        /// <summary>Exportiert Bewerbungen als CSV, optional auf eine Liga gefiltert.</summary>
         [HttpGet("export")]
         [Authorize(Policy = "Admin.Applications.Manage")]
-        public async Task<IActionResult> Export(string? division = null)
+        public async Task<IActionResult> Export(string? leagueId = null)
         {
             try
             {
-                var csv = await _appService.ExportAsCSVAsync(division);
+                var csv = await _queries.ExportCsvAsync(leagueId);
                 var fileName = $"applications-{DateTime.Now:yyyy-MM-dd}.csv";
                 return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", fileName);
             }
@@ -366,122 +310,22 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             {
                 _logger.LogError(ex, "Error exporting applications");
                 TempData["Error"] = "Fehler beim Export";
-                return RedirectToAction("Dashboard");
+                return RedirectToAction(nameof(Dashboard));
             }
         }
 
-        /// <summary>
-        /// Zeigt Bewerbungs-Metriken an.
-        /// </summary>
-        [HttpGet("metrics")]
-        [Authorize(Policy = "Admin.Applications.Metrics")]
-        public async Task<IActionResult> Metrics()
+        // ── Helpers ──────────────────────────────────────────────────────────────
+
+        private void SetResultMessage(ApplicationActionResult result)
         {
-            var metrics = await _appService.GetMetricsAsync();
-            var stats = await _appService.GetStatisticsAsync();
-
-            var viewModel = new ApplicationMetricsViewModel
-            {
-                Metrics = metrics,
-                Statistics = stats
-            };
-
-            return View("~/Views/Admin/Applications/Metrics.cshtml", viewModel);
-        }
-
-        // ---- Review-Status & Rollen-Zuweisung ----
-
-        /// <summary>
-        /// Setzt eine Bewerbung als abgelehnt oder entfernt die Ablehnung.
-        /// </summary>
-        [HttpPost("set-rejected/{id}")]
-        [Authorize(Policy = "Admin.Applications.Manage")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetRejected(int id, bool rejected, string? note)
-        {
-            if (rejected)
-            {
-                var reason = string.IsNullOrWhiteSpace(note) ? "Keine Angabe" : note;
-                var result = await _appService.RejectApplicationAsync(id, reason, GetCurrentUserId());
-                if (result.Success)
-                {
-                    TempData["Success"] = result.Message;
-                    return RedirectToAction("Open");
-                }
-
+            if (result.Success)
+                TempData["Success"] = result.Message;
+            else
                 TempData["Error"] = result.Message;
-                return RedirectToAction("Detail", new { id });
-            }
-
-            // Ablehnung aufheben: Flag zurücksetzen + optionale Notiz übernehmen.
-            var app = await GetApplicationOrNotFound(id);
-            if (app == null) return NotFound();
-            app.IsRejected = false;
-            app.RejectedAt = null;
-            if (!string.IsNullOrWhiteSpace(note))
-                app.ReviewNote = note;
-            await _appService.UpdateApplicationDirectAsync(app, GetCurrentUserId());
-            TempData["Success"] = "Ablehnung entfernt (Notiz gesetzt).";
-            return RedirectToAction("Detail", new { id });
         }
-
-        /// <summary>
-        /// Weist einer angenommenen Bewerbung eine finale Fahrer-Rolle zu
-        /// (Stammfahrer, Ersatzfahrer, Academy).
-        /// </summary>
-        [HttpPost("assign-role/{id}")]
-        [Authorize(Policy = "Admin.Applications.Manage")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AssignRole(int id, string? assignedRole, string? leagueId)
-        {
-            if (string.IsNullOrWhiteSpace(assignedRole))
-            {
-                TempData["Error"] = "Bitte eine Rolle auswählen.";
-                return RedirectToAction("Detail", new { id });
-            }
-
-            var app = await _appService.GetApplicationByIdAsync(id);
-            if (app == null) return NotFound();
-
-            // Rolle zuerst persistieren, damit der Accept-Flow sie für die
-            // Reserve-Einstufung des Liga-Eintrags berücksichtigt.
-            app.AssignedRole = assignedRole;
-            await _appService.UpdateApplicationDirectAsync(app, GetCurrentUserId());
-
-            if (!app.IsAccepted)
-            {
-                // Annahme inkl. Liga-Eintrag: gewählte Liga übersteuert die beworbene.
-                var acceptResult = await _appService.AcceptApplicationAsync(id, GetCurrentUserId(), overrideLeagueId: leagueId);
-                if (!acceptResult.Success)
-                {
-                    TempData["Error"] = "Annahme fehlgeschlagen: " + acceptResult.Message;
-                    return RedirectToAction("Detail", new { id });
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(leagueId))
-            {
-                // Bereits angenommen: in die gewählte Liga umziehen.
-                var assignResult = await _appService.AssignToLeagueAsync(id, leagueId, assignedRole, GetCurrentUserId());
-                if (!assignResult.Success)
-                {
-                    TempData["Error"] = "Liga-Zuweisung fehlgeschlagen: " + assignResult.Message;
-                    return RedirectToAction("Detail", new { id });
-                }
-            }
-
-            await _audit.LogAsync("AdminAction", "ApplicationForm", id.ToString(),
-                $"Rolle zugewiesen: {assignedRole}, League={leagueId}");
-
-            TempData["Success"] = $"Rolle \"{assignedRole}\" zugewiesen.";
-            return RedirectToAction("Detail", new { id });
-        }
-
-        // ── Private Helpers ──────────────────────────────────────────────────────
-        private async Task<ApplicationForm?> GetApplicationOrNotFound(int id)
-            => await _appService.GetApplicationByIdAsync(id);
     }
 
-    // ---- ViewModels ----
+    // ── ViewModels ───────────────────────────────────────────────────────────────
 
     public class ApplicationDashboardViewModel
     {
@@ -489,22 +333,20 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         public ApplicationMetrics Metrics { get; set; } = null!;
         public List<ApplicationForm> RecentApplications { get; set; } = new();
         public string? CurrentSort { get; set; }
+
+        /// <summary>Kapazitäts-/Warteliste-Übersicht je Liga, die aktuell Bewerbungen annimmt.</summary>
+        public List<LeagueCapacityRow> Capacities { get; set; } = new();
     }
 
     public class ApplicationListViewModel
     {
-        public List<ApplicationForm> Applications { get; set; } = new();
+        public ApplicationSearchResult Result { get; set; } = new();
         public ApplicationStatistics Statistics { get; set; } = null!;
-        public string? CurrentDivision { get; set; }
-        public bool? CurrentAcceptedFilter { get; set; }
-        public int CurrentPage { get; set; } = 1;
-        public string? CurrentSort { get; set; }
-        public List<string> AvailableDivisions { get; set; } = new();
-    }
 
-    public class ApplicationMetricsViewModel
-    {
-        public ApplicationMetrics Metrics { get; set; } = null!;
-        public ApplicationStatistics Statistics { get; set; } = null!;
+        /// <summary>Aktive Ligen für den Liga-Filter.</summary>
+        public List<League> Leagues { get; set; } = new();
+
+        /// <summary>Aktive Filter (für Formular-Zustand und Pagination-Links).</summary>
+        public ApplicationSearchFilter Filter { get; set; } = new();
     }
 }

@@ -1,0 +1,112 @@
+@model List<<OWNER_HANDLE>_ERC.Controllers.DuplicateApplicationGroup>
+
+@{
+    ViewData["Title"] = "Doppelte Bewerbungen";
+    ViewData["Kicker"] = "Admin · Bewerbungen";
+    ViewData["HeroTitle"] = "Doppelte Bewerbungen";
+    ViewData["HeroSubtitle"] = "Bewerber mit mehr als einer Bewerbung";
+}
+
+@section Styles {
+    <style>
+        .dup-group {
+            background: var(--surface-1);
+            border: 1px solid var(--stroke-1);
+            border-radius: var(--r-2);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .dup-group h3 { margin: 0 0 1rem; color: var(--ink); font-size: 1.05rem; }
+        .dup-table { width: 100%; border-collapse: collapse; }
+        .dup-table th, .dup-table td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid var(--stroke-1); font-size: 0.875rem; }
+        .dup-table th { color: var(--ink-tertiary); font-weight: 600; text-transform: uppercase; font-size: 0.72rem; }
+        .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
+        .status--pending { background: rgba(255, 193, 7, 0.1); color: ***REMOVED***ffc107; }
+        .status--accepted { background: rgba(76, 175, 80, 0.1); color: ***REMOVED***4caf50; }
+        .status--rejected { background: rgba(244, 67, 54, 0.1); color: ***REMOVED***f44336; }
+        .btn-sm {
+            padding: 0.4rem 0.7rem; border: none; border-radius: var(--r-1);
+            cursor: pointer; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+        }
+        .btn-sm--secondary { background: var(--surface-2); color: var(--ink); }
+        .btn-sm--danger { background: rgba(244, 67, 54, 0.85); color: ***REMOVED***fff; }
+    </style>
+}
+
+<div class="container-fluid py-5">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mb-3">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-3">@TempData["Error"]</div>
+    }
+
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Doppelte Bewerbungen</h1>
+            <p class="text-mute">@Model.Count Bewerber mit mehreren Bewerbungen</p>
+        </div>
+        <div class="col-auto">
+            <a href="@Url.Action("List", "AdminApplications")" class="btn-sm btn-sm--secondary" style="padding:0.5rem 1rem;">
+                <i class="bi bi-arrow-left"></i> Zur Liste
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div style="background: var(--surface-1); border: 1px solid var(--stroke-1); border-radius: var(--r-2); padding: 2rem; text-align: center; color: var(--ink-secondary);">
+            <i class="bi bi-check-circle" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p style="margin-top: 1rem;">Keine doppelten Bewerbungen gefunden.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var group in Model)
+        {
+            <div class="dup-group">
+                <h3>@group.DiscordName <span class="text-mute small">(@group.Applications.Count Bewerbungen)</span></h3>
+                <table class="dup-table">
+                    <thead>
+                        <tr>
+                            <th>Division</th>
+                            <th>Rolle</th>
+                            <th>EA-Name</th>
+                            <th>Status</th>
+                            <th>Eingereicht</th>
+                            <th style="text-align:right;">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in group.Applications)
+                        {
+                            var statusClass = app.IsAccepted ? "status--accepted" : app.IsRejected ? "status--rejected" : "status--pending";
+                            var statusText = app.IsAccepted ? "Akzeptiert" : app.IsRejected ? "Abgelehnt" : "Offen";
+                            <tr>
+                                <td>@app.Division</td>
+                                <td>@app.Role</td>
+                                <td>@app.GamingName <span class="text-mute small">(@app.Platform)</span></td>
+                                <td><span class="status-badge @statusClass">@statusText</span></td>
+                                <td>@app.SubmittedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td style="text-align:right; white-space:nowrap;">
+                                    <a href="@Url.Action("Detail", "AdminApplications", new { id = app.Id })" class="btn-sm btn-sm--secondary">
+                                        <i class="bi bi-eye"></i> Detail
+                                    </a>
+                                    <form method="post" action="@Url.Action("Delete", "AdminApplications", new { id = app.Id })" style="display:inline;"
+                                          onsubmit="return confirm('Diese Bewerbung wirklich löschen?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-sm btn-sm--danger">
+                                            <i class="bi bi-trash"></i> Löschen
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</div>

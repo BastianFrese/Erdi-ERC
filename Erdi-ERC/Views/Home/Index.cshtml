@@ -86,7 +86,7 @@
                 <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" style="color:var(--accent-2); font-weight:700;"><OWNER_HANDLE>10</a>.
             </p>
             <div class="f1-hero__actions">
-                <a class="btn f1-btn f1-btn--primary" asp-controller="Home" asp-action="<OWNER_HANDLE>10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
+                <a class="btn f1-btn f1-btn--primary" asp-controller="Stats" asp-action="<OWNER_HANDLE>10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
                 <a class="btn f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
                 <button type="button" class="btn f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
             </div>
@@ -219,7 +219,7 @@
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-stat-grid f1-stagger">
-        <a asp-controller="Home" asp-action="<OWNER_HANDLE>10">
+        <a asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
             <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="3">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="flag"></i></span>
@@ -232,7 +232,7 @@
                 <div class="f1-stat__sector-bar" aria-hidden="true"><span></span><span></span><span></span></div>
             </div>
         </a>
-        <a asp-controller="Home" asp-action="Results">
+        <a asp-controller="Races" asp-action="Results">
             <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.DriverCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="users"></i></span>
@@ -245,7 +245,7 @@
                 <div class="f1-stat__sector-bar" aria-hidden="true"><span></span><span></span><span></span></div>
             </div>
         </a>
-        <a asp-controller="Home" asp-action="@(string.IsNullOrWhiteSpace(firstLeagueId) ? "Results" : "AllRaces")">
+        <a asp-controller="Races" asp-action="@(string.IsNullOrWhiteSpace(firstLeagueId) ? "Results" : "AllRaces")">
             <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.RaceCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="flag"></i></span>
@@ -258,7 +258,7 @@
                 <div class="f1-stat__sector-bar" aria-hidden="true"><span></span><span></span><span></span></div>
             </div>
         </a>
-        <a asp-controller="Home" asp-action="<OWNER_HANDLE>10">
+        <a asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
             <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.UpcomingCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="calendar-days"></i></span>
@@ -291,7 +291,7 @@
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-pitbox f1-stagger">
-        <a asp-controller="Home" asp-action="Results">
+        <a asp-controller="Races" asp-action="Results">
             <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="trophy"></i></span><span class="f1-pitcard__tag">Standings</span></div>
                 <h5 class="f1-pitcard__title">Bestenlisten</h5>
@@ -299,7 +299,7 @@
                 <span class="f1-pitcard__cta">Jetzt ansehen <i class="f1-icon" data-lucide="arrow-right"></i></span>
             </div>
         </a>
-        <a asp-controller="Home" asp-action="AllRaces">
+        <a asp-controller="Races" asp-action="AllRaces">
             <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--cyan"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Archive</span></div>
                 <h5 class="f1-pitcard__title">Race Results</h5>
@@ -307,7 +307,7 @@
                 <span class="f1-pitcard__cta">Ergebnisse &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
             </div>
         </a>
-        <a asp-controller="Home" asp-action="TrackSetups">
+        <a asp-controller="Setups" asp-action="TrackSetups">
             <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--amber"><i class="f1-icon" data-lucide="settings-2"></i></span><span class="f1-pitcard__tag">Setups</span></div>
                 <h5 class="f1-pitcard__title">F1 Strecken-Setups</h5>
@@ -325,7 +325,7 @@
         <div class="f1-section__head">
             <span class="f1-section__bar" aria-hidden="true"></span>
             <h2 class="f1-section__title">Paddock</h2>
-            <a class="f1-section__sub" asp-controller="Home" asp-action="<OWNER_HANDLE>10">Alle Ligen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+            <a class="f1-section__sub" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">Alle Ligen <i class="f1-icon" data-lucide="arrow-right"></i></a>
         </div>
         <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
         <div class="f1-paddock f1-stagger">
@@ -384,7 +384,7 @@
         {
             @foreach (var post in communityNews)
             {
-                <a asp-controller="Home" asp-action="CommunityNews">
+                <a asp-controller="Community" asp-action="CommunityNews">
                     <div class="f1-newscard f1-tiltable f1-border-anim f1-holographic @(post.IsPinned ? "is-pinned" : "")">
                         <div class="f1-newscard__head">
                             <span class="f1-newscard__cat @(post.IsPinned ? "f1-newscard__cat--pinned" : "")">@post.Category</span>
@@ -478,7 +478,7 @@
                 <h2 class="f1-hero__title" style="font-size:clamp(1.6rem,3.2vw,2.6rem); margin:1rem 0 .4rem;">Was du auf der Seite alles machen kannst</h2>
                 <p class="f1-hero__lead" style="font-size:.95rem; margin-bottom:1.4rem;">Schneller Einstieg in alle Bereiche der ERC.</p>
                 <div class="f1-intro-guide-grid f1-stagger">
-                    <a class="text-decoration-none" asp-controller="Home" asp-action="<OWNER_HANDLE>10">
+                    <a class="text-decoration-none" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
                         <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Hub</span></div>
                             <h5 class="f1-pitcard__title">Racing Hub</h5>
@@ -486,7 +486,7 @@
                             <span class="f1-pitcard__cta">Zum Hub <i class="f1-icon" data-lucide="arrow-right"></i></span>
                         </div>
                     </a>
-                    <a class="text-decoration-none" asp-controller="Home" asp-action="Results">
+                    <a class="text-decoration-none" asp-controller="Races" asp-action="Results">
                         <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--cyan"><i class="f1-icon" data-lucide="trophy"></i></span><span class="f1-pitcard__tag">Archive</span></div>
                             <h5 class="f1-pitcard__title">Results &amp; Archiv</h5>
@@ -494,7 +494,7 @@
                             <span class="f1-pitcard__cta">Results &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
                         </div>
                     </a>
-                    <a class="text-decoration-none" asp-controller="Home" asp-action="TrackSetups">
+                    <a class="text-decoration-none" asp-controller="Setups" asp-action="TrackSetups">
                         <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--amber"><i class="f1-icon" data-lucide="settings-2"></i></span><span class="f1-pitcard__tag">Setups</span></div>
                             <h5 class="f1-pitcard__title">Track Setups</h5>
@@ -502,7 +502,7 @@
                             <span class="f1-pitcard__cta">Setups oeffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
                         </div>
                     </a>
-                    <a class="text-decoration-none" asp-controller="Home" asp-action="Events">
+                    <a class="text-decoration-none" asp-controller="Community" asp-action="Events">
                         <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--green"><i class="f1-icon" data-lucide="calendar-days"></i></span><span class="f1-pitcard__tag">Events</span></div>
                             <h5 class="f1-pitcard__title">Events &amp; Streams</h5>
@@ -510,7 +510,7 @@
                             <span class="f1-pitcard__cta">Events <i class="f1-icon" data-lucide="arrow-right"></i></span>
                         </div>
                     </a>
-                    <a class="text-decoration-none" asp-controller="Home" asp-action="Apply">
+                    <a class="text-decoration-none" asp-controller="Application" asp-action="Apply">
                         <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="file-signature"></i></span><span class="f1-pitcard__tag">Bewerbung</span></div>
                             <h5 class="f1-pitcard__title">Liga-Bewerbung</h5>

@@ -23,5 +23,11 @@ namespace <OWNER_HANDLE>_ERC.Options
 
         /// <summary>Kurzes Jahr-Label, z.B. "26" oder "2026".</summary>
         public string F1GameYearShort { get; set; } = "26";
+
+        /// <summary>Discord-Einladungslink zum Community-Server.</summary>
+        public string DiscordInviteCommunity { get; set; } = "https://discord.gg/VyhjtDXYYV";
+
+        /// <summary>Discord-Einladungslink zum Liga-Server.</summary>
+        public string DiscordInviteLeague { get; set; } = "https://discord.gg/fRqH8DA95d";
     }
 }

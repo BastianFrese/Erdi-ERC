@@ -295,6 +295,12 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.Property<DateTime?>("AcceptedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("ActiveDiscordKey")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)")
+                        .HasComputedColumnSql("(CASE WHEN `Status` <> 2 THEN `DiscordId` ELSE NULL END)", true);
+
                     b.Property<int>("Age")
                         .HasColumnType("int");
 
@@ -304,6 +310,10 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("AppliedLeagueId")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("AssignedLeagueId")
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
@@ -324,15 +334,20 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
+                    b.Property<DateTime?>("FlaggedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("GamingName")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
-                    b.Property<bool>("IsAccepted")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<bool>("IsFlagged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
 
-                    b.Property<bool>("IsRejected")
+                    b.Property<bool>("IsOnTrial")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("JoinedCommunityDiscord")
@@ -341,7 +356,18 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.Property<bool>("JoinedLeagueDiscord")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("PaceReference")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
                     b.Property<string>("Platform")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int?>("PreferredNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PreferredTeam")
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
@@ -361,12 +387,31 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp(6)");
 
+                    b.Property<string>("SimHardware")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("TrialEndsAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ActiveDiscordKey")
+                        .IsUnique();
+
                     b.HasIndex("AppliedLeagueId");
+
+                    b.HasIndex("AssignedLeagueId");
+
+                    b.HasIndex("DiscordId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("SubmittedAt");
 
@@ -691,6 +736,9 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<int?>("ManualSetupTier")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nationality")
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
@@ -785,6 +833,11 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("int");
 
+                    b.Property<int>("PointsAdjustment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<int>("Position")
                         .HasColumnType("int");
 
@@ -832,9 +885,19 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
+                    b.Property<int?>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CurrentSeason")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1024)
                         .HasColumnType("varchar(1024)");
+
+                    b.Property<int?>("DropWorstResults")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsArchived")
                         .HasColumnType("tinyint(1)");
@@ -846,6 +909,9 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1042,6 +1108,9 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.Property<int>("Position")
                         .HasColumnType("int");
 
+                    b.Property<int?>("QualifyingPosition")
+                        .HasColumnType("int");
+
                     b.Property<int>("RaceResultId")
                         .HasColumnType("int");
 
@@ -1157,6 +1226,10 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Season")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.Property<string>("Track")
                         .IsRequired()
@@ -1438,6 +1511,24 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.ToTable("SetupAccessRoleMappings");
                 });
 
+            modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.SetupBlockedUser", b =>
+                {
+                    b.Property<string>("DiscordId")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.HasKey("DiscordId");
+
+                    b.ToTable("SetupBlockedUsers");
+                });
+
             modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.SetupComment", b =>
                 {
                     b.Property<int>("Id")
@@ -1602,6 +1693,121 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.ToTable("TrackSetups");
                 });
 
+            modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.Troll.TrollCustomGag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Body")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("Eyebrow")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Lead")
+                        .HasMaxLength(400)
+                        .HasColumnType("varchar(400)");
+
+                    b.Property<string>("OptionsJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Question")
+                        .HasMaxLength(400)
+                        .HasColumnType("varchar(400)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("TrollCustomGags");
+                });
+
+            modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.Troll.TrollGagOverride", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("TrollGagOverrides");
+                });
+
+            modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.Troll.TrollSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("ApplyToAdmins")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("CooldownMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("MathMaxOperand")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MercyAfterAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<double>("TriggerChance")
+                        .HasColumnType("double");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TrollSettings");
+                });
+
             modelBuilder.Entity("<OWNER_HANDLE>_ERC.Models.WebhookAutomationRule", b =>
                 {
                     b.Property<int>("Id")
@@ -1704,6 +1910,11 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                     b.HasOne("<OWNER_HANDLE>_ERC.Models.League", null)
                         .WithMany()
                         .HasForeignKey("AppliedLeagueId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("<OWNER_HANDLE>_ERC.Models.League", null)
+                        .WithMany()
+                        .HasForeignKey("AssignedLeagueId")
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 

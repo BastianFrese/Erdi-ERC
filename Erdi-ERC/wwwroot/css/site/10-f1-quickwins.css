@@ -388,42 +388,13 @@
    8) TELEMETRY TOPBAR (animated EKG-style line)
    --------------------------------------------------------------------- */
 .topbar { position: relative; }
-.topbar::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    background:
-        linear-gradient(90deg,
-            transparent 0%,
-            color-mix(in srgb, var(--accent) 70%, transparent) 25%,
-            var(--sig-cyan) 50%,
-            color-mix(in srgb, var(--accent) 70%, transparent) 75%,
-            transparent 100%);
-    background-size: 220% 100%;
-    animation: telemetry-topbar-run 8s linear infinite;
-    opacity: .85;
-    pointer-events: none;
-    z-index: 2;
-}
+/* Telemetry-Linien deaktiviert für den cleanen "Pillen"-Look des Headers.
+   (Der Header ist jetzt eine schwebende schwarze Pille — siehe 03-layout.css.) */
+.topbar::before,
+.topbar::after { content: none; display: none; }
 @keyframes telemetry-topbar-run {
     0%   { background-position: 0% 50%; }
     100% { background-position: 220% 50%; }
-}
-
-/* feiner EKG-Puls als Hintergrund-Texture in der Topbar */
-.topbar::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-        repeating-linear-gradient(90deg, transparent 0 80px, rgba(255,255,255,.025) 80px 81px),
-        radial-gradient(60% 100% at 50% 100%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%);
-    z-index: 0;
-    opacity: .8;
 }
 
 @media (prefers-reduced-motion: reduce) {

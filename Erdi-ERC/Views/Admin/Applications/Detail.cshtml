@@ -1,10 +1,19 @@
 @model <OWNER_HANDLE>_ERC.Services.ApplicationFormWithHistory
+@using <OWNER_HANDLE>_ERC.Models
 
 @{
     ViewData["Title"] = $"Bewerbung von {Model.Application.DiscordName}";
     ViewData["Kicker"] = "Admin · Bewerbungen";
     ViewData["HeroTitle"] = "Bewerbungs-Detail";
-    ViewData["HeroSubtitle"] = $"Vollständige Übersicht mit Audit-Trail";
+    ViewData["HeroSubtitle"] = "Vollständige Übersicht mit Audit-Trail";
+
+    var app = Model.Application;
+    var leagues = ViewData["Leagues"] as List<<OWNER_HANDLE>_ERC.Models.League> ?? new List<<OWNER_HANDLE>_ERC.Models.League>();
+    string? LeagueName(string? id) => string.IsNullOrEmpty(id) ? null : leagues.FirstOrDefault(l => l.Id == id)?.Name;
+
+    var assignedLeagueName = LeagueName(app.AssignedLeagueId) ?? (app.IsAccepted ? app.Division : null);
+    var appliedLeagueName = LeagueName(app.AppliedLeagueId);
+    var roleOptions = new[] { "Stammfahrer", "Ersatzfahrer", "Academy" };
 }
 
 @section Styles {
@@ -43,18 +52,13 @@
         .status-large--pending  { background: rgba(255, 193, 7, 0.1); color: ***REMOVED***ffc107; }
         .status-large--review   { background: rgba(0, 188, 212, 0.1); color: ***REMOVED***00bcd4; }
         .status-large--rejected { background: rgba(244, 67, 54, 0.1); color: ***REMOVED***f44336; }
-        .status-large--expired  { background: rgba(158, 158, 158, 0.12); color: ***REMOVED***9e9e9e; }
 
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
         .info-item { background: var(--surface-0); padding: 1rem; border-radius: var(--r-1); }
         .info-label { font-size: 0.75rem; font-weight: 600; color: var(--ink-tertiary); text-transform: uppercase; }
         .info-value { font-size: 1rem; font-weight: 600; color: var(--ink); margin-top: 0.5rem; }
 
-        .action-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
+        .action-panel { display: flex; flex-direction: column; gap: 0.75rem; min-width: 240px; }
         .btn-action {
             padding: 0.75rem 1rem;
             border-radius: var(--r-1);
@@ -75,6 +79,8 @@
         .btn-action--danger:hover { background: rgba(244, 67, 54, 1); }
         .btn-action--secondary { background: var(--surface-2); color: var(--ink); border: 1px solid var(--stroke-1); }
         .btn-action--secondary:hover { background: var(--surface-3); }
+        .btn-action--primary { background: rgba(0, 188, 212, 0.9); color: ***REMOVED***04121a; font-weight: 700; }
+        .btn-action--primary:hover { background: rgba(0, 188, 212, 1); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3); }
 
         .section { margin-top: 2rem; }
         .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--ink); }
@@ -105,10 +111,7 @@
         .app-modal-backdrop {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
             align-items: center;
@@ -116,12 +119,7 @@
         }
         .app-modal-backdrop.active { display: flex; }
         .app-modal { background: var(--surface-0); border-radius: var(--r-2); padding: 2rem; max-width: 500px; width: 90%; }
-        .app-modal-close {
-            float: right;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--ink-secondary);
-        }
+        .app-modal-close { float: right; font-size: 1.5rem; cursor: pointer; color: var(--ink-secondary); }
         .app-modal-title { font-size: 1.25rem; font-weight: 700; margin: 1rem 0; clear: both; }
         .app-modal-input {
             width: 100%;
@@ -131,6 +129,7 @@
             margin-bottom: 1rem;
             font-size: 0.875rem;
         }
+        .app-modal-label { display: block; margin-bottom: .5rem; font-size: .8rem; color: var(--ink-3); }
     </style>
 }
 
@@ -148,87 +147,200 @@
     <div class="detail-header">
         <div>
             <div class="applicant-info">
-                <div class="applicant-avatar">@(string.IsNullOrEmpty(Model.Application.DiscordName) ? '?' : Model.Application.DiscordName[0])</div>
+                <div class="applicant-avatar">@(string.IsNullOrEmpty(app.DiscordName) ? '?' : app.DiscordName[0])</div>
                 <div class="applicant-meta">
-                    <h2>@Model.Application.DiscordName</h2>
-                    <p><strong>EA-Name:</strong> @Model.Application.GamingName <span class="text-mute small ms-2">(@Model.Application.Platform)</span></p>
-                    <p><strong>Alter:</strong> @Model.Application.Age Jahre</p>
+                    <h2>@app.DiscordName</h2>
+                    <p><strong>Ingame-Name:</strong> @app.GamingName <span class="text-mute small ms-2">(@app.Platform)</span></p>
+                    <p><strong>Alter:</strong> @app.Age Jahre</p>
                     <div style="margin-top: 0.75rem;">
-                        @{ 
+                        @{
                             var (badgeClass, badgeText) = Model.Status switch
                             {
-                                <OWNER_HANDLE>_ERC.Services.ApplicationStatus.Expired => ("status-large--expired", "⏰ Abgelaufen"),
-                                <OWNER_HANDLE>_ERC.Services.ApplicationStatus.Rejected => ("status-large--rejected", "✕ Abgelehnt"),
-                                _ => Model.Application.IsAccepted ? ("status-large--accepted", "✓ Akzeptiert") : ("status-large--pending", "⏳ Offen")
+                                ApplicationStatus.Accepted => ("status-large--accepted", "✓ Angenommen"),
+                                ApplicationStatus.Rejected => ("status-large--rejected", "✕ Abgelehnt"),
+                                _ => app.IsFlagged
+                                    ? ("status-large--review", "⚑ Zur Überprüfung")
+                                    : ("status-large--pending", "⏳ Offen")
                             };
                         }
                         <span class="status-large @badgeClass">@badgeText</span>
+                        @if (app.IsOnTrial)
+                        {
+                            <span class="status-large" style="background:rgba(255,184,0,.12);color:***REMOVED***ffb800;">Auf Probe@(app.TrialEndsAt.HasValue ? $" bis {app.TrialEndsAt:dd.MM.yyyy}" : "")</span>
+                        }
                     </div>
                 </div>
             </div>
 
-            @if (string.IsNullOrEmpty(Model.Application.AppliedLeagueId))
+            @if (string.IsNullOrEmpty(app.AppliedLeagueId) && string.IsNullOrEmpty(app.AssignedLeagueId))
             {
                 <div style="margin-top:.75rem;padding:.5rem .75rem;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);border-radius:var(--r-1);font-size:.8rem;color:***REMOVED***ffc107;">
                     <i class="bi bi-exclamation-triangle"></i>
-                    Keine Liga-Zuordnung — beim Akzeptieren bitte Liga auswählen.
+                    Keine Liga-Zuordnung — beim Annehmen bitte Liga auswählen.
                 </div>
             }
 
             <div class="info-grid">
+                @if (app.IsAccepted)
+                {
+                    <div class="info-item">
+                        <div class="info-label">Zugewiesene Liga</div>
+                        <div class="info-value">@(assignedLeagueName ?? "—")</div>
+                    </div>
+                }
                 <div class="info-item">
-                    <div class="info-label">Division</div>
-                    <div class="info-value">@Model.Application.Division</div>
+                    <div class="info-label">Beworben für</div>
+                    <div class="info-value">@(appliedLeagueName ?? (string.IsNullOrWhiteSpace(app.Division) ? "—" : app.Division))</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Rolle</div>
-                    <div class="info-value">@Model.Application.Role</div>
+                    <div class="info-value">@(app.AssignedRole ?? app.Role)</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">AI Level</div>
-                    <div class="info-value">@Model.Application.AiLevel</div>
+                    <div class="info-value">@app.AiLevel</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Eingereicht</div>
-                    <div class="info-value">@Model.Application.SubmittedAt.ToString("dd.MM.yyyy")</div>
+                    <div class="info-value">@app.SubmittedAt.ToString("dd.MM.yyyy")</div>
                 </div>
+                @if (app.PreferredNumber.HasValue)
+                {
+                    <div class="info-item">
+                        <div class="info-label">Wunsch-Nummer</div>
+                        <div class="info-value">***REMOVED***@app.PreferredNumber</div>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(app.PreferredTeam))
+                {
+                    <div class="info-item">
+                        <div class="info-label">Wunsch-Team</div>
+                        <div class="info-value">@app.PreferredTeam</div>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(app.SimHardware))
+                {
+                    <div class="info-item">
+                        <div class="info-label">Sim-Hardware</div>
+                        <div class="info-value">@app.SimHardware</div>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(app.PaceReference))
+                {
+                    <div class="info-item">
+                        <div class="info-label">Pace / Erfahrung</div>
+                        <div class="info-value" style="font-size:.85rem;">@app.PaceReference</div>
+                    </div>
+                }
             </div>
         </div>
 
-        <!-- Action Panel -->
+        <!-- Aktionsleiste: EIN Pfad pro Übergang -->
         <div class="action-panel">
-            @if (!Model.Application.IsAccepted)
+            @if (Model.Status == ApplicationStatus.Open)
             {
                 <button class="btn-action btn-action--success" onclick="showModal('acceptModal')">
-                    <i class="bi bi-check-circle"></i> Akzeptieren
+                    <i class="bi bi-check-circle"></i> Annehmen
                 </button>
                 <button class="btn-action btn-action--danger" onclick="showModal('rejectModal')">
                     <i class="bi bi-x-circle"></i> Ablehnen
                 </button>
-                <button class="btn-action btn-action--secondary" onclick="showModal('flagModal')">
-                    <i class="bi bi-flag"></i> Zur Überprüfung
+                @if (app.IsFlagged)
+                {
+                    <form method="post" action="@Url.Action("Unflag", "AdminApplications", new { id = app.Id })" style="margin:0;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-action btn-action--secondary" style="width:100%;">
+                            <i class="bi bi-flag-fill"></i> Markierung aufheben
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button class="btn-action btn-action--secondary" onclick="showModal('flagModal')">
+                        <i class="bi bi-flag"></i> Zur Überprüfung
+                    </button>
+                }
+            }
+            else if (Model.Status == ApplicationStatus.Accepted)
+            {
+                <button class="btn-action btn-action--primary" onclick="showModal('moveLeagueModal')">
+                    <i class="bi bi-arrow-left-right"></i> Liga / Rolle ändern
+                </button>
+                <button class="btn-action btn-action--danger" onclick="showModal('reopenModal')">
+                    <i class="bi bi-arrow-counterclockwise"></i> Wieder öffnen
                 </button>
             }
             else
             {
-                <button class="btn-action btn-action--danger" onclick="showModal('unacceptModal')">
-                    <i class="bi bi-arrow-counterclockwise"></i> Akzeptanz rückgängig
+                <button class="btn-action btn-action--primary" onclick="showModal('reopenModal')">
+                    <i class="bi bi-arrow-counterclockwise"></i> Wieder öffnen
                 </button>
             }
 
-            <button class="btn-action btn-action--secondary" onclick="showModal('assignRoleModal')"
-                    title="Finale Fahrer-Rolle nach Annahme zuweisen">
-                <i class="bi bi-person-check"></i> Rolle zuweisen
-                @if (!string.IsNullOrEmpty(Model.Application.AssignedRole))
-                {
-                    <span class="badge bg-primary ms-1" style="font-size:.65rem;">@Model.Application.AssignedRole</span>
-                }
-            </button>
+            <form method="post" action="@Url.Action("Delete", "AdminApplications", new { id = app.Id })" style="margin:0;"
+                  onsubmit="return confirm('Bewerbung endgültig löschen? Das kann nicht rückgängig gemacht werden.');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-action btn-action--secondary" style="width:100%;">
+                    <i class="bi bi-trash"></i> Löschen
+                </button>
+            </form>
+
             <a href="@Url.Action("Dashboard", "AdminApplications")" class="btn-action btn-action--secondary">
                 <i class="bi bi-arrow-left"></i> Zurück
             </a>
         </div>
     </div>
+
+    <!-- Notizen & Probezeit -->
+    <div class="section">
+        <h3 class="section-title">Notiz hinzufügen</h3>
+        <p class="section-subtitle">Kontakt-/Review-Notizen erscheinen zeitgestempelt in der Historie unten.</p>
+        <form asp-action="AddNote" asp-route-id="@app.Id" method="post" class="d-flex gap-2 flex-wrap align-items-start">
+            @Html.AntiForgeryToken()
+            <textarea name="text" class="form-control" rows="2" maxlength="1000" placeholder="z.B. Discord angeschrieben am … / Bewerbungsgespräch vereinbart" style="flex:1; min-width:260px;"></textarea>
+            <button type="submit" class="btn-action btn-action--secondary"><i class="bi bi-journal-plus"></i> Notiz speichern</button>
+        </form>
+
+        @if (app.IsAccepted)
+        {
+            <hr style="border-color:var(--stroke-1); margin:1rem 0;" />
+            <h3 class="section-title">Probezeit</h3>
+            @if (app.IsOnTrial)
+            {
+                <p class="section-subtitle">
+                    <span class="badge" style="background:***REMOVED***ffb800;color:***REMOVED***04121a;">AUF PROBE</span>
+                    @if (app.TrialEndsAt.HasValue)
+                    {
+                        <span>bis @app.TrialEndsAt.Value.ToString("dd.MM.yyyy")</span>
+                    }
+                </p>
+                <form asp-action="SetTrial" asp-route-id="@app.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="onTrial" value="false" />
+                    <button type="submit" class="btn-action btn-action--secondary"><i class="bi bi-check2-circle"></i> Probezeit beenden (bestätigen)</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="SetTrial" asp-route-id="@app.Id" method="post" class="d-flex gap-2 align-items-center flex-wrap">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="onTrial" value="true" />
+                    <label class="section-subtitle mb-0">Dauer (Tage):</label>
+                    <input type="number" name="days" value="30" min="1" max="365" class="form-control" style="width:90px;" />
+                    <button type="submit" class="btn-action btn-action--secondary"><i class="bi bi-hourglass-split"></i> Auf Probe setzen</button>
+                </form>
+            }
+        }
+    </div>
+
+    <!-- Review-Notizen -->
+    @if (!string.IsNullOrWhiteSpace(app.ReviewNote))
+    {
+        <div class="section">
+            <h3 class="section-title">Review-Notizen</h3>
+            <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-2);padding:1rem;white-space:pre-line;color:var(--ink-secondary);font-size:.875rem;">@app.ReviewNote</div>
+        </div>
+    }
 
     <!-- Audit Trail -->
     <div class="section">
@@ -248,7 +360,7 @@
                             Von: @entry.Actor
                             @if (!string.IsNullOrEmpty(entry.Details))
                             {
-                                <div>Grund: @entry.Details</div>
+                                <div>@entry.Details</div>
                             }
                         </div>
                     </div>
@@ -262,32 +374,39 @@
     </div>
 
     <!-- Discord Info -->
-    @if (!string.IsNullOrEmpty(Model.Application.DiscordId))
+    @if (!string.IsNullOrEmpty(app.DiscordId))
     {
         <div class="section">
             <h3 class="section-title">Discord-Informationen</h3>
             <div class="info-grid">
                 <div class="info-item">
                     <div class="info-label">Discord ID</div>
-                    <div class="info-value" style="font-family: monospace; font-size: 0.875rem;">@Model.Application.DiscordId</div>
+                    <div class="info-value d-flex align-items-center gap-2" style="font-family: monospace; font-size: 0.875rem;">
+                        @app.DiscordId
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary py-0 px-1"
+                                title="Kopieren"
+                                onclick="navigator.clipboard.writeText('@app.DiscordId').then(() => { this.innerHTML='<i class=\'bi bi-check\'></i>'; setTimeout(() => this.innerHTML='<i class=\'bi bi-clipboard\'></i>', 1500); })">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     }
 </div>
 
-<!-- Modals -->
+<!-- ── Annehmen: Liga + Rolle in EINEM Formular ─────────────────────────── -->
 <div id="acceptModal" class="app-modal-backdrop">
     <div class="app-modal">
         <span class="app-modal-close" onclick="closeModal('acceptModal')">&times;</span>
-        <h3 class="app-modal-title">Bewerbung akzeptieren</h3>
-        <form method="post" action="@Url.Action("Accept", "AdminApplications", new { id = Model.Application.Id })">
+        <h3 class="app-modal-title">Bewerbung annehmen</h3>
+        <form method="post" action="@Url.Action("Accept", "AdminApplications", new { id = app.Id })">
             @Html.AntiForgeryToken()
             @{
-                var acceptLeagues = ViewData["Leagues"] as List<<OWNER_HANDLE>_ERC.Models.League>;
-                var hasLeague = !string.IsNullOrEmpty(Model.Application.AppliedLeagueId);
+                var hasAppliedLeague = !string.IsNullOrEmpty(app.AppliedLeagueId);
             }
-            @if (!hasLeague)
+            @if (!hasAppliedLeague)
             {
                 <p style="color:***REMOVED***ffc107;margin-bottom:.75rem;">
                     <i class="bi bi-exclamation-triangle"></i>
@@ -295,9 +414,9 @@
                 </p>
             }
             <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Liga</label>
-                <select name="leagueId" class="app-modal-input" @(!hasLeague ? "required" : "")>
-                    @if (hasLeague)
+                <label class="app-modal-label">Liga (Fahrer wird dort eingetragen)</label>
+                <select name="leagueId" class="app-modal-input" required="@(!hasAppliedLeague)">
+                    @if (hasAppliedLeague)
                     {
                         <option value="">– Beworbene Liga verwenden –</option>
                     }
@@ -305,128 +424,135 @@
                     {
                         <option value="">– Liga auswählen –</option>
                     }
-                    @if (acceptLeagues != null)
+                    @foreach (var l in leagues)
                     {
-                        foreach (var l in acceptLeagues)
-                        {
-                            var isApplied = l.Id == Model.Application.AppliedLeagueId;
-                            <option value="@l.Id" selected="@isApplied">@l.Name@(isApplied ? " (beworben)" : "")</option>
-                        }
+                        var isApplied = l.Id == app.AppliedLeagueId;
+                        <option value="@l.Id" selected="@(isApplied ? "selected" : null)">@l.Name@(isApplied ? " (beworben)" : "")</option>
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label class="app-modal-label">Rolle</label>
+                <select name="assignedRole" class="app-modal-input">
+                    <option value="">– Beworbene Rolle (@app.Role) –</option>
+                    @foreach (var role in roleOptions)
+                    {
+                        <option value="@role" selected="@(app.AssignedRole == role ? "selected" : null)">@role</option>
                     }
                 </select>
             </div>
             <button type="submit" class="btn-action btn-action--success" style="width: 100%;">
-                <i class="bi bi-check-circle"></i> Ja, akzeptieren
+                <i class="bi bi-check-circle"></i> Annehmen &amp; in Liga eintragen
             </button>
-            <button type="button" class="btn-action btn-action--secondary" style="width: 100%;" onclick="closeModal('acceptModal')">
+            <button type="button" class="btn-action btn-action--secondary" style="width: 100%; margin-top:.5rem;" onclick="closeModal('acceptModal')">
                 Abbrechen
             </button>
         </form>
     </div>
 </div>
 
+<!-- ── Ablehnen ─────────────────────────────────────────────────────────── -->
 <div id="rejectModal" class="app-modal-backdrop">
     <div class="app-modal">
         <span class="app-modal-close" onclick="closeModal('rejectModal')">&times;</span>
         <h3 class="app-modal-title">Bewerbung ablehnen</h3>
-        <form method="post" action="@Url.Action("Reject", "AdminApplications", new { id = Model.Application.Id })">
+        <form method="post" action="@Url.Action("Reject", "AdminApplications", new { id = app.Id })">
             @Html.AntiForgeryToken()
-            <label style="display: block; margin-bottom: 0.5rem;">Grund für Ablehnung:</label>
-            <textarea name="reason" class="app-modal-input" rows="3" required placeholder="z.B. Keine freien Plätze in dieser Division"></textarea>
+            <label class="app-modal-label">Grund für Ablehnung (optional):</label>
+            <textarea name="reason" class="app-modal-input" rows="3" placeholder="z.B. Keine freien Plätze in dieser Liga"></textarea>
             <button type="submit" class="btn-action btn-action--danger" style="width: 100%;">
                 <i class="bi bi-x-circle"></i> Ablehnen
             </button>
-            <button type="button" class="btn-action btn-action--secondary" style="width: 100%;" onclick="closeModal('rejectModal')">
+            <button type="button" class="btn-action btn-action--secondary" style="width: 100%; margin-top:.5rem;" onclick="closeModal('rejectModal')">
                 Abbrechen
             </button>
         </form>
     </div>
 </div>
 
-<div id="unacceptModal" class="app-modal-backdrop">
+<!-- ── Wieder öffnen (Annahme oder Ablehnung zurücknehmen) ──────────────── -->
+<div id="reopenModal" class="app-modal-backdrop">
     <div class="app-modal">
-        <span class="app-modal-close" onclick="closeModal('unacceptModal')">&times;</span>
-        <h3 class="app-modal-title">Akzeptanz rückgängig machen</h3>
-        <form method="post" action="@Url.Action("Unaccept", "AdminApplications", new { id = Model.Application.Id })">
+        <span class="app-modal-close" onclick="closeModal('reopenModal')">&times;</span>
+        <h3 class="app-modal-title">Bewerbung wieder öffnen</h3>
+        @if (Model.Status == ApplicationStatus.Accepted)
+        {
+            <p class="section-subtitle">Die Annahme wird zurückgenommen: der Liga-Eintrag (falls noch ohne Ergebnisse) wird entfernt und die Bewerbung ist wieder offen.</p>
+        }
+        else
+        {
+            <p class="section-subtitle">Die Ablehnung wird aufgehoben — die Bewerbung ist danach wieder offen.</p>
+        }
+        <form method="post" action="@Url.Action("Reopen", "AdminApplications", new { id = app.Id })">
             @Html.AntiForgeryToken()
-            <label style="display: block; margin-bottom: 0.5rem;">Grund:</label>
-            <textarea name="reason" class="app-modal-input" rows="3" required placeholder="z.B. Benutzer hat sich gegen Teilnahme entschieden"></textarea>
+            <label class="app-modal-label">Notiz (optional):</label>
+            <textarea name="note" class="app-modal-input" rows="3" placeholder="z.B. Versehentlich angenommen / neue Infos vom Bewerber"></textarea>
             <button type="submit" class="btn-action btn-action--danger" style="width: 100%;">
-                <i class="bi bi-arrow-counterclockwise"></i> Rückgängig
+                <i class="bi bi-arrow-counterclockwise"></i> Wieder öffnen
             </button>
-            <button type="button" class="btn-action btn-action--secondary" style="width: 100%;" onclick="closeModal('unacceptModal')">
+            <button type="button" class="btn-action btn-action--secondary" style="width: 100%; margin-top:.5rem;" onclick="closeModal('reopenModal')">
                 Abbrechen
             </button>
         </form>
     </div>
 </div>
 
+<!-- ── Zur Überprüfung markieren ────────────────────────────────────────── -->
 <div id="flagModal" class="app-modal-backdrop">
     <div class="app-modal">
         <span class="app-modal-close" onclick="closeModal('flagModal')">&times;</span>
-        <h3 class="app-modal-title">Zur Überprüfung kennzeichnen</h3>
-        <form method="post" action="@Url.Action("Flag", "AdminApplications", new { id = Model.Application.Id })">
+        <h3 class="app-modal-title">Zur Überprüfung markieren</h3>
+        <form method="post" action="@Url.Action("Flag", "AdminApplications", new { id = app.Id })">
             @Html.AntiForgeryToken()
-            <label style="display: block; margin-bottom: 0.5rem;">Grund für Kennzeichnung:</label>
+            <label class="app-modal-label">Grund für Markierung:</label>
             <textarea name="reason" class="app-modal-input" rows="3" required placeholder="z.B. Verdächtige Aktivität, benötigt weitere Überprüfung"></textarea>
             <button type="submit" class="btn-action btn-action--secondary" style="width: 100%;">
-                <i class="bi bi-flag"></i> Kennzeichnen
+                <i class="bi bi-flag"></i> Markieren
             </button>
-            <button type="button" class="btn-action btn-action--secondary" style="width: 100%;" onclick="closeModal('flagModal')">
+            <button type="button" class="btn-action btn-action--secondary" style="width: 100%; margin-top:.5rem;" onclick="closeModal('flagModal')">
                 Abbrechen
             </button>
         </form>
     </div>
 </div>
 
-@* ── Rollen-Zuweisung Modal ─────────────────────────────────────────── *@
-<div id="assignRoleModal" class="app-modal-backdrop">
+<!-- ── Liga / Rolle ändern (nur für Angenommene) ────────────────────────── -->
+<div id="moveLeagueModal" class="app-modal-backdrop">
     <div class="app-modal">
-        <span class="app-modal-close" onclick="closeModal('assignRoleModal')">&times;</span>
-        <h3 class="app-modal-title">Fahrer-Rolle zuweisen</h3>
-        <form method="post" action="@Url.Action("AssignRole", "AdminApplications", new { id = Model.Application.Id })">
+        <span class="app-modal-close" onclick="closeModal('moveLeagueModal')">&times;</span>
+        <h3 class="app-modal-title">Liga / Rolle ändern</h3>
+        <p class="section-subtitle">Der Fahrer wird in die gewählte Liga eingetragen; ein leerer Alt-Eintrag (0 Punkte) wird automatisch entfernt.</p>
+        <form method="post" action="@Url.Action("MoveLeague", "AdminApplications", new { id = app.Id })">
             @Html.AntiForgeryToken()
             <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Liga</label>
-                <select name="leagueId" class="app-modal-input">
-                    <option value="">– Keine Auswahl –</option>
-                    @{
-                        var leagues = ViewData["Leagues"] as List<<OWNER_HANDLE>_ERC.Models.League>;
-                        if (leagues != null)
-                        {
-                            foreach (var l in leagues)
-                            {
-                                var isApplied = l.Id == Model.Application.AppliedLeagueId;
-                                <option value="@l.Id" selected="@isApplied">@l.Name@(isApplied ? " (beworben)" : "")</option>
-                            }
-                        }
+                <label class="app-modal-label">Ziel-Liga</label>
+                <select name="leagueId" class="app-modal-input" required>
+                    <option value="">– Liga auswählen –</option>
+                    @foreach (var l in leagues)
+                    {
+                        var isCurrent = l.Id == app.AssignedLeagueId;
+                        <option value="@l.Id" selected="@(isCurrent ? "selected" : null)">@l.Name@(isCurrent ? " (aktuell)" : "")</option>
                     }
                 </select>
             </div>
             <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:.5rem;font-size:.8rem;color:var(--ink-3);">Rolle</label>
-                <select name="assignedRole" class="app-modal-input" required>
-                    <option value="">– Rolle wählen –</option>
-                    @foreach (var role in new[]{ "Stammfahrer", "Ersatzfahrer", "Academy" })
+                <label class="app-modal-label">Rolle</label>
+                <select name="assignedRole" class="app-modal-input">
+                    <option value="">– Unverändert (@(app.AssignedRole ?? app.Role)) –</option>
+                    @foreach (var role in roleOptions)
                     {
-                        if (Model.Application.AssignedRole == role)
-                        {
-                            <option value="@role" selected>@role</option>
-                        }
-                        else
-                        {
-                            <option value="@role">@role</option>
-                        }
+                        <option value="@role">@role</option>
                     }
                 </select>
             </div>
             <button type="submit" class="btn-action btn-action--primary" style="width:100%;">
-                <i class="bi bi-person-check"></i> Rolle &amp; Liga zuweisen und akzeptieren
+                <i class="bi bi-arrow-left-right"></i> Umziehen
             </button>
-            <button type="button" class="btn-action btn-action--secondary" style="width:100%;margin-top:.5rem;" onclick="closeModal('assignRoleModal')">Abbrechen</button>
+            <button type="button" class="btn-action btn-action--secondary" style="width:100%;margin-top:.5rem;" onclick="closeModal('moveLeagueModal')">Abbrechen</button>
         </form>
     </div>
 </div>
+
 <script>
     function showModal(modalId) {
         document.getElementById(modalId).classList.add('active');

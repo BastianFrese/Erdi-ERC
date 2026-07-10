@@ -7,6 +7,7 @@
     var settings = (RaceCalendarSettings?)ViewBag.CalendarSettings ?? new RaceCalendarSettings();
     var leagues  = (ViewBag.Leagues  as List<League>)      ?? new List<League>();
     var weekends = (ViewBag.Weekends as List<RaceWeekend>) ?? new List<RaceWeekend>();
+    var legResultMap = ViewBag.LegResultMap as Dictionary<int, int> ?? new Dictionary<int, int>();
 
     var seasonTitle    = string.IsNullOrWhiteSpace(settings.SeasonTitle) ? "Saison-Kalender" : settings.SeasonTitle;
     var seasonSubtitle = string.IsNullOrWhiteSpace(settings.SeasonSubtitle)
@@ -237,10 +238,18 @@ else
                                 var league = leagueLookup.TryGetValue(leg.LeagueId, out var lg) ? lg : null;
                                 var leagueShort = league?.Name ?? leg.LeagueId;
                                 var isNextLeg = leg == nextLeg;
+                                var hasResult = legResultMap.TryGetValue(leg.Id, out var legRaceRowId);
                                 <div class="rc-poster-doc__leg @(isNextLeg ? "is-next" : "")">
                                     <span class="rc-poster-doc__leg-league">@leagueShort</span>
                                     <span class="rc-poster-doc__leg-date">@FormatDay(leg.Date) @leg.Date.ToString("dd.MM")</span>
                                     <span class="rc-poster-doc__leg-time">@FormatTime(leg.Date)</span>
+                                    @if (hasResult)
+                                    {
+                                        <a class="rc-poster-doc__leg-result" href="@Url.Action("RaceDetail", "Races", new { leagueId = leg.LeagueId, raceId = legRaceRowId })"
+                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--sig-cyan,***REMOVED***00e5ff);text-decoration:none;">
+                                            <i class="bi bi-flag-checkered"></i> Ergebnis
+                                        </a>
+                                    }
                                 </div>
                             }
                         }

@@ -1,11 +1,21 @@
 @using <OWNER_HANDLE>_ERC.Models
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Caching.Memory
 @inject <OWNER_HANDLE>_ERC.Data.AppDbContext _layoutDb
+@inject IMemoryCache _layoutCache
 @{
     var _title  = ViewData["HeroTitle"]    as string ?? ViewData["Title"] as string ?? "Admin";
     var _kicker = ViewData["Kicker"]       as string ?? string.Empty;
     int _openApplications = 0;
-    try { _openApplications = await _layoutDb.ApplicationForms.CountAsync(x => !x.IsAccepted); } catch { }
+    try
+    {
+        if (!_layoutCache.TryGetValue("admin:open-apps-count", out _openApplications))
+        {
+            _openApplications = await _layoutDb.ApplicationForms.CountAsync(x => x.Status == ApplicationStatus.Open);
+            _layoutCache.Set("admin:open-apps-count", _openApplications, TimeSpan.FromSeconds(30));
+        }
+    }
+    catch { }
 
     var _ctrl   = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var _action = ViewContext.RouteData.Values["action"]?.ToString()     ?? "";
@@ -42,7 +52,8 @@
 
     bool canDrvAchievements = HasAnyPerm(AdminPermissions.DriversAchievements, AdminPermissions.Drivers);
     bool canDrvDefinitions  = HasAnyPerm(AdminPermissions.DriversDefinitions,  AdminPermissions.Drivers);
-    bool canDrivers          = canDrvAchievements || canDrvDefinitions;
+    bool canDrvCards        = HasAnyPerm(AdminPermissions.DriversCards,        AdminPermissions.Drivers);
+    bool canDrivers          = canDrvAchievements || canDrvDefinitions || canDrvCards;
 
     bool canSysMusic      = HasAnyPerm(AdminPermissions.SystemMusic,      AdminPermissions.System);
     bool canSysSetups     = HasAnyPerm(AdminPermissions.SystemSetups,     AdminPermissions.System);
@@ -51,7 +62,8 @@
     bool canSysAboutMe    = isSuperAdmin;
     bool canSysAdmins     = isSuperAdmin;
     bool canSysRegelwerk  = HasAnyPerm(AdminPermissions.SystemRegelwerk,  AdminPermissions.System);
-    bool canSystem        = canSysMusic || canSysSetups || canSysAudit || canSysAdmins || canSysWebhooks || canSysAboutMe || canSysRegelwerk;
+    bool canSysTroll      = HasAnyPerm(AdminPermissions.SystemTroll,      AdminPermissions.System);
+    bool canSystem        = canSysMusic || canSysSetups || canSysAudit || canSysAdmins || canSysWebhooks || canSysAboutMe || canSysRegelwerk || canSysTroll;
 }
 <!DOCTYPE html>
 <html lang="de" data-bs-theme="dark">
@@ -138,7 +150,7 @@
                     @{
                         // "Liga verwalten" zeigt auf Admin/Index — aber nur aktiv markieren
                         // wenn wir auf einer Edit-/Liga-Unterseite sind, nicht auf dem Dashboard.
-                        var ligaNavClass = (_ctrl == "Admin" && (_action == "EditLeague" || _action == "EnterRace"))
+                        var ligaNavClass = ((_ctrl == "AdminLeagueManagement" && _action == "EditLeague") || (_ctrl == "AdminLeague" && _action == "EnterRace"))
                             ? "adm-nav-link is-active"
                             : "adm-nav-link";
                     }
@@ -146,7 +158,7 @@
                         <i class="bi bi-trophy-fill"></i> Liga verwalten
                     </a>
                     <a class="@Nav("AdminRaceCalendar","Index")" asp-controller="AdminRaceCalendar" asp-action="Index">
-                        <i class="bi bi-calendar3"></i> Race Calendar
+                        <i class="bi bi-calendar3"></i> Rennkalender
                     </a>
                 </div>
             }
@@ -198,6 +210,12 @@
                             <i class="bi bi-list-check"></i> Definitionen
                         </a>
                     }
+                    @if (canDrvCards)
+                    {
+                        <a class="@Nav("AdminDriverCards","Index")" asp-controller="AdminDriverCards" asp-action="Index">
+                            <i class="bi bi-person-vcard-fill"></i> Fahrerkarten
+                        </a>
+                    }
                 </div>
             }
 
@@ -207,7 +225,7 @@
                     <span class="adm-nav-group__label">System</span>
                     @if (canSysAdmins)
                     {
-                        <a class="@Nav("Admin","Admins")" asp-controller="Admin" asp-action="Admins">
+                        <a class="@Nav("AdminPermissions","Admins")" asp-controller="AdminPermissions" asp-action="Admins">
                             <i class="bi bi-shield-lock"></i> Admins
                         </a>
                     }
@@ -225,7 +243,7 @@
                     }
                     @if (canSysSetups)
                     {
-                        <a class="@Nav("Admin","TrackSetups")" asp-controller="Admin" asp-action="TrackSetups">
+                        <a class="@Nav("AdminSetups","TrackSetups")" asp-controller="AdminSetups" asp-action="TrackSetups">
                             <i class="bi bi-sliders2"></i> Track Setups
                         </a>
                     }
@@ -248,6 +266,12 @@
                     {
                         <a class="@Nav("AdminRegelwerk","Index")" asp-controller="AdminRegelwerk" asp-action="Index">
                             <i class="bi bi-file-earmark-text"></i> Regelwerk
+                        </a>
+                    }
+                    @if (canSysTroll)
+                    {
+                        <a class="@Nav("AdminTroll","Index")" asp-controller="AdminTroll" asp-action="Index">
+                            <i class="bi bi-emoji-laughing"></i> Troll-System
                         </a>
                     }
                 </div>

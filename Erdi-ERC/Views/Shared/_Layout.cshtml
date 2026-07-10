@@ -67,7 +67,7 @@
         && _lsa >= DateTime.UtcNow.AddDays(-<OWNER_HANDLE>_ERC.Models.SetupNewsGroup.WindowDays)
         ? _lsa.ToString("O")
         : null;
-    var _isOnSetupsPage = IsActive("Home", "TrackSetups") == "active";
+    var _isOnSetupsPage = IsActive("Setups", "TrackSetups") == "active";
 }
 <!DOCTYPE html>
 <html lang="de" data-bs-theme="dark">
@@ -235,8 +235,8 @@
         <nav class="navbar navbar-expand-xl navbar-dark">
             <div class="app-shell-container d-flex align-items-center w-100">
                 <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark" aria-hidden="true"></span>
-                    <OWNER_HANDLE>&***REMOVED***x27;s&nbsp;Racing&nbsp;Community
+                    <span class="brand-mark" aria-hidden="true">R</span>
+                    <span class="brand-word"><OWNER_HANDLE>&***REMOVED***x27;s&nbsp;Racing&nbsp;Community</span>
                 </a>
                 @if (_activeStream != null)
                 {
@@ -255,21 +255,21 @@
                 <div class="navbar-collapse collapse" id="mainNavbarCollapse">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "<OWNER_HANDLE>10")" asp-controller="Home" asp-action="<OWNER_HANDLE>10">
+                            <a class="nav-link @IsActive("Stats", "<OWNER_HANDLE>10")" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
                                 <i class="bi bi-speedometer2 nav-ico" aria-hidden="true"></i>Racing&nbsp;Hub
                             </a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @((IsActive("Home", "Results", "LeagueResults") == "active" || IsActive("Home", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="***REMOVED***" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle @((IsActive("Races", "Results", "LeagueResults") == "active" || IsActive("Races", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="***REMOVED***" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-flag-fill nav-ico" aria-hidden="true"></i>ERC Liga
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="racesDropdown">
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Results"><i class="bi bi-trophy-fill me-2"></i>Results</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="AllRaces"><i class="bi bi-flag-fill me-2"></i>Alle Rennen</a></li>
+                                <li><a class="dropdown-item" asp-controller="Races" asp-action="Results"><i class="bi bi-trophy-fill me-2"></i>Results</a></li>
+                                <li><a class="dropdown-item" asp-controller="Races" asp-action="AllRaces"><i class="bi bi-flag-fill me-2"></i>Alle Rennen</a></li>
                             </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "TrackSetups")" asp-controller="Home" asp-action="TrackSetups">
+                            <a class="nav-link @IsActive("Setups", "TrackSetups")" asp-controller="Setups" asp-action="TrackSetups">
                                 <i class="bi bi-sliders2 nav-ico" aria-hidden="true"></i>Setups
                                 @if (_latestSetupActivityIso != null)
                                 {
@@ -281,22 +281,22 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "Apply")" asp-controller="Home" asp-action="Apply">
+                            <a class="nav-link @IsActive("Application", "Apply")" asp-controller="Application" asp-action="Apply">
                                 <i class="bi bi-clipboard2-check nav-ico" aria-hidden="true"></i>Bewerbung
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "Events", "EventDetail")" asp-controller="Home" asp-action="Events">
+                            <a class="nav-link @IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">
                                 <i class="bi bi-calendar2-event-fill nav-ico" aria-hidden="true"></i>Events
                             </a>
                         </li>
 @*                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "CommunityNews")" asp-controller="Home" asp-action="CommunityNews">
+                            <a class="nav-link @IsActive("Community", "CommunityNews")" asp-controller="Community" asp-action="CommunityNews">
                                 <i class="bi bi-megaphone-fill nav-ico" aria-hidden="true"></i>News
                             </a>
                         </li> *@
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Home", "RaceCalendar")" asp-controller="Home" asp-action="RaceCalendar">
+                            <a class="nav-link @IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">
                                 <i class="bi bi-calendar-check-fill nav-ico" aria-hidden="true"></i>Kalender
                             </a>
                         </li>
@@ -314,7 +314,7 @@
                                 <i class="bi bi-grid-3x3-gap-fill nav-ico" aria-hidden="true"></i>Mehr
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="moreDropdown">
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="EwigeListe" data-race-lights="force" data-race-lights-text="Hall of Fame · Lights out…" data-race-lights-go="WELCOME TO THE HALL OF FAME">Ewige Liste</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="HallOfFame">Hall of Fame</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Teams">Teams</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="ReserveExchange">Reservefahrer-Börse</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="CommunityVotes">Community-Votings</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Highlights">Highlights</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="DriverLevels">Fahrerlevel / XP</a></li>
+                                <li><a class="dropdown-item" asp-controller="Stats" asp-action="EwigeListe" data-race-lights="force" data-race-lights-text="Hall of Fame · Lights out…" data-race-lights-go="WELCOME TO THE HALL OF FAME">Ewige Liste</a></li><li><a class="dropdown-item" asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="Teams">Teams</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-Börse</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="Highlights">Highlights</a></li><li><a class="dropdown-item" asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel / XP</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Stewarding">Stewarding</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Faq">FAQ</a></li>
                                 <li><a class="dropdown-item" href="/about/erdi10">Über mich</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
@@ -360,6 +360,12 @@
                             </li>
                         }
                     </ul>
+
+                    @* Trennstrich + "F1"-Logo am rechten Pillen-Rand (Desktop) *@
+                    <div class="nav-f1-badge d-none d-xl-flex" aria-hidden="true">
+                        <span class="nav-f1-badge__divider"></span>
+                        <span class="nav-f1-badge__logo">F1</span>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -455,9 +461,9 @@
                 const io = new IntersectionObserver((entries) => {
                     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
                 }, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
-                document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+                document.querySelectorAll('.reveal, .f1-stagger').forEach(el => io.observe(el));
             } else {
-                document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+                document.querySelectorAll('.reveal, .f1-stagger').forEach(el => el.classList.add('is-visible'));
             }
 
             // ---------- Live Race-Lights pills (data-race-state-target="<ISO>") ----------
@@ -877,11 +883,11 @@
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
             const map = {
-                h: '@Url.Action("<OWNER_HANDLE>10", "Home")',
-                r: '@Url.Action("Results", "Home")',
-                a: '@Url.Action("AllRaces", "Home")',
-                s: '@Url.Action("TrackSetups", "Home")',
-                e: '@Url.Action("Events", "Home")',
+                h: '@Url.Action("<OWNER_HANDLE>10", "Stats")',
+                r: '@Url.Action("Results", "Races")',
+                a: '@Url.Action("AllRaces", "Races")',
+                s: '@Url.Action("TrackSetups", "Setups")',
+                e: '@Url.Action("Events", "Community")',
                 t: 'https://twitch.tv/erdi10'
             };
             let pendingG = false, gTimer = null;

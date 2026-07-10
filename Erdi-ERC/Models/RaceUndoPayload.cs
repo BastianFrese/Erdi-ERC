@@ -15,6 +15,7 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string Track { get; set; } = string.Empty;
         public string Winner { get; set; } = string.Empty;
         public string FastestLap { get; set; } = string.Empty;
+        public string? Season { get; set; }
     }
 
     public class RaceFinishSnapshot
@@ -25,6 +26,7 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int Position { get; set; }
         public bool FastestLap { get; set; }
         public int? RaceTimeMs { get; set; }
+        public int? QualifyingPosition { get; set; }
     }
 
     public class RaceReserveAssignmentSnapshot

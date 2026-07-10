@@ -53,11 +53,10 @@
     Title     = "<OWNER_HANDLE>10",
     Highlight = "Racing Hub",
     Lead      = $"Offizielle Fan-Page des Twitch-Streamers <a href=\"https://twitch.tv/{Model.TwitchChannel}\" style=\"color:var(--accent);\" target=\"_blank\" rel=\"noopener\">@{Model.TwitchChannel}</a>. Bestenlisten, vergangene Rennen und kommende Events der ERC-Ligen.",
-    GhostText = "",
     Actions   = new() {
         new F1ButtonVm { Label="Auf Twitch",  Variant="primary", IconLucide="external-link", Href=$"https://twitch.tv/{Model.TwitchChannel}", Target="_blank" },
-        new F1ButtonVm { Label="Standings",   Variant="ghost",   IconLucide="trophy",        Href=Url.Action("Results","Home")! },
-        new F1ButtonVm { Label="Alle Rennen", Variant="ghost",   IconLucide="flag",           Href=Url.Action("AllRaces","Home")! }
+        new F1ButtonVm { Label="Standings",   Variant="ghost",   IconLucide="trophy",        Href=Url.Action("Results", "Races")! },
+        new F1ButtonVm { Label="Alle Rennen", Variant="ghost",   IconLucide="flag",           Href=Url.Action("AllRaces", "Races")! }
     }
 })" />
 
@@ -232,7 +231,7 @@
                                                             var winnerFinish      = !string.IsNullOrWhiteSpace(r.Winner)
                                                                 ? r.Finishes.FirstOrDefault(f => f.Driver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase))
                                                                 : null;
-                                                            var raceDetailUrl = Url.Action("RaceDetail", "Home", new { leagueId = league.Id, raceId = r.RowId });
+                                                            var raceDetailUrl = Url.Action("RaceDetail", "Races", new { leagueId = league.Id, raceId = r.RowId });
                                                             <tr class="f1-hub-race-row"
                                                                 style="box-shadow: inset 3px 0 0 @rowColor;"
                                                                 onclick="window.location.href='@raceDetailUrl'">

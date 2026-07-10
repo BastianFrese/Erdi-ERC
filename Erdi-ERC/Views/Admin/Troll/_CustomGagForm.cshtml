@@ -1,0 +1,100 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollCustomGag
+@using <OWNER_HANDLE>_ERC.Models.Troll
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var isNew = Model.Id == 0;
+    var optionsText = string.Join("\n", Model.Options());
+
+    // Über asp-items rendern – literale <option>-Tags mit C***REMOVED*** sind in Razor nicht erlaubt (RZ1031).
+    var kindItems = new SelectList(new[]
+    {
+        new { Value = "Message", Text = "Nachricht" },
+        new { Value = "Quiz",    Text = "Quiz (Pflicht)" }
+    }, "Value", "Text", Model.Kind.ToString());
+
+    var catItems = new SelectList(new[]
+    {
+        new { Value = "0", Text = "Mathe & Köpfchen" },
+        new { Value = "1", Text = "Fake-System" },
+        new { Value = "2", Text = "Reaktion & Geschick" },
+        new { Value = "3", Text = "Glück & Sprüche" }
+    }, "Value", "Text", ((int)Model.Category).ToString());
+}
+<form asp-action="SaveCustom" method="post" class="troll-cgform">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="row g-2 mb-2">
+        <div class="col-sm-3">
+            <label class="form-label text-muted small mb-1">Art</label>
+            <select name="kind" data-cg-kind asp-items="kindItems" class="form-select form-select-sm bg-dark text-white border-secondary"></select>
+        </div>
+        <div class="col-sm-4">
+            <label class="form-label text-muted small mb-1">Kategorie</label>
+            <select name="category" asp-items="catItems" class="form-select form-select-sm bg-dark text-white border-secondary"></select>
+        </div>
+        <div class="col-sm-3">
+            <label class="form-label text-muted small mb-1">Gewicht</label>
+            <input type="number" name="weight" min="0" value="@(isNew ? 10 : Model.Weight)" class="form-control form-control-sm bg-dark text-white border-secondary" />
+        </div>
+        <div class="col-sm-2 d-flex align-items-end">
+            <div class="form-check form-switch mb-1">
+                <input class="form-check-input" type="checkbox" role="switch" name="isEnabled" value="true" @(isNew || Model.IsEnabled ? "checked" : "") />
+                <input type="hidden" name="isEnabled" value="false" />
+                <label class="form-check-label text-muted small">aktiv</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-2">
+        <div class="col-sm-8">
+            <label class="form-label text-muted small mb-1">Titel <span class="text-danger">*</span></label>
+            <input type="text" name="title" value="@Model.Title" required maxlength="200" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="z. B. <OWNER_HANDLE>-Wissenstest" />
+        </div>
+        <div class="col-sm-4">
+            <label class="form-label text-muted small mb-1">Key (optional)</label>
+            <input type="text" name="key" value="@Model.Key" maxlength="64" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="auto aus Titel" />
+        </div>
+    </div>
+
+    <div class="row g-2 mb-2">
+        <div class="col-sm-5">
+            <label class="form-label text-muted small mb-1">Eyebrow (kleine Überschrift)</label>
+            <input type="text" name="eyebrow" value="@Model.Eyebrow" maxlength="80" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="z. B. <OWNER_HANDLE> · Durchsage" />
+        </div>
+        <div class="col-sm-7">
+            <label class="form-label text-muted small mb-1">Lead (Einleitung, optional)</label>
+            <input type="text" name="lead" value="@Model.Lead" maxlength="400" class="form-control form-control-sm bg-dark text-white border-secondary" />
+        </div>
+    </div>
+
+    @* ── Nur Nachricht ── *@
+    <div data-cg-message class="mb-2">
+        <label class="form-label text-muted small mb-1">Nachrichtentext</label>
+        <textarea name="body" rows="2" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Der eigentliche Prank-Text …">@Model.Body</textarea>
+    </div>
+
+    @* ── Nur Quiz ── *@
+    <div data-cg-quiz>
+        <div class="row g-2 mb-2">
+            <div class="col-sm-8">
+                <label class="form-label text-muted small mb-1">Frage</label>
+                <input type="text" name="question" value="@Model.Question" maxlength="400" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Wer ist der beste Fahrer?" />
+            </div>
+            <div class="col-sm-4">
+                <label class="form-label text-muted small mb-1">Richtige Antwort</label>
+                <input type="text" name="answer" value="@Model.Answer" maxlength="200" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="<OWNER_HANDLE>" />
+            </div>
+        </div>
+        <div class="mb-2">
+            <label class="form-label text-muted small mb-1">Optionen (eine pro Zeile; die richtige wird automatisch ergänzt)</label>
+            <textarea name="optionsRaw" rows="3" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="<OWNER_HANDLE>&***REMOVED***10;Max Verstappen&***REMOVED***10;Du">@optionsText</textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-save me-1"></i>@(isNew ? "Anlegen" : "Speichern")
+        </button>
+    </div>
+</form>

@@ -1,17 +1,22 @@
 using <OWNER_HANDLE>_ERC.Data;
 using <OWNER_HANDLE>_ERC.Models;
+using <OWNER_HANDLE>_ERC.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace <OWNER_HANDLE>_ERC.Services
 {
     public class StatsService : IStatsService
     {
-        private static readonly int[] PointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+        private static readonly int[] DefaultPointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
         private readonly AppDbContext _db;
+        private readonly int[] _pointMap;
 
-        public StatsService(AppDbContext db)
+        public StatsService(AppDbContext db, IOptions<F1ScoringOptions> scoringOptions)
         {
             _db = db;
+            var configured = scoringOptions.Value.PointMap;
+            _pointMap = configured is { Length: > 0 } ? configured : DefaultPointMap;
         }
 
         public async Task RebuildAllLeagueStandingsAsync(CancellationToken cancellationToken = default)
@@ -32,8 +37,19 @@ namespace <OWNER_HANDLE>_ERC.Services
                 .Where(x => x.LeagueId == leagueId)
                 .ToListAsync(cancellationToken);
 
-            var races = await _db.RaceResults.AsTracking()
-                .Where(r => r.LeagueId == leagueId)
+            // Aktuelle Saison der Liga: ist sie gesetzt, zählt die Tabelle nur Rennen dieser Saison.
+            // Null/leer = alle Rennen (rückwärtskompatibles Standardverhalten).
+            var currentSeason = await _db.Leagues
+                .Where(l => l.Id == leagueId)
+                .Select(l => l.CurrentSeason)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var racesQuery = _db.RaceResults.AsTracking()
+                .Where(r => r.LeagueId == leagueId);
+            if (!string.IsNullOrWhiteSpace(currentSeason))
+                racesQuery = racesQuery.Where(r => r.Season == currentSeason);
+
+            var races = await racesQuery
                 .Include(r => r.Finishes)
                 .Include(r => r.ReserveAssignments)
                 .OrderBy(r => r.Date)
@@ -69,6 +85,10 @@ namespace <OWNER_HANDLE>_ERC.Services
                 .GroupBy(s => s.Driver, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+            // Punkte je Fahrer pro Rennen sammeln, damit Streichresultate (Drop-Scores)
+            // nach der vollständigen Saison angewendet werden können.
+            var racePointsByStanding = new Dictionary<DriverStanding, List<int>>();
+
             foreach (var race in races)
             {
                 var raceReserveToMain = race.ReserveAssignments
@@ -101,7 +121,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                     }
 
                     var pointsIndex = finish.Position - 1;
-                    var points = pointsIndex >= 0 && pointsIndex < PointMap.Length ? PointMap[pointsIndex] : 0;
+                    var points = pointsIndex >= 0 && pointsIndex < _pointMap.Length ? _pointMap[pointsIndex] : 0;
 
                     if (!string.IsNullOrWhiteSpace(mappedMainDriver))
                     {
@@ -109,12 +129,64 @@ namespace <OWNER_HANDLE>_ERC.Services
                         standing.ReservePointsForMain += points;
                     }
 
-                    standing.Points += points;
+                    if (!racePointsByStanding.TryGetValue(standing, out var raceScores))
+                    {
+                        raceScores = new List<int>();
+                        racePointsByStanding[standing] = raceScores;
+                    }
+                    raceScores.Add(points);
 
                     if (finish.Position == 1)
                     {
                         standing.Wins += 1;
                     }
+                }
+            }
+
+            // Drop-Scores (Streichresultate): die N schwächsten Rennergebnisse je Fahrer werden
+            // aus der Wertung genommen, falls die Liga das konfiguriert hat. 0/null = alle zählen.
+            var dropWorst = await _db.Leagues
+                .Where(l => l.Id == leagueId)
+                .Select(l => l.DropWorstResults)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            foreach (var standing in standings)
+            {
+                if (!racePointsByStanding.TryGetValue(standing, out var raceScores) || raceScores.Count == 0)
+                {
+                    standing.Points = 0;
+                    continue;
+                }
+
+                var ordered = raceScores.OrderByDescending(p => p).ToList();
+                var keep = dropWorst.HasValue && dropWorst.Value > 0
+                    ? Math.Max(0, ordered.Count - dropWorst.Value)
+                    : ordered.Count;
+                standing.Points = ordered.Take(keep).Sum();
+            }
+
+            // Manuelle Korrektur (Bonus/Malus) auf die aus den Rennen abgeleiteten Punkte addieren.
+            // Sie überlebt jede Neuberechnung, weil PointsAdjustment oben nicht zurückgesetzt wird.
+            foreach (var standing in standings)
+            {
+                standing.Points += standing.PointsAdjustment;
+            }
+
+            // Stewarding-Strafen vom Typ "Punkteabzug" automatisch auf die Tabelle anwenden,
+            // damit Stewards keine zusätzliche manuelle Korrektur (PointsAdjustment) pflegen müssen.
+            // Andere Strafarten (Zeitstrafe/Grid/Verwarnung) wirken im Rennen selbst, nicht hier.
+            var penaltyPointsByDriver = (await _db.LeaguePenalties
+                    .Where(p => p.LeagueId == leagueId && p.PenaltyType == "Punkteabzug")
+                    .ToListAsync(cancellationToken))
+                .GroupBy(p => Normalize(p.Driver), StringComparer.OrdinalIgnoreCase)
+                .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.Points)), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var standing in standings)
+            {
+                if (penaltyPointsByDriver.TryGetValue(standing.Driver, out var deduction))
+                {
+                    standing.Points -= deduction;
                 }
             }
 
@@ -155,24 +227,6 @@ namespace <OWNER_HANDLE>_ERC.Services
             standings.Add(standing);
             standingsByDriver[driverName] = standing;
             return standing;
-        }
-
-        private static void SyncReserveTeamFromMainIfNeeded(
-            DriverStanding standing,
-            Dictionary<string, DriverStanding> standingsByDriver)
-        {
-            if (!standing.IsReserveDriver || string.IsNullOrWhiteSpace(standing.ReserveForDriver))
-            {
-                return;
-            }
-
-            if (standingsByDriver.TryGetValue(standing.ReserveForDriver, out var mainStanding)
-                && !string.IsNullOrWhiteSpace(mainStanding.Team)
-                && !mainStanding.IsReserveDriver)
-            {
-                // Reservefahrer zählen in der Teamwertung über den ausgewählten Hauptfahrer.
-                standing.Team = mainStanding.Team;
-            }
         }
 
         private static string Normalize(string? value)

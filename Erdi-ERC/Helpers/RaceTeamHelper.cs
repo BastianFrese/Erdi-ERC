@@ -1,0 +1,104 @@
+using <OWNER_HANDLE>_ERC.Models;
+
+namespace <OWNER_HANDLE>_ERC.Helpers
+{
+    /// <summary>
+    /// Team-Auflösung für Rennergebnisse (inkl. Reserve-Fahrer-Logik) — geteilt zwischen
+    /// Home- (Startseite), Races- (Renn-Detail) und Stats-Controller (Ewige Liste).
+    /// </summary>
+    public static class RaceTeamHelper
+    {
+        public static string? ResolveTeamForRaceDriver(IEnumerable<DriverStanding> standings, RaceResult race, string? driverName)
+        {
+            if (string.IsNullOrWhiteSpace(driverName)) return null;
+            var normalizedDriver = driverName.Trim();
+
+            var raceMainDriver = race.ReserveAssignments
+                .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
+                                     && a.ReserveDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase))?.MainDriver;
+
+            if (!string.IsNullOrWhiteSpace(raceMainDriver))
+            {
+                var mainTeam = standings.FirstOrDefault(s =>
+                    !string.IsNullOrWhiteSpace(s.Driver) &&
+                    s.Driver.Trim().Equals(raceMainDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+
+                if (!string.IsNullOrWhiteSpace(mainTeam))
+                {
+                    return mainTeam.Trim();
+                }
+            }
+
+            var standing = standings.FirstOrDefault(s =>
+                !string.IsNullOrWhiteSpace(s.Driver) &&
+                s.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase));
+
+            if (standing is null) return null;
+
+            if (!string.IsNullOrWhiteSpace(standing.Team))
+            {
+                return standing.Team.Trim();
+            }
+
+            if (standing.IsReserveDriver && !string.IsNullOrWhiteSpace(standing.ReserveForDriver))
+            {
+                var fallbackTeam = standings.FirstOrDefault(s =>
+                    !string.IsNullOrWhiteSpace(s.Driver) &&
+                    s.Driver.Trim().Equals(standing.ReserveForDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+
+                return string.IsNullOrWhiteSpace(fallbackTeam) ? null : fallbackTeam.Trim();
+            }
+
+            return null;
+        }
+
+        public static int? ComputeTeamPointsForLeague(League league, string? teamName)
+        {
+            if (string.IsNullOrWhiteSpace(teamName)) return null;
+
+            int[] pointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+            var normalizedTeam = teamName.Trim();
+            var total = 0;
+
+            foreach (var race in league.Races.OrderBy(r => r.Date).ThenBy(r => r.RowId))
+            {
+                foreach (var finish in race.Finishes.Where(f => f.Position > 0))
+                {
+                    var resolvedTeam = ResolveTeamForRaceDriver(league.Standings, race, finish.Driver);
+                    if (string.IsNullOrWhiteSpace(resolvedTeam) || !resolvedTeam.Equals(normalizedTeam, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var idx = finish.Position - 1;
+                    if (idx >= 0 && idx < pointMap.Length)
+                    {
+                        total += pointMap[idx];
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        public static bool HasDrivenForMultipleTeams(League league, string driverName)
+        {
+            if (string.IsNullOrWhiteSpace(driverName)) return false;
+
+            var normalizedDriver = driverName.Trim();
+
+            var teams = league.Races
+                .OrderBy(r => r.Date)
+                .ThenBy(r => r.RowId)
+                .Where(r => r.Finishes.Any(f => !string.IsNullOrWhiteSpace(f.Driver)
+                                                && f.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)))
+                .Select(r => ResolveTeamForRaceDriver(league.Standings, r, normalizedDriver))
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return teams.Count > 1;
+        }
+    }
+}
