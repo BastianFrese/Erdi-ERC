@@ -78,14 +78,18 @@ builder.Services.AddScoped<IWebhookAutomationService, WebhookAutomationService>(
 builder.Services.AddScoped<ISetupAccessService, SetupAccessService>();
 builder.Services.AddScoped<ITrackSetupAccessPolicy, TrackSetupAccessPolicy>();
 builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
-builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
+builder.Services.AddScoped<IApplicationWorkflowService, ApplicationWorkflowService>();
+builder.Services.AddScoped<IApplicationQueryService, ApplicationQueryService>();
+builder.Services.AddScoped<IDiscordGuildService, DiscordGuildService>();
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<DatabaseTransactionHelper>();
 builder.Services.Configure<DiscordSetupAccessOptions>(builder.Configuration.GetSection("Discord:SetupAccess"));
 builder.Services.Configure<DiscordGuildOptions>(builder.Configuration.GetSection(DiscordGuildOptions.SectionName));
 builder.Services.Configure<DriverMatchingOptions>(builder.Configuration.GetSection(DriverMatchingOptions.SectionName));
 builder.Services.Configure<ApplicationOptions>(builder.Configuration.GetSection(ApplicationOptions.SectionName));
+builder.Services.Configure<TrollOptions>(builder.Configuration.GetSection(TrollOptions.SectionName));
 builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
 builder.Services.Configure<BackgroundMusicOptions>(builder.Configuration.GetSection(BackgroundMusicOptions.SectionName));
 builder.Services.Configure<F1ScoringOptions>(builder.Configuration.GetSection(F1ScoringOptions.SectionName));
@@ -471,7 +475,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx =>
                   HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversAchievements, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversDefinitions,  <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
+                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversDefinitions,  <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers) ||
+                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversCards,        <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
 
     options.AddPolicy("Admin.Drivers.Achievements", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
@@ -480,6 +485,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin.Drivers.Definitions", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversDefinitions, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
+
+    options.AddPolicy("Admin.Drivers.Cards", policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
+              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversCards, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
 
     // ── System ───────────────────────────────────────────────────────────────────
     options.AddPolicy("Admin.System", policy =>
@@ -491,7 +500,8 @@ builder.Services.AddAuthorization(options =>
                   HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemWebhooks,  <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
                   HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemAboutMe,   <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
                   HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueStandings, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueRaces,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueRaces,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemTroll,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.Music", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
@@ -517,6 +527,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin.System.Regelwerk", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemRegelwerk, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+
+    options.AddPolicy("Admin.System.Troll", policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
+              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemTroll, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
 });
 var app = builder.Build();
 
@@ -758,6 +772,59 @@ Directory.CreateDirectory(uploadsPath);
         }
     });
 }
+
+// --- 301-Redirects für den Controller-Split (Juli 2026) ---
+// Alte /Home/...- und /Admin/...-URLs (Discord-Links, Bookmarks) permanent auf die neuen
+// Controller (Races/Stats/Setups/Community/Application bzw. AdminLeagueManagement/
+// AdminPermissions/AdminSetups) umleiten. Query-String und Rest-Pfad (z.B. /EventDetail/5)
+// bleiben erhalten. Nur GET — Formulare posten bereits auf die neuen Controller.
+var movedRoutes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+{
+    ["Home/Results"] = "/Races/Results",
+    ["Home/LeagueResults"] = "/Races/LeagueResults",
+    ["Home/RaceDetail"] = "/Races/RaceDetail",
+    ["Home/AllRaces"] = "/Races/AllRaces",
+    ["Home/RaceCalendar"] = "/Races/RaceCalendar",
+    ["Home/DriverDetail"] = "/Races/DriverDetail",
+    ["Home/<OWNER_HANDLE>10"] = "/Stats/<OWNER_HANDLE>10",
+    ["Home/EwigeListe"] = "/Stats/EwigeListe",
+    ["Home/HallOfFame"] = "/Stats/HallOfFame",
+    ["Home/DriverLevels"] = "/Stats/DriverLevels",
+    ["Home/DriverCards"] = "/fahrerkarten",
+    ["Home/TrackSetups"] = "/Setups/TrackSetups",
+    ["Home/SetupSandbox"] = "/Setups/SetupSandbox",
+    ["Home/Events"] = "/Community/Events",
+    ["Home/EventDetail"] = "/Community/EventDetail",
+    ["Home/CommunityNews"] = "/Community/CommunityNews",
+    ["Home/CommunityVotes"] = "/Community/CommunityVotes",
+    ["Home/Highlights"] = "/Community/Highlights",
+    ["Home/Teams"] = "/Community/Teams",
+    ["Home/Team"] = "/Community/Team",
+    ["Home/ReserveExchange"] = "/Community/ReserveExchange",
+    ["Home/Apply"] = "/Application/Apply",
+    ["Home/MyApplication"] = "/Application/MyApplication",
+    ["Admin/EditLeague"] = "/AdminLeagueManagement/EditLeague",
+    ["Admin/Admins"] = "/AdminPermissions/Admins",
+    ["Admin/TrackSetups"] = "/AdminSetups/TrackSetups",
+    ["Admin/TrackSetupStrategy"] = "/AdminSetups/TrackSetupStrategy",
+};
+
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsGet(context.Request.Method))
+    {
+        var segments = (context.Request.Path.Value ?? string.Empty)
+            .Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length >= 2 && movedRoutes.TryGetValue($"{segments[0]}/{segments[1]}", out var target))
+        {
+            var rest = segments.Length > 2 ? "/" + string.Join('/', segments[2..]) : string.Empty;
+            context.Response.Redirect(target + rest + context.Request.QueryString, permanent: true);
+            return;
+        }
+    }
+
+    await next();
+});
 
 app.UseRouting();
 

@@ -54,6 +54,16 @@
   z-index: 0;
 }
 
+/* Flag inline next to the driver name (both layouts) */
+.erc-name__flag {
+  width: 22px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.25), 0 1px 3px rgba(0,0,0,.6);
+  flex-shrink: 0;
+}
+
 /* ── Brand strip (shared) ────────────────────────────────────── */
 .erc-card__brand {
   position: absolute;
@@ -206,6 +216,9 @@
   letter-spacing: .02em;
   line-height: .98;
   text-shadow: 0 3px 16px rgba(0,0,0,.95);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .erc-card--photo .erc-info__accent {
   width: 54px;
@@ -240,14 +253,14 @@
   color: rgba(255,255,255,.45);
 }
 .erc-meta__val {
-  font-size: 11px;
+  font-size: 11px;          /* Basis; driver-card-fit.js verkleinert bei Bedarf */
   font-weight: 700;
   letter-spacing: .02em;
   color: rgba(255,255,255,.92);
   text-transform: uppercase;
+  /* Einzeilig – das Autofit-Skript schrumpft den Text, statt ihn zu kappen. */
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -256,12 +269,14 @@
   height: 16px;
   width: auto;
   max-width: 60px;
+  flex-shrink: 0;
   filter: brightness(0) invert(1);
   opacity: .92;
 }
 .erc-meta__track-svg {
   height: 17px;
   width: auto;
+  flex-shrink: 0;
   opacity: .9;
   filter: brightness(1.15);
 }
@@ -300,12 +315,31 @@
   border-radius: 2px;
   box-shadow: 0 0 12px color-mix(in srgb, var(--dc-accent) 75%, transparent);
 }
+.erc-tower__team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
 .erc-tower__team img {
   height: 30px;
   width: auto;
   max-width: 64px;
   filter: brightness(0) invert(1);
   opacity: .92;
+}
+.erc-tower__team-lbl {
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 72px;
 }
 
 /* Central identity: initials monogram instead of a photo */
@@ -362,6 +396,10 @@
   letter-spacing: .02em;
   line-height: 1;
   text-shadow: 0 2px 12px rgba(0,0,0,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .erc-sname__rule {
   width: 64px;
@@ -445,13 +483,15 @@
 /* Footer hardware (shared, bottom-centered for stats / left for photo) */
 .erc-card__hw {
   position: absolute;
-  left: 0; right: 0;
+  left: 18px; right: 18px;
   bottom: 18px;
   z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: nowrap;
   gap: 8px;
+  overflow: hidden;
 }
 .erc-card__hw .erc-hw__lbl {
   font-size: 7px;
@@ -464,6 +504,15 @@
   height: 18px;
   width: auto;
   max-width: 100px;
+  flex-shrink: 0;
   filter: brightness(0) invert(1);
   opacity: .85;
+}
+.erc-hw__name {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.7);
+  white-space: nowrap;
 }

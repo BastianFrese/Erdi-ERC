@@ -97,6 +97,14 @@
 }
 
 <div class="container-fluid py-5">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mb-3">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-3">@TempData["Error"]</div>
+    }
     <div class="row mb-4">
         <div class="col">
             <h1>Offene Bewerbungen</h1>
@@ -126,30 +134,38 @@
     {
         @foreach (var app in Model.Applications)
         {
-            var badgeClass = app.Division switch
-            {
-                "Main Division 1" => "badge--main",
-                "Second Crossplay Division 2" => "badge--second",
-                "Rookie Crossplay Division 3" => "badge--rookie",
-                "Community Crossplay Event" => "badge--community",
-                _ => "badge--main"
-            };
+            var _leagueKey = app.AppliedLeagueId ?? app.Division ?? "";
+            var _hue = string.IsNullOrEmpty(_leagueKey) ? 180 : Math.Abs(_leagueKey.GetHashCode()) % 300 + 30;
+            var badgeStyle = $"background:hsl({_hue},55%,32%);color:***REMOVED***fff;";
 
             <div class="app-card">
                 <div class="app-card-info">
-                    <h3>@app.DiscordName</h3>
+                    <h3>
+                        @app.DiscordName
+                        @if (app.IsFlagged)
+                        {
+                            <span class="badge" style="background:rgba(0,188,212,.12);color:***REMOVED***00bcd4;" title="Zur Überprüfung markiert"><i class="bi bi-flag-fill"></i> Überprüfung</span>
+                        }
+                    </h3>
                     <div class="app-card-meta">
-                        <span class="badge @badgeClass">@app.Division</span>
+                        <span class="badge" style="@badgeStyle">@app.Division</span>
                         <span>@app.Role</span>
                         <span>@app.GamingName <span class="text-mute small">(@app.Platform)</span></span>
-                        <span>eingereicht vor @((DateTime.UtcNow - app.SubmittedAt).TotalHours.ToString("0")) Std.</span>
+                        @{
+                            var _age = DateTime.UtcNow - app.SubmittedAt;
+                            var _ageStr = _age.TotalHours < 1
+                                ? $"{(int)_age.TotalMinutes} Min."
+                                : $"{(int)_age.TotalHours} Std.";
+                        }
+                        <span>eingereicht vor @_ageStr</span>
                     </div>
                 </div>
                 <div class="card-actions">
                     <a href="@Url.Action("Detail", "AdminApplications", new { id = app.Id })" class="btn-sm btn-sm--secondary">
                         <i class="bi bi-eye"></i> Ansehen
                     </a>
-                    <form method="post" action="@Url.Action("Accept", "AdminApplications", new { id = app.Id })" style="margin: 0;">
+                    <form method="post" action="@Url.Action("Accept", "AdminApplications", new { id = app.Id })" style="margin: 0;"
+                          onsubmit="return confirm('Bewerbung von @app.DiscordName wirklich akzeptieren?');">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn-sm btn-sm--primary" style="width: 100%;">
                             <i class="bi bi-check"></i> Akzeptieren

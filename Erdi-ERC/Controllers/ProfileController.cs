@@ -123,7 +123,18 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             detail.Achievements = DriverAchievementsHelper.Compute(detail, custom, defs.ToList()).ToList();
 
             ViewBag.Profile = profile;
-            ViewBag.CanEditEaName = string.Equals(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, profile.DiscordId, StringComparison.Ordinal);
+            var isOwnProfile = string.Equals(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, profile.DiscordId, StringComparison.Ordinal);
+            ViewBag.CanEditEaName = isOwnProfile;
+
+            // Eigene Bewerbung als Status-Block anzeigen (nur auf dem eigenen Profil — Privatsphäre).
+            if (isOwnProfile)
+            {
+                ViewBag.MyApplication = await _db.ApplicationForms
+                    .AsNoTracking()
+                    .Where(a => a.DiscordId == profile.DiscordId)
+                    .OrderByDescending(a => a.SubmittedAt)
+                    .FirstOrDefaultAsync();
+            }
             ViewBag.ProfileWall = await _db.ProfileWallMessages
                 .Where(x => x.ProfileDiscordId == profile.DiscordId)
                 .OrderByDescending(x => x.CreatedAt)
@@ -138,99 +149,67 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         {
             var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(discordId))
-            {
                 return Forbid();
-            }
 
             if (!confirmEaNameAccuracy)
             {
-                TempData["ProfileMessage"] = "Bitte bestätige vor dem Speichern, dass dein EA-Name zu 100% korrekt und ehrlich eingetragen ist.";
+                TempData["ProfileMessage"] = "Bitte bestätige vor dem Speichern, dass dein Ingame-Name zu 100% korrekt ist.";
                 return RedirectToAction(nameof(Index), new { discordId });
             }
 
-            var normalizedEaName = eaName?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(normalizedEaName))
+            var normalized = eaName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalized))
             {
-                TempData["ProfileMessage"] = "Bitte einen gültigen EA-Namen eintragen.";
+                TempData["ProfileMessage"] = "Bitte einen gültigen Ingame-Namen eintragen.";
                 return RedirectToAction(nameof(Index), new { discordId });
             }
 
-            if (normalizedEaName.Length > 128)
+            if (normalized.Length > 128)
             {
-                TempData["ProfileMessage"] = "Der EA-Name darf maximal 128 Zeichen lang sein.";
+                TempData["ProfileMessage"] = "Der Ingame-Name darf maximal 128 Zeichen lang sein.";
                 return RedirectToAction(nameof(Index), new { discordId });
             }
 
             var profile = await _db.DriverProfiles
-                .AsTracking()
+                .AsNoTracking()
                 .Include(p => p.GamerTags)
                 .FirstOrDefaultAsync(p => p.DiscordId == discordId);
             if (profile is null)
-            {
                 return NotFound();
-            }
 
-            var existingEaTag = profile.GamerTags
-                .FirstOrDefault(t => string.Equals(t.Platform, "EA", StringComparison.OrdinalIgnoreCase));
-            var previousEaName = existingEaTag?.GamerTag?.Trim() ?? string.Empty;
+            var platform = !string.IsNullOrWhiteSpace(profile.PreferredPlatform)
+                ? profile.PreferredPlatform.Trim()
+                : "EA";
+            var previousName = profile.GamerTags
+                .FirstOrDefault(t => string.Equals(t.Platform, platform, StringComparison.OrdinalIgnoreCase))
+                ?.GamerTag?.Trim()
+                ?? profile.DisplayName?.Trim()
+                ?? string.Empty;
 
-            if (string.Equals(previousEaName, normalizedEaName, StringComparison.Ordinal))
+            if (string.Equals(previousName, normalized, StringComparison.Ordinal))
             {
-                TempData["ProfileMessage"] = "Dein EA-Name ist bereits so eingetragen.";
+                TempData["ProfileMessage"] = "Dein Ingame-Name ist bereits so eingetragen.";
                 return RedirectToAction(nameof(Index), new { discordId });
             }
 
-            if (existingEaTag is null)
-            {
-                profile.GamerTags.Add(new DriverGamerTag
-                {
-                    DiscordId = discordId,
-                    Platform = "EA",
-                    GamerTag = normalizedEaName,
-                    IsPrimary = profile.GamerTags.Count == 0,
-                    LinkedAt = DateTime.UtcNow,
-                    LinkedByDiscordId = discordId
-                });
-            }
-            else
-            {
-                existingEaTag.GamerTag = normalizedEaName;
-                existingEaTag.LinkedAt = DateTime.UtcNow;
-                existingEaTag.LinkedByDiscordId = discordId;
-            }
-
-            profile.DisplayName = normalizedEaName;
-
-            if (string.IsNullOrWhiteSpace(profile.PreferredPlatform))
-            {
-                profile.PreferredPlatform = "EA";
-            }
-
-            profile.UpdatedAt = DateTime.UtcNow;
-
-            var changedReferences = 0;
-            if (!string.IsNullOrWhiteSpace(previousEaName))
-            {
-                changedReferences = await RenameDriverReferencesAsync(profile, previousEaName, normalizedEaName);
-            }
-
+            int changedReferences;
             try
             {
-                await _db.SaveChangesAsync();
+                changedReferences = await _profiles.RenameIngameNameAsync(discordId, normalized, discordId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Fehler beim Speichern des EA-Namens für {DiscordId}", discordId);
+                _logger.LogError(ex, "Fehler beim Speichern des Ingame-Namens für {DiscordId}", discordId);
                 TempData["ProfileMessage"] = "Fehler beim Speichern. Bitte versuche es erneut.";
                 return RedirectToAction(nameof(Index), new { discordId });
             }
             await _audit.LogAsync(
-                "UpdateEaName",
+                "UpdateIngameName",
                 "DriverProfile",
                 discordId,
-                $"Discord={profile.DiscordName}, OldEaName={previousEaName}, NewEaName={normalizedEaName}, ChangedReferences={changedReferences}");
+                $"Discord={profile.DiscordName}, Platform={platform}, OldName={previousName}, NewName={normalized}, ChangedRefs={changedReferences}");
 
-            TempData["ProfileMessage"] = "EA-Name gespeichert. Bitte trage immer zu 100% deinen echten und korrekten EA-Namen ein.";
+            TempData["ProfileMessage"] = "Ingame-Name gespeichert. Bitte trage immer zu 100% deinen echten und korrekten Ingame-Namen ein.";
             return RedirectToAction(nameof(Index), new { discordId });
         }
 
@@ -399,99 +378,5 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             return RedirectToAction(nameof(Index), new { discordId = profileDiscordId });
         }
 
-        private async Task<int> RenameDriverReferencesAsync(DriverProfile profile, string oldName, string newName)
-        {
-            var changed = 0;
-
-            var standings = await _db.DriverStandings.AsTracking()
-                .Where(x => x.Driver == oldName || x.ReserveForDriver == oldName)
-                .ToListAsync();
-            foreach (var standing in standings)
-            {
-                if (string.Equals(standing.Driver, oldName, StringComparison.Ordinal))
-                {
-                    standing.Driver = newName;
-                    changed++;
-                }
-                if (string.Equals(standing.ReserveForDriver, oldName, StringComparison.Ordinal))
-                {
-                    standing.ReserveForDriver = newName;
-                    changed++;
-                }
-            }
-
-            var raceResults = await _db.RaceResults.AsTracking()
-                .Where(x => x.Winner == oldName || x.FastestLap == oldName)
-                .ToListAsync();
-            foreach (var race in raceResults)
-            {
-                if (string.Equals(race.Winner, oldName, StringComparison.Ordinal))
-                {
-                    race.Winner = newName;
-                    changed++;
-                }
-                if (string.Equals(race.FastestLap, oldName, StringComparison.Ordinal))
-                {
-                    race.FastestLap = newName;
-                    changed++;
-                }
-            }
-
-            var finishes = await _db.RaceFinishes.AsTracking()
-                .Where(x => x.Driver == oldName)
-                .ToListAsync();
-            foreach (var finish in finishes)
-            {
-                finish.Driver = newName;
-                changed++;
-            }
-
-            var reserveAssignments = await _db.RaceReserveAssignments.AsTracking()
-                .Where(x => x.ReserveDriver == oldName || x.MainDriver == oldName)
-                .ToListAsync();
-            foreach (var assignment in reserveAssignments)
-            {
-                if (string.Equals(assignment.ReserveDriver, oldName, StringComparison.Ordinal))
-                {
-                    assignment.ReserveDriver = newName;
-                    changed++;
-                }
-                if (string.Equals(assignment.MainDriver, oldName, StringComparison.Ordinal))
-                {
-                    assignment.MainDriver = newName;
-                    changed++;
-                }
-            }
-
-            var penalties = await _db.LeaguePenalties.AsTracking()
-                .Where(x => x.Driver == oldName)
-                .ToListAsync();
-            foreach (var penalty in penalties)
-            {
-                penalty.Driver = newName;
-                changed++;
-            }
-
-            var customAchievements = await _db.CustomAchievements.AsTracking()
-                .Where(x => x.Driver == oldName)
-                .ToListAsync();
-            foreach (var achievement in customAchievements)
-            {
-                achievement.Driver = newName;
-                changed++;
-            }
-
-            var applications = await _db.ApplicationForms.AsTracking()
-                .Where(x => x.GamingName == oldName && x.Platform == "EA"
-                    && ((x.DiscordId != null && x.DiscordId == profile.DiscordId) || x.DiscordName == profile.DiscordName))
-                .ToListAsync();
-            foreach (var application in applications)
-            {
-                application.GamingName = newName;
-                changed++;
-            }
-
-            return changed;
-        }
     }
 }

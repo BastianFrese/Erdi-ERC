@@ -1,0 +1,68 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@*
+    Generisches Partial für admin-erstellte Inhalts-Gags (TrollCustomGag).
+    Kind == Message → wegklickbar (Continue). Kind == Quiz → blockierend, via Solve geprüft.
+    Das „<OWNER_HANDLE> schüttelt den Kopf"-/Gnaden-Feedback rendert zentral Gate.cshtml.
+*@
+@{
+    var c = Model.Custom;
+}
+@if (c is null)
+{
+    @* Fallback: Daten nicht (mehr) auffindbar → einfach durchlassen, niemals hängen bleiben. *@
+    <div class="troll-gag">
+        <div class="troll-eyebrow"><OWNER_HANDLE>/div>
+        <h2 class="troll-title"><OWNER_HANDLE> hat es sich anders überlegt.</h2>
+        <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Reinlassen →</a>
+    </div>
+}
+else if (c.Kind == <OWNER_HANDLE>_ERC.Models.Troll.TrollCustomGagKind.Quiz)
+{
+    <div class="troll-gag troll-gag--quiz">
+        <div class="troll-eyebrow">@(string.IsNullOrWhiteSpace(c.Eyebrow) ? "<OWNER_HANDLE> · Quiz" : c.Eyebrow)</div>
+        <h2 class="troll-title">@c.Title</h2>
+        @if (!string.IsNullOrWhiteSpace(c.Lead))
+        {
+            <p class="troll-lead">@c.Lead</p>
+        }
+        <p class="troll-lead">@(Model.Prompt ?? c.Question)</p>
+
+        @{
+            var options = c.Options();
+        }
+        @if (options.Count > 0)
+        {
+            <form asp-controller="Troll" asp-action="Solve" method="post" class="troll-choices">
+                @foreach (var opt in options)
+                {
+                    <button type="submit" name="answer" value="@opt" class="troll-choice">@opt</button>
+                }
+            </form>
+        }
+        else
+        {
+            @* Quiz ohne vordefinierte Optionen → freies Textfeld. *@
+            <form asp-controller="Troll" asp-action="Solve" method="post" class="troll-form" autocomplete="off">
+                <input type="text" name="answer" class="troll-input troll-input--wide"
+                       placeholder="Deine Antwort" required autofocus aria-label="Antwort" />
+                <button type="submit" class="f1-btn f1-btn--primary">Antwort abschicken</button>
+            </form>
+        }
+    </div>
+}
+else
+{
+    <div class="troll-gag">
+        <div class="troll-eyebrow">@(string.IsNullOrWhiteSpace(c.Eyebrow) ? "<OWNER_HANDLE> · Durchsage" : c.Eyebrow)</div>
+        <h2 class="troll-title">@c.Title</h2>
+        @if (!string.IsNullOrWhiteSpace(c.Lead))
+        {
+            <p class="troll-lead">@c.Lead</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(c.Body))
+        {
+            <p class="troll-fortune">@c.Body</p>
+        }
+        <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Reinlassen →</a>
+    </div>
+}

@@ -70,10 +70,10 @@
             </div>
 
             <div class="adm-panel__body">
-                <form asp-action="CreateLeague" method="post" class="adm-league-form">
+                <form asp-controller="AdminLeagueManagement" asp-action="CreateLeague" method="post" class="adm-league-form" id="adm-create-league">
                     @Html.AntiForgeryToken()
-                    <input class="form-control form-control-sm" name="id" placeholder="ID (z.B. pro)" required />
-                    <input class="form-control form-control-sm" name="name" placeholder="Name" required />
+                    <input class="form-control form-control-sm" name="name" id="adm-league-name" placeholder="Name (z.B. ERC Pro)" required autocomplete="off" />
+                    <input class="form-control form-control-sm" name="id" id="adm-league-id" placeholder="ID (automatisch aus Name)" autocomplete="off" title="Optional — wird sonst automatisch aus dem Namen erzeugt" />
                     <input class="form-control form-control-sm" name="description" placeholder="Beschreibung (optional)" />
                     <button class="btn btn-sm btn-primary adm-league-form__submit" type="submit">
                         <i class="bi bi-plus-lg me-1"></i>Anlegen
@@ -117,10 +117,26 @@
                                     @(league.Description ?? "—")
                                 </span>
                                 <div class="adm-league-table__actions">
-                                    <a class="btn btn-xs btn-outline-secondary" asp-action="EditLeague" asp-route-id="@league.Id" title="Bearbeiten">
+                                    <form asp-controller="AdminLeagueManagement" asp-action="MoveLeague" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@league.Id" />
+                                        <input type="hidden" name="direction" value="up" />
+                                        <button class="btn btn-xs btn-outline-secondary" type="submit" title="Nach oben"@(league == Model.First() ? " disabled" : "")>
+                                            <i class="bi bi-arrow-up"></i>
+                                        </button>
+                                    </form>
+                                    <form asp-controller="AdminLeagueManagement" asp-action="MoveLeague" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@league.Id" />
+                                        <input type="hidden" name="direction" value="down" />
+                                        <button class="btn btn-xs btn-outline-secondary" type="submit" title="Nach unten"@(league == Model.Last() ? " disabled" : "")>
+                                            <i class="bi bi-arrow-down"></i>
+                                        </button>
+                                    </form>
+                                    <a class="btn btn-xs btn-outline-secondary" asp-controller="AdminLeagueManagement" asp-action="EditLeague" asp-route-id="@league.Id" title="Bearbeiten">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <form asp-action="DeleteLeague" method="post" class="d-inline"
+                                    <form asp-controller="AdminLeagueManagement" asp-action="DeleteLeague" method="post" class="d-inline"
                                           onsubmit="return confirm('Liga &quot;@league.Name&quot; wirklich löschen?');">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@league.Id" />
@@ -230,7 +246,7 @@
 
                 <div class="adm-system-action-group">
                     <div class="adm-system-action-group__label">Statistiken</div>
-                    <form asp-action="RebuildAllStats" method="post">
+                    <form asp-controller="AdminLeagueManagement" asp-action="RebuildAllStats" method="post">
                         @Html.AntiForgeryToken()
                         <button class="btn btn-sm btn-warning" type="submit"
                                 onclick="return confirm('Alle Statistiken neu berechnen?');">
@@ -260,7 +276,7 @@
                 <div class="adm-system-action-group">
                     <div class="adm-system-action-group__label">Race-Kalender</div>
                     <a class="btn btn-sm btn-outline-info"
-                       asp-controller="Home" asp-action="RaceCalendar" asp-route-preview="1"
+                       asp-controller="Races" asp-action="RaceCalendar" asp-route-preview="1"
                        target="_blank" rel="noopener"
                        title="Öffnet die Discord-Vorschau (Vollbild ohne Nav/Footer) in einem neuen Tab.">
                         <i class="bi bi-image me-1"></i>Discord-Vorschau öffnen
@@ -272,3 +288,26 @@
     </div>
 
 </div>
+
+@section Scripts {
+    <script>
+        // Auto-Slug: ID wird aus dem Namen erzeugt, solange der Nutzer die ID nicht selbst angefasst hat.
+        (() => {
+            const nameEl = document.getElementById('adm-league-name');
+            const idEl = document.getElementById('adm-league-id');
+            if (!nameEl || !idEl) return;
+
+            let idTouched = false;
+            idEl.addEventListener('input', () => { idTouched = idEl.value.trim().length > 0; });
+
+            const slugify = (raw) => (raw || '').toLowerCase()
+                .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+                .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+            nameEl.addEventListener('input', () => {
+                if (idTouched) return;
+                idEl.value = slugify(nameEl.value);
+            });
+        })();
+    </script>
+}

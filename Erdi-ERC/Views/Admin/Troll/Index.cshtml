@@ -1,0 +1,264 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollAdminViewModel
+@using <OWNER_HANDLE>_ERC.Models.Troll
+@{
+    ViewData["Title"] = "Troll-System";
+    ViewData["Kicker"] = "System";
+
+    string CatName(TrollGagCategory c) => c switch
+    {
+        TrollGagCategory.MatheKoepfchen => "Mathe & Köpfchen",
+        TrollGagCategory.FakeSystem => "Fake-System",
+        TrollGagCategory.ReaktionGeschick => "Reaktion & Geschick",
+        TrollGagCategory.GlueckSprueche => "Glück & Sprüche",
+        _ => c.ToString()
+    };
+    var s = Model.Settings;
+}
+
+<div class="f1-page-hero mb-4">
+    <div class="f1-page-hero__inner">
+        <span class="f1-page-hero__eyebrow"><i class="bi bi-emoji-laughing text-warning me-1"></i> System</span>
+        <h1 class="f1-page-hero__title"><OWNER_HANDLE>-Troll-System</h1>
+        <p class="f1-page-hero__subtitle">Login-Pranks verwalten: an/aus &amp; Gewicht je Gag, globale Auslöse-Settings und eigene Inhalts-Gags.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@ok
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@err
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ════════════════ Globale Settings ════════════════ *@
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header d-flex align-items-center gap-2 py-3">
+        <i class="bi bi-sliders text-warning"></i>
+        <span class="fw-bold text-white">Globale Settings</span>
+        <span class="text-muted small ms-2">Überschreiben die appsettings-Werte zur Laufzeit.</span>
+    </div>
+    <div class="card-body">
+        <form asp-action="SaveSettings" method="post" class="row g-3 align-items-end">
+            @Html.AntiForgeryToken()
+            <div class="col-auto">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="set-enabled" name="enabled" value="true" @(s.Enabled ? "checked" : "") />
+                    <input type="hidden" name="enabled" value="false" />
+                    <label class="form-check-label text-white" for="set-enabled">Aktiv</label>
+                </div>
+            </div>
+            <div class="col-auto">
+                <label class="form-label text-muted small mb-1">Auslöse-Chance (0–1)</label>
+                <input class="form-control form-control-sm bg-dark text-white border-secondary" style="width:120px"
+                       type="number" name="triggerChance" step="0.05" min="0" max="1" value="@s.TriggerChance.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label text-muted small mb-1">Cooldown (Min.)</label>
+                <input class="form-control form-control-sm bg-dark text-white border-secondary" style="width:110px"
+                       type="number" name="cooldownMinutes" min="0" value="@s.CooldownMinutes" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label text-muted small mb-1">Mercy nach (Versuche)</label>
+                <input class="form-control form-control-sm bg-dark text-white border-secondary" style="width:130px"
+                       type="number" name="mercyAfterAttempts" min="1" value="@s.MercyAfterAttempts" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label text-muted small mb-1">Mathe max. Operand (1–9)</label>
+                <input class="form-control form-control-sm bg-dark text-white border-secondary" style="width:150px"
+                       type="number" name="mathMaxOperand" min="1" max="9" value="@s.MathMaxOperand" />
+            </div>
+            <div class="col-auto">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="set-admins" name="applyToAdmins" value="true" @(s.ApplyToAdmins ? "checked" : "") />
+                    <input type="hidden" name="applyToAdmins" value="false" />
+                    <label class="form-check-label text-white" for="set-admins">Admins trollen</label>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-save me-1"></i>Speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ════════════════ Eigene Inhalts-Gags ════════════════ *@
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header d-flex align-items-center gap-2 py-3">
+        <i class="bi bi-stars text-warning"></i>
+        <span class="fw-bold text-white">Eigene Gags</span>
+        <span class="adm-badge ms-1">@Model.Custom.Count</span>
+        <button class="btn btn-sm btn-outline-success ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="***REMOVED***new-custom">
+            <i class="bi bi-plus-lg me-1"></i>Neuer Gag
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="collapse mb-3" id="new-custom">
+            <div class="p-3 border border-secondary rounded">
+                <h6 class="text-white mb-3">Neuen Inhalts-Gag anlegen</h6>
+                @await Html.PartialAsync("~/Views/Admin/Troll/_CustomGagForm.cshtml", new TrollCustomGag())
+            </div>
+        </div>
+
+        @if (Model.Custom.Count == 0)
+        {
+            <div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Noch keine eigenen Gags. Lege oben einen an (Nachricht oder Quiz).</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark table-sm table-hover align-middle mb-0">
+                    <thead class="text-muted">
+                        <tr>
+                            <th>Key</th><th>Titel</th><th>Art</th><th>Kategorie</th>
+                            <th class="text-center">Gewicht</th><th class="text-center">Aktiv</th><th class="text-end">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Custom)
+                        {
+                            <tr>
+                                <td><code class="text-info">@c.Key</code></td>
+                                <td class="text-white">@c.Title</td>
+                                <td>
+                                    <span class="badge @(c.Kind == TrollCustomGagKind.Quiz ? "bg-info" : "bg-secondary")">
+                                        @(c.Kind == TrollCustomGagKind.Quiz ? "Quiz" : "Nachricht")
+                                    </span>
+                                </td>
+                                <td class="text-muted small">@CatName(c.Category)</td>
+                                <td class="text-center">@c.Weight</td>
+                                <td class="text-center">
+                                    <form asp-action="ToggleCustom" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.Id" />
+                                        <button type="submit" class="btn btn-sm @(c.IsEnabled ? "btn-success" : "btn-secondary") py-0 px-2">
+                                            @(c.IsEnabled ? "Aktiv" : "Inaktiv")
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="text-end" style="white-space:nowrap">
+                                    <form asp-action="Preview" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="key" value="@c.Key" />
+                                        <button type="submit" class="btn btn-sm btn-outline-info me-1" title="Vorschau"><i class="bi bi-eye"></i></button>
+                                    </form>
+                                    <button class="btn btn-sm btn-outline-primary me-1" type="button" data-bs-toggle="collapse" data-bs-target="***REMOVED***edit-custom-@c.Id" title="Bearbeiten">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form asp-action="DeleteCustom" method="post" class="d-inline" onsubmit="return confirm('Gag &quot;@c.Title&quot; löschen?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Löschen"><i class="bi bi-trash3"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    <div class="collapse" id="edit-custom-@c.Id">
+                                        <div class="p-3 border-top border-secondary">
+                                            @await Html.PartialAsync("~/Views/Admin/Troll/_CustomGagForm.cshtml", c)
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* ════════════════ Eingebaute Gags ════════════════ *@
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header d-flex align-items-center gap-2 py-3">
+        <i class="bi bi-controller text-warning"></i>
+        <span class="fw-bold text-white">Eingebaute Gags</span>
+        <span class="adm-badge ms-1">@Model.BuiltIns.Count</span>
+        <span class="text-muted small ms-2">Mechanik fix (Code) — an/aus &amp; Gewicht einstellbar.</span>
+    </div>
+    <div class="card-body">
+        @foreach (var grp in Model.BuiltIns.GroupBy(b => b.Def.Category))
+        {
+            <h6 class="text-uppercase text-muted small mt-2 mb-2" style="letter-spacing:.1em">@CatName(grp.Key)</h6>
+            <div class="table-responsive mb-3">
+                <table class="table table-dark table-sm table-hover align-middle mb-0">
+                    <tbody>
+                        @foreach (var row in grp)
+                        {
+                            <tr>
+                                <td style="width:30%">
+                                    <code class="text-info">@row.Def.Key</code>
+                                    @if (row.Def.IsBlocking)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1" title="Muss gelöst werden">Pflicht</span>
+                                    }
+                                    @if (row.IsOverridden)
+                                    {
+                                        <span class="badge bg-secondary ms-1" title="Override aktiv">angepasst</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form asp-action="SaveOverride" method="post" class="d-flex gap-2 align-items-center flex-wrap">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="key" value="@row.Def.Key" />
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" role="switch" name="isEnabled" value="true" @(row.IsEnabled ? "checked" : "") id="en-@row.Def.Key" />
+                                            <input type="hidden" name="isEnabled" value="false" />
+                                            <label class="form-check-label text-muted small" for="en-@row.Def.Key">aktiv</label>
+                                        </div>
+                                        <label class="text-muted small mb-0">Gewicht</label>
+                                        <input class="form-control form-control-sm bg-dark text-white border-secondary" style="width:80px" type="number" name="weight" min="0" value="@row.Weight" />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-save"></i></button>
+                                    </form>
+                                </td>
+                                <td class="text-end" style="white-space:nowrap;width:170px">
+                                    <form asp-action="Preview" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="key" value="@row.Def.Key" />
+                                        <button type="submit" class="btn btn-sm btn-outline-info me-1" title="Vorschau"><i class="bi bi-eye"></i> Vorschau</button>
+                                    </form>
+                                    @if (row.IsOverridden)
+                                    {
+                                        <form asp-action="ResetOverride" method="post" class="d-inline" title="Auf Code-Default zurücksetzen">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="key" value="@row.Def.Key" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Im Custom-Gag-Formular: Quiz- vs. Nachricht-Felder je nach Auswahl zeigen.
+        (function () {
+            function sync(form) {
+                var kind = form.querySelector('[data-cg-kind]');
+                if (!kind) return;
+                var isQuiz = kind.value === 'Quiz';
+                form.querySelectorAll('[data-cg-quiz]').forEach(function (el) { el.style.display = isQuiz ? '' : 'none'; });
+                form.querySelectorAll('[data-cg-message]').forEach(function (el) { el.style.display = isQuiz ? 'none' : ''; });
+            }
+            document.querySelectorAll('.troll-cgform').forEach(function (form) {
+                var kind = form.querySelector('[data-cg-kind]');
+                if (kind) kind.addEventListener('change', function () { sync(form); });
+                sync(form);
+            });
+        })();
+    </script>
+}

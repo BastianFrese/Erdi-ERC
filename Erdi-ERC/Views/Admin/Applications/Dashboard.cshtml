@@ -1,4 +1,5 @@
 @model <OWNER_HANDLE>_ERC.Controllers.ApplicationDashboardViewModel
+@using <OWNER_HANDLE>_ERC.Models
 
 @{
     ViewData["Title"] = "Bewerbungs-Dashboard";
@@ -6,14 +7,12 @@
     ViewData["HeroTitle"] = "Bewerbungen";
     ViewData["HeroSubtitle"] = "Dashboard & Übersicht";
 
-    string DivBadgeColor(string? division) => division switch
+    string DivBadgeColor(string? key)
     {
-        "Main Division 1"               => "var(--sig-cyan)",
-        "Second Crossplay Division 2"   => "***REMOVED***ff9800",
-        "Rookie Crossplay Division 3"   => "***REMOVED***4caf50",
-        "Community Crossplay Event"     => "***REMOVED***9c27b0",
-        _                               => "var(--sig-cyan)"
-    };
+        if (string.IsNullOrEmpty(key)) return "var(--sig-cyan)";
+        var hue = Math.Abs(key.GetHashCode()) % 300 + 30;
+        return $"hsl({hue},60%,45%)";
+    }
 }
 
 <div class="adm-dashboard">
@@ -25,11 +24,7 @@
             <div class="adm-alert adm-alert--warning">
                 <strong>Konflikt erkannt:</strong> Eine Aktion wurde von einem anderen Admin durchgeführt.
                 <div style="margin-top:.5rem; display:flex; gap:.5rem;">
-                    <button type="button" class="btn btn-sm btn-primary"
-                            onclick="if(confirm('Seite neu laden?')) { window.location.href='@Url.Action("Dashboard","AdminApplications")'; }">
-                        Neu laden
-                    </button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload();">Reload</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="window.location.reload();">Seite neu laden</button>
                 </div>
             </div>
         }
@@ -45,7 +40,7 @@
 
     @* KPI Row *@
     <section class="adm-kpi-grid">
-        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminApplications" asp-action="Open" style="--kpi-color:***REMOVED***e10600;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminApplications" asp-action="List" asp-route-status="Open" style="--kpi-color:***REMOVED***e10600;">
             <div class="adm-kpi-card__icon"><i class="bi bi-inbox-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Statistics.OpenApplications</div>
@@ -53,11 +48,11 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
-        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminApplications" asp-action="Accepted" style="--kpi-color:***REMOVED***39ff14;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminApplications" asp-action="List" asp-route-status="Accepted" style="--kpi-color:***REMOVED***39ff14;">
             <div class="adm-kpi-card__icon"><i class="bi bi-check2-circle"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Statistics.AcceptedApplications</div>
-                <div class="adm-kpi-card__label">Akzeptiert</div>
+                <div class="adm-kpi-card__label">Angenommen</div>
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
@@ -78,7 +73,7 @@
         </div>
     </section>
 
-    @* Quick Actions *@
+    @* Quick Actions + Kennzahlen *@
     <div class="adm-panel" style="margin-bottom:1.5rem;">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
@@ -86,26 +81,95 @@
             </span>
         </div>
         <div class="adm-panel__body">
-            <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
-                <a class="btn btn-sm btn-primary" asp-controller="AdminApplications" asp-action="Open">
+            <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <a class="btn btn-sm btn-primary" asp-controller="AdminApplications" asp-action="List" asp-route-status="Open">
                     <i class="bi bi-inbox me-1"></i>Offene ansehen
                 </a>
                 <a class="btn btn-sm btn-primary" asp-controller="AdminApplications" asp-action="List">
                     <i class="bi bi-list-ul me-1"></i>Alle anzeigen
                 </a>
-                <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminApplications" asp-action="Metrics">
-                    <i class="bi bi-graph-up me-1"></i>Statistiken
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminApplications" asp-action="List" asp-route-flagged="true">
+                    <i class="bi bi-flag me-1"></i>Markierte
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminApplications" asp-action="List" asp-route-duplicates="true">
+                    <i class="bi bi-people me-1"></i>Duplikate
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminApplications" asp-action="List" asp-route-withoutLeague="true">
+                    <i class="bi bi-question-circle me-1"></i>Ohne Liga
                 </a>
                 <a class="btn btn-sm btn-outline-secondary" asp-controller="AdminApplications" asp-action="Export">
                     <i class="bi bi-download me-1"></i>CSV Export
                 </a>
             </div>
+            @* Kennzahlen inline (ersetzt die frühere Metrics-Seite) *@
+            <div style="display:flex; gap:1.5rem; flex-wrap:wrap; font-size:.82rem; color:var(--ink-2);">
+                <span><i class="bi bi-stopwatch me-1" style="color:var(--sig-cyan);"></i>Ø Bearbeitungszeit: <strong style="color:var(--ink);">@Math.Round(Model.Metrics.AverageProcessingTimeHours, 1) Std.</strong></span>
+                <span><i class="bi bi-calendar-week me-1" style="color:var(--sig-cyan);"></i>Diese Woche: <strong style="color:var(--ink);">@Model.Metrics.ApplicationsThisWeek</strong></span>
+                <span><i class="bi bi-calendar-month me-1" style="color:var(--sig-cyan);"></i>Dieser Monat: <strong style="color:var(--ink);">@Model.Metrics.ApplicationsThisMonth</strong></span>
+                <span><i class="bi bi-flag me-1" style="color:var(--sig-amber);"></i>Markiert: <strong style="color:var(--ink);">@Model.Statistics.FlaggedForReviewApplications</strong></span>
+                <span><i class="bi bi-x-circle me-1" style="color:***REMOVED***e10600;"></i>Abgelehnt: <strong style="color:var(--ink);">@Model.Statistics.RejectedApplications</strong></span>
+            </div>
         </div>
     </div>
 
+    @* Liga-Kapazität & Warteliste *@
+    @if (Model.Capacities.Count > 0)
+    {
+        <div class="adm-panel" style="margin-bottom:1.5rem;">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-people-fill me-2" style="color:var(--sig-amber);"></i>Liga-Kapazität &amp; Warteliste
+                </span>
+            </div>
+            <div class="adm-panel__body">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem;">
+                    @foreach (var cap in Model.Capacities)
+                    {
+                        <div style="background:var(--surface-2); border:1px solid var(--stroke-1); border-radius:var(--r-2); padding:1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem;">
+                                <span style="font-weight:700; color:var(--ink);">@cap.Name</span>
+                                @if (cap.IsFull)
+                                {
+                                    <span class="badge" style="background:***REMOVED***e10600; color:***REMOVED***fff;">VOLL</span>
+                                }
+                                else if (cap.Capacity.HasValue)
+                                {
+                                    <span class="badge" style="background:***REMOVED***39ff14; color:***REMOVED***04121a;">@cap.FreeSlots frei</span>
+                                }
+                            </div>
+                            <div style="font-size:.8rem; color:var(--ink-2); margin-bottom:.4rem;">
+                                @cap.Filled@(cap.Capacity.HasValue ? $" / {cap.Capacity}" : "") Stammfahrer
+                            </div>
+                            @if (cap.Capacity.HasValue)
+                            {
+                                <div style="height:8px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; margin-bottom:.5rem;">
+                                    <div style="height:100%; width:@(cap.FillPercent)%; background:@(cap.IsFull ? "***REMOVED***e10600" : "linear-gradient(90deg,***REMOVED***39ff14,***REMOVED***5b8cff)");"></div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="font-size:.72rem; color:var(--ink-3); margin-bottom:.5rem;">Keine Kapazität gesetzt (unbegrenzt)</div>
+                            }
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:.78rem; color:var(--ink-2);">
+                                    <i class="bi bi-hourglass-split me-1" style="color:var(--sig-amber);"></i>@cap.Pending offen
+                                    @if (cap.IsFull && cap.Pending > 0)
+                                    {
+                                        <span style="color:***REMOVED***ff8a4c;"> · Warteliste</span>
+                                    }
+                                </span>
+                                <a class="btn btn-xs btn-outline-secondary" href="@Url.Action("List","AdminApplications", new { leagueId = cap.LeagueId })">Ansehen</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="adm-content-grid">
 
-        @* Bewerbungen nach Division *@
+        @* Bewerbungen nach Division (Anzeige-Snapshot) *@
         @if (Model.Statistics.ApplicationsByDivision.Count > 0)
         {
             <div class="adm-panel">
@@ -118,18 +182,17 @@
                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem;">
                         @foreach (var kvp in Model.Statistics.ApplicationsByDivision.OrderByDescending(x => x.Value))
                         {
-                            <a href="@Url.Action("ByDivision", "AdminApplications", new { division = kvp.Key })"
-                               style="background:var(--surface-2); padding:1rem; border-radius:var(--r-2); text-align:center; text-decoration:none; display:block; border:1px solid var(--stroke-1);">
+                            <div style="background:var(--surface-2); padding:1rem; border-radius:var(--r-2); text-align:center; border:1px solid var(--stroke-1);">
                                 <div style="font-size:1.75rem; font-weight:700; color:@DivBadgeColor(kvp.Key);">@kvp.Value</div>
-                                <div style="font-size:.75rem; color:var(--ink-2); margin-top:.35rem; font-weight:600;">@kvp.Key</div>
-                            </a>
+                                <div style="font-size:.75rem; color:var(--ink-2); margin-top:.35rem; font-weight:600;">@(string.IsNullOrWhiteSpace(kvp.Key) ? "(keine)" : kvp.Key)</div>
+                            </div>
                         }
                     </div>
                 </div>
             </div>
         }
 
-        @* Neueste Bewerbungen *@
+        @* Neueste offene Bewerbungen *@
         @if (Model.RecentApplications.Count > 0)
         {
             <div class="adm-panel">
@@ -147,7 +210,7 @@
                             <i class="bi bi-sort-up"></i> Älteste
                         </a>
                     </span>
-                    <a class="adm-panel__head-action" asp-controller="AdminApplications" asp-action="Open">
+                    <a class="adm-panel__head-action" asp-controller="AdminApplications" asp-action="List" asp-route-status="Open">
                         Alle offenen <i class="bi bi-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -158,10 +221,22 @@
                             <div class="adm-log-item__body">
                                 <span class="adm-log-item__id">@app.DiscordName</span>
                                 <span class="adm-log-item__detail" style="color:@DivBadgeColor(app.Division);">@app.Division</span>
+                                @if (app.IsFlagged)
+                                {
+                                    <span class="badge" style="background:rgba(0,188,212,.15);color:***REMOVED***00bcd4;" title="Zur Überprüfung markiert"><i class="bi bi-flag-fill"></i></span>
+                                }
                             </div>
                             <div style="display:flex; align-items:center; gap:.75rem; flex-shrink:0;">
                                 <span class="adm-log-item__time">
-                                    vor @((DateTime.UtcNow - app.SubmittedAt).TotalHours.ToString("0")) Std.
+                                    @{
+                                        var _dashAge = DateTime.UtcNow - app.SubmittedAt;
+                                        var _dashAgeStr = _dashAge.TotalMinutes < 60
+                                            ? $"vor {(int)_dashAge.TotalMinutes} Min."
+                                            : _dashAge.TotalHours < 48
+                                                ? $"vor {(int)_dashAge.TotalHours} Std."
+                                                : $"vor {(int)_dashAge.TotalDays} Tagen";
+                                    }
+                                    @_dashAgeStr
                                 </span>
                                 <a class="btn btn-xs btn-outline-secondary"
                                    asp-controller="AdminApplications" asp-action="Detail" asp-route-id="@app.Id">

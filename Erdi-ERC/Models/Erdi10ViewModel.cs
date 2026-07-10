@@ -57,6 +57,13 @@ namespace <OWNER_HANDLE>_ERC.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
+    public class SetupBlockedUser
+    {
+        public string DiscordId { get; set; } = string.Empty;
+        public string? Reason { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
     public class DriverStanding
     {
         public int RowId { get; set; }
@@ -67,6 +74,9 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int? DriverNumber { get; set; }
         public int Points { get; set; }
         public int Wins { get; set; }
+        /// <summary>Manueller Punkte-Bonus/-Malus, der bei jeder Neuberechnung erhalten bleibt
+        /// und auf die aus den Rennen abgeleiteten Punkte addiert wird (z.B. Strafpunkte).</summary>
+        public int PointsAdjustment { get; set; }
         public bool IsReserveDriver { get; set; }
         public string? ReserveForDriver { get; set; }
         public int ReserveStarts { get; set; }
@@ -81,6 +91,11 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string Track { get; set; } = string.Empty;
         public string Winner { get; set; } = string.Empty;
         public string FastestLap { get; set; } = string.Empty;
+
+        /// <summary>Saison-Label (z.B. "2026"). Null = nicht zugeordnet. Steuert die
+        /// saison-bezogene Tabellen-Berechnung, wenn die Liga eine aktuelle Saison gesetzt hat.</summary>
+        public string? Season { get; set; }
+
         public List<RaceFinish> Finishes { get; set; } = new();
         public List<RaceReserveAssignment> ReserveAssignments { get; set; } = new();
     }
@@ -94,6 +109,9 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int Position { get; set; }
         public bool FastestLap { get; set; }
         public int? RaceTimeMs { get; set; }
+
+        /// <summary>1-based Startposition aus dem Qualifying (Pole = 1). Null = nicht erfasst.</summary>
+        public int? QualifyingPosition { get; set; }
     }
 
     public class RaceReserveAssignment

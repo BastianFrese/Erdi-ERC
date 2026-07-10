@@ -1,0 +1,100 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@*
+    Kategorie „Reaktion & Geschick". not-a-bot ist serverseitig validiert (Solve, Antwort "car");
+    reaction & runaway-button laufen rein clientseitig und enden mit Continue.
+*@
+@switch (Model.Gag.Key)
+{
+    case "reaction":
+        <div class="troll-gag" data-troll-reaction>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Reflex-Test</div>
+            <h2 class="troll-title">Mal sehen, ob deine Reflexe schneller sind als deine Rundenzeiten.</h2>
+            <p class="troll-lead">Warte auf <strong>Grün</strong> und klick sofort. Frühstart = <OWNER_HANDLE> lacht.</p>
+            <button type="button" class="troll-light" data-troll-light>Warten …</button>
+            <div class="troll-reaction__result" data-troll-reaction-result aria-live="polite"></div>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-reaction-done>
+                Reinlassen →
+            </a>
+        </div>
+        break;
+
+    case "not-a-bot":
+        <div class="troll-gag">
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Sicherheitscheck</div>
+            <h2 class="troll-title">Ich bin kein Bot.</h2>
+            <p class="troll-lead">Beweise es: Klick das <strong>Rennauto</strong> an.</p>
+            <form asp-controller="Troll" asp-action="Solve" method="post" class="troll-captcha">
+                @{
+                    var tiles = new (string Val, string Emoji, string Label)[]
+                    {
+                        ("tractor", "🚜", "Traktor"),
+                        ("car",     "🏎️", "Rennauto"),
+                        ("bike",    "🚲", "Fahrrad"),
+                        ("boat",    "⛵", "Segelboot"),
+                        ("rocket",  "🚀", "Rakete"),
+                        ("scooter", "🛴", "Roller")
+                    };
+                }
+                @foreach (var t in tiles)
+                {
+                    <button type="submit" name="answer" value="@t.Val" class="troll-captcha__tile" aria-label="@t.Label">@t.Emoji</button>
+                }
+            </form>
+        </div>
+        break;
+
+    case "runaway-button":
+        <div class="troll-gag">
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Geschicklichkeit</div>
+            <h2 class="troll-title">Klick den Button. Falls du ihn erwischst.</h2>
+            <p class="troll-lead"><OWNER_HANDLE> hat ihn ein bisschen … flüchtig gemacht. Nach ein paar Versuchen wird er müde.</p>
+            <div class="troll-runaway__field">
+                <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-runaway" data-troll-dodge data-troll-final>
+                    Reinlassen →
+                </a>
+            </div>
+        </div>
+        break;
+
+    case "hold-button":
+        <div class="troll-gag" data-troll-hold>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Treue-Test</div>
+            <h2 class="troll-title">Halt den Button gedrückt, bis <OWNER_HANDLE> zufrieden ist.</h2>
+            <p class="troll-lead">Drei Sekunden durchhalten. Loslassen = von vorn. <OWNER_HANDLE> ist nachtragend.</p>
+            <button type="button" class="troll-hold__btn" data-troll-hold-btn>
+                <span class="troll-hold__fill" data-troll-hold-fill></span>
+                <span class="troll-hold__label" data-troll-hold-label>Gedrückt halten</span>
+            </button>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-hold-done>
+                <OWNER_HANDLE> nickt. Reinlassen →
+            </a>
+        </div>
+        break;
+
+    case "whack-erdi":
+        <div class="troll-gag" data-troll-whack>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Reaktion</div>
+            <h2 class="troll-title">Triff den flüchtigen <OWNER_HANDLE> <span data-troll-whack-goal>3</span>×.</h2>
+            <p class="troll-lead">Er ist flink. Du schaffst das. Wahrscheinlich nicht.</p>
+            <div class="troll-whack__field" data-troll-whack-field>
+                <button type="button" class="troll-whack__target" data-troll-whack-target aria-label="<OWNER_HANDLE> treffen">🏎️</button>
+            </div>
+            <div class="troll-result" data-troll-whack-result aria-live="polite">Treffer: 0</div>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-whack-done>
+                Reinlassen →
+            </a>
+        </div>
+        break;
+
+    case "red-button":
+        <div class="troll-gag" data-troll-red>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Verbotener Knopf</div>
+            <h2 class="troll-title">Drück auf <em>keinen</em> Fall den roten Knopf.</h2>
+            <p class="troll-lead" data-troll-red-text><OWNER_HANDLE> meint das ernst. Wirklich. Lass ihn einfach in Ruhe.</p>
+            <button type="button" class="troll-red__btn" data-troll-red-btn>NICHT DRÜCKEN</button>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary troll-hidden" data-troll-red-done>
+                Brav. Reinlassen →
+            </a>
+        </div>
+        break;
+}

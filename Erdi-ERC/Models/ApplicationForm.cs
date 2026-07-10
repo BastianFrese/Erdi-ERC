@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace <OWNER_HANDLE>_ERC.Models
 {
@@ -30,6 +31,22 @@ namespace <OWNER_HANDLE>_ERC.Models
         [MaxLength(128)]
         public string GamingName { get; set; } = string.Empty;
 
+        /// <summary>Sim-Hardware (Lenkrad/Pad-Marke), wird beim Annehmen ins Profil (InputDevice) übernommen.</summary>
+        [MaxLength(64)]
+        public string? SimHardware { get; set; }
+
+        /// <summary>Wunsch-Fahrernummer; beim Annehmen für den Standings-Eintrag verwendet, falls frei.</summary>
+        [Range(0, 999, ErrorMessage = "Fahrernummer muss zwischen 0 und 999 liegen.")]
+        public int? PreferredNumber { get; set; }
+
+        /// <summary>Wunsch-Team; beim Annehmen ins Profil (FavoriteTeam) und in den Standings-Eintrag übernommen.</summary>
+        [MaxLength(64)]
+        public string? PreferredTeam { get; set; }
+
+        /// <summary>Pace-Referenz / Erfahrung (z.B. Bestzeit auf einer Referenzstrecke, Vorerfahrung).</summary>
+        [MaxLength(256)]
+        public string? PaceReference { get; set; }
+
         [Required]
         [MaxLength(64)]
         public string Platform { get; set; } = string.Empty; // Steam / EA / Xbox / Playstation
@@ -46,12 +63,36 @@ namespace <OWNER_HANDLE>_ERC.Models
         [MaxLength(64)]
         public string? AppliedLeagueId { get; set; }
 
-        public bool IsAccepted { get; set; }
+        /// <summary>Liga, in die der Fahrer bei der Annahme tatsächlich eingetragen wurde.
+        /// Kann von <see cref="AppliedLeagueId"/> abweichen, wenn der Admin eine andere Liga wählt.
+        /// Null = (noch) nicht zugewiesen.</summary>
+        [MaxLength(64)]
+        public string? AssignedLeagueId { get; set; }
+
+        /// <summary>Bewerbungs-Status (offen/akzeptiert/abgelehnt) — genau EIN Zustand.</summary>
+        public ApplicationStatus Status { get; set; } = ApplicationStatus.Open;
+
         public DateTime? AcceptedAt { get; set; }
 
-        /// <summary>Vom Admin abgelehnt — abgelehnte Bewerbungen verschwinden aus der "offen"-Liste.</summary>
-        public bool IsRejected { get; set; }
+        /// <summary>Angenommener Fahrer auf Probe (Probezeit). Wird nach Bestätigung aufgehoben.</summary>
+        public bool IsOnTrial { get; set; }
+
+        /// <summary>Ende der Probezeit (informativ; null = unbefristet bzw. nicht auf Probe).</summary>
+        public DateTime? TrialEndsAt { get; set; }
+
         public DateTime? RejectedAt { get; set; }
+
+        /// <summary>Komfort-Ableitung für Views/In-Memory-Logik. In EF-Queries <see cref="Status"/> verwenden!</summary>
+        [NotMapped]
+        public bool IsAccepted => Status == ApplicationStatus.Accepted;
+
+        /// <summary>Komfort-Ableitung für Views/In-Memory-Logik. In EF-Queries <see cref="Status"/> verwenden!</summary>
+        [NotMapped]
+        public bool IsRejected => Status == ApplicationStatus.Rejected;
+
+        /// <summary>Vom Admin zur Überprüfung markiert (Grund steht in <see cref="ReviewNote"/>).</summary>
+        public bool IsFlagged { get; set; }
+        public DateTime? FlaggedAt { get; set; }
 
         /// <summary>Zugewiesene Fahrer-Rolle nach Annahme (Stammfahrer, Ersatzfahrer, Academy).</summary>
         [MaxLength(64)]

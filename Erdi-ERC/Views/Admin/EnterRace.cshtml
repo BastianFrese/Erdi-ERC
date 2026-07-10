@@ -26,6 +26,62 @@
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .OrderBy(x => x)
         .ToList();
+
+    // ── Bearbeiten-Modus: ein bestehendes Rennen vorbefüllen ──────────────────
+    var existing = ViewBag.ExistingRace as <OWNER_HANDLE>_ERC.Models.RaceResult;
+    var isEdit = existing != null;
+    var formAction = isEdit ? "UpdateEnteredRace" : "SaveEnteredRace";
+
+    string FormatMs(int ms)
+    {
+        var ts = TimeSpan.FromMilliseconds(ms);
+        return ts.Minutes > 0 ? $"{ts.Minutes}:{ts.Seconds:00}.{ts.Milliseconds:000}" : $"{ts.Seconds}.{ts.Milliseconds:000}";
+    }
+
+    var posToDriver = new Dictionary<int, string>();
+    var posToTime = new Dictionary<int, string>();
+    var posToQuali = new Dictionary<int, int>();
+    var dnfPrefill = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    var prefillReserveToMain = reserveToMain;
+    var fastestLapPrefill = existing?.FastestLap ?? string.Empty;
+
+    if (existing != null)
+    {
+        foreach (var f in existing.Finishes)
+        {
+            if (f.Position > 0)
+            {
+                posToDriver[f.Position] = f.Driver;
+                if (f.RaceTimeMs.HasValue) posToTime[f.Position] = FormatMs(f.RaceTimeMs.Value);
+                if (f.QualifyingPosition.HasValue) posToQuali[f.Position] = f.QualifyingPosition.Value;
+            }
+            else if (f.Position == 0)
+            {
+                dnfPrefill.Add(f.Driver);
+            }
+        }
+
+        prefillReserveToMain = existing.ReserveAssignments
+            .Where(a => !string.IsNullOrWhiteSpace(a.ReserveDriver) && !string.IsNullOrWhiteSpace(a.MainDriver))
+            .GroupBy(a => a.ReserveDriver.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().MainDriver.Trim(), StringComparer.OrdinalIgnoreCase);
+    }
+
+    // Gastfahrer (in den Ergebnissen, aber nicht in der Liga-Fahrerliste) zusätzlich anbieten.
+    var guestDrivers = existing == null
+        ? new List<string>()
+        : existing.Finishes.Select(f => f.Driver?.Trim() ?? string.Empty)
+            .Where(d => !string.IsNullOrWhiteSpace(d) && !drivers.Contains(d, StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    var allDrivers = drivers.Concat(guestDrivers).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(d => d).ToList();
+
+    if (isEdit)
+    {
+        ViewData["Title"] = $"Rennen bearbeiten - {Model.Name}";
+        ViewData["HeroSubtitle"] = "Korrigiere ein bestehendes Renn-Ergebnis vollständig — Positionen, Zeiten, DNF und Reserve. Punkte werden danach automatisch neu berechnet.";
+    }
 }
 
 <div class="adm-dashboard">
@@ -64,24 +120,38 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,***REMOVED***ffb800);"></i>Neues Renn-Ergebnis · @Model.Name
+                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,***REMOVED***ffb800);"></i>@(isEdit ? "Renn-Ergebnis bearbeiten" : "Neues Renn-Ergebnis") · @Model.Name
             </span>
         </div>
         <div class="adm-panel__body">
-            <form asp-action="SaveEnteredRace" method="post" id="enterRaceForm">
+            <form asp-action="@formAction" method="post" id="enterRaceForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="leagueId" value="@Model.Id" />
-                <input type="hidden" name="fastestLapDriver" value="" />
+                @if (isEdit)
+                {
+                    <input type="hidden" name="rowId" value="@existing!.RowId" />
+                }
+                <input type="hidden" name="fastestLapDriver" value="@fastestLapPrefill" />
 
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
                         <label class="form-label">Datum & Uhrzeit</label>
-                        <input class="form-control" type="datetime-local" name="date" required value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                        <input class="form-control" type="datetime-local" name="date" required value="@(isEdit ? existing!.Date.ToString("yyyy-MM-ddTHH:mm") : DateTime.Now.ToString("yyyy-MM-ddTHH:mm"))" />
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label">Strecke</label>
-                        <input class="form-control" type="text" name="track" required placeholder="z. B. Australien" />
+                        <input class="form-control" type="text" name="track" required placeholder="z. B. Australien" value="@(isEdit ? existing!.Track : "")" />
                     </div>
+                </div>
+
+                <div class="border rounded p-3 mb-4">
+                    <label class="form-label small mb-1"><i class="bi bi-person-plus me-1"></i>Gastfahrer aus einer anderen Liga aufnehmen</label>
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <input class="form-control form-control-sm" id="guestDriverInput" list="all-driver-suggestions" placeholder="Name eingeben…" autocomplete="off" style="min-width:240px" />
+                        <button class="btn btn-sm btn-outline-info" type="button" id="addGuestBtn"><i class="bi bi-plus-lg me-1"></i>Aufnehmen</button>
+                        <span class="text-muted small">Erscheint in allen Positions- und DNF-Listen. Die Punkte zählen für <strong>diese</strong> Liga.</span>
+                    </div>
+                    <datalist id="all-driver-suggestions"></datalist>
                 </div>
 
                 @if (reserveDrivers.Count > 0)
@@ -99,7 +169,7 @@
                                         <option value="">-- keine Zuordnung für dieses Rennen --</option>
                                         @foreach (var mainDriver in mainDrivers)
                                         {
-                                            <option value="@mainDriver" selected="@(reserveToMain.TryGetValue(reserveDriver, out var mapped) && string.Equals(mapped, mainDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
+                                            <option value="@mainDriver" selected="@(prefillReserveToMain.TryGetValue(reserveDriver, out var mapped) && string.Equals(mapped, mainDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
                                         }
                                     </select>
                                 </div>
@@ -120,17 +190,21 @@
                                 <div class="col-12 mb-3">
                                     <label class="form-label fw-bold">Position @(i+1) (@pointsMap[i] Pkt.)</label>
                                     <div class="row g-2">
-                                        <div class="col-md-5">
+                                        <div class="col-md-4">
                                             <select class="form-select race-position-select" name="positions">
                                                 <option value="">-- Leer --</option>
-                                                @foreach(var driver in drivers)
+                                                @{ var selectedDriverForPos = posToDriver.TryGetValue(i + 1, out var pd) ? pd : null; }
+                                                @foreach(var driver in allDrivers)
                                                 {
-                                                    <option value="@driver">@driver</option>
+                                                    <option value="@driver" selected="@(string.Equals(driver, selectedDriverForPos, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@driver</option>
                                                 }
                                             </select>
                                         </div>
-                                        <div class="col-md-4">
-                                            <input class="form-control" name="raceTimes" placeholder="Zeit (z. B. 1:35.228)" />
+                                        <div class="col-md-2">
+                                            <input class="form-control" name="qualiPositions" type="number" min="0" max="30" step="1" placeholder="Quali" title="Startposition aus dem Qualifying (Pole = 1)" value="@(posToQuali.TryGetValue(i + 1, out var qp) ? qp.ToString() : "")" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input class="form-control" name="raceTimes" placeholder="Zeit (z. B. 1:35.228)" value="@(posToTime.TryGetValue(i + 1, out var pt) ? pt : "")" />
                                         </div>
                                         <div class="col-md-3">
                                             <input class="form-control" name="penaltySeconds" type="number" min="0" step="1" placeholder="Strafe (Sek.)" />
@@ -151,12 +225,12 @@
                         <div class="border rounded p-3">
                             <h5 class="mb-2">DNF</h5>
                             <p class="text-muted small mb-3">Markiere Fahrer, die ausgefallen sind.</p>
-                            <div class="row g-2">
-                                @foreach (var driver in drivers)
+                            <div class="row g-2" id="dnfList">
+                                @foreach (var driver in allDrivers)
                                 {
                                     <div class="col-12">
                                         <div class="form-check">
-                                            <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" />
+                                            <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" checked="@(dnfPrefill.Contains(driver) ? "checked" : null)" />
                                             <label class="form-check-label" for="dnf-@driver.GetHashCode()">@driver</label>
                                         </div>
                                     </div>
@@ -170,7 +244,7 @@
 
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-floppy-fill me-1"></i> Ergebnis speichern &amp; Punkte berechnen
+                        <i class="bi bi-floppy-fill me-1"></i> @(isEdit ? "Änderungen speichern & Punkte neu berechnen" : "Ergebnis speichern & Punkte berechnen")
                     </button>
                 </div>
             </form>
@@ -186,9 +260,82 @@
             const selects = Array.from(document.querySelectorAll('.race-position-select'));
             const dnfChecks = Array.from(document.querySelectorAll('.dnf-driver-check'));
             const reserveMainSelects = Array.from(document.querySelectorAll('.reserve-main-select'));
-            const defaultReserveToMain = @Html.Raw(JsonSerializer.Serialize(reserveToMain));
+            const defaultReserveToMain = @Html.Raw(JsonSerializer.Serialize(prefillReserveToMain));
 
             if (!form || selects.length === 0) return;
+
+            // ── Gastfahrer aufnehmen: Name in alle Positions-Dropdowns + DNF-Liste einfügen ──
+            const guestInput = document.getElementById('guestDriverInput');
+            const addGuestBtn = document.getElementById('addGuestBtn');
+            const dnfList = document.getElementById('dnfList');
+            const guestDatalist = document.getElementById('all-driver-suggestions');
+
+            const knownDrivers = () => new Set(
+                Array.from(selects[0].options).map(o => (o.value || '').toLowerCase()).filter(Boolean)
+            );
+
+            const addGuestDriver = (rawName) => {
+                const name = (rawName || '').trim();
+                if (!name) return;
+                if (knownDrivers().has(name.toLowerCase())) {
+                    if (guestInput) guestInput.value = '';
+                    return;
+                }
+                for (const select of selects) {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                }
+                if (dnfList) {
+                    const col = document.createElement('div');
+                    col.className = 'col-12';
+                    const id = 'dnf-guest-' + name.replace(/[^a-z0-9]/gi, '');
+                    col.innerHTML = `<div class="form-check">
+                        <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="${name}" id="${id}" />
+                        <label class="form-check-label" for="${id}">${name} <span class="text-info">(Gast)</span></label></div>`;
+                    dnfList.appendChild(col);
+                    const newCheck = col.querySelector('.dnf-driver-check');
+                    if (newCheck) {
+                        newCheck.addEventListener('change', syncDisabledOptions);
+                        dnfChecks.push(newCheck);
+                    }
+                }
+                if (guestInput) guestInput.value = '';
+                syncDisabledOptions();
+            };
+
+            if (addGuestBtn) addGuestBtn.addEventListener('click', () => addGuestDriver(guestInput && guestInput.value));
+            if (guestInput) guestInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addGuestDriver(guestInput.value); }
+            });
+
+            // Profil-Autocomplete für die Gast-Eingabe (gleiche Quelle wie in der Fahrerverwaltung).
+            if (guestInput && guestDatalist) {
+                let guestTimer = null;
+                guestInput.addEventListener('input', () => {
+                    const q = (guestInput.value || '').trim();
+                    clearTimeout(guestTimer);
+                    if (q.length < 2) return;
+                    guestTimer = setTimeout(async () => {
+                        try {
+                            const resp = await fetch(`/AdminLeague/DriverSuggestions?q=${encodeURIComponent(q)}`, { credentials: 'same-origin' });
+                            if (!resp.ok) return;
+                            const items = await resp.json();
+                            guestDatalist.innerHTML = '';
+                            const seen = new Set();
+                            for (const m of items) {
+                                const key = (m.gamerTag || '').toLowerCase();
+                                if (!key || seen.has(key)) continue;
+                                seen.add(key);
+                                const opt = document.createElement('option');
+                                opt.value = m.gamerTag;
+                                guestDatalist.appendChild(opt);
+                            }
+                        } catch { /* still */ }
+                    }, 200);
+                });
+            }
 
             const getEffectiveReserveToMain = () => {
                 const map = new Map(Object.entries(defaultReserveToMain || {}));

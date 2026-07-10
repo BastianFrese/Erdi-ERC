@@ -1,4 +1,3 @@
-﻿<Solution>
+<Solution>
   <Project Path="<OWNER_HANDLE>-ERC/<OWNER_HANDLE>-ERC.csproj" />
-  <Project Path="tests/<OWNER_HANDLE>-ERC.Tests/<OWNER_HANDLE>-ERC.Tests.csproj" />
 </Solution>

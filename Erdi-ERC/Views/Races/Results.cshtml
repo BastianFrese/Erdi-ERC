@@ -26,10 +26,10 @@
     Title = "Race",
     Highlight = "Results",
     Lead = "Aktueller Stand der Meisterschaften – <strong>Punkte, Sieger und Saisonverlauf</strong> aller Ligen.",
-    GhostText = "STANDINGS",
+
     Actions = new() {
-        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10","Home")! },
-        new F1ButtonVm { Label = "Alle Rennen", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("AllRaces","Home")! }
+        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10", "Stats")! },
+        new F1ButtonVm { Label = "Alle Rennen", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("AllRaces", "Races")! }
     }
 })" />
 
@@ -90,7 +90,7 @@ else
         <partial name="_F1Section" model="@(new F1SectionVm {
             Chip = "Standings",
             Title = league.Name,
-            SubLink = Url.Action("LeagueResults", "Home", new { leagueId = league.Id }),
+            SubLink = Url.Action("LeagueResults", "Races", new { leagueId = league.Id }),
             SubText = races.Any() ? $"Round {races.Count} of {races.Count}" : "Saison startet bald"
         })" />
 

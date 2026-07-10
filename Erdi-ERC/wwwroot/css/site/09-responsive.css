@@ -14,7 +14,7 @@
     .hero { padding:1rem; }
     .hero__title { font-size:1.5rem; }
     .music-player {
-        top:calc(52px + .5rem);
+        top:calc(70px + .5rem);
         left:.5rem;
         right:.5rem;
         min-width:0;

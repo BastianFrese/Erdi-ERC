@@ -1,4 +1,5 @@
 using <OWNER_HANDLE>_ERC.Models;
+using <OWNER_HANDLE>_ERC.Models.Troll;
 using Microsoft.EntityFrameworkCore;
 
 namespace <OWNER_HANDLE>_ERC.Data
@@ -24,6 +25,7 @@ namespace <OWNER_HANDLE>_ERC.Data
         public DbSet<StreamSchedule> StreamSchedules => Set<StreamSchedule>();
         public DbSet<TrackSetup> TrackSetups => Set<TrackSetup>();
         public DbSet<SetupAccessRoleMapping> SetupAccessRoleMappings => Set<SetupAccessRoleMapping>();
+        public DbSet<SetupBlockedUser> SetupBlockedUsers => Set<SetupBlockedUser>();
         public DbSet<CustomAchievement> CustomAchievements => Set<CustomAchievement>();
         public DbSet<DriverProfile> DriverProfiles => Set<DriverProfile>();
         public DbSet<DriverGamerTag> DriverGamerTags => Set<DriverGamerTag>();
@@ -44,6 +46,9 @@ namespace <OWNER_HANDLE>_ERC.Data
         public DbSet<RegelwerkDocument> RegelwerkDocuments => Set<RegelwerkDocument>();
         public DbSet<DriverRoleHistory> DriverRoleHistories => Set<DriverRoleHistory>();
         public DbSet<RaceCalendarSettings> RaceCalendarSettings => Set<RaceCalendarSettings>();
+        public DbSet<TrollGagOverride> TrollGagOverrides => Set<TrollGagOverride>();
+        public DbSet<TrollCustomGag> TrollCustomGags => Set<TrollCustomGag>();
+        public DbSet<TrollSettingsEntity> TrollSettings => Set<TrollSettingsEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,6 +62,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Description).HasMaxLength(1024);
                 b.Property(x => x.ArchivedName).HasMaxLength(128);
                 b.Property(x => x.ApplicationInfo).HasMaxLength(256);
+                b.Property(x => x.CurrentSeason).HasMaxLength(32);
 
                 b.HasMany(x => x.Standings)
                     .WithOne()
@@ -79,14 +85,39 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Role).HasMaxLength(64).IsRequired(false);
                 b.Property(x => x.ReviewNote).HasMaxLength(1000).IsRequired(false);
                 b.Property(x => x.AppliedLeagueId).HasMaxLength(64).IsRequired(false);
+                b.Property(x => x.AssignedLeagueId).HasMaxLength(64).IsRequired(false);
+                b.Property(x => x.SimHardware).HasMaxLength(64).IsRequired(false);
+                b.Property(x => x.PreferredTeam).HasMaxLength(64).IsRequired(false);
+                b.Property(x => x.PaceReference).HasMaxLength(256).IsRequired(false);
                 b.Property(x => x.RowVersion).IsRowVersion();
+                b.Property(x => x.IsFlagged).HasDefaultValue(false);
                 b.HasIndex(x => x.SubmittedAt);
+                // Häufige Filter: offene Liste (Status) + Status-Lookup pro Bewerber.
+                b.HasIndex(x => x.Status);
+                b.HasIndex(x => x.DiscordId);
+
+                // Dedup-Guard auf DB-Ebene: höchstens EINE aktive (nicht abgelehnte) Bewerbung
+                // pro DiscordId. MySQL kennt keine gefilterten Unique-Indizes, daher eine
+                // generierte Spalte, die für abgelehnte Bewerbungen NULL ist — mehrere NULLs
+                // kollidieren in einem Unique-Index nicht, eine erneute Bewerbung nach Ablehnung
+                // bleibt also möglich. (2 = ApplicationStatus.Rejected; Enum-Werte sind fixiert.)
+                b.Property<string?>("ActiveDiscordKey")
+                    .HasMaxLength(32)
+                    .HasComputedColumnSql("(CASE WHEN `Status` <> 2 THEN `DiscordId` ELSE NULL END)", stored: true);
+                b.HasIndex("ActiveDiscordKey").IsUnique();
 
                 // Bewerbung referenziert die beworbene Liga; beim Löschen der Liga bleibt
                 // die Bewerbung erhalten (Referenz wird genullt).
                 b.HasOne<League>()
                     .WithMany()
                     .HasForeignKey(x => x.AppliedLeagueId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                // Tatsächlich zugewiesene Liga (bei Annahme gesetzt) — gleiche Semantik:
+                // Liga weg → Referenz genullt, Bewerbung bleibt als Historie erhalten.
+                b.HasOne<League>()
+                    .WithMany()
+                    .HasForeignKey(x => x.AssignedLeagueId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -97,6 +128,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Driver).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Team).HasMaxLength(128);
                 b.Property(x => x.ReserveForDriver).HasMaxLength(128);
+                b.Property(x => x.PointsAdjustment).HasDefaultValue(0);
                 // Hot-Query: Layout-Service & viele Controller filtern auf (LeagueId, Driver).
                 b.HasIndex(x => new { x.LeagueId, x.Driver });
                 b.HasIndex(x => x.Driver);
@@ -109,6 +141,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Track).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Winner).HasMaxLength(128);
                 b.Property(x => x.FastestLap).HasMaxLength(128);
+                b.Property(x => x.Season).HasMaxLength(32);
                 // Hot-Queries: Latest-Race (Layout), LeagueResults, AllRaces – alle filtern auf LeagueId und sortieren nach Date.
                 b.HasIndex(x => new { x.LeagueId, x.Date });
                 b.HasIndex(x => x.Date);
@@ -271,6 +304,13 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.HasIndex(x => x.Tier);
             });
 
+            modelBuilder.Entity<SetupBlockedUser>(b =>
+            {
+                b.HasKey(x => x.DiscordId);
+                b.Property(x => x.DiscordId).HasMaxLength(32);
+                b.Property(x => x.Reason).HasMaxLength(256);
+            });
+
             modelBuilder.Entity<DriverProfile>(b =>
             {
                 b.HasKey(x => x.DiscordId);
@@ -424,6 +464,33 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Reason).HasMaxLength(500);
                 b.Property(x => x.ChangedBy).HasMaxLength(128);
                 b.HasIndex(x => new { x.LeagueId, x.Driver });
+            });
+
+            // ── <OWNER_HANDLE>-Troll-System (admin-verwaltet) ───────────────────────────────────
+            modelBuilder.Entity<TrollGagOverride>(b =>
+            {
+                b.HasKey(x => x.Key);
+                b.Property(x => x.Key).HasMaxLength(64);
+            });
+
+            modelBuilder.Entity<TrollCustomGag>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Key).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Title).HasMaxLength(200).IsRequired();
+                b.Property(x => x.Eyebrow).HasMaxLength(80);
+                b.Property(x => x.Lead).HasMaxLength(400);
+                b.Property(x => x.Body).HasColumnType("TEXT");
+                b.Property(x => x.Question).HasMaxLength(400);
+                b.Property(x => x.Answer).HasMaxLength(200);
+                b.Property(x => x.OptionsJson).HasColumnType("TEXT");
+                b.Property(x => x.CreatedBy).HasMaxLength(128);
+                b.HasIndex(x => x.Key).IsUnique();
+            });
+
+            modelBuilder.Entity<TrollSettingsEntity>(b =>
+            {
+                b.HasKey(x => x.Id);
             });
         }
     }

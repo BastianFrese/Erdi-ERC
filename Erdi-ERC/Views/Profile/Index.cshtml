@@ -4,7 +4,12 @@
     ViewData["Title"] = $"Profil – {Model.Driver}";
     var profile = ViewBag.Profile as <OWNER_HANDLE>_ERC.Models.DriverProfile;
     var canEditEaName = ViewBag.CanEditEaName is bool ce && ce;
-    var currentEaTag = profile?.GamerTags?.FirstOrDefault(t => string.Equals(t.Platform, "EA", StringComparison.OrdinalIgnoreCase))?.GamerTag ?? string.Empty;
+    var preferredPlatform = profile?.PreferredPlatform?.Trim() ?? "EA";
+    var currentIngameTag = profile?.GamerTags?
+        .FirstOrDefault(t => string.Equals(t.Platform, preferredPlatform, StringComparison.OrdinalIgnoreCase))?.GamerTag?.Trim()
+        ?? profile?.GamerTags?.FirstOrDefault(t => t.IsPrimary)?.GamerTag?.Trim()
+        ?? profile?.DisplayName?.Trim()
+        ?? string.Empty;
     var wallMessages = (ViewBag.ProfileWall as List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>) ?? new List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>();
 
     var selectedTrackKey = RaceFlagHelper.ResolveTrack(profile?.FavoriteTrack)?.Key ?? string.Empty;
@@ -12,7 +17,7 @@
     var profileFavTeam = F1TeamsHelper.GetTeamByName(profile?.FavoriteTeam);
     var profileHardware = SimHardwareHelper.Resolve(profile?.InputDevice);
     var currentInputDevice = profile?.InputDevice?.Trim() ?? string.Empty;
-    var hwOptions = new[] { "Fanatec", "MOZA Racing", "Logitech G", "Thrustmaster", "Gamepad", "Tastatur & Maus" };
+    var hwOptions = new[] { "Fanatec", "MOZA Racing", "Logitech G", "Thrustmaster", "Gamepad" };
 
     var featured = DriverAchievementsHelper.GetFeatured(Model.Achievements);
     var totalRaces = Model.Races.Count;
@@ -42,13 +47,54 @@
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
     Eyebrow   = "Fahrer-Profil · ERC",
     Title     = Model.Driver,
-    GhostText = "PROFILE"
 })" />
 
 @* Driver card visual (custom partial) *@
-<div class="mb-4 reveal">
+<div class="mb-2 reveal" id="driver-card-wrapper">
     <partial name="_DriverCard" model="Model" />
 </div>
+<div class="mb-4 d-flex gap-2">
+    <button class="f1-btn f1-btn--ghost" id="btn-card-download" style="font-size:.82rem;padding:.35rem .9rem;" title="Karte als PNG-Datei herunterladen">
+        <i class="f1-icon" data-lucide="download"></i> Karte speichern
+    </button>
+    <button class="f1-btn f1-btn--ghost" id="btn-card-copy" style="font-size:.82rem;padding:.35rem .9rem;" title="Karte als Bild in die Zwischenablage kopieren">
+        <i class="f1-icon" data-lucide="copy"></i> Karte kopieren
+    </button>
+</div>
+
+@{
+    var myApp = ViewBag.MyApplication as <OWNER_HANDLE>_ERC.Models.ApplicationForm;
+}
+@if (myApp != null)
+{
+    var (appColor, appIcon, appLabel, appHint) =
+        myApp.IsAccepted
+            ? ("***REMOVED***4caf50", "check-circle", "Angenommen", $"Willkommen in {myApp.Division}!")
+        : myApp.IsRejected
+            ? ("***REMOVED***f44336", "x-circle", "Abgelehnt", "Du kannst dich erneut bewerben.")
+        : myApp.IsFlagged
+            ? ("***REMOVED***00bcd4", "flag", "In Prüfung", "Deine Bewerbung wird gerade geprüft.")
+            : ("***REMOVED***ffc107", "clock", "Offen", "Sobald sie bearbeitet wurde, wirst du über Discord benachrichtigt.");
+
+    <div class="reveal mb-4" style="background:var(--surface-1);border:1px solid var(--stroke-1);border-left:3px solid @appColor;border-radius:var(--r-3);padding:1rem 1.15rem;display:flex;align-items:center;gap:.9rem;">
+        <i class="f1-icon" data-lucide="@appIcon" style="width:22px;height:22px;color:@appColor;flex:0 0 auto;"></i>
+        <div>
+            <div style="font:700 .9rem/1.2 var(--ff-body);color:var(--ink);">
+                Deine Liga-Bewerbung: <span style="color:@appColor;">@appLabel</span>
+            </div>
+            <div style="font-size:.82rem;color:var(--ink-3);margin-top:.15rem;">
+                @appHint
+                <span class="text-mute">· @myApp.Division · eingereicht @myApp.SubmittedAt.ToString("dd.MM.yyyy")</span>
+            </div>
+        </div>
+        @if (myApp.IsRejected)
+        {
+            <a class="f1-btn f1-btn--ghost ms-auto" style="font-size:.8rem;padding:.35rem .9rem;" href="@Url.Action("Apply", "Application")">
+                <i class="f1-icon" data-lucide="rotate-ccw"></i> Erneut bewerben
+            </a>
+        }
+    </div>
+}
 
 @if (featured != null || profile is not null || totalRaces > 0)
 {
@@ -95,27 +141,24 @@
     <div class="col-lg-4">
 
         <div class="profile-card">
-            <div class="profile-card__head"><i class="bi bi-controller" style="color:var(--sig-cyan);"></i> Verknüpfte Gamer-Tags</div>
+            <div class="profile-card__head"><i class="bi bi-controller" style="color:var(--sig-cyan);"></i> Ingame-Name</div>
             <div class="profile-card__body d-flex flex-column gap-2">
-                @if (profile?.GamerTags?.Any() == true)
+                @{
+                    var displayedName = profile?.DisplayName ?? profile?.GamerTags?.FirstOrDefault(t => t.IsPrimary)?.GamerTag;
+                }
+                @if (!string.IsNullOrWhiteSpace(displayedName))
                 {
-                    foreach (var tag in profile.GamerTags.OrderByDescending(t => t.IsPrimary))
-                    {
-                        <div class="d-flex align-items-center justify-content-between surface-glass p-2">
-                            <div>
-                                <div class="text-mute small">@tag.Platform</div>
-                                <div class="fw-semibold">@tag.GamerTag</div>
-                            </div>
-                            @if (tag.IsPrimary)
-                            {
-                                <span class="status-pill is-green">Primär</span>
-                            }
+                    <div class="d-flex align-items-center justify-content-between surface-glass p-2">
+                        <div>
+                            <div class="text-mute small">@preferredPlatform</div>
+                            <div class="fw-semibold">@displayedName</div>
                         </div>
-                    }
+                        <span class="status-pill is-green">Aktiv</span>
+                    </div>
                 }
                 else
                 {
-                    <div class="text-mute">Noch keine Tags verknüpft.</div>
+                    <div class="text-mute">Noch kein Ingame-Name eingetragen.</div>
                 }
             </div>
         </div>
@@ -190,23 +233,23 @@
             </div>
 
             <div class="profile-card mt-4" style="border-color:var(--text-amber,***REMOVED***f59e0b);">
-                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> EA-Namen ändern</div>
+                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Ingame-Namen ändern</div>
                 <div class="profile-card__body d-flex flex-column gap-3">
-                    <div class="text-mute small">Hier kannst du deinen EA-Namen selbst anpassen.</div>
+                    <div class="text-mute small">Hier kannst du deinen Ingame-Namen (@preferredPlatform) selbst anpassen.</div>
                     <div class="surface-glass p-3" style="border-left:3px solid var(--text-amber,***REMOVED***f59e0b);font-size:.88rem;">
-                        <strong>Wichtiger Hinweis:</strong> Bitte trage hier immer zu <strong>100% deinen echten und korrekten EA-Namen</strong> ein. Falsche oder unehrliche Angaben führen zu falschen Zuordnungen im System.
+                        <strong>Wichtiger Hinweis:</strong> Bitte trage hier immer zu <strong>100% deinen echten und korrekten Ingame-Namen</strong> ein. Falsche Angaben führen zu falschen Zuordnungen im System.
                     </div>
                     <form asp-action="UpdateEaName" method="post" class="d-flex flex-column gap-2">
                         @Html.AntiForgeryToken()
-                        <label class="form-label mb-0" for="eaName">EA-Name</label>
-                        <input class="form-control" id="eaName" name="eaName" maxlength="128" value="@currentEaTag" placeholder="Dein exakter EA-Name" required />
+                        <label class="form-label mb-0" for="eaName">Ingame-Name (@preferredPlatform)</label>
+                        <input class="form-control" id="eaName" name="eaName" maxlength="128" value="@currentIngameTag" placeholder="Dein exakter Ingame-Name" required />
                         <div class="form-check mt-1">
                             <input class="form-check-input" type="checkbox" id="confirmEaNameAccuracy" name="confirmEaNameAccuracy" value="true" required />
                             <label class="form-check-label small" for="confirmEaNameAccuracy">
-                                Ich bestätige, dass dieser EA-Name mein echter, vollständiger und aktueller EA-Namen ist.
+                                Ich bestätige, dass dieser Ingame-Name mein echter, vollständiger und aktueller Name ist.
                             </label>
                         </div>
-                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,***REMOVED***f59e0b);color:var(--text-amber,***REMOVED***f59e0b);">EA-Namen speichern</button>
+                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,***REMOVED***f59e0b);color:var(--text-amber,***REMOVED***f59e0b);">Ingame-Namen speichern</button>
                     </form>
                 </div>
             </div>
@@ -257,7 +300,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label mb-0">Plattform</label>
-                            <input class="form-control" name="preferredPlatform" maxlength="64" value="@profile?.PreferredPlatform" placeholder="EA / Steam / Xbox / Playstation" />
+                            <input class="form-control" name="preferredPlatform" maxlength="64" value="@profile?.PreferredPlatform" placeholder="z. B. Steam, EA, Xbox …" />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label mb-0">Nationalität / Flagge</label>
@@ -361,7 +404,7 @@
                         <input type="hidden" name="profileDiscordId" value="@profile.DiscordId" />
                         <textarea class="form-control" name="message" rows="3" maxlength="600" placeholder="Schreib eine kurze öffentliche Nachricht an diesen Fahrer..." required></textarea>
                         <div class="d-flex justify-content-end">
-                            <button class="f1-btn f1-btn--ghost" type="submit" style="font-size:.85rem;padding:.4rem 1rem;">Nachricht posten</button>
+                            <button class="f1-btn f1-btn--ghost"type="submit" style="font-size:.85rem;padding:.4rem 1rem;">Nachricht posten</button>
                         </div>
                     </form>
                 }
@@ -410,7 +453,7 @@
                                     @foreach (var r in Model.Races)
                                     {
                                         var hasLink = r.RaceId > 0 && !string.IsNullOrWhiteSpace(r.LeagueId);
-                                        var url = hasLink ? Url.Action("RaceDetail", "Home", new { leagueId = r.LeagueId, raceId = r.RaceId }) : null;
+                                        var url = hasLink ? Url.Action("RaceDetail", "Races", new { leagueId = r.LeagueId, raceId = r.RaceId }) : null;
                                         <tr class="@(hasLink ? "race-row" : null)"
                                             data-href="@(hasLink ? url : null)"
                                             role="@(hasLink ? "button" : null)"
@@ -457,6 +500,65 @@ else
 </div>
 
 @section Scripts {
+    <script>
+        (() => {
+            const driverName = '@Html.Raw(Model.Driver?.Replace("'", "\\'") ?? "fahrerkarte")';
+
+            const loadLib = () => new Promise((resolve, reject) => {
+                if (window.htmlToImage) { resolve(window.htmlToImage); return; }
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+                s.onload = () => resolve(window.htmlToImage);
+                s.onerror = () => reject(new Error('Bild-Bibliothek konnte nicht geladen werden.'));
+                document.head.appendChild(s);
+            });
+
+            const captureCard = async (btn) => {
+                const card = document.querySelector('.erc-card');
+                if (!card) { alert('Karte nicht gefunden.'); return null; }
+                const origHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.textContent = 'Wird gerendert…';
+                try {
+                    const lib = await loadLib();
+                    const dataUrl = await lib.toPng(card, { pixelRatio: 2 });
+                    return dataUrl;
+                } catch (err) {
+                    alert('Fehler beim Rendern: ' + err.message);
+                    return null;
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            };
+
+            document.getElementById('btn-card-download')?.addEventListener('click', async function () {
+                const dataUrl = await captureCard(this);
+                if (!dataUrl) return;
+                const a = document.createElement('a');
+                a.download = `erc-${driverName.toLowerCase().replace(/\s+/g, '-')}.png`;
+                a.href = dataUrl;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+
+            document.getElementById('btn-card-copy')?.addEventListener('click', async function () {
+                const dataUrl = await captureCard(this);
+                if (!dataUrl) return;
+                try {
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    const origHtml = this.innerHTML;
+                    this.textContent = 'Kopiert!';
+                    setTimeout(() => { this.innerHTML = origHtml; }, 1800);
+                } catch {
+                    alert('Clipboard-Zugriff nicht möglich. Bitte "Karte speichern" verwenden.');
+                }
+            });
+        })();
+    </script>
     <script>
         document.querySelectorAll('.profile-race-table tr.race-row').forEach(function (row) {
             row.addEventListener('click', function (ev) {

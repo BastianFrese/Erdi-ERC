@@ -1,0 +1,860 @@
+@model List<(<OWNER_HANDLE>_ERC.Models.League League, List<(<OWNER_HANDLE>_ERC.Models.DriverProfile Profile, <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel Card)> Drivers)>
+@using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Helpers
+@{
+    ViewData["Title"] = "Fahrer-Lineup";
+    ViewData["OgTitle"] = "Fahrer-Lineup · <OWNER_HANDLE>'s Racing Community";
+    ViewData["OgDescription"] = "Das komplette Fahrer-Lineup der ERC – alle Fahrer, sortiert nach Liga.";
+    ViewData["BodyClass"] = "di-fullscreen-page";
+
+    var totalDrivers = Model.Sum(g => g.Drivers.Count);
+
+    // Flat item list for the stage (league banners + cards in order)
+    var flatItems = new List<(string Type, string LeagueName, int DriverCount,
+        <OWNER_HANDLE>_ERC.Models.DriverProfile? Profile, <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel? Card, int Position)>();
+    foreach (var (league, drivers) in Model)
+    {
+        flatItems.Add(("league", league.Name, drivers.Count, null, null, 0));
+        for (var i = 0; i < drivers.Count; i++)
+            flatItems.Add(("card", league.Name, 0, drivers[i].Profile, drivers[i].Card, i + 1));
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
+    <style>
+        body.di-fullscreen-page { background: ***REMOVED***04050a; overflow-x: hidden; }
+
+        /* ── Stage ─────────────────────────────────────────────────── */
+        .di-stage {
+            position: relative;
+            width: 100%;
+            height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: ***REMOVED***04050a;
+        }
+
+        .di-stage::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(225,6,0,.025) 1px, transparent 1px),
+                linear-gradient(0deg,  rgba(225,6,0,.025) 1px, transparent 1px);
+            background-size: 64px 64px;
+            pointer-events: none;
+        }
+
+        .di-stage::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 35% at 50% 100%, rgba(225,6,0,.14) 0%, transparent 65%),
+                radial-gradient(ellipse 100% 15% at 50% 0%,  rgba(225,6,0,.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* ── Items ─────────────────────────────────────────────────── */
+        .di-item {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .di-item.is-entering {
+            animation: diSlideIn .48s cubic-bezier(.16,1,.3,1) forwards;
+        }
+
+        .di-item.is-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .di-item.is-exiting {
+            animation: diSlideOut .32s cubic-bezier(.55,0,1,.45) forwards;
+            pointer-events: none;
+        }
+
+        @@keyframes diSlideIn {
+            from { opacity: 0; transform: translateX(90px) scale(.95); }
+            to   { opacity: 1; transform: translateX(0)    scale(1); }
+        }
+
+        @@keyframes diSlideOut {
+            from { opacity: 1; transform: translateX(0)     scale(1); }
+            to   { opacity: 0; transform: translateX(-90px) scale(.95); }
+        }
+
+        /* ── League banner ─────────────────────────────────────────── */
+        .di-league-banner { text-align: center; padding: 2rem; }
+
+        .di-league-banner__eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            font-weight: 600;
+            letter-spacing: .4em;
+            text-transform: uppercase;
+            color: ***REMOVED***e10600;
+            margin-bottom: 1.25rem;
+            opacity: 0;
+        }
+
+        .di-league-banner__name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2.2rem, 9vw, 5.5rem);
+            font-weight: 900;
+            color: ***REMOVED***fff;
+            line-height: 1;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            opacity: 0;
+        }
+
+        .di-league-banner__line {
+            width: 0;
+            height: 3px;
+            background: ***REMOVED***e10600;
+            margin: 1.5rem auto;
+            box-shadow: 0 0 24px ***REMOVED***e10600, 0 0 50px rgba(225,6,0,.35);
+        }
+
+        .di-league-banner__count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .8rem;
+            color: rgba(255,255,255,.35);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            opacity: 0;
+        }
+
+        .is-entering .di-league-banner__eyebrow { animation: diFadeUp .4s .08s ease forwards; }
+        .is-entering .di-league-banner__name    { animation: diFadeUp .55s .18s cubic-bezier(.16,1,.3,1) forwards; }
+        .is-entering .di-league-banner__line    { animation: diLineGrow .55s .34s ease forwards; }
+        .is-entering .di-league-banner__count   { animation: diFadeUp .4s .52s ease forwards; }
+
+        /* Hold final state once is-entering is removed */
+        .is-active:not(.is-entering) .di-league-banner__eyebrow,
+        .is-active:not(.is-entering) .di-league-banner__name,
+        .is-active:not(.is-entering) .di-league-banner__count { opacity: 1; transform: translateY(0); }
+        .is-active:not(.is-entering) .di-league-banner__line  { width: 180px; }
+        .is-active:not(.is-entering) .di-card-pos              { opacity: 1; transform: translateY(0); }
+
+        @@keyframes diFadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes diLineGrow {
+            from { width: 0; }
+            to   { width: 180px; }
+        }
+
+        /* ── Card flash sweep on enter ─────────────────────────────── */
+        .di-card-pos {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            font-weight: 700;
+            letter-spacing: .3em;
+            color: ***REMOVED***e10600;
+            text-transform: uppercase;
+            margin-bottom: .85rem;
+            opacity: 0;
+        }
+
+        .is-entering .di-card-pos { animation: diFadeUp .3s .04s ease forwards; }
+
+        .di-card-wrap {
+            position: relative;
+            filter: drop-shadow(0 0 64px rgba(225,6,0,.2));
+        }
+
+        .di-card-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 24px;
+            background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.6) 50%, transparent 65%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .is-entering .di-card-wrap::after {
+            animation: diFlash .55s .08s ease forwards;
+        }
+
+        @@keyframes diFlash {
+            0%   { opacity: 0; transform: translateX(-120%); }
+            45%  { opacity: 1; }
+            100% { opacity: 0; transform: translateX(220%); }
+        }
+
+        /* ── HUD (top center) ──────────────────────────────────────── */
+        .di-hud {
+            position: absolute;
+            top: 1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        .di-hud__brand {
+            font-family: 'Orbitron', sans-serif;
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .35em;
+            color: rgba(255,255,255,.2);
+            text-transform: uppercase;
+        }
+
+        .di-hud__sep { color: rgba(255,255,255,.12); }
+
+        .di-hud__league {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .68rem;
+            color: ***REMOVED***e10600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            transition: opacity .25s;
+        }
+
+        /* ── Progress ──────────────────────────────────────────────── */
+        .di-progress {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: rgba(255,255,255,.05);
+            z-index: 10;
+        }
+
+        .di-progress__fill {
+            height: 100%;
+            background: ***REMOVED***e10600;
+            box-shadow: 0 0 14px rgba(225,6,0,.7);
+            transition: width .4s ease;
+            width: 0%;
+        }
+
+        /* ── Controls ──────────────────────────────────────────────── */
+        .di-controls {
+            position: absolute;
+            bottom: 1.6rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            z-index: 20;
+            background: rgba(4,5,10,.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 50px;
+            padding: .45rem .7rem;
+        }
+
+        .di-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,.5);
+            font-size: 1rem;
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: color .12s, background .12s;
+        }
+
+        .di-btn:hover { color: ***REMOVED***fff; background: rgba(255,255,255,.07); }
+
+        .di-btn--play {
+            background: ***REMOVED***e10600;
+            color: ***REMOVED***fff !important;
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 1.05rem;
+        }
+
+        .di-btn--play:hover { background: ***REMOVED***c50500; }
+
+        .di-btn--auto.is-on { color: ***REMOVED***e10600; }
+
+        .di-divider { width: 1px; height: 1.1rem; background: rgba(255,255,255,.1); }
+
+        .di-counter {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .68rem;
+            color: rgba(255,255,255,.35);
+            min-width: 3.5rem;
+            text-align: center;
+        }
+
+        /* ── Grid toggle (top right) ───────────────────────────────── */
+        .di-ui-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            z-index: 30;
+            background: rgba(4,5,10,.65);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,.09);
+            border-radius: 8px;
+            color: rgba(255,255,255,.45);
+            font-size: .72rem;
+            padding: .38rem .85rem;
+            cursor: pointer;
+            transition: color .15s, border-color .15s;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .04em;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        .di-ui-btn:hover { color: ***REMOVED***fff; border-color: rgba(255,255,255,.2); }
+
+        /* ── End screen ────────────────────────────────────────────── */
+        .di-end {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.75rem;
+            z-index: 25;
+            pointer-events: auto;
+        }
+
+        .di-end.is-visible { display: flex; }
+
+        .di-end__title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.6rem, 6vw, 3.5rem);
+            font-weight: 900;
+            color: ***REMOVED***fff;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            animation: diFadeUp .5s ease both;
+        }
+
+        .di-end__title span { color: ***REMOVED***e10600; }
+
+        .di-end__sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .8rem;
+            color: rgba(255,255,255,.3);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            animation: diFadeUp .5s .1s ease both;
+        }
+
+        .di-end__actions {
+            display: flex;
+            gap: .75rem;
+            animation: diFadeUp .5s .2s ease both;
+        }
+
+        .di-end__btn {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 10px;
+            color: ***REMOVED***fff;
+            font-size: .82rem;
+            padding: .65rem 1.5rem;
+            cursor: pointer;
+            transition: background .15s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+        }
+
+        .di-end__btn:hover { background: rgba(255,255,255,.11); }
+        .di-end__btn--red { background: ***REMOVED***e10600; border-color: ***REMOVED***e10600; }
+        .di-end__btn--red:hover { background: ***REMOVED***c50500; }
+
+        /* ── Grid view ─────────────────────────────────────────────── */
+        .di-grid-view {
+            display: none;
+            min-height: 100svh;
+            padding: 5.5rem 2rem 5rem;
+            background: ***REMOVED***04050a;
+        }
+
+        .di-grid-view.is-visible { display: block; }
+
+        .di-grid-section { margin-bottom: 4.5rem; }
+
+        .di-grid-section__head {
+            display: flex;
+            align-items: baseline;
+            gap: .85rem;
+            margin-bottom: 2rem;
+            padding-bottom: .75rem;
+            border-bottom: 2px solid rgba(225,6,0,.5);
+        }
+
+        .di-grid-section__name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            color: ***REMOVED***fff;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .di-grid-section__count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            color: rgba(255,255,255,.3);
+            letter-spacing: .1em;
+        }
+
+        .di-grid-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        /* ── Back to intro (grid view) ─────────────────────────────── */
+        .di-back-bar {
+            position: fixed;
+            top: 1rem;
+            right: 1.25rem;
+            z-index: 50;
+            display: none;
+        }
+
+        .di-back-bar.is-visible { display: block; }
+
+        /* ── Speed lines ───────────────────────────────────────────── */
+        .di-speed-lines {
+            position: absolute;
+            inset: -50%;
+            background: repeating-conic-gradient(
+                rgba(225,6,0,.010) 0deg 1deg,
+                transparent 1deg 9deg
+            );
+            animation: diSpin 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @@keyframes diSpin { to { transform: rotate(360deg); } }
+
+        /* ── Light streaks ─────────────────────────────────────────── */
+        .di-streak {
+            position: absolute;
+            top: var(--top, 30%);
+            left: -10%;
+            width: 1px;
+            height: 28%;
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(225,6,0,.28) 35%,
+                rgba(225,6,0,.28) 65%,
+                transparent 100%);
+            transform: skewY(-55deg);
+            animation: diStreak var(--dur, 5s) var(--delay, 0s) ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @@keyframes diStreak {
+            0%   { left: -10%; opacity: 0; }
+            8%   { opacity: 1; }
+            90%  { opacity: .55; }
+            100% { left: 110%; opacity: 0; }
+        }
+
+        /* ── Team logo watermark ───────────────────────────────────── */
+        .di-bg-team {
+            position: absolute;
+            right: 7%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: min(38vw, 360px);
+            opacity: 0;
+            filter: grayscale(1) brightness(3);
+            pointer-events: none;
+            z-index: 1;
+            transition: opacity .7s ease;
+            object-fit: contain;
+        }
+        .di-bg-team.is-visible { opacity: .055; }
+
+        /* ── Track SVG ─────────────────────────────────────────────── */
+        .di-bg-track {
+            position: absolute;
+            left: 6%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: min(28vw, 280px);
+            opacity: 0;
+            filter: brightness(3) sepia(1) hue-rotate(330deg) saturate(2);
+            pointer-events: none;
+            z-index: 1;
+            transition: opacity .5s ease;
+            object-fit: contain;
+        }
+        .di-bg-track.is-visible { opacity: .07; }
+    </style>
+}
+
+<div id="diStage" class="di-stage">
+
+    @* Background effects *@
+    <div class="di-speed-lines" aria-hidden="true"></div>
+    <div class="di-streak" style="--dur:5.5s;--delay:0s;--top:14%" aria-hidden="true"></div>
+    <div class="di-streak" style="--dur:7.8s;--delay:2.4s;--top:48%" aria-hidden="true"></div>
+    <div class="di-streak" style="--dur:6.3s;--delay:4.8s;--top:76%" aria-hidden="true"></div>
+    <img class="di-bg-team" id="diBgTeam" src="" alt="" aria-hidden="true" />
+    <img class="di-bg-track" id="diBgTrack" src="" alt="" aria-hidden="true" />
+
+    @* HUD *@
+    <div class="di-hud">
+        <span class="di-hud__brand">ERC · Lineup</span>
+        <span class="di-hud__sep">·</span>
+        <span class="di-hud__league" id="diHudLeague">&nbsp;</span>
+    </div>
+
+    @* Toggle to grid view *@
+    <button class="di-ui-btn" id="diToggleGrid" type="button">
+        <i class="bi bi-grid-3x3-gap-fill"></i> Alle anzeigen
+    </button>
+
+    @* Pre-rendered items *@
+    @for (var idx = 0; idx < flatItems.Count; idx++)
+    {
+        var item = flatItems[idx];
+
+        if (item.Type == "league")
+        {
+            <div class="di-item di-item--league"
+                 data-league="@item.LeagueName"
+                 data-hold="4400">
+                <div class="di-league-banner">
+                    <div class="di-league-banner__eyebrow">Liga · Fahrerfeld</div>
+                    <div class="di-league-banner__name">@item.LeagueName</div>
+                    <div class="di-league-banner__line"></div>
+                    <div class="di-league-banner__count">@item.DriverCount Fahrer</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="di-item di-item--card"
+                 data-league="@item.LeagueName"
+                 data-hold="3200"
+                 data-team="@(F1TeamsHelper.GetTeamByName(item.Card?.Team)?.LogoKey ?? "")"
+                 data-track="@(item.Profile?.FavoriteTrack ?? "")">
+                @{ ViewBag.Profile = item.Profile; }
+                <div class="di-card-pos">P@(item.Position) &nbsp;·&nbsp; @item.LeagueName</div>
+                <div class="di-card-wrap">
+                    <partial name="~/Views/Shared/_DriverCard.cshtml" model="item.Card" />
+                </div>
+            </div>
+        }
+    }
+
+    @* End screen *@
+    <div class="di-end" id="diEnd">
+        <div class="di-end__title">Lineup <span>Complete</span></div>
+        <div class="di-end__sub">@totalDrivers Fahrer · @Model.Count Liga@(Model.Count != 1 ? "s" : "")</div>
+        <div class="di-end__actions">
+            <button class="di-end__btn di-end__btn--red" id="diRestartBtn" type="button">
+                <i class="bi bi-arrow-counterclockwise"></i> Nochmal
+            </button>
+            <button class="di-end__btn" id="diGridFromEnd" type="button">
+                <i class="bi bi-grid-3x3-gap-fill"></i> Alle Karten
+            </button>
+        </div>
+    </div>
+
+    @* Progress *@
+    <div class="di-progress">
+        <div class="di-progress__fill" id="diProgressFill"></div>
+    </div>
+
+    @* Controls *@
+    <div class="di-controls" id="diControls">
+        <button class="di-btn" id="diPrevBtn" title="Zurück" type="button">
+            <i class="bi bi-skip-start-fill"></i>
+        </button>
+        <button class="di-btn di-btn--play" id="diPlayBtn" title="Play / Pause" type="button">
+            <i class="bi bi-play-fill" id="diPlayIcon"></i>
+        </button>
+        <button class="di-btn" id="diNextBtn" title="Weiter" type="button">
+            <i class="bi bi-skip-end-fill"></i>
+        </button>
+        <div class="di-divider"></div>
+        <span class="di-counter" id="diCounter">0&nbsp;/&nbsp;@totalDrivers</span>
+        <div class="di-divider"></div>
+        <button class="di-btn di-btn--auto" id="diAutoBtn" title="Auto-Play" type="button">
+            <i class="bi bi-broadcast"></i>
+        </button>
+    </div>
+</div>
+
+@* Grid view *@
+<div class="di-grid-view" id="diGridView">
+    @foreach (var (league, drivers) in Model)
+    {
+        <div class="di-grid-section">
+            <div class="di-grid-section__head">
+                <span class="di-grid-section__name">@league.Name</span>
+                <span class="di-grid-section__count">@drivers.Count Fahrer</span>
+            </div>
+            <div class="di-grid-cards">
+                @foreach (var (profile, card) in drivers)
+                {
+                    <div style="display:contents">
+                        @{ ViewBag.Profile = profile; }
+                        <partial name="~/Views/Shared/_DriverCard.cshtml" model="card" />
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@* Back-to-intro button (visible in grid mode) *@
+<div class="di-back-bar" id="diBackBar">
+    <button class="di-ui-btn" id="diBackBtn" type="button">
+        <i class="bi bi-play-fill"></i> Intro
+    </button>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL      = @totalDrivers;
+    const HOLD_CARD  = 3200;
+    const HOLD_LEAGUE = 4400;
+
+    const items       = [...document.querySelectorAll('.di-item')];
+    const stage       = document.getElementById('diStage');
+    const gridView    = document.getElementById('diGridView');
+    const end         = document.getElementById('diEnd');
+    const fill        = document.getElementById('diProgressFill');
+    const counter     = document.getElementById('diCounter');
+    const hudLeague   = document.getElementById('diHudLeague');
+    const playBtn     = document.getElementById('diPlayBtn');
+    const playIcon    = document.getElementById('diPlayIcon');
+    const prevBtn     = document.getElementById('diPrevBtn');
+    const nextBtn     = document.getElementById('diNextBtn');
+    const autoBtn     = document.getElementById('diAutoBtn');
+    const toggleGrid  = document.getElementById('diToggleGrid');
+    const gridFromEnd = document.getElementById('diGridFromEnd');
+    const restartBtn  = document.getElementById('diRestartBtn');
+    const bgTeam      = document.getElementById('diBgTeam');
+    const bgTrack     = document.getElementById('diBgTrack');
+    const backBtn     = document.getElementById('diBackBtn');
+    const backBar     = document.getElementById('diBackBar');
+    const controls    = document.getElementById('diControls');
+
+    let current    = -1;
+    let autoPlay   = false;
+    let timer      = null;
+    let inGrid     = false;
+    let cardsSeen  = 0;
+
+    const cardItems = items.filter(el => el.classList.contains('di-item--card'));
+
+    // ── Grid toggle ───────────────────────────────────────────────
+    function showGrid() {
+        inGrid = true;
+        stopAuto();
+        stage.style.display = 'none';
+        gridView.classList.add('is-visible');
+        backBar.classList.add('is-visible');
+    }
+
+    function showStage() {
+        inGrid = false;
+        stage.style.display = '';
+        gridView.classList.remove('is-visible');
+        backBar.classList.remove('is-visible');
+    }
+
+    toggleGrid.addEventListener('click', showGrid);
+    gridFromEnd.addEventListener('click', showGrid);
+    backBtn.addEventListener('click', showStage);
+
+    // ── Progress ──────────────────────────────────────────────────
+    function updateProgress() {
+        const pct = TOTAL > 0 ? (cardsSeen / TOTAL) * 100 : 0;
+        fill.style.width = pct + '%';
+        counter.textContent = cardsSeen + ' / ' + TOTAL;
+    }
+
+    // ── Activate item ─────────────────────────────────────────────
+    function activate(idx) {
+        if (idx < 0 || idx >= items.length) return;
+
+        // Exit old
+        if (current >= 0 && current !== idx) {
+            const old = items[current];
+            old.classList.remove('is-active', 'is-entering');
+            old.classList.add('is-exiting');
+            const oldEl = old;
+            setTimeout(() => oldEl.classList.remove('is-exiting'), 380);
+        }
+
+        // Enter new
+        const el = items[idx];
+        el.classList.remove('is-exiting', 'is-active');
+        el.classList.add('is-entering');
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-active')));
+        setTimeout(() => el.classList.remove('is-entering'), 1000);
+
+        current = idx;
+
+        // Update HUD
+        hudLeague.textContent = el.dataset.league || '';
+
+        // Update background: team logo + track SVG
+        const teamKey  = el.dataset.team  || '';
+        const trackKey = el.dataset.track || '';
+        if (bgTeam) {
+            if (teamKey && bgTeam.dataset.current !== teamKey) {
+                bgTeam.dataset.current = teamKey;
+                bgTeam.src = '/images/teams/' + teamKey + '.svg';
+            }
+            bgTeam.classList.toggle('is-visible', !!teamKey);
+        }
+        if (bgTrack) {
+            if (trackKey && bgTrack.dataset.current !== trackKey) {
+                bgTrack.dataset.current = trackKey;
+                bgTrack.src = '/images/tracks/' + trackKey + '.svg';
+            }
+            bgTrack.classList.toggle('is-visible', !!trackKey);
+        }
+
+        // Count visible driver cards
+        if (el.classList.contains('di-item--card')) {
+            const cardIdx = cardItems.indexOf(el);
+            if (cardIdx + 1 > cardsSeen) cardsSeen = cardIdx + 1;
+            updateProgress();
+        }
+
+        // Auto-advance
+        if (autoPlay) {
+            const hold = parseInt(el.dataset.hold || HOLD_CARD, 10);
+            clearTimeout(timer);
+            timer = setTimeout(advance, hold);
+        }
+    }
+
+    function advance() {
+        clearTimeout(timer);
+        if (current >= items.length - 1) {
+            finishIntro();
+            return;
+        }
+        activate(current + 1);
+    }
+
+    function retreat() {
+        clearTimeout(timer);
+        end.classList.remove('is-visible');
+        controls.style.display = '';
+        if (current > 0) activate(current - 1);
+    }
+
+    function finishIntro() {
+        stopAuto();
+        if (current >= 0) {
+            items[current].classList.remove('is-active', 'is-entering');
+        }
+        end.classList.add('is-visible');
+        controls.style.display = 'none';
+        cardsSeen = TOTAL;
+        updateProgress();
+    }
+
+    // ── Auto-play ─────────────────────────────────────────────────
+    function startAuto() {
+        autoPlay = true;
+        autoBtn.classList.add('is-on');
+        playIcon.className = 'bi bi-pause-fill';
+        if (current >= 0) {
+            const el = items[current];
+            const hold = parseInt(el.dataset.hold || HOLD_CARD, 10);
+            clearTimeout(timer);
+            timer = setTimeout(advance, hold);
+        }
+    }
+
+    function stopAuto() {
+        autoPlay = false;
+        clearTimeout(timer);
+        autoBtn.classList.remove('is-on');
+        playIcon.className = 'bi bi-play-fill';
+    }
+
+    function restartIntro() {
+        end.classList.remove('is-visible');
+        controls.style.display = '';
+        cardsSeen = 0;
+        updateProgress();
+        items.forEach(el => el.classList.remove('is-active', 'is-entering', 'is-exiting'));
+        current = -1;
+        activate(0);
+        startAuto();
+    }
+
+    // ── Controls ──────────────────────────────────────────────────
+    playBtn.addEventListener('click', () => {
+        if (end.classList.contains('is-visible')) { restartIntro(); return; }
+        if (!autoPlay) {
+            if (current === -1) activate(0);
+            startAuto();
+        } else {
+            stopAuto();
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        clearTimeout(timer);
+        end.classList.remove('is-visible');
+        controls.style.display = '';
+        advance();
+    });
+
+    prevBtn.addEventListener('click', retreat);
+    autoBtn.addEventListener('click', () => autoPlay ? stopAuto() : startAuto());
+    restartBtn.addEventListener('click', restartIntro);
+
+    // ── Keyboard ──────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (inGrid) { if (e.key === 'Escape') { e.preventDefault(); showStage(); } return; }
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextBtn.click(); }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); prevBtn.click(); }
+        if (e.key === 'p' || e.key === 'P') { playBtn.click(); }
+        if (e.key === 'g' || e.key === 'G') { showGrid(); }
+    });
+
+    // ── Boot ──────────────────────────────────────────────────────
+    updateProgress();
+    setTimeout(() => {
+        activate(0);
+        startAuto();
+    }, 700);
+}());
+</script>
+}

@@ -17,10 +17,10 @@
     Title = "Ewige",
     Highlight = "Liste",
     Lead = "Das komplette Archiv der <OWNER_HANDLE>'s Racing Community – alle Saisons, Ligen und Ergebnisse auf einen Blick.",
-    GhostText = "ARCHIVE",
+
     Actions = new() {
-        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10","Home")! },
-        new F1ButtonVm { Label = "Ergebnisse", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("Results","Home")! }
+        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10", "Stats")! },
+        new F1ButtonVm { Label = "Ergebnisse", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("Results", "Races")! }
     }
 })" />
 

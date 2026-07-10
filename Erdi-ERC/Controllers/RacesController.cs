@@ -1,0 +1,239 @@
+using <OWNER_HANDLE>_ERC.Data;
+using <OWNER_HANDLE>_ERC.Helpers;
+using <OWNER_HANDLE>_ERC.Models;
+using <OWNER_HANDLE>_ERC.Options;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
+namespace <OWNER_HANDLE>_ERC.Controllers
+{
+    /// <summary>Öffentliche Renn-Seiten: Standings, Liga-Ergebnisse, Renn-Details, Rennkalender.</summary>
+    public class RacesController : Controller
+    {
+        private readonly AppDbContext _db;
+        private readonly ApplicationOptions _appOptions;
+
+        public RacesController(AppDbContext db, IOptions<ApplicationOptions> appOptions)
+        {
+            _db = db;
+            _appOptions = appOptions.Value;
+        }
+
+        public async Task<IActionResult> Results()
+        {
+            var leagues = await _db.Leagues
+                .Include(l => l.Standings)
+                .Include(l => l.Races).ThenInclude(r => r.Finishes)
+                .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
+                .OrderBy(l => l.Name)
+                .ToListAsync();
+
+            foreach (var l in leagues)
+            {
+                l.Standings = l.Standings.OrderBy(s => s.Position).ToList();
+                l.Races = l.Races.OrderBy(r => r.Date).ToList();
+            }
+
+            return View(new <OWNER_HANDLE>10ViewModel
+            {
+                TwitchChannel = _appOptions.TwitchChannel,
+                Leagues = leagues
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LeagueResults(string leagueId)
+        {
+            if (string.IsNullOrWhiteSpace(leagueId)) return NotFound();
+
+            var league = await _db.Leagues
+                .Include(l => l.Races).ThenInclude(r => r.Finishes)
+                .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
+                .Include(l => l.Standings)
+                .FirstOrDefaultAsync(l => l.Id == leagueId);
+
+            if (league is null) return NotFound();
+
+            league.Races = league.Races
+                .OrderByDescending(r => r.Date)
+                .ThenByDescending(r => r.RowId)
+                .ToList();
+
+            return View(new LeagueResultsViewModel
+            {
+                League = league,
+                Races = league.Races
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RaceDetail(string leagueId, int raceId)
+        {
+            if (string.IsNullOrWhiteSpace(leagueId) || raceId <= 0) return NotFound();
+
+            var league = await _db.Leagues
+                .Include(l => l.Standings)
+                .FirstOrDefaultAsync(l => l.Id == leagueId);
+
+            if (league is null) return NotFound();
+
+            var race = await _db.RaceResults
+                .Include(r => r.Finishes)
+                .Include(r => r.ReserveAssignments)
+                .FirstOrDefaultAsync(r => r.RowId == raceId && r.LeagueId == leagueId);
+
+            if (race is null) return NotFound();
+
+            var orderedFinishes = race.Finishes
+                .Where(f => f.Position > 0)
+                .OrderBy(f => f.Position)
+                .ToList();
+
+            var dnfFinishes = race.Finishes
+                .Where(f => f.Position <= 0)
+                .OrderBy(f => f.Driver)
+                .ToList();
+
+            var leaderMs = orderedFinishes.FirstOrDefault(f => f.RaceTimeMs.HasValue)?.RaceTimeMs;
+            int[] pointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+
+            var rows = orderedFinishes.Select(f =>
+            {
+                var basePoints = (f.Position >= 1 && f.Position <= pointMap.Length)
+                    ? pointMap[f.Position - 1]
+                    : 0;
+
+                return new RaceResultDetailRow
+                {
+                    Position = f.Position,
+                    Driver = f.Driver,
+                    Team = RaceTeamHelper.ResolveTeamForRaceDriver(league.Standings, race, f.Driver) ?? "",
+                    Points = basePoints,
+                    RaceTimeMs = f.RaceTimeMs,
+                    GapToLeaderMs = leaderMs.HasValue && f.RaceTimeMs.HasValue
+                        ? Math.Max(0, f.RaceTimeMs.Value - leaderMs.Value)
+                        : null,
+                    FastestLap = f.FastestLap
+                };
+            }).ToList();
+
+            rows.AddRange(dnfFinishes.Select(f => new RaceResultDetailRow
+            {
+                Position = 0,
+                Driver = f.Driver,
+                Team = RaceTeamHelper.ResolveTeamForRaceDriver(league.Standings, race, f.Driver) ?? "",
+                Points = 0,
+                RaceTimeMs = null,
+                GapToLeaderMs = null,
+                FastestLap = f.FastestLap
+            }));
+
+            return View(new RaceResultDetailViewModel
+            {
+                League = league,
+                Race = race,
+                Rows = rows
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AllRaces()
+        {
+            var leagues = await _db.Leagues
+                .Include(l => l.Races).ThenInclude(r => r.Finishes)
+                .OrderBy(l => l.Name)
+                .ToListAsync();
+
+            var vm = new AllRacesViewModel
+            {
+                Leagues = leagues
+                    .Select(l => new AllRacesLeagueGroup
+                    {
+                        LeagueId = l.Id,
+                        LeagueName = l.Name,
+                        Races = l.Races
+                            .OrderByDescending(r => r.Date)
+                            .ThenByDescending(r => r.RowId)
+                            .Select(r =>
+                            {
+                                var podium = r.Finishes
+                                    .Where(f => f.Position > 0)
+                                    .OrderBy(f => f.Position)
+                                    .Take(3)
+                                    .ToList();
+
+                                return new AllRaceItem
+                                {
+                                    RaceId = r.RowId,
+                                    Date = r.Date,
+                                    Track = r.Track,
+                                    Winner = r.Winner,
+                                    WinnerRaceTimeMs = podium.FirstOrDefault()?.RaceTimeMs,
+                                    P2 = podium.Count > 1 ? podium[1].Driver : null,
+                                    P3 = podium.Count > 2 ? podium[2].Driver : null
+                                };
+                            })
+                            .ToList()
+                    })
+                    .Where(x => x.Races.Count > 0)
+                    .ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RaceCalendar()
+        {
+            var settings = await _db.RaceCalendarSettings.FirstOrDefaultAsync()
+                ?? new RaceCalendarSettings();
+
+            var leagues = await _db.Leagues
+                .Where(l => !l.IsArchived)
+                .OrderBy(l => l.Name)
+                .ToListAsync();
+
+            var weekends = await _db.RaceWeekends
+                .Include(w => w.Legs)
+                .OrderBy(w => w.Order)
+                .ToListAsync();
+
+            // Geplante Termine mit bereits eingetragenen Ergebnissen verknüpfen (Liga + Strecke),
+            // damit der Kalender pro Leg direkt auf das gefahrene Rennen verlinken kann.
+            var legResultMap = new Dictionary<int, int>();
+            var legsWithTrack = weekends
+                .SelectMany(w => w.Legs.Select(l => new { Leg = l, w.Track }))
+                .ToList();
+            if (legsWithTrack.Count > 0)
+            {
+                var legLeagueIds = legsWithTrack.Select(x => x.Leg.LeagueId).Distinct().ToList();
+                var candidateResults = await _db.RaceResults
+                    .Where(r => legLeagueIds.Contains(r.LeagueId))
+                    .Select(r => new { r.RowId, r.LeagueId, r.Track })
+                    .ToListAsync();
+                foreach (var item in legsWithTrack)
+                {
+                    var match = candidateResults.FirstOrDefault(r =>
+                        string.Equals(r.LeagueId, item.Leg.LeagueId, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals((r.Track ?? string.Empty).Trim(), (item.Track ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (match != null) legResultMap[item.Leg.Id] = match.RowId;
+                }
+            }
+
+            ViewBag.CalendarSettings = settings;
+            ViewBag.Leagues = leagues;
+            ViewBag.Weekends = weekends;
+            ViewBag.LegResultMap = legResultMap;
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult DriverDetail(string leagueId, string driver)
+        {
+            if (string.IsNullOrWhiteSpace(driver)) return NotFound();
+
+            return RedirectToAction("ByDriverName", "Profile", new { driverName = driver.Trim() });
+        }
+    }
+}

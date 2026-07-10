@@ -177,16 +177,23 @@
 .live-race-banner__cta { font-size: .85rem; opacity: .85; white-space: nowrap; }
 .live-race-banner__cta i { margin-right: .25rem; }
 
-/* ---------- Team color theme – alias to --accent token ---------- */
-:root {
+/* ---------- Team color theme – alias to --accent token ----------
+   WICHTIG: auf body (nicht :root!), da body.team-* das --accent erst auf body
+   überschreibt. Auf :root würde var(--accent) das Basis-Rot einfrieren und die
+   Team-Färbung site-weit (Header-Tint, Chips, Scroll-Progress) tot legen. */
+body {
     --team-primary: var(--accent);
     --team-secondary: var(--accent-2);
 }
 
-/* Dezentes Glow auf Brand & aktiver Nav-Item, das die Team-Farbe widerspiegelt */
-body[class*="team-"] .navbar-brand .brand-mark { box-shadow: 0 0 24px var(--team-primary); }
-body[class*="team-"] .topbar { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--team-primary) 35%, transparent); }
-body[class*="team-"] .nav-link.active { color: var(--team-primary) !important; }
+/* Team-Reflexion an der Pille: klar sichtbarer Glow am "R", getönter Pillen-Rand (60%)
+   + dezenter Außen-Halo in Team-Farbe (über --cabin-team-glow; Farbe = --accent-glow je Team).
+   Aktiver Nav-Text bleibt weiß, Unterstrich/LED bleiben F1-rot (***REMOVED***e10600). */
+body[class*="team-"] .navbar-brand .brand-mark { text-shadow: 0 0 18px var(--team-primary), 0 0 7px var(--team-primary); }
+body[class*="team-"] .topbar .navbar {
+    border-color: color-mix(in srgb, var(--team-primary) 60%, ***REMOVED***2a2a2a);
+    --cabin-team-glow: 0 6px 26px -6px var(--accent-glow, transparent);
+}
 body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(--team-primary), var(--team-secondary)); }
 
 /* ---------- Achievement chips ---------- */

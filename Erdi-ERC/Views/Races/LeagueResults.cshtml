@@ -1,5 +1,6 @@
 @model <OWNER_HANDLE>_ERC.Models.LeagueResultsViewModel
 @using <OWNER_HANDLE>_ERC.Helpers
+@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.F1ScoringOptions> ScoringOptions
 
 @{
     ViewData["Title"] = $"{Model.League.Name} · Rennen";
@@ -65,7 +66,9 @@
         }
     }
 
-    int[] pointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+    int[] pointMap = ScoringOptions.Value.PointMap is { Length: > 0 } cfgMap
+        ? cfgMap
+        : new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
 
     var constructors = allTeamNames
         .Select(team =>
@@ -121,10 +124,10 @@
     Eyebrow   = $"{Model.League.Name} · Liga",
     Title     = Model.League.Name,
     Lead      = "Alle Rennen und Constructors' Championship",
-    GhostText = "LEAGUE",
+
     Actions   = new() {
-        new F1ButtonVm { Label="Zu Results", Variant="primary", IconLucide="arrow-left", Href=Url.Action("Results","Home")! },
-        new F1ButtonVm { Label="Racing Hub", Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10","Home")! }
+        new F1ButtonVm { Label="Zu Results", Variant="primary", IconLucide="arrow-left", Href=Url.Action("Results", "Races")! },
+        new F1ButtonVm { Label="Racing Hub", Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10", "Stats")! }
     }
 })" />
 
@@ -167,7 +170,7 @@
     }
     else
     {
-        <div class="row g-3">
+        <div class="row g-3 f1-stagger">
             @for (int ri = 0; ri < orderedRaces.Count; ri++)
             {
                 var race      = orderedRaces[ri];
@@ -175,7 +178,7 @@
                 var teamKey   = F1TeamsHelper.GetCssKeyForDriver(race.Winner);
                 var teamInfo  = teamKey != null ? F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == teamKey) : null;
                 var bar       = teamInfo?.PrimaryColor ?? "var(--accent)";
-                var detailUrl = Url.Action("RaceDetail", "Home", new { leagueId = Model.League.Id, raceId = race.RowId });
+                var detailUrl = Url.Action("RaceDetail", "Races", new { leagueId = Model.League.Id, raceId = race.RowId });
                 <div class="col-md-6 col-xl-4">
                     <div class="f1-race-card" style="--race-color: @bar;"
                          onclick="if(event.target.closest('a')) return; window.location.href='@detailUrl'">

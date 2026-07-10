@@ -36,6 +36,8 @@ namespace <OWNER_HANDLE>_ERC.Models
         public const string DriversAchievements  = "drivers.achievements";
         /// <summary>Achievement-Definitionen verwalten</summary>
         public const string DriversDefinitions   = "drivers.definitions";
+        /// <summary>Fahrerkarten anzeigen und Anzeigenamen korrigieren</summary>
+        public const string DriversCards         = "drivers.cards";
 
         // ── System ────────────────────────────────────────────────────────────────
         /// <summary>Hintergrundmusik verwalten</summary>
@@ -50,6 +52,8 @@ namespace <OWNER_HANDLE>_ERC.Models
         public const string SystemAboutMe     = "system.aboutme";
         /// <summary>Regelwerk-Dokumente hochladen und verwalten</summary>
         public const string SystemRegelwerk   = "system.regelwerk";
+        /// <summary><OWNER_HANDLE>-Troll-System verwalten (Gags, Gewichte, eigene Gags, Settings)</summary>
+        public const string SystemTroll       = "system.troll";
 
         // ── Rückwärtskompatible Gruppen-Aliases ───────────────────────────────────
         // (Legacy-Wert: ein Admin, dem früher "applications" zugewiesen wurde,
@@ -84,8 +88,9 @@ namespace <OWNER_HANDLE>_ERC.Models
             ]),
             new("Fahrer", "bi-person-badge-fill", "***REMOVED***c084fc",
             [
-                new(DriversAchievements, "Achievements", "bi-award"),
-                new(DriversDefinitions,  "Definitionen", "bi-journal-text"),
+                new(DriversAchievements, "Achievements",  "bi-award"),
+                new(DriversDefinitions,  "Definitionen",  "bi-journal-text"),
+                new(DriversCards,        "Fahrerkarten",  "bi-person-vcard-fill"),
             ]),
             new("System", "bi-gear-fill", "***REMOVED***ffb800",
             [
@@ -94,6 +99,7 @@ namespace <OWNER_HANDLE>_ERC.Models
                     new(SystemAuditLogs, "Audit Logs",       "bi-journal-code"),
                     new(SystemWebhooks,  "Discord Webhooks", "bi-discord"),
                     new(SystemRegelwerk, "Regelwerk",        "bi-file-earmark-text"),
+                    new(SystemTroll,     "Troll-System",     "bi-emoji-laughing"),
             ]),
         ];
 

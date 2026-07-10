@@ -55,6 +55,12 @@ namespace <OWNER_HANDLE>_ERC.Models
         // Subscriber-Setups angezeigt werden.
         public bool HasAcceptedExclusiveSetupTerms { get; set; } = false;
         public DateTime? ExclusiveSetupTermsAcceptedAt { get; set; }
+
+        /// <summary>
+        /// Manuell vom Admin vergebener Setup-Zugangs-Tier (1–5). Überschreibt
+        /// den via Discord-Rollen aufgelösten Tier, wenn höher. Null = kein manueller Grant.
+        /// </summary>
+        public int? ManualSetupTier { get; set; }
     }
 
     /// <summary>Plattform-spezifischer Gamer-Tag eines Driver-Profils.</summary>

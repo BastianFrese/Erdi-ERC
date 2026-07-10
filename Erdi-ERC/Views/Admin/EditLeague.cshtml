@@ -29,7 +29,7 @@
             <div class="league-page-hero-card league-page-action-panel">
                 <div class="league-page-action-panel__title">Aktionen</div>
                 <div class="league-page-action-panel__stack">
-                    <a class="btn btn-outline-secondary" asp-action="Index">← Zurück zum Dashboard</a>
+                    <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Index">← Zurück zum Dashboard</a>
                     <form asp-controller="AdminLeague" asp-action="ValidateReserveData" method="post" class="d-inline" onsubmit="return confirm('Reservefahrer-Daten dieser Liga prüfen?');">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="leagueId" value="@Model.Id" />
@@ -99,20 +99,36 @@
     <div class="card mb-4 shadow-sm league-page-surface">
         <div class="card-header"><strong>Liga-Details</strong></div>
         <div class="card-body">
-            <form asp-controller="Admin" asp-action="UpdateLeague" method="post" class="row g-2" id="updateLeagueForm">
+            <form asp-controller="AdminLeagueManagement" asp-action="UpdateLeague" method="post" class="row g-2" id="updateLeagueForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Name</label>
                     <input class="form-control" name="name" value="@Model.Name" required />
                 </div>
+                <div class="col-md-1">
+                    <label class="form-label">Reihenfolge</label>
+                    <input class="form-control" type="number" name="sortOrder" value="@Model.SortOrder" min="0" max="9999" title="Niedrigere Zahl erscheint zuerst" />
+                </div>
                 <div class="col-md-8">
                     <label class="form-label">Beschreibung</label>
-                    <input class="form-control" name="description" value="@Model.Description" />
+                    <textarea class="form-control" name="description" rows="2">@Model.Description</textarea>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Bewerbungs-Info <span class="text-muted small">(Untertitel im Bewerbungsformular, z.B. "Freitags 20:00 · KI bis 105")</span></label>
                     <input class="form-control" name="applicationInfo" value="@Model.ApplicationInfo" maxlength="256" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Kapazität <span class="text-muted small">(Stammplätze)</span></label>
+                    <input class="form-control" type="number" name="capacity" value="@(Model.Capacity)" min="0" max="999" placeholder="∞" title="Soll-Anzahl Stammfahrer. Leer/0 = unbegrenzt." />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Streichresultate <span class="text-muted small">(Drop)</span></label>
+                    <input class="form-control" type="number" name="dropWorstResults" value="@(Model.DropWorstResults)" min="0" max="99" placeholder="0" title="Anzahl der schwächsten Rennergebnisse, die je Fahrer nicht zählen. Leer/0 = alle zählen." />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Aktuelle Saison <span class="text-muted small">(Tabelle)</span></label>
+                    <input class="form-control" type="text" name="currentSeason" value="@Model.CurrentSeason" maxlength="32" placeholder="z.B. 2026" title="Ist sie gesetzt, zählt die Tabelle nur Rennen dieser Saison. Leer = alle Rennen." />
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check">
@@ -161,6 +177,74 @@
 
             <hr />
 
+            <details class="mb-0">
+                <summary class="fw-semibold text-success-emphasis" style="cursor:pointer;user-select:none;">
+                    🆕 Neue Saison starten / Liga duplizieren
+                </summary>
+                <div class="mt-3">
+                    <p class="small text-muted mb-2">
+                        Erstellt eine <strong>neue Liga</strong> mit dem kompletten Fahrer-Roster dieser Liga
+                        (Name, Nummer, Team, Reserve-Status). <strong>Punkte, Siege und Rennen werden zurückgesetzt</strong> —
+                        ideal für den Start einer neuen Saison. Optional kannst du die aktuelle Liga dabei abschließen (Archiv + .xlsx-Snapshot).
+                    </p>
+                    <form asp-action="CloneLeague" method="post" class="row g-2 align-items-end"
+                          onsubmit="return confirm('Neue Liga mit dem Roster dieser Liga erstellen?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="sourceId" value="@Model.Id" />
+                        <div class="col-md-5">
+                            <label class="form-label">Name der neuen Liga/Saison</label>
+                            <input class="form-control" name="newName" placeholder="z. B. @Model.Name S+1" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Neue ID <span class="text-muted small">(optional)</span></label>
+                            <input class="form-control" name="newId" placeholder="automatisch aus Name" maxlength="64" pattern="[^\s]*" title="Keine Leerzeichen" />
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end pb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="archiveSource" value="true" id="cloneArchiveSource" />
+                                <label class="form-check-label small" for="cloneArchiveSource">Alte Liga archivieren</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button class="btn btn-success" type="submit">Saison erstellen</button>
+                        </div>
+                    </form>
+                </div>
+            </details>
+
+            <hr />
+
+            <details class="mb-0">
+                <summary class="fw-semibold text-warning-emphasis" style="cursor:pointer;user-select:none;">
+                    ⚠️ Liga-ID umbenennen
+                </summary>
+                <div class="mt-3">
+                    <p class="small text-muted mb-2">
+                        Die ID ist der interne Schlüssel dieser Liga (<code>@Model.Id</code>). Eine Änderung aktualisiert automatisch
+                        alle verknüpften Datensätze (Standings, Rennen, Bewerbungen, Strafen, Verlauf …).
+                        Die Aktion läuft in einer Transaktion — entweder alles oder nichts.
+                    </p>
+                    <form asp-action="RenameLeagueId" method="post" class="row g-2 align-items-end"
+                          onsubmit="return confirm('Liga-ID wirklich von \'@Model.Id\' umbenennen? Alle verknüpften Daten werden mitgezogen.');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="oldId" value="@Model.Id" />
+                        <div class="col-md-4">
+                            <label class="form-label">Aktuelle ID</label>
+                            <input class="form-control" value="@Model.Id" disabled />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Neue ID <span class="text-muted small">(max. 64 Zeichen, keine Leerzeichen)</span></label>
+                            <input class="form-control" name="newId" required maxlength="64" pattern="[^\s]+" title="Keine Leerzeichen erlaubt" />
+                        </div>
+                        <div class="col-md-4 d-grid">
+                            <button class="btn btn-warning" type="submit">ID umbenennen</button>
+                        </div>
+                    </form>
+                </div>
+            </details>
+
+            <hr />
+
             <div class="d-flex flex-column gap-2">
                 <div class="small text-muted">Reset / Saison-Neustart: Entfernt alle Fahrer, Rennen, Events, Strafen und Undo-Einträge dieser Liga. Funktioniert auch bei abgeschlossener Liga.</div>
                 <form asp-action="ClearLeagueData" method="post" class="d-inline"
@@ -175,119 +259,142 @@
 
     @* === Formulare außerhalb der Tabellen, per form="..." referenziert === *@
 
-    @* Standings *@
-    @foreach (var s in Model.Standings)
-    {
-        <form asp-controller="AdminLeague" asp-action="SaveStanding" method="post" id="save-standing-@s.RowId">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="rowId" value="@s.RowId" />
-            <input type="hidden" name="leagueId" value="@Model.Id" />
-        </form>
-        <form asp-controller="AdminLeague" asp-action="DeleteStanding" method="post" id="del-standing-@s.RowId">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="rowId" value="@s.RowId" />
-        </form>
-    }
-    <form asp-controller="AdminLeague" asp-action="SaveStanding" method="post" id="add-standing">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="leagueId" value="@Model.Id" />
-    </form>
-
     <div class="card mb-4 shadow-sm league-page-surface league-page-surface--standings">
-        <div class="card-header"><strong>Bestenliste</strong></div>
+        <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <strong>Bestenliste</strong>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-secondary" type="button"
+                        data-bs-toggle="collapse" data-bs-target="***REMOVED***bulkImportCollapse"
+                        aria-expanded="false" aria-controls="bulkImportCollapse">
+                    <i class="bi bi-list-ul me-1"></i>Fahrer per Liste importieren
+                </button>
+                <form asp-controller="AdminLeague" asp-action="ResortStandings" method="post" class="d-inline"
+                      onsubmit="return confirm('Positionen nach aktuellen Punkten neu nummerieren? (Punkte selbst bleiben unverändert)');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="leagueId" value="@Model.Id" />
+                    <button class="btn btn-sm btn-outline-info" type="submit" title="Reihenfolge rein nach Punkten/Siegen — ohne Renn-Neuberechnung">
+                        <i class="bi bi-sort-numeric-down me-1"></i>Nach Punkten neu nummerieren
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div id="bulkImportCollapse" class="collapse">
+            <div class="card-body border-bottom">
+                <form asp-controller="AdminLeague" asp-action="BulkAddStandings" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="leagueId" value="@Model.Id" />
+                    <label class="form-label mb-1">Mehrere Fahrer auf einmal hinzufügen</label>
+                    <p class="small text-muted mb-2">
+                        Ein Fahrer pro Zeile. Optional Nummer und Team mit Semikolon trennen:
+                        <code>Name; Nr; Team</code> — z. B. <code>Max Müller; 33; Red Bull Racing</code>.
+                        Bereits vorhandene Namen und vergebene Nummern werden übersprungen. Punkte starten bei 0.
+                    </p>
+                    <textarea class="form-control mb-2" name="bulk" rows="6" placeholder="Max Müller; 33; Red Bull Racing&***REMOVED***10;Lena Schmidt; 16; Ferrari&***REMOVED***10;Tom Becker"></textarea>
+                    <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-plus-lg me-1"></i>Fahrer importieren</button>
+                </form>
+            </div>
+        </div>
         <div class="card-body p-0">
-            <table class="table table-sm align-middle mb-0 league-page-standings-table">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width:80px">***REMOVED***</th>
-                        <th>Fahrer</th>
-                        <th style="width:90px">Nr.</th>
-                        <th>Team</th>
-                        <th style="width:120px">Reserve?</th>
-                        <th>Reservefahrer</th>
-                        <th style="width:90px">Siege</th>
-                        <th style="width:90px">Punkte</th>
-                        <th style="width:140px"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var s in Model.Standings)
-                    {
-                        var f = $"save-standing-{s.RowId}";
-                        var d = $"del-standing-{s.RowId}";
+            <form asp-controller="AdminLeague" asp-action="SaveAllStandings" method="post" id="standings-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="leagueId" value="@Model.Id" />
+                <table class="table table-sm align-middle mb-0 league-page-standings-table">
+                    <thead class="table-light">
                         <tr>
-                            <td><input class="form-control form-control-sm" type="number" name="position" value="@s.Position" form="@f" required /></td>
+                            <th style="width:56px" title="Automatisch aus Punkten">***REMOVED***</th>
+                            <th>Fahrer</th>
+                            <th style="width:90px">Nr.</th>
+                            <th>Team</th>
+                            <th style="width:110px">Reserve?</th>
+                            <th>Reservefahrer</th>
+                            <th style="width:64px" class="text-center" title="Aus Rennen">Siege</th>
+                            <th style="width:64px" class="text-center" title="Aus Rennen + Korrektur">Punkte</th>
+                            <th style="width:104px" title="Manueller Bonus/Malus, bleibt bei Neuberechnung erhalten">Korrektur</th>
+                            <th style="width:64px" class="text-center">Löschen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model.Standings)
+                        {
+                            var rfId = $"reserve-for-{s.RowId}";
+                            <tr>
+                                <td class="text-muted fw-semibold">@s.Position<input type="hidden" name="rowId" value="@s.RowId" /></td>
+                                <td><input class="form-control form-control-sm js-driver-input" name="driver" value="@s.Driver" autocomplete="off" list="driver-suggestions" /></td>
+                                <td><input class="form-control form-control-sm" type="number" min="0" max="999" name="driverNumber" value="@s.DriverNumber" /></td>
+                                <td>
+                                    <select class="form-select form-select-sm" name="team">
+                                        <option value="">-- Team wählen --</option>
+                                        @foreach (var t in F1TeamsHelper.Teams)
+                                        {
+                                            <option value="@t.Name" selected="@(t.Name == s.Team ? "selected" : null)">@t.Name</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm js-reserve-toggle" name="isReserveDriver" data-target="@rfId">
+                                        <option value="false" selected="@(!s.IsReserveDriver ? "selected" : null)">Nein</option>
+                                        <option value="true" selected="@(s.IsReserveDriver ? "selected" : null)">Ja</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm" id="@rfId" name="reserveForDriver" disabled="@(!s.IsReserveDriver ? "disabled" : null)">
+                                        <option value="">-- Hauptfahrer wählen --</option>
+                                        @foreach (var mainDriver in mainDriverOptions)
+                                        {
+                                            <option value="@mainDriver" selected="@(string.Equals(mainDriver, s.ReserveForDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td class="text-center fw-semibold">@s.Wins</td>
+                                <td class="text-center fw-semibold">@s.Points</td>
+                                <td><input class="form-control form-control-sm" type="number" name="pointsAdjustment" value="@s.PointsAdjustment" title="+/- Punkte" /></td>
+                                <td class="text-center"><input class="form-check-input" type="checkbox" name="deleteRowIds" value="@s.RowId" title="Zum Löschen markieren" /></td>
+                            </tr>
+                        }
+                        @* Leerzeile zum Anlegen — Name eintragen genügt, der Rest ist optional *@
+                        <tr class="league-page-add-row">
+                            <td class="text-muted small">neu<input type="hidden" name="rowId" value="0" /></td>
+                            <td><input class="form-control form-control-sm js-driver-input" name="driver" placeholder="Fahrer hinzufügen…" autocomplete="off" list="driver-suggestions" /></td>
+                            <td><input class="form-control form-control-sm" type="number" min="0" max="999" name="driverNumber" placeholder="Nr." /></td>
                             <td>
-                                <input class="form-control form-control-sm js-driver-input" name="driver" value="@s.Driver" form="@f" autocomplete="off" list="driver-suggestions" required />
-                            </td>
-                            <td><input class="form-control form-control-sm" type="number" min="0" max="999" name="driverNumber" value="@s.DriverNumber" form="@f" /></td>
-                            <td>
-                                <select class="form-select form-select-sm" name="team" form="@f">
+                                <select class="form-select form-select-sm" name="team">
                                     <option value="">-- Team wählen --</option>
                                     @foreach (var t in F1TeamsHelper.Teams)
                                     {
-                                        <option value="@t.Name" selected="@(t.Name == s.Team ? "selected" : null)">@t.Name</option>
+                                        <option value="@t.Name">@t.Name</option>
                                     }
                                 </select>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm js-reserve-toggle" name="isReserveDriver" form="@f" data-target="reserve-for-@s.RowId">
-                                    <option value="false" selected="@(!s.IsReserveDriver ? "selected" : null)">Nein</option>
-                                    <option value="true" selected="@(s.IsReserveDriver ? "selected" : null)">Ja</option>
+                                <select class="form-select form-select-sm js-reserve-toggle" name="isReserveDriver" data-target="reserve-for-new">
+                                    <option value="false" selected="selected">Nein</option>
+                                    <option value="true">Ja</option>
                                 </select>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm" id="reserve-for-@s.RowId" name="reserveForDriver" form="@f" disabled="@(!s.IsReserveDriver ? "disabled" : null)">
+                                <select class="form-select form-select-sm" id="reserve-for-new" name="reserveForDriver" disabled>
                                     <option value="">-- Hauptfahrer wählen --</option>
                                     @foreach (var mainDriver in mainDriverOptions)
                                     {
-                                        <option value="@mainDriver" selected="@(string.Equals(mainDriver, s.ReserveForDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
+                                        <option value="@mainDriver">@mainDriver</option>
                                     }
                                 </select>
                             </td>
-                            <td><input class="form-control form-control-sm" type="number" name="wins" value="@s.Wins" form="@f" /></td>
-                            <td><input class="form-control form-control-sm" type="number" name="points" value="@s.Points" form="@f" /></td>
-                            <td>
-                                <button class="btn btn-sm btn-success" type="submit" form="@f">✔</button>
-                                <button class="btn btn-sm btn-outline-danger" type="submit" form="@d"
-                                        onclick="return confirm('Eintrag löschen?');">🗑️</button>
-                            </td>
+                            <td class="text-center text-muted">–</td>
+                            <td class="text-center text-muted">–</td>
+                            <td><input class="form-control form-control-sm" type="number" name="pointsAdjustment" value="0" /></td>
+                            <td class="text-center text-muted">–</td>
                         </tr>
-                    }
-                    <tr class="league-page-add-row">
-                        <td><input class="form-control form-control-sm" type="number" name="position" placeholder="***REMOVED***" form="add-standing" required /></td>
-                        <td><input class="form-control form-control-sm js-driver-input" name="driver" placeholder="Fahrer" form="add-standing" autocomplete="off" list="driver-suggestions" required /></td>
-                        <td><input class="form-control form-control-sm" type="number" min="0" max="999" name="driverNumber" placeholder="Nr." form="add-standing" /></td>
-                        <td>
-                            <select class="form-select form-select-sm" name="team" form="add-standing">
-                                <option value="">-- Team wählen --</option>
-                                @foreach (var t in F1TeamsHelper.Teams)
-                                {
-                                    <option value="@t.Name">@t.Name</option>
-                                }
-                            </select>
-                        </td>
-                        <td>
-                            <select class="form-select form-select-sm js-reserve-toggle" name="isReserveDriver" form="add-standing" data-target="reserve-for-add-standing">
-                                <option value="false" selected="selected">Nein</option>
-                                <option value="true">Ja</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="form-select form-select-sm" id="reserve-for-add-standing" name="reserveForDriver" form="add-standing" disabled>
-                                <option value="">-- Hauptfahrer wählen --</option>
-                                @foreach (var mainDriver in mainDriverOptions)
-                                {
-                                    <option value="@mainDriver">@mainDriver</option>
-                                }
-                            </select>
-                        </td>
-                        <td><input class="form-control form-control-sm" type="number" name="wins" value="0" form="add-standing" /></td>
-                        <td><input class="form-control form-control-sm" type="number" name="points" value="0" form="add-standing" /></td>
-                        <td><button class="btn btn-sm btn-primary" type="submit" form="add-standing">+ Hinzufügen</button></td>
-                    </tr>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+                <div class="p-3 d-flex justify-content-between align-items-center gap-2 flex-wrap border-top">
+                    <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>Position, Siege und Punkte werden automatisch aus den Rennen (+ Korrektur) berechnet. Zum Entfernen das Häkchen in „Löschen" setzen.</span>
+                    <button class="btn btn-primary" type="submit"
+                            onclick="return confirm('Alle Änderungen an der Fahrerliste speichern? Markierte Zeilen werden gelöscht.');">
+                        <i class="bi bi-floppy-fill me-1"></i>Alle Änderungen speichern
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -328,7 +435,7 @@
                         items = cache.get(q);
                     } else {
                         try {
-                            const resp = await fetch(`/Admin/DriverSuggestions?q=${encodeURIComponent(q)}`, { credentials: 'same-origin' });
+                            const resp = await fetch(`/AdminLeague/DriverSuggestions?q=${encodeURIComponent(q)}`, { credentials: 'same-origin' });
                             if (!resp.ok) return;
                             items = await resp.json();
                             cache.set(q, items);
@@ -420,9 +527,12 @@
                                 }
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-success" type="submit" form="@f">✔</button>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="AdminLeague" asp-action="EditRace" asp-route-rowId="@r.RowId" title="Positionen, Zeiten, DNF & Reserve vollständig bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <button class="btn btn-sm btn-success" type="submit" form="@f" title="Datum/Strecke/Sieger schnell speichern">✔</button>
                                 <button class="btn btn-sm btn-outline-danger" type="submit" form="@d"
-                                        onclick="return confirm('Rennen löschen?');">❌</button>
+                                        onclick="return confirm('Rennen löschen? Du kannst es danach über „Letzte Löschungen rückgängig\" wiederherstellen.');">❌</button>
                             </td>
                         </tr>
                     }

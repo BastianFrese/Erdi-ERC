@@ -50,6 +50,14 @@ secrets.json
 <OWNER_HANDLE>-ERC/backgroundmusic/*
 !<OWNER_HANDLE>-ERC/backgroundmusic/.gitkeep
 
+***REMOVED*** --- DB-Backups (personenbezogene Daten — NIE einchecken!) ---
+applicationforms-backup-*.json
+
 ***REMOVED*** --- Migration Bootstrap (enthält ggf. sensible Daten) ---
 ***REMOVED*** migration_bootstrap.sql  ***REMOVED*** optional auskommentieren falls du es behalten willst
 .aider*
+
+***REMOVED*** --- Design-Previews (nur lokal; liegen in wwwroot → nie committen/deployen) ---
+<OWNER_HANDLE>-ERC/wwwroot/_header-preview.html
+<OWNER_HANDLE>-ERC/wwwroot/_preview-f1.html
+<OWNER_HANDLE>-ERC/wwwroot/_preview_*.png

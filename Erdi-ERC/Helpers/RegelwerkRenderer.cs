@@ -14,20 +14,6 @@ namespace <OWNER_HANDLE>_ERC.Helpers
         private static readonly MarkdownPipeline Pipeline =
             new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
 
-        // Icon-Rotation für Abschnittskarten
-        private static readonly string[] SectionIcons =
-        [
-            "bi-flag-fill is-cyan",
-            "bi-people-fill is-cyan",
-            "bi-sliders is-amber",
-            "bi-clock-history is-cyan",
-            "bi-shield-check is-cyan",
-            "bi-trophy-fill is-cyan",
-            "bi-star-fill is-amber",
-            "bi-gear-fill is-cyan",
-            "bi-info-circle-fill is-cyan",
-        ];
-
         public record Section(string HeadingHtml, string BodyHtml, int Level, int Index);
 
         /// <summary>

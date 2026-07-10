@@ -16,6 +16,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly IAdminAuditService _audit;
         private readonly IWebhookAutomationService _webhookAuto;
+        private readonly IStatsService _stats;
+        private readonly IStaticDataCache _staticCache;
 
         public AdminCommunityController(
             ICommunityContentService contentService,
@@ -23,7 +25,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             AppDbContext db,
             IWebHostEnvironment env,
             IAdminAuditService audit,
-            IWebhookAutomationService webhookAuto)
+            IWebhookAutomationService webhookAuto,
+            IStatsService stats,
+            IStaticDataCache staticCache)
         {
             _contentService = contentService;
             _mediaService = mediaService;
@@ -31,6 +35,21 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             _env = env;
             _audit = audit;
             _webhookAuto = webhookAuto;
+            _stats = stats;
+            _staticCache = staticCache;
+        }
+
+        /// <summary>
+        /// Punkteabzug-Strafen fließen direkt in die abgeleitete Tabelle ein — nach jeder
+        /// Änderung daran die Liga neu berechnen und den öffentlichen Cache invalidieren.
+        /// </summary>
+        private async Task RecalculateAfterPenaltyAsync(string leagueId)
+        {
+            // Immer neu berechnen (auch wenn eine Strafe von "Punkteabzug" weg geändert wurde),
+            // damit die abgeleitete Tabelle exakt dem aktuellen Strafen-Stand entspricht.
+            if (string.IsNullOrWhiteSpace(leagueId)) return;
+            await _stats.RebuildLeagueStandingsAsync(leagueId);
+            _staticCache.InvalidateLeagues();
         }
 
         [HttpGet]
@@ -377,7 +396,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             entity.DayOfWeek = isRecurring ? dayOfWeek : null;
             entity.TimeOfDay = isRecurring ? timeOfDay : null;
             entity.StartAt = isRecurring
-                ? ComputeNextOccurrence(dayOfWeek!.Value, timeOfDay!.Value, DateTime.UtcNow)
+                ? ComputeNextOccurrence(dayOfWeek!.Value, timeOfDay!.Value, DateTime.Now)
                 : startAt!.Value;
             entity.DurationMinutes = Math.Max(1, durationMinutes);
             entity.Title = title.Trim();
@@ -522,6 +541,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 entity.Id.ToString(),
                 $"League={entity.LeagueId}, Driver={entity.Driver}, Type={entity.PenaltyType}, Points={entity.Points}, Public={entity.IsPublic}");
 
+            // Punkteabzug wirkt direkt auf die Tabelle → Liga neu berechnen.
+            await RecalculateAfterPenaltyAsync(entity.LeagueId);
+
             TempData["AdminMessage"] = isNew ? "Strafe gespeichert." : "Strafe aktualisiert.";
             if (isNew && isPublic)
                 await _webhookAuto.FireAsync(WebhookEvents.PenaltySaved, new()
@@ -549,10 +571,14 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 return RedirectToAction(nameof(Stewarding));
             }
 
+            var penaltyLeagueId = entity.LeagueId;
             _db.LeaguePenalties.Remove(entity);
             await _db.SaveChangesAsync();
             await _audit.LogAsync("DeletePenalty", "LeaguePenalty", id.ToString(),
                 $"League={entity.LeagueId}, Driver={entity.Driver}, Type={entity.PenaltyType}");
+
+            // Entfernter Punkteabzug → Liga neu berechnen.
+            await RecalculateAfterPenaltyAsync(penaltyLeagueId);
 
             TempData["AdminMessage"] = "Strafe gelöscht.";
             return RedirectToAction(nameof(Stewarding));

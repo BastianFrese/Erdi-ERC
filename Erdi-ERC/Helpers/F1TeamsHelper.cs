@@ -16,6 +16,7 @@ namespace <OWNER_HANDLE>_ERC.Helpers
             new("Haas",              "haas",       "***REMOVED***B6BABD", "***REMOVED***E8002D", "haas",            new[] { "Esteban Ocon",      "Oliver Bearman" }),
             new("Racing Bulls",      "racingbulls","***REMOVED***6692FF", "***REMOVED***CC1E4A", "rb",              new[] { "Isack Hadjar",      "Liam Lawson" }),
             new("Audi",              "audi",       "***REMOVED***8A9597", "***REMOVED***FFFFFF", "audi",            new[] { "Nico Hülkenberg",   "Gabriel Bortoleto" }),
+            new("Cadillac",            "cadillac",   "***REMOVED***000000", "***REMOVED***FFFFFF", "cadillac",        new[] { "Logan Sargeant",    "Zane Maloney" }),
         };
 
         private static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> TeamAliases =
@@ -34,7 +35,8 @@ namespace <OWNER_HANDLE>_ERC.Helpers
                 ["audi"] = "audi",
                 ["stake sauber"] = "audi",
                 ["kick sauber"] = "audi",
-                ["alfa romeo"] = "audi"
+                ["alfa romeo"] = "audi",
+                ["cadillac"] = "cadillac"
             };
 
         public static readonly System.Collections.Generic.IReadOnlyDictionary<string, F1Team> DriverToTeam =

@@ -1,0 +1,105 @@
+@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@*
+    Kategorie „Glück & Sprüche" – alle wegklickbar (Continue). wheel & dice clientseitig animiert,
+    fortune zieht serverseitig einen zufälligen Spruch.
+*@
+@switch (Model.Gag.Key)
+{
+    case "wheel":
+        <div class="troll-gag" data-troll-wheel>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Glücksrad</div>
+            <h2 class="troll-title"><OWNER_HANDLE> dreht am Rad deines Schicksals.</h2>
+            <div class="troll-spinner" data-troll-wheel-face>🎡</div>
+            <div class="troll-result" data-troll-wheel-result aria-live="polite">Drück auf „Drehen".</div>
+            <div class="troll-gag__actions">
+                <button type="button" class="f1-btn f1-btn--primary" data-troll-wheel-spin>Drehen</button>
+                <a asp-controller="Troll" asp-action="Continue" class="f1-btn troll-hidden" data-troll-wheel-done>Reinlassen →</a>
+            </div>
+        </div>
+        break;
+
+    case "fortune":
+    {
+        var sprueche = new[]
+        {
+            "Wer bremst, verliert. Wer nicht bremst, auch – aber spektakulärer.",
+            "Ein gutes Setup ersetzt kein Talent. Aber es kaschiert es ganz gut.",
+            "Die schnellste Runde ist die, die du nicht in die Mauer setzt.",
+            "P2 ist der erste Verlierer. Sagt <OWNER_HANDLE>. Meistens von P14 aus.",
+            "Reifen sind wie Geduld: irgendwann sind beide hinüber.",
+            "Ein DNF ist auch ein Ergebnis. Nur ein trauriges."
+        };
+        var spruch = sprueche[Random.Shared.Next(sprueche.Length)];
+        <div class="troll-gag">
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Glückskeks</div>
+            <h2 class="troll-title"><OWNER_HANDLE>s Weisheit des Tages</h2>
+            <p class="troll-fortune">„@spruch"</p>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Erleuchtet. Reinlassen →</a>
+        </div>
+        break;
+    }
+
+    case "dice":
+        <div class="troll-gag" data-troll-dice>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Würfelorakel</div>
+            <h2 class="troll-title"><OWNER_HANDLE> würfelt deine Startaufstellung aus.</h2>
+            <div class="troll-spinner" data-troll-dice-face>🎲</div>
+            <div class="troll-result" data-troll-dice-result aria-live="polite"></div>
+            <div class="troll-gag__actions">
+                <button type="button" class="f1-btn f1-btn--primary" data-troll-dice-roll>Würfeln</button>
+                <a asp-controller="Troll" asp-action="Continue" class="f1-btn troll-hidden" data-troll-dice-done>Reinlassen →</a>
+            </div>
+        </div>
+        break;
+
+    case "magic-8ball":
+        <div class="troll-gag" data-troll-8ball>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Orakel</div>
+            <h2 class="troll-title">Die magische <OWNER_HANDLE>-Kugel</h2>
+            <p class="troll-lead">Denk an eine Frage und schüttel die Kugel.</p>
+            <div class="troll-8ball" data-troll-8ball-face>🎱</div>
+            <div class="troll-result" data-troll-8ball-result aria-live="polite">…</div>
+            <div class="troll-gag__actions">
+                <button type="button" class="f1-btn f1-btn--primary" data-troll-8ball-shake>Schütteln</button>
+                <a asp-controller="Troll" asp-action="Continue" class="f1-btn troll-hidden" data-troll-8ball-done>Reinlassen →</a>
+            </div>
+        </div>
+        break;
+
+    case "horoscope":
+    {
+        var signs = new[] { "Bremsverlierer", "Frühstarter", "Kurvenräuber", "Boxenmauer-Magnet", "Reifenflüsterer", "DNF-Veteran" };
+        var horoskope = new[]
+        {
+            "Die Sterne stehen günstig — für alle außer dir.",
+            "Heute lauert dein Glück in Kurve 1. Genau wie die Mauer.",
+            "Ein großer Überholversuch steht bevor. Er endet im Kies.",
+            "Merkur rät: weniger Gas, mehr Demut.",
+            "Dein Setup-Karma ist im Keller. Untersteuer voraus.",
+            "Heute gewinnst du — im Aufwärmrunden-Ranking."
+        };
+        var sign = signs[Random.Shared.Next(signs.Length)];
+        var text = horoskope[Random.Shared.Next(horoskope.Length)];
+        <div class="troll-gag">
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Astrologie</div>
+            <h2 class="troll-title">Dein Renn-Horoskop</h2>
+            <p class="troll-horo__sign">Sternzeichen: <strong>@sign</strong></p>
+            <p class="troll-fortune">„@text"</p>
+            <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Schicksal akzeptiert →</a>
+        </div>
+        break;
+    }
+
+    case "coinflip":
+        <div class="troll-gag" data-troll-coin>
+            <div class="troll-eyebrow"><OWNER_HANDLE> · Münzwurf</div>
+            <h2 class="troll-title">Kopf — du darfst rein. Zahl — <OWNER_HANDLE> überlegt's sich.</h2>
+            <div class="troll-coin" data-troll-coin-face>🪙</div>
+            <div class="troll-result" data-troll-coin-result aria-live="polite"><OWNER_HANDLE> hat die Münze in der Hand …</div>
+            <div class="troll-gag__actions">
+                <button type="button" class="f1-btn f1-btn--primary" data-troll-coin-flip>Werfen</button>
+                <a asp-controller="Troll" asp-action="Continue" class="f1-btn troll-hidden" data-troll-coin-done>Reinlassen →</a>
+            </div>
+        </div>
+        break;
+}

@@ -1,7 +1,7 @@
 @{
     ViewData["Title"] = "Login erforderlich";
     Layout = "_Layout";
-    var returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("Apply", "Home");
+    var returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("Apply", "Application");
 }
 
 @section Styles {
@@ -15,7 +15,7 @@
     Title     = "Login",
     Highlight = "erforderlich",
     Lead      = "Um eine Bewerbung abzusenden, musst du dich zuerst mit deinem <strong>Discord-Account</strong> anmelden.",
-    GhostText = "AUTH"
+ 
 })" />
 
 <section class="f1-section reveal">

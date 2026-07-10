@@ -40,5 +40,16 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         /// <summary>Findet ein Profil, dessen Anzeigename oder GamerTag exakt zum Eintrag passt.</summary>
         Task<DriverProfile?> FindByDriverNameAsync(string driverName, CancellationToken ct = default);
+
+        /// <summary>
+        /// Benennt den Ingame-Namen (plattformunabhängig) um und propagiert die Änderung
+        /// in alle abhängigen Tabellen (Standings, Finishes, Penalties, Achievements, …).
+        /// Gibt die Anzahl geänderter Referenzen zurück.
+        /// </summary>
+        Task<int> RenameIngameNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default);
+
+        /// <inheritdoc cref="RenameIngameNameAsync"/>
+        [Obsolete("Use RenameIngameNameAsync")]
+        Task<int> RenameEaNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default);
     }
 }
