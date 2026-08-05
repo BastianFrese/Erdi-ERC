@@ -6,6 +6,7 @@
     var nextUpcomingEvent = ViewBag.NextUpcomingEvent;
     var introVideoUrl = Url.Content("~/videos/vorstellung%20erdi10.mp4");
     var communityNews = (ViewBag.CommunityNews as IEnumerable<<OWNER_HANDLE>_ERC.Models.CommunityNewsPost>)?.ToList() ?? new List<<OWNER_HANDLE>_ERC.Models.CommunityNewsPost>();
+    var overallTop3 = (ViewBag.OverallConstructorsTop3 as IEnumerable<<OWNER_HANDLE>_ERC.Models.OverallConstructorRow> ?? new List<<OWNER_HANDLE>_ERC.Models.OverallConstructorRow>()).ToList();
 
     var lastWinnerItems = new List<dynamic>();
     if (lastWinners != null)
@@ -182,6 +183,30 @@
                     </div>
                 </div>
             }
+
+            @if (overallTop3.Count > 0)
+            {
+                <a class="text-decoration-none d-block" asp-controller="Races" asp-action="Constructors">
+                    <div class="f1-timing-card f1-tiltable f1-overall-chip">
+                        <div class="f1-timing-card__head">
+                            <span class="f1-timing-card__label"><i class="f1-icon" data-lucide="layers"></i> Constructors aller Ligen</span>
+                            <span class="f1-chip f1-chip--drs" style="font-size:.6rem; padding:.15rem .45rem;">Top 3</span>
+                        </div>
+                        <ol class="f1-overall-chip__list">
+                            @foreach (var row in overallTop3)
+                            {
+                                <li class="f1-overall-chip__row">
+                                    <span class="f1-overall-chip__pos f1-pos-badge f1-pos-badge--p@(row.Position)">@row.Position</span>
+                                    <span class="f1-overall-chip__bar" style="background:@row.PrimaryColor;"></span>
+                                    <span class="f1-overall-chip__name">@row.DisplayName</span>
+                                    <span class="f1-overall-chip__pts"><strong>@row.Points</strong><span>Pkt.</span></span>
+                                </li>
+                            }
+                        </ol>
+                        <div class="f1-overall-chip__cta">Vollst&auml;ndige Tabelle &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></div>
+                    </div>
+                </a>
+            }
         </div>
     </div>
 
@@ -195,7 +220,6 @@
             <span class="f1-ticker__item"><b>SUPER</b> &middot; Top-Fahrer Showdown</span>
             <span class="f1-ticker__item"><b>TWITCH</b> &middot; erdi10</span>
             <span class="f1-ticker__item"><b>SETUPS</b> &middot; Strecken-Setups verfuegbar</span>
-            <span class="f1-ticker__item"><b>DRS</b> &middot; Bewerbung jetzt oeffnen</span>
             @* Duplicate for seamless loop *@
             <span class="f1-ticker__item"><b>ERC</b> &middot; <OWNER_HANDLE>'s Racing Community</span>
             <span class="f1-ticker__item"><b>F1 26</b> &middot; Sim Racing Liga</span>
@@ -204,7 +228,6 @@
             <span class="f1-ticker__item"><b>SUPER</b> &middot; Top-Fahrer Showdown</span>
             <span class="f1-ticker__item"><b>TWITCH</b> &middot; erdi10</span>
             <span class="f1-ticker__item"><b>SETUPS</b> &middot; Strecken-Setups verfuegbar</span>
-            <span class="f1-ticker__item"><b>DRS</b> &middot; Bewerbung jetzt oeffnen</span>
         </div>
     </div>
 </section>
@@ -508,14 +531,6 @@
                             <h5 class="f1-pitcard__title">Events &amp; Streams</h5>
                             <p class="f1-pitcard__lead">Kommende Events, Countdown und Stream-Links.</p>
                             <span class="f1-pitcard__cta">Events <i class="f1-icon" data-lucide="arrow-right"></i></span>
-                        </div>
-                    </a>
-                    <a class="text-decoration-none" asp-controller="Application" asp-action="Apply">
-                        <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
-                            <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="file-signature"></i></span><span class="f1-pitcard__tag">Bewerbung</span></div>
-                            <h5 class="f1-pitcard__title">Liga-Bewerbung</h5>
-                            <p class="f1-pitcard__lead">Bewirb dich direkt fuer eine Liga und werde Teil der Community.</p>
-                            <span class="f1-pitcard__cta">Jetzt bewerben <i class="f1-icon" data-lucide="arrow-right"></i></span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Home" asp-action="Faq">

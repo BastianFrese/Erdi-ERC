@@ -30,6 +30,9 @@
                 <div class="league-page-action-panel__title">Aktionen</div>
                 <div class="league-page-action-panel__stack">
                     <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Index">← Zurück zum Dashboard</a>
+                    <a class="btn btn-success" asp-controller="AdminApplications" asp-action="ManualRegister" asp-route-leagueId="@Model.Id">
+                        <i class="bi bi-person-plus me-1"></i>Fahrer manuell registrieren
+                    </a>
                     <form asp-controller="AdminLeague" asp-action="ValidateReserveData" method="post" class="d-inline" onsubmit="return confirm('Reservefahrer-Daten dieser Liga prüfen?');">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="leagueId" value="@Model.Id" />
@@ -115,10 +118,6 @@
                     <textarea class="form-control" name="description" rows="2">@Model.Description</textarea>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Bewerbungs-Info <span class="text-muted small">(Untertitel im Bewerbungsformular, z.B. "Freitags 20:00 · KI bis 105")</span></label>
-                    <input class="form-control" name="applicationInfo" value="@Model.ApplicationInfo" maxlength="256" />
-                </div>
-                <div class="col-md-2">
                     <label class="form-label">Kapazität <span class="text-muted small">(Stammplätze)</span></label>
                     <input class="form-control" type="number" name="capacity" value="@(Model.Capacity)" min="0" max="999" placeholder="∞" title="Soll-Anzahl Stammfahrer. Leer/0 = unbegrenzt." />
                 </div>
@@ -132,8 +131,8 @@
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="isOpenForApplications" value="true" id="leagueOpenForApps" @(Model.IsOpenForApplications ? "checked" : "") />
-                        <label class="form-check-label" for="leagueOpenForApps">Bewerbungen offen (im Formular sichtbar)</label>
+                        <input class="form-check-input" type="checkbox" name="countsTowardOverall" value="true" id="leagueCountsOverall" @(Model.CountsTowardOverall ? "checked" : "") />
+                        <label class="form-check-label" for="leagueCountsOverall">In Constructors-Gesamtwertung <span class="text-muted small">(Punkte aller Ligen zusammenzählen)</span></label>
                     </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
