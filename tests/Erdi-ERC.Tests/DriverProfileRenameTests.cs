@@ -47,7 +47,8 @@ public class DriverProfileRenameTests
     public async Task Rename_updates_standing_entered_under_non_preferred_platform_tag()
     {
         using var ctx = new SqliteTestContext();
-        ApplicationServiceTestHarness.SeedLeague(ctx.Db, "l1", "League One");
+        ctx.Db.Leagues.Add(new League { Id = "l1", Name = "League One" });
+        ctx.Db.SaveChanges();
         // Preferred platform is EA, but the standing was entered under the Steam tag.
         SeedProfile(ctx.Db, "discord-1", displayName: "EaName", preferredPlatform: "EA",
             ("EA", "EaName", true), ("Steam", "SteamName", false));
@@ -68,7 +69,8 @@ public class DriverProfileRenameTests
     public async Task Rename_updates_references_despite_casing_and_whitespace()
     {
         using var ctx = new SqliteTestContext();
-        ApplicationServiceTestHarness.SeedLeague(ctx.Db, "l1", "League One");
+        ctx.Db.Leagues.Add(new League { Id = "l1", Name = "League One" });
+        ctx.Db.SaveChanges();
         SeedProfile(ctx.Db, "discord-2", displayName: "EaName", preferredPlatform: "EA",
             ("EA", "EaName", true));
         // Hand-entered rows with different casing / stray whitespace.

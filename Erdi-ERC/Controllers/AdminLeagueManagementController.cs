@@ -188,7 +188,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 trackedSource.IsArchived = true;
                 trackedSource.ArchivedName = archivedName;
                 trackedSource.ArchivedAt = DateTime.UtcNow;
-                trackedSource.IsOpenForApplications = false;
                 await _db.SaveChangesAsync();
                 await ExportArchivedLeagueWorkbookAsync(sourceId, archivedName);
             }
@@ -226,7 +225,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, string? applicationInfo, bool isOpenForApplications = false, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, bool countsTowardOverall = true)
+        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, bool countsTowardOverall = true)
         {
             var league = await _db.Leagues.AsTracking().FirstOrDefaultAsync(l => l.Id == id);
             if (league is null) return NotFound();
@@ -236,8 +235,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             league.Name = newName;
             league.Description = description?.Trim() ?? "";
-            league.ApplicationInfo = applicationInfo?.Trim();
-            league.IsOpenForApplications = isOpenForApplications;
             league.SortOrder = Math.Clamp(sortOrder, 0, 9999);
             // Kapazität: 0/negativ bedeutet "unbegrenzt" (null), sonst auf sinnvolles Maximum begrenzen.
             league.Capacity = capacity.HasValue && capacity.Value > 0 ? Math.Min(capacity.Value, 999) : (int?)null;
@@ -303,8 +300,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                     Name = league.Name,
                     Description = league.Description,
                     ArchivedName = league.ArchivedName,
-                    ApplicationInfo = league.ApplicationInfo,
-                    IsOpenForApplications = league.IsOpenForApplications,
                     IsArchived = league.IsArchived,
                     ArchivedAt = league.ArchivedAt,
                 });
@@ -407,8 +402,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             league.IsArchived = true;
             league.ArchivedName = normalizedArchivedName;
             league.ArchivedAt = DateTime.UtcNow;
-            // Archivierte Ligen nehmen keine Bewerbungen mehr an.
-            league.IsOpenForApplications = false;
             await _db.SaveChangesAsync();
             _staticCache.InvalidateLeagues();
 
