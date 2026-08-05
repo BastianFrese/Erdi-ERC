@@ -78,11 +78,5 @@ internal sealed class RowVersionInterceptor : SaveChangesInterceptor
     private static void Apply(DbContext? context)
     {
         if (context is null) return;
-
-        foreach (var entry in context.ChangeTracker.Entries<ApplicationForm>())
-        {
-            if (entry.State is EntityState.Added or EntityState.Modified)
-                entry.Entity.RowVersion = BitConverter.GetBytes(DateTime.UtcNow.Ticks);
-        }
     }
 }

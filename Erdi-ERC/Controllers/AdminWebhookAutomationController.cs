@@ -72,31 +72,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 ["RaceLabel"] = "Spa GP – Runde 3",
                 ["Author"] = "<OWNER_HANDLE>"
             },
-            [WebhookEvents.ApplicationReceived] = new()
-            {
-                ["DiscordName"] = "TestUser***REMOVED***1234",
-                ["DiscordId"] = "123456789012345678",
-                ["GamingName"] = "MockDriver",
-                ["Role"] = "Stammfahrer",
-                ["SubmittedAt"] = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm")
-            },
-            [WebhookEvents.ApplicationAccepted] = new()
-            {
-                ["DiscordName"] = "TestUser***REMOVED***1234",
-                ["GamingName"] = "MockDriver",
-                ["Platform"] = "Steam",
-                ["Division"] = "Main Division 1",
-                ["Role"] = "Stammfahrer",
-                ["Actor"] = "<OWNER_HANDLE>"
-            },
-            [WebhookEvents.ApplicationRejected] = new()
-            {
-                ["DiscordName"] = "TestUser***REMOVED***1234",
-                ["GamingName"] = "MockDriver",
-                ["Platform"] = "Steam",
-                ["Reason"] = "Keine freien Plätze in dieser Division",
-                ["Actor"] = "<OWNER_HANDLE>"
-            },
             [WebhookEvents.VotePollPublished] = new()
             {
                 ["Title"] = "Lieblings-Strecke Saison 2026",

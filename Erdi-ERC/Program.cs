@@ -78,12 +78,12 @@ builder.Services.AddScoped<IWebhookAutomationService, WebhookAutomationService>(
 builder.Services.AddScoped<ISetupAccessService, SetupAccessService>();
 builder.Services.AddScoped<ITrackSetupAccessPolicy, TrackSetupAccessPolicy>();
 builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
-builder.Services.AddScoped<IApplicationWorkflowService, ApplicationWorkflowService>();
-builder.Services.AddScoped<IApplicationQueryService, ApplicationQueryService>();
 builder.Services.AddScoped<IDiscordGuildService, DiscordGuildService>();
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
+builder.Services.AddScoped<IStreamScheduleQueryService, StreamScheduleQueryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ITrollService, TrollService>();
+builder.Services.AddScoped<OverallConstructorsService>();
 builder.Services.AddScoped<DatabaseTransactionHelper>();
 builder.Services.Configure<DiscordSetupAccessOptions>(builder.Configuration.GetSection("Discord:SetupAccess"));
 builder.Services.Configure<DiscordGuildOptions>(builder.Configuration.GetSection(DiscordGuildOptions.SectionName));
@@ -409,26 +409,6 @@ builder.Services.AddAuthorization(options =>
     static bool HasPerm(System.Security.Claims.ClaimsPrincipal user, string key, string legacyGroup)
         => user.HasClaim("erdi:superadmin", "true")
         || user.Claims.Any(c => c.Type == "erdi:perm" && (c.Value == key || c.Value == legacyGroup));
-
-    // ── Bewerbungen ──────────────────────────────────────────────────────────────
-    options.AddPolicy("Admin.Applications", policy =>
-        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx =>
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsView,    <OWNER_HANDLE>_ERC.Models.AdminPermissions.Applications) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage,  <OWNER_HANDLE>_ERC.Models.AdminPermissions.Applications) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsMetrics, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Applications)));
-
-    options.AddPolicy("Admin.Applications.View", policy =>
-        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsView, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Applications)));
-
-    options.AddPolicy("Admin.Applications.Manage", policy =>
-        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Applications)));
-
-    options.AddPolicy("Admin.Applications.Metrics", policy =>
-        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsMetrics, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Applications)));
 
     // ── Liga ─────────────────────────────────────────────────────────────────────
     options.AddPolicy("Admin.League", policy =>
@@ -801,8 +781,6 @@ var movedRoutes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCas
     ["Home/Teams"] = "/Community/Teams",
     ["Home/Team"] = "/Community/Team",
     ["Home/ReserveExchange"] = "/Community/ReserveExchange",
-    ["Home/Apply"] = "/Application/Apply",
-    ["Home/MyApplication"] = "/Application/MyApplication",
     ["Admin/EditLeague"] = "/AdminLeagueManagement/EditLeague",
     ["Admin/Admins"] = "/AdminPermissions/Admins",
     ["Admin/TrackSetups"] = "/AdminSetups/TrackSetups",
