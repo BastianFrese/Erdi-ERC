@@ -14,57 +14,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IAdminAuditService _audit;
+        private readonly IStreamScheduleQueryService _streamSchedules;
 
-        public AdminController(AppDbContext db, IAdminAuditService audit)
+        public AdminController(AppDbContext db, IAdminAuditService audit, IStreamScheduleQueryService streamSchedules)
         {
             _db = db;
             _audit = audit;
-        }
-
-        private async Task<StreamSchedule?> GetNextStreamScheduleAsync()
-        {
-            var schedules = await _db.StreamSchedules.ToListAsync();
-            if (schedules.Count == 0) return null;
-
-            // UtcNow konsistent zum Save-Pfad in AdminCommunityController, der recurring StartAt
-            // mit UTC berechnet. Mischen würde sonst zu 1-2h Drift (Sommer-/Winterzeit) führen.
-            var now = DateTime.UtcNow;
-
-            return schedules
-                .Select(x =>
-                {
-                    var nextStart = x.IsRecurring && x.DayOfWeek.HasValue && x.TimeOfDay.HasValue
-                        ? ComputeNextOccurrence(x.DayOfWeek.Value, x.TimeOfDay.Value, now)
-                        : x.StartAt;
-
-                    return new StreamSchedule
-                    {
-                        Id = x.Id,
-                        Title = x.Title,
-                        Url = x.Url,
-                        DurationMinutes = x.DurationMinutes,
-                        IsRecurring = x.IsRecurring,
-                        DayOfWeek = x.DayOfWeek,
-                        TimeOfDay = x.TimeOfDay,
-                        StartAt = nextStart,
-                        CreatedAt = x.CreatedAt
-                    };
-                })
-                .Where(x => x.StartAt >= now)
-                .OrderBy(x => x.StartAt)
-                .FirstOrDefault();
-        }
-
-        private static DateTime ComputeNextOccurrence(int dayOfWeek, TimeSpan timeOfDay, DateTime from)
-        {
-            var daysUntil = ((dayOfWeek - (int)from.DayOfWeek) + 7) % 7;
-            var candidate = from.Date.AddDays(daysUntil).Add(timeOfDay);
-            if (candidate < from)
-            {
-                candidate = candidate.AddDays(7);
-            }
-
-            return candidate;
+            _streamSchedules = streamSchedules;
         }
 
         // ---- Dashboard / Main Übersicht ----
@@ -79,12 +35,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .ToListAsync();
 
             // "Offen" = wirklich unbearbeitet (früher zählte !IsAccepted auch Abgelehnte mit).
-            ViewBag.OpenApplications = await _db.ApplicationForms.CountAsync(x => x.Status == ApplicationStatus.Open);
-            ViewBag.AcceptedApplications = await _db.ApplicationForms.CountAsync(x => x.Status == ApplicationStatus.Accepted);
             ViewBag.TotalRaces = await _db.RaceResults.CountAsync();
             ViewBag.TotalDrivers = await _db.DriverStandings.Select(s => s.Driver).Distinct().CountAsync();
             ViewBag.AuditCount24h = await _db.AdminAuditLogs.CountAsync(x => x.CreatedAt >= DateTime.UtcNow.AddHours(-24));
-            ViewBag.NextStream = await GetNextStreamScheduleAsync();
+            ViewBag.NextStream = await _streamSchedules.GetNextStreamScheduleAsync();
             ViewBag.RecentEaNameChanges = await _db.AdminAuditLogs
                 .Where(x => x.Action == "UpdateEaName")
                 .OrderByDescending(x => x.CreatedAt)

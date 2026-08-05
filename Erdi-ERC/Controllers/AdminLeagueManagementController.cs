@@ -155,8 +155,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 Id = finalId,
                 Name = newName.Trim(),
                 Description = source.Description,
-                ApplicationInfo = source.ApplicationInfo,
-                IsOpenForApplications = false,
                 SortOrder = maxSort + 1
             };
             _db.Leagues.Add(newLeague);
@@ -228,7 +226,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, string? applicationInfo, bool isOpenForApplications = false, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null)
+        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, string? applicationInfo, bool isOpenForApplications = false, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, bool countsTowardOverall = true)
         {
             var league = await _db.Leagues.AsTracking().FirstOrDefaultAsync(l => l.Id == id);
             if (league is null) return NotFound();
@@ -247,31 +245,21 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             league.DropWorstResults = dropWorstResults.HasValue && dropWorstResults.Value > 0 ? Math.Min(dropWorstResults.Value, 99) : (int?)null;
             // Aktuelle Saison (leer = alle Rennen zählen).
             league.CurrentSeason = string.IsNullOrWhiteSpace(currentSeason) ? null : currentSeason.Trim();
+            // Opt-in Liga-übergreifende Constructors-Meisterschaft (Default true).
+            league.CountsTowardOverall = countsTowardOverall;
 
             try
             {
                 await _db.SaveChangesAsync();
 
-                // Wenn der Liganame geändert wurde, app.Division in allen Bewerbungen synchronisieren.
-                int divisionUpdated = 0;
-                if (!string.Equals(oldName, newName, StringComparison.Ordinal))
-                {
-                    divisionUpdated = await _db.ApplicationForms
-                        .Where(a => a.Division == oldName)
-                        .ExecuteUpdateAsync(s => s.SetProperty(a => a.Division, newName));
-                }
-
                 // Drop-Scores wirken auf die abgeleiteten Punkte → Tabelle neu berechnen.
                 await _statsService.RebuildLeagueStandingsAsync(id);
                 _staticCache.InvalidateLeagues();
                 await _audit.LogAsync("UpdateLeague", "League", id,
-                    $"Name={newName}, OpenForApplications={league.IsOpenForApplications}, DropWorst={league.DropWorstResults}, DivisionsSynced={divisionUpdated}");
+                    $"Name={newName}, CountsTowardOverall={league.CountsTowardOverall}, DropWorst={league.DropWorstResults}");
                 await _db.SaveChangesAsync();
 
-                var msg = $"Liga '{newName}' aktualisiert.";
-                if (divisionUpdated > 0)
-                    msg += $" {divisionUpdated} Bewerbung(en) auf neuen Namen synchronisiert.";
-                TempData["AdminMessage"] = msg;
+                TempData["AdminMessage"] = $"Liga '{newName}' aktualisiert.";
             }
             catch (Exception ex)
             {
@@ -331,10 +319,6 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 await _db.RaceResults
                     .Where(x => x.LeagueId == oldId)
                     .ExecuteUpdateAsync(s => s.SetProperty(x => x.LeagueId, newId));
-
-                await _db.ApplicationForms
-                    .Where(x => x.AppliedLeagueId == oldId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.AppliedLeagueId, newId));
 
                 await _db.RaceWeekendLegs
                     .Where(x => x.LeagueId == oldId)
@@ -478,13 +462,27 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var penalties = await _db.LeaguePenalties.Where(x => x.LeagueId == id).ToListAsync();
             var undoEntries = await _db.RaceUndoEntries.Where(x => x.LeagueId == id).ToListAsync();
 
-            if (raceResults.Count > 0) _db.RaceResults.RemoveRange(raceResults);
-            if (standings.Count > 0) _db.DriverStandings.RemoveRange(standings);
-            if (legsForLeague.Count > 0) _db.RaceWeekendLegs.RemoveRange(legsForLeague);
-            if (penalties.Count > 0) _db.LeaguePenalties.RemoveRange(penalties);
-            if (undoEntries.Count > 0) _db.RaceUndoEntries.RemoveRange(undoEntries);
+            // Atomar: schlägt ein RemoveRange fehl, bleiben alle 5 Entitäten erhalten —
+            // ein teilweiser Clear würde inkonsistente Ligen-Stände erzeugen.
+            await using var tx = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                if (raceResults.Count > 0) _db.RaceResults.RemoveRange(raceResults);
+                if (standings.Count > 0) _db.DriverStandings.RemoveRange(standings);
+                if (legsForLeague.Count > 0) _db.RaceWeekendLegs.RemoveRange(legsForLeague);
+                if (penalties.Count > 0) _db.LeaguePenalties.RemoveRange(penalties);
+                if (undoEntries.Count > 0) _db.RaceUndoEntries.RemoveRange(undoEntries);
 
-            await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                try { await tx.RollbackAsync(); } catch { }
+                await _audit.LogAndSaveAsync("ClearLeagueDataError", "League", id, ex.Message);
+                TempData["AdminMessage"] = $"Fehler beim Leeren der Liga '{league.Name}': {ex.Message}";
+                return RedirectToAction(nameof(EditLeague), new { id });
+            }
 
             await _audit.LogAsync("ClearLeagueData", "League", id, $"Cleared all league data (Standings={standings.Count}, Races={raceResults.Count}, Legs={legsForLeague.Count}, Penalties={penalties.Count}, Undo={undoEntries.Count})");
             TempData["AdminMessage"] = league.IsArchived
