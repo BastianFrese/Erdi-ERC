@@ -9,7 +9,7 @@ namespace <OWNER_HANDLE>_ERC.Tests.Infrastructure;
 /// <summary>
 /// Stellt einen <see cref="AppDbContext"/> auf einer frischen SQLite-In-Memory-DB bereit.
 /// Im Gegensatz zum EF-InMemory-Provider unterstützt SQLite echte Transaktionen, die
-/// <c>ApplicationManagementService</c> (Accept/Unaccept/AssignToLeague) verwendet.
+/// <c>ApplicationWorkflowService</c> (Accept/Reopen/MoveToLeague) verwendet.
 ///
 /// Die Connection bleibt für die Lebensdauer offen — sonst verwirft SQLite die
 /// In-Memory-Datenbank, sobald die letzte Verbindung schließt.
