@@ -7,14 +7,6 @@ namespace <OWNER_HANDLE>_ERC.Models
     /// </summary>
     public static class AdminPermissions
     {
-        // ── Bewerbungen ────────────────────────────────────────────────────────────
-        /// <summary>Bewerbungen einsehen (Dashboard, Liste, Detailansicht)</summary>
-        public const string ApplicationsView    = "applications.view";
-        /// <summary>Bewerbungen annehmen / ablehnen</summary>
-        public const string ApplicationsManage  = "applications.manage";
-        /// <summary>Bewerbungsmetriken &amp; Statistiken</summary>
-        public const string ApplicationsMetrics = "applications.metrics";
-
         // ── Liga ──────────────────────────────────────────────────────────────────
         /// <summary>Liga-Tabellen, Fahrer, Events verwalten</summary>
         public const string LeagueStandings = "league.standings";
@@ -56,9 +48,6 @@ namespace <OWNER_HANDLE>_ERC.Models
         public const string SystemTroll       = "system.troll";
 
         // ── Rückwärtskompatible Gruppen-Aliases ───────────────────────────────────
-        // (Legacy-Wert: ein Admin, dem früher "applications" zugewiesen wurde,
-        //  gilt weiterhin für alle applications.* Policies.)
-        public const string Applications = "applications";
         public const string Community    = "community";
         public const string Drivers      = "drivers";
         public const string System       = "system";
@@ -68,12 +57,6 @@ namespace <OWNER_HANDLE>_ERC.Models
         /// </summary>
         public static readonly IReadOnlyList<PermissionGroup> Groups =
         [
-            new("Bewerbungen", "bi-clipboard-check", "***REMOVED***5b8cff",
-            [
-                new(ApplicationsView,    "Einsehen",         "bi-eye"),
-                new(ApplicationsManage,  "Annehmen/Ablehnen","bi-check2-circle"),
-                new(ApplicationsMetrics, "Metriken",         "bi-bar-chart-line"),
-            ]),
             new("Liga", "bi-flag-fill", "***REMOVED***39ff14",
             [
                 new(LeagueStandings, "Tabellen & Fahrer", "bi-list-ol"),
