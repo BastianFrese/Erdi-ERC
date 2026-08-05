@@ -18,6 +18,7 @@
     var profileHardware = SimHardwareHelper.Resolve(profile?.InputDevice);
     var currentInputDevice = profile?.InputDevice?.Trim() ?? string.Empty;
     var hwOptions = new[] { "Fanatec", "MOZA Racing", "Logitech G", "Thrustmaster", "Gamepad" };
+    var currentNumberColor = ViewBag.NumberColor as string ?? "***REMOVED***e10600";
 
     var featured = DriverAchievementsHelper.GetFeatured(Model.Achievements);
     var totalRaces = Model.Races.Count;
@@ -63,38 +64,11 @@
 </div>
 
 @{
-    var myApp = ViewBag.MyApplication as <OWNER_HANDLE>_ERC.Models.ApplicationForm;
+    var featured = ViewBag.FeaturedAchievement as <OWNER_HANDLE>_ERC.Models.Achievement;
+    var profile = ViewBag.Profile as <OWNER_HANDLE>_ERC.Models.DriverProfile;
+    int totalRaces = 0, top10Rate = 0;
 }
-@if (myApp != null)
-{
-    var (appColor, appIcon, appLabel, appHint) =
-        myApp.IsAccepted
-            ? ("***REMOVED***4caf50", "check-circle", "Angenommen", $"Willkommen in {myApp.Division}!")
-        : myApp.IsRejected
-            ? ("***REMOVED***f44336", "x-circle", "Abgelehnt", "Du kannst dich erneut bewerben.")
-        : myApp.IsFlagged
-            ? ("***REMOVED***00bcd4", "flag", "In Prüfung", "Deine Bewerbung wird gerade geprüft.")
-            : ("***REMOVED***ffc107", "clock", "Offen", "Sobald sie bearbeitet wurde, wirst du über Discord benachrichtigt.");
-
-    <div class="reveal mb-4" style="background:var(--surface-1);border:1px solid var(--stroke-1);border-left:3px solid @appColor;border-radius:var(--r-3);padding:1rem 1.15rem;display:flex;align-items:center;gap:.9rem;">
-        <i class="f1-icon" data-lucide="@appIcon" style="width:22px;height:22px;color:@appColor;flex:0 0 auto;"></i>
-        <div>
-            <div style="font:700 .9rem/1.2 var(--ff-body);color:var(--ink);">
-                Deine Liga-Bewerbung: <span style="color:@appColor;">@appLabel</span>
-            </div>
-            <div style="font-size:.82rem;color:var(--ink-3);margin-top:.15rem;">
-                @appHint
-                <span class="text-mute">· @myApp.Division · eingereicht @myApp.SubmittedAt.ToString("dd.MM.yyyy")</span>
-            </div>
-        </div>
-        @if (myApp.IsRejected)
-        {
-            <a class="f1-btn f1-btn--ghost ms-auto" style="font-size:.8rem;padding:.35rem .9rem;" href="@Url.Action("Apply", "Application")">
-                <i class="f1-icon" data-lucide="rotate-ccw"></i> Erneut bewerben
-            </a>
-        }
-    </div>
-}
+@* Bewerbungs-Status-Block entfernt - System wird greenfield-rebuilt. *@
 
 @if (featured != null || profile is not null || totalRaces > 0)
 {
@@ -325,6 +299,13 @@
                             <label class="form-label mb-0">Kurze Bio</label>
                             <textarea class="form-control" name="bio" rows="3" maxlength="512" placeholder="Kurz etwas über dich, deinen Fahrstil oder deine Ziele...">@profile?.Bio</textarea>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-0">Farbe der Fahrernummer</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input class="form-control form-control-color" type="color" name="driverNumberColor" value="@currentNumberColor" title="Farbe der Fahrernummer auf der Karte" />
+                                <span class="text-mute small">Default: Team-Farbe</span>
+                            </div>
+                        </div>
                         <div class="col-12 d-grid">
                             <button class="f1-btn f1-btn--ghost" type="submit">Profil-Infos speichern</button>
                         </div>
@@ -502,7 +483,7 @@ else
 @section Scripts {
     <script>
         (() => {
-            const driverName = '@Html.Raw(Model.Driver?.Replace("'", "\\'") ?? "fahrerkarte")';
+            const driverName = @Json.Serialize(Model.Driver ?? "fahrerkarte");
 
             const loadLib = () => new Promise((resolve, reject) => {
                 if (window.htmlToImage) { resolve(window.htmlToImage); return; }
@@ -513,20 +494,67 @@ else
                 document.head.appendChild(s);
             });
 
+            // 1×1 transparentes PNG — Ersatz für Bilder, die nicht geladen werden konnten
+            // (z. B. fehlende Flaggen-SVGs). html-to-image bricht bei 404 sonst mit
+            // „Resource not found" den kompletten Render ab, statt auf den Code-Fallback zu fallen.
+            const PLACEHOLDER_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+
+            const blobToDataURL = (blob) => new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result);
+                r.onerror = () => reject(new Error('Bild konnte nicht gelesen werden.'));
+                r.readAsDataURL(blob);
+            });
+
+            // Alle <img> der Karte vorab holen und als Data-URL inline setzen. Bilder, die
+            // nicht existieren (404) oder nicht geladen werden können, bekommen einen
+            // transparenten Platzhalter + visibility:hidden — so geraten sie nicht in den
+            // html-to-image-Fetch, der 404s hart werden lässt. Gibt die gemerkten Zustände
+            // zurück, damit sie nach dem Render wiederhergestellt werden können.
+            const inlineImages = async (root) => {
+                const touched = [];
+                const imgs = Array.from(root.querySelectorAll('img'));
+                await Promise.all(imgs.map(async (img) => {
+                    const src = img.getAttribute('src') || '';
+                    if (!src || src.startsWith('data:')) return;
+                    touched.push({ img, src });
+                    try {
+                        const res = await fetch(src, { credentials: 'same-origin' });
+                        if (!res.ok) throw new Error(res.status);
+                        const dataUrl = await blobToDataURL(await res.blob());
+                        img.setAttribute('src', dataUrl);
+                    } catch {
+                        img.setAttribute('src', PLACEHOLDER_PNG);
+                        img.style.visibility = 'hidden';
+                    }
+                }));
+                return touched;
+            };
+
+            const restoreImages = (touched) => {
+                touched.forEach(({ img, src }) => {
+                    img.setAttribute('src', src);
+                    img.style.visibility = '';
+                });
+            };
+
             const captureCard = async (btn) => {
                 const card = document.querySelector('.erc-card');
                 if (!card) { alert('Karte nicht gefunden.'); return null; }
                 const origHtml = btn.innerHTML;
                 btn.disabled = true;
                 btn.textContent = 'Wird gerendert…';
+                let touched = [];
                 try {
+                    touched = await inlineImages(card);
                     const lib = await loadLib();
-                    const dataUrl = await lib.toPng(card, { pixelRatio: 2 });
+                    const dataUrl = await lib.toPng(card, { pixelRatio: 2, cacheBust: false, imagePlaceholder: PLACEHOLDER_PNG });
                     return dataUrl;
                 } catch (err) {
                     alert('Fehler beim Rendern: ' + err.message);
                     return null;
                 } finally {
+                    restoreImages(touched);
                     btn.disabled = false;
                     btn.innerHTML = origHtml;
                 }

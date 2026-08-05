@@ -1,21 +1,7 @@
 @using <OWNER_HANDLE>_ERC.Models
-@using Microsoft.EntityFrameworkCore
-@using Microsoft.Extensions.Caching.Memory
-@inject <OWNER_HANDLE>_ERC.Data.AppDbContext _layoutDb
-@inject IMemoryCache _layoutCache
 @{
     var _title  = ViewData["HeroTitle"]    as string ?? ViewData["Title"] as string ?? "Admin";
     var _kicker = ViewData["Kicker"]       as string ?? string.Empty;
-    int _openApplications = 0;
-    try
-    {
-        if (!_layoutCache.TryGetValue("admin:open-apps-count", out _openApplications))
-        {
-            _openApplications = await _layoutDb.ApplicationForms.CountAsync(x => x.Status == ApplicationStatus.Open);
-            _layoutCache.Set("admin:open-apps-count", _openApplications, TimeSpan.FromSeconds(30));
-        }
-    }
-    catch { }
 
     var _ctrl   = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var _action = ViewContext.RouteData.Values["action"]?.ToString()     ?? "";
@@ -33,12 +19,6 @@
     bool HasPerm(string p) => isSuperAdmin
         || User.Claims.Any(c => c.Type == "erdi:perm" && c.Value == p);
     bool HasAnyPerm(params string[] keys) => keys.Any(k => HasPerm(k));
-
-    // Granulare Checks pro Seite
-    bool canAppView     = HasAnyPerm(AdminPermissions.ApplicationsView,    AdminPermissions.Applications);
-    bool canAppManage   = HasAnyPerm(AdminPermissions.ApplicationsManage,  AdminPermissions.Applications);
-    bool canAppMetrics  = HasAnyPerm(AdminPermissions.ApplicationsMetrics, AdminPermissions.Applications);
-    bool canApplications = canAppView || canAppManage || canAppMetrics;
 
     bool canLeagueStandings = HasAnyPerm(AdminPermissions.LeagueStandings, AdminPermissions.System);
     bool canLeagueRaces     = HasAnyPerm(AdminPermissions.LeagueRaces,     AdminPermissions.System);
@@ -104,44 +84,6 @@
                     <i class="bi bi-grid-fill"></i> Dashboard
                 </a>
             </div>
-
-            @if (canApplications)
-            {
-                <div class="adm-nav-group">
-                    <span class="adm-nav-group__label">Bewerbungen</span>
-                    @if (canAppView || canAppManage)
-                    {
-                        <a class="@Nav("AdminApplications","Dashboard")" asp-controller="AdminApplications" asp-action="Dashboard">
-                            <i class="bi bi-clipboard-check"></i> Übersicht
-                        </a>
-                    }
-                    @if (canAppManage)
-                    {
-                        <a class="@Nav("AdminApplications","Open")" asp-controller="AdminApplications" asp-action="Open">
-                            <i class="bi bi-inbox"></i> Offen
-                            @if (_openApplications > 0)
-                            {
-                                <span class="adm-nav-badge">@_openApplications</span>
-                            }
-                        </a>
-                        <a class="@Nav("AdminApplications","Accepted")" asp-controller="AdminApplications" asp-action="Accepted">
-                            <i class="bi bi-check-circle"></i> Angenommen
-                        </a>
-                    }
-                    @if (canAppView || canAppManage)
-                    {
-                        <a class="@Nav("AdminApplications","List")" asp-controller="AdminApplications" asp-action="List">
-                            <i class="bi bi-list-ul"></i> Alle Bewerbungen
-                        </a>
-                    }
-                    @if (canAppMetrics)
-                    {
-                        <a class="@Nav("AdminApplications","Metrics")" asp-controller="AdminApplications" asp-action="Metrics">
-                            <i class="bi bi-bar-chart-line"></i> Metriken
-                        </a>
-                    }
-                </div>
-            }
 
             @if (canLeague)
             {

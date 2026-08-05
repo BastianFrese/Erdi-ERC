@@ -281,11 +281,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Application", "Apply")" asp-controller="Application" asp-action="Apply">
-                                <i class="bi bi-clipboard2-check nav-ico" aria-hidden="true"></i>Bewerbung
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link @IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">
                                 <i class="bi bi-calendar2-event-fill nav-ico" aria-hidden="true"></i>Events
                             </a>
@@ -331,7 +326,7 @@
                         </li>
                     </ul>
 
-                    <ul class="navbar-nav align-items-lg-center gap-2">
+                    <ul class="navbar-nav navbar-nav--auth align-items-lg-center gap-2">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
