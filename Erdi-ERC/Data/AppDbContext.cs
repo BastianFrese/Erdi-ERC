@@ -17,7 +17,6 @@ namespace <OWNER_HANDLE>_ERC.Data
         public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
         public DbSet<RealLifeEvent> RealLifeEvents => Set<RealLifeEvent>();
         public DbSet<RealLifeEventImage> RealLifeEventImages => Set<RealLifeEventImage>();
-        public DbSet<ApplicationForm> ApplicationForms => Set<ApplicationForm>();
         public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
         public DbSet<RaceUndoEntry> RaceUndoEntries => Set<RaceUndoEntry>();
         public DbSet<RaceReserveAssignment> RaceReserveAssignments => Set<RaceReserveAssignment>();
@@ -61,7 +60,6 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Name).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Description).HasMaxLength(1024);
                 b.Property(x => x.ArchivedName).HasMaxLength(128);
-                b.Property(x => x.ApplicationInfo).HasMaxLength(256);
                 b.Property(x => x.CurrentSeason).HasMaxLength(32);
 
                 b.HasMany(x => x.Standings)
@@ -75,52 +73,6 @@ namespace <OWNER_HANDLE>_ERC.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.Entity<ApplicationForm>(b =>
-            {
-                b.HasKey(x => x.Id);
-                b.Property(x => x.DiscordName).HasMaxLength(128).IsRequired();
-                b.Property(x => x.GamingName).HasMaxLength(128).IsRequired();
-                b.Property(x => x.Platform).HasMaxLength(64).IsRequired(false);
-                b.Property(x => x.Division).HasMaxLength(128).IsRequired(false);
-                b.Property(x => x.Role).HasMaxLength(64).IsRequired(false);
-                b.Property(x => x.ReviewNote).HasMaxLength(1000).IsRequired(false);
-                b.Property(x => x.AppliedLeagueId).HasMaxLength(64).IsRequired(false);
-                b.Property(x => x.AssignedLeagueId).HasMaxLength(64).IsRequired(false);
-                b.Property(x => x.SimHardware).HasMaxLength(64).IsRequired(false);
-                b.Property(x => x.PreferredTeam).HasMaxLength(64).IsRequired(false);
-                b.Property(x => x.PaceReference).HasMaxLength(256).IsRequired(false);
-                b.Property(x => x.RowVersion).IsRowVersion();
-                b.Property(x => x.IsFlagged).HasDefaultValue(false);
-                b.HasIndex(x => x.SubmittedAt);
-                // Häufige Filter: offene Liste (Status) + Status-Lookup pro Bewerber.
-                b.HasIndex(x => x.Status);
-                b.HasIndex(x => x.DiscordId);
-
-                // Dedup-Guard auf DB-Ebene: höchstens EINE aktive (nicht abgelehnte) Bewerbung
-                // pro DiscordId. MySQL kennt keine gefilterten Unique-Indizes, daher eine
-                // generierte Spalte, die für abgelehnte Bewerbungen NULL ist — mehrere NULLs
-                // kollidieren in einem Unique-Index nicht, eine erneute Bewerbung nach Ablehnung
-                // bleibt also möglich. (2 = ApplicationStatus.Rejected; Enum-Werte sind fixiert.)
-                b.Property<string?>("ActiveDiscordKey")
-                    .HasMaxLength(32)
-                    .HasComputedColumnSql("(CASE WHEN `Status` <> 2 THEN `DiscordId` ELSE NULL END)", stored: true);
-                b.HasIndex("ActiveDiscordKey").IsUnique();
-
-                // Bewerbung referenziert die beworbene Liga; beim Löschen der Liga bleibt
-                // die Bewerbung erhalten (Referenz wird genullt).
-                b.HasOne<League>()
-                    .WithMany()
-                    .HasForeignKey(x => x.AppliedLeagueId)
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                // Tatsächlich zugewiesene Liga (bei Annahme gesetzt) — gleiche Semantik:
-                // Liga weg → Referenz genullt, Bewerbung bleibt als Historie erhalten.
-                b.HasOne<League>()
-                    .WithMany()
-                    .HasForeignKey(x => x.AssignedLeagueId)
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
-
             modelBuilder.Entity<DriverStanding>(b =>
             {
                 b.HasKey(x => x.RowId);
@@ -131,6 +83,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.PointsAdjustment).HasDefaultValue(0);
                 // Hot-Query: Layout-Service & viele Controller filtern auf (LeagueId, Driver).
                 b.HasIndex(x => new { x.LeagueId, x.Driver });
+                b.HasIndex(x => new { x.LeagueId, x.DriverNumber }).IsUnique();
                 b.HasIndex(x => x.Driver);
             });
 
@@ -261,9 +214,11 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.HasKey(x => x.Id);
                 b.Property(x => x.LeagueId).HasMaxLength(64).IsRequired();
                 b.Property(x => x.Driver).HasMaxLength(128).IsRequired();
-                b.Property(x => x.PenaltyType).HasMaxLength(32).IsRequired();
+                b.Property(x => x.DriverNumber);
+                b.Property(x => x.PenaltyType).HasMaxLength(64).IsRequired();
                 b.Property(x => x.RaceTrack).HasMaxLength(128);
                 b.Property(x => x.SecondDriver).HasMaxLength(128);
+                b.Property(x => x.SecondDriverNumber);
                 b.Property(x => x.Incident).HasMaxLength(2048);
                 b.Property(x => x.Reason).HasMaxLength(1024).IsRequired();
                 b.Property(x => x.CreatedBy).HasMaxLength(128);
@@ -322,6 +277,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.PreferredPlatform).HasMaxLength(64);
                 b.Property(x => x.Nationality).HasMaxLength(64);
                 b.Property(x => x.Bio).HasMaxLength(512);
+                b.Property(x => x.DriverNumberColor).HasMaxLength(7);
                 // FindByDriverNameAsync lookup.
                 b.HasIndex(x => x.DisplayName);
                 b.HasMany(x => x.GamerTags)
