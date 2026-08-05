@@ -123,18 +123,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             detail.Achievements = DriverAchievementsHelper.Compute(detail, custom, defs.ToList()).ToList();
 
             ViewBag.Profile = profile;
+            ViewBag.NumberColor = _profiles.ResolveDriverNumberColor(profile);
             var isOwnProfile = string.Equals(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, profile.DiscordId, StringComparison.Ordinal);
             ViewBag.CanEditEaName = isOwnProfile;
 
-            // Eigene Bewerbung als Status-Block anzeigen (nur auf dem eigenen Profil — Privatsphäre).
-            if (isOwnProfile)
-            {
-                ViewBag.MyApplication = await _db.ApplicationForms
-                    .AsNoTracking()
-                    .Where(a => a.DiscordId == profile.DiscordId)
-                    .OrderByDescending(a => a.SubmittedAt)
-                    .FirstOrDefaultAsync();
-            }
             ViewBag.ProfileWall = await _db.ProfileWallMessages
                 .Where(x => x.ProfileDiscordId == profile.DiscordId)
                 .OrderByDescending(x => x.CreatedAt)
@@ -145,6 +137,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         [Authorize]
         [HttpPost, ValidateAntiForgeryToken]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("forms")]
         public async Task<IActionResult> UpdateEaName(string eaName, bool confirmEaNameAccuracy = false)
         {
             var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -213,9 +206,14 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             return RedirectToAction(nameof(Index), new { discordId });
         }
 
+        private static readonly System.Text.RegularExpressions.Regex HexColorRegex = new(
+            @"^***REMOVED***[0-9A-Fa-f]{6}$",
+            System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
         [Authorize]
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProfileMeta(string favoriteTrack, string? favoriteTeam, string inputDevice, string preferredPlatform, string nationality, string? bio, int? age = null)
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("forms")]
+        public async Task<IActionResult> UpdateProfileMeta(string favoriteTrack, string? favoriteTeam, string inputDevice, string preferredPlatform, string nationality, string? bio, int? age = null, string? driverNumberColor = null)
         {
             var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(discordId))
@@ -244,6 +242,11 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             profile.Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim()[..Math.Min(bio.Trim().Length, 512)];
             // Alter nur im plausiblen Bereich übernehmen, sonst löschen.
             profile.Age = age is >= 14 and <= 99 ? age : null;
+
+            // Fahrernummer-Farbe: gültige ***REMOVED***RRGGBB übernehmen, sonst leer lassen (Default greift).
+            var color = driverNumberColor?.Trim() ?? string.Empty;
+            profile.DriverNumberColor = HexColorRegex.IsMatch(color) ? color : null;
+
             profile.UpdatedAt = DateTime.UtcNow;
 
             try

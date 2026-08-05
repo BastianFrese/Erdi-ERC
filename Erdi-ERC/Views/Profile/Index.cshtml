@@ -63,11 +63,6 @@
     </button>
 </div>
 
-@{
-    var featured = ViewBag.FeaturedAchievement as <OWNER_HANDLE>_ERC.Models.Achievement;
-    var profile = ViewBag.Profile as <OWNER_HANDLE>_ERC.Models.DriverProfile;
-    int totalRaces = 0, top10Rate = 0;
-}
 @* Bewerbungs-Status-Block entfernt - System wird greenfield-rebuilt. *@
 
 @if (featured != null || profile is not null || totalRaces > 0)
