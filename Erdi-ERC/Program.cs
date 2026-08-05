@@ -552,8 +552,13 @@ using (var scope = app.Services.CreateScope())
     }
     catch { /* Erste Inbetriebnahme – DB existiert noch nicht, Migrate() legt alles an */ }
 
-    // Alle ausstehenden Migrationen anwenden (inkl. neue Tabellen)
-    db.Database.Migrate();
+    // Auto-Migrate NUR in Development. Auf Prod würde das beim App-Start
+    // unkontrolliert Schema-Änderungen fahren — Prod-Migrationen laufen
+    // explizit per `dotnet ef database update` auf dem Server (siehe Docs/MIGRATION-SAFETY.md).
+    if (app.Environment.IsDevelopment())
+    {
+        db.Database.Migrate();
+    }
 
     // Bestehende Admins ohne IsSuperAdmin=true → als SuperAdmin markieren (Upgrade-Pfad)
     var legacyAdmins = db.AdminUsers.AsTracking().Where(a => !a.IsSuperAdmin).ToList();
