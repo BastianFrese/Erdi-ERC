@@ -17,83 +17,6 @@ namespace <OWNER_HANDLE>_ERC.Services
             _options = options.Value;
         }
 
-        public async Task<DriverProfile> LinkApplicationAsync(ApplicationForm app, string? actorDiscordId, CancellationToken ct = default)
-        {
-            // Bewerbungen tragen aktuell keine Discord-Id mit. Wir nutzen den Discord-Namen als
-            // stabilen Schlüssel-Fallback (Format "name" / "name***REMOVED***1234") für ältere Bewerbungen.
-            // Sobald die Bewerbung eine echte DiscordId hat, wird die genutzt.
-            var discordId = !string.IsNullOrWhiteSpace(app.DiscordId)
-                ? app.DiscordId.Trim()
-                : "name:" + app.DiscordName.Trim();
-
-            var profile = await _db.DriverProfiles
-                .AsTracking()
-                .Include(p => p.GamerTags)
-                .FirstOrDefaultAsync(p => p.DiscordId == discordId, ct);
-
-            if (profile is null)
-            {
-                profile = new DriverProfile
-                {
-                    DiscordId = discordId,
-                    DiscordName = app.DiscordName,
-                    DisplayName = app.GamingName,
-                    PreferredPlatform = app.Platform?.Trim(),
-                    InputDevice = string.IsNullOrWhiteSpace(app.SimHardware) ? null : app.SimHardware.Trim(),
-                    FavoriteTeam = string.IsNullOrWhiteSpace(app.PreferredTeam) ? null : app.PreferredTeam.Trim(),
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                _db.DriverProfiles.Add(profile);
-            }
-            else
-            {
-                profile.DiscordName = app.DiscordName;
-                profile.UpdatedAt = DateTime.UtcNow;
-                if (string.IsNullOrWhiteSpace(profile.DisplayName))
-                    profile.DisplayName = app.GamingName;
-                if (string.IsNullOrWhiteSpace(profile.PreferredPlatform))
-                    profile.PreferredPlatform = app.Platform?.Trim();
-                // Hardware/Wunsch-Team aus der Bewerbung nur ergänzen, nie ein bestehendes
-                // (vom Admin/Fahrer gepflegtes) Profilfeld überschreiben.
-                if (string.IsNullOrWhiteSpace(profile.InputDevice) && !string.IsNullOrWhiteSpace(app.SimHardware))
-                    profile.InputDevice = app.SimHardware.Trim();
-                if (string.IsNullOrWhiteSpace(profile.FavoriteTeam) && !string.IsNullOrWhiteSpace(app.PreferredTeam))
-                    profile.FavoriteTeam = app.PreferredTeam.Trim();
-            }
-
-            if (!string.IsNullOrWhiteSpace(app.Platform) && !string.IsNullOrWhiteSpace(app.GamingName))
-            {
-                var platform = app.Platform.Trim();
-                var tag = app.GamingName.Trim();
-
-                var existing = profile.GamerTags
-                    .FirstOrDefault(t => string.Equals(t.Platform, platform, StringComparison.OrdinalIgnoreCase));
-
-                if (existing is null)
-                {
-                    profile.GamerTags.Add(new DriverGamerTag
-                    {
-                        DiscordId = discordId,
-                        Platform = platform,
-                        GamerTag = tag,
-                        IsPrimary = profile.GamerTags.Count == 0,
-                        LinkedAt = DateTime.UtcNow,
-                        LinkedByDiscordId = actorDiscordId
-                    });
-                }
-                else
-                {
-                    existing.GamerTag = tag;
-                    existing.LinkedAt = DateTime.UtcNow;
-                    existing.LinkedByDiscordId = actorDiscordId;
-                }
-            }
-
-            await _db.SaveChangesAsync(ct);
-            return profile;
-        }
-
         public async Task<IReadOnlyList<DriverNameSuggestion>> SuggestAsync(string query, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < _options.MinQueryLength)
@@ -175,6 +98,25 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         public Task<int> RenameEaNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default)
             => RenameIngameNameAsync(discordId, newName, actorDiscordId, ct);
+
+        private static readonly System.Text.RegularExpressions.Regex HexColorRegex = new(
+            "^***REMOVED***[0-9A-Fa-f]{6}$",
+            System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+        public string ResolveDriverNumberColor(DriverProfile profile)
+        {
+            if (profile is null) return "***REMOVED***e10600";
+
+            var explicitColor = profile.DriverNumberColor?.Trim();
+            if (!string.IsNullOrWhiteSpace(explicitColor) && HexColorRegex.IsMatch(explicitColor))
+                return explicitColor;
+
+            var team = <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.GetTeamByName(profile.FavoriteTeam);
+            if (!string.IsNullOrWhiteSpace(team?.PrimaryColor))
+                return team.PrimaryColor.Trim();
+
+            return "***REMOVED***e10600";
+        }
 
         public async Task<int> RenameIngameNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default)
         {
@@ -292,12 +234,6 @@ namespace <OWNER_HANDLE>_ERC.Services
                 .Where(x => x.Driver != null && x.Driver.Trim().ToLower() == oldLower)
                 .ToListAsync(ct);
             foreach (var a in achievements) { a.Driver = newName; changed++; }
-
-            var applications = await _db.ApplicationForms.AsTracking()
-                .Where(x => x.GamingName != null && x.GamingName.Trim().ToLower() == oldLower
-                    && ((x.DiscordId != null && x.DiscordId == profile.DiscordId) || x.DiscordName == profile.DiscordName))
-                .ToListAsync(ct);
-            foreach (var a in applications) { a.GamingName = newName; changed++; }
 
             return changed;
         }

@@ -20,12 +20,6 @@ namespace <OWNER_HANDLE>_ERC.Services
     public interface IDriverProfileService
     {
         /// <summary>
-        /// Legt ein Profil an oder aktualisiert es und verknüpft den eingetragenen
-        /// GamerTag der Bewerbung mit dem Discord-Profil.
-        /// </summary>
-        Task<DriverProfile> LinkApplicationAsync(ApplicationForm app, string? actorDiscordId, CancellationToken ct = default);
-
-        /// <summary>
         /// Liefert Vorschläge zu einer Eingabe (Exact-Match + Fuzzy via Levenshtein).
         /// </summary>
         Task<IReadOnlyList<DriverNameSuggestion>> SuggestAsync(string query, CancellationToken ct = default);
@@ -47,6 +41,12 @@ namespace <OWNER_HANDLE>_ERC.Services
         /// Gibt die Anzahl geänderter Referenzen zurück.
         /// </summary>
         Task<int> RenameIngameNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Liefert die effektive Farbe der Fahrernummer: explizit gespeicherte Farbe,
+        /// sonst Team-Primary-Farbe, sonst Default ***REMOVED***e10600.
+        /// </summary>
+        string ResolveDriverNumberColor(DriverProfile profile);
 
         /// <inheritdoc cref="RenameIngameNameAsync"/>
         [Obsolete("Use RenameIngameNameAsync")]
