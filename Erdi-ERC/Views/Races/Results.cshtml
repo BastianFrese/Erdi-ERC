@@ -35,6 +35,24 @@
 
 @if (leagues.Any())
 {
+    <a class="text-decoration-none d-block reveal mb-4" asp-controller="Races" asp-action="Constructors">
+        <div class="f1-constructors-hero f1-constructors-hero--compact">
+            <div class="f1-constructors-hero__lead">
+                <span class="f1-constructors-hero__eyebrow"><i class="bi bi-trophy-fill"></i> Gesamt-Meisterschaft</span>
+                <h2 class="f1-constructors-hero__title" style="font-size:clamp(1.3rem, 2.4vw, 1.8rem); margin:0;">
+                    Constructors <span class="f1-constructors-hero__title-em">aller Ligen</span>
+                </h2>
+                <p class="f1-constructors-hero__subtitle" style="font-size:.82rem; margin:.25rem 0 0;">
+                    Punkte aller Ligen mit Opt-in werden pro Team zusammengezählt.
+                    Berücksichtigte Ligen: <strong>@string.Join(" · ", leagues.Select(l => l.Name))</strong>.
+                </p>
+            </div>
+            <div class="f1-constructors-hero__podium" style="align-self:center;">
+                <span class="f1-constructors-hero__cta">Volle Constructors-Tabelle &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+            </div>
+        </div>
+    </a>
+
     <div class="f1-stat-grid reveal mb-4">
         <partial name="_F1StatTile" model="@(new F1StatTileVm {
             IconLucide = "flag",

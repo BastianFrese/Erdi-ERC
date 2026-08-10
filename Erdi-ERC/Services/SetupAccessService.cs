@@ -47,7 +47,10 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             if (mappings.Count == 0)
             {
-                return new SetupAccessResolution { Tier = 1, Success = false };
+                // Keine Rollen-Mappings konfiguriert -> kein Setup-Zugang (Tier 0), aber der
+                // User bleibt eingeloggt. Success=false würde in OnValidatePrincipal zum
+                // RejectPrincipal/SignOut führen (Logout bzw. Login-Loop).
+                return new SetupAccessResolution { Tier = 0, Success = true, IsOnCommunityGuild = false };
             }
 
             try

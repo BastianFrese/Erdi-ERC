@@ -15,17 +15,23 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
         private readonly ApplicationOptions _appOptions;
+        private readonly int[] _f1PointMap;
 
-        public StatsController(AppDbContext db, IWebHostEnvironment env, IOptions<ApplicationOptions> appOptions)
+        public StatsController(AppDbContext db, IWebHostEnvironment env, IOptions<ApplicationOptions> appOptions, IOptions<F1ScoringOptions> f1Scoring)
         {
             _db = db;
             _env = env;
             _appOptions = appOptions.Value;
+            var configuredMap = f1Scoring.Value.PointMap;
+            _f1PointMap = configuredMap is { Length: > 0 }
+                ? configuredMap
+                : new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
         }
 
         public async Task<IActionResult> <OWNER_HANDLE>10()
         {
             var leagues = await _db.Leagues
+                .AsNoTracking()
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
@@ -39,6 +45,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             }
 
             var upcomingLegs = await _db.RaceWeekendLegs
+                .AsNoTracking()
                 .Include(l => l.Weekend)
                 .Where(l => l.Date >= DateTime.Today)
                 .OrderBy(l => l.Date)
@@ -215,6 +222,16 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .OrderByDescending(x => x.Count)
                 .FirstOrDefault();
 
+            // Podiums-König: gemeinsame LINQ-Kette für Driver + Count, damit die Logik
+            // nicht viermal parallel läuft (Performance + Lesbarkeit).
+            var topPodium = races.SelectMany(r => r.Finishes)
+                .Where(f => f.Position is >= 1 and <= 3)
+                .GroupBy(f => f.Driver, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new { Driver = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .ThenBy(x => x.Driver)
+                .FirstOrDefault() ?? new { Driver = "-", Count = 0 };
+
             var vm = new HallOfFamePageViewModel
             {
                 Records = new List<HallOfFameRecordViewModel>()
@@ -243,22 +260,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                     new()
                     {
                         Title = "Meiste Podien",
-                        Driver = races.SelectMany(r => r.Finishes)
-                            .Where(f => f.Position is >= 1 and <= 3)
-                            .GroupBy(f => f.Driver, StringComparer.OrdinalIgnoreCase)
-                            .OrderByDescending(g => g.Count())
-                            .ThenBy(g => g.Key)
-                            .Select(g => g.Key)
-                            .FirstOrDefault() ?? "-",
-                        Value = races.SelectMany(r => r.Finishes)
-                            .Count(f => f.Position is >= 1 and <= 3 && string.Equals(f.Driver,
-                                races.SelectMany(rr => rr.Finishes)
-                                    .Where(ff => ff.Position is >= 1 and <= 3)
-                                    .GroupBy(ff => ff.Driver, StringComparer.OrdinalIgnoreCase)
-                                    .OrderByDescending(g => g.Count())
-                                    .ThenBy(g => g.Key)
-                                    .Select(g => g.Key)
-                                    .FirstOrDefault(), StringComparison.OrdinalIgnoreCase)).ToString(),
+                        Driver = topPodium.Driver,
+                        Value = topPodium.Count.ToString(),
                         Subtitle = "Podestplätze insgesamt"
                     }
                 }
@@ -658,7 +661,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                         return new
                         {
                             Team = teamName,
-                            Points = RaceTeamHelper.ComputeTeamPointsForLeague(league, teamName) ?? 0,
+                            Points = RaceTeamHelper.ComputeTeamPointsForLeague(league, teamName, _f1PointMap) ?? 0,
                             Wins = p1,
                             Podiums = p1 + p2 + p3,
                             RaceValues = raceValues

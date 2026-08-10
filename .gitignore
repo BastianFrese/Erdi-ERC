@@ -36,6 +36,9 @@ Thumbs.db
 ***REMOVED*** --- Sensitive config (NIE einchecken!) ---
 ***REMOVED*** appsettings.Production.json wird BEWUSST eingecheckt + gepublished,
 ***REMOVED*** Secrets dort daher NUR in einem privaten Repo eintragen!
+***REMOVED*** appsettings.Development.json enthält Discord-Secrets, Webhook-URL und Dev-DB-Passwort
+***REMOVED*** und wird lokal gehalten.
+appsettings.Development.json
 appsettings.Local.json
 appsettings.*.Local.json
 secrets.json

@@ -1,0 +1,148 @@
+@model <OWNER_HANDLE>_ERC.Models.OverallConstructorsViewModel
+@{
+    ViewData["Title"] = "Constructors · Gesamt-Meisterschaft";
+    var hasOverallLeagues = Model.OverallLeagueIds.Count > 0;
+    var topThree = Model.Rows.Take(3).ToList();
+    var leagueById = Model.OverallLeagueIds
+        .Zip(Model.OverallLeagueNames, (id, name) => new { Id = id, Name = name })
+        .ToDictionary(x => x.Id, x => x.Name, StringComparer.OrdinalIgnoreCase);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/constructors.css" asp-append-version="true" />
+}
+
+@if (!hasOverallLeagues)
+{
+    <div class="alert alert-warning" role="alert">
+        <strong>Noch keine Ligen aktiviert.</strong> Im Liga-Management muss pro Liga der Haken
+        "In Constructors-Gesamtwertung" gesetzt sein, damit ihre Punkte hier aggregiert werden.
+        Aktuell zählt keine Liga in die Übersicht.
+    </div>
+}
+
+<div class="f1-constructors-hero">
+    <div class="f1-constructors-hero__lead">
+        <span class="f1-constructors-hero__eyebrow"><i class="bi bi-trophy-fill"></i> Gesamt-Meisterschaft</span>
+        <h1 class="f1-constructors-hero__title">Constructors <span class="f1-constructors-hero__title-em">aller Ligen</span></h1>
+        <p class="f1-constructors-hero__subtitle">
+            Punkte aller Ligen mit Opt-in werden pro Team zusammengezählt.
+            @if (hasOverallLeagues)
+            {
+                <text>Berücksichtigte Ligen: <strong>@string.Join(" · ", Model.OverallLeagueNames)</strong>.</text>
+            }
+        </p>
+    </div>
+    <div class="f1-constructors-hero__podium">
+        @if (topThree.Count == 0)
+        {
+            <div class="f1-constructors-hero__podium-empty">Noch keine Rennergebnisse in den aktivierten Ligen.</div>
+        }
+        else
+        {
+            <div class="f1-constructors-podium">
+                @foreach (var row in topThree)
+                {
+                    <div class="f1-constructors-podium__step f1-constructors-podium__step--p@(row.Position)" style="--team-color:@row.PrimaryColor;">
+                        <div class="f1-constructors-podium__rank">P@(row.Position)</div>
+                        <div class="f1-constructors-podium__name">@row.DisplayName</div>
+                        <div class="f1-constructors-podium__pts"><strong>@row.Points</strong> <span>Pkt.</span></div>
+                        <div class="f1-constructors-podium__meta">@row.Wins Sieg · @row.Podiums Podest</div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="f1-card f1-card--constructors">
+    <div class="f1-card__head">
+        <h2 class="f1-card__title"><i class="bi bi-bar-chart-steps"></i> Volle Tabelle</h2>
+        <div class="f1-card__meta">@Model.Rows.Count Teams · @Model.TotalEvents Renn-Ergebnisse</div>
+    </div>
+
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="f1-card__empty">Es gibt noch keine Constructor-Punkte. Sobald ein Rennen in einer aktivierten Liga gefahren wurde, erscheint hier die Tabelle.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="f1-table f1-table--constructors">
+                <thead>
+                    <tr>
+                        <th class="col-pos">***REMOVED***</th>
+                        <th>Team</th>
+                        <th class="col-num">PTS</th>
+                        <th class="col-num" title="Gold / Silber / Bronze">P1 / P2 / P3</th>
+                        <th class="col-num">Top 5</th>
+                        <th class="col-num">Top 10</th>
+                        <th class="col-num">Best</th>
+                        <th class="col-num">Podest</th>
+                        <th class="col-num">Rennen</th>
+                        <th class="col-num">Ligen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td class="col-pos">
+                                <span class="f1-pos-badge f1-pos-badge--p@(row.Position)">@row.Position</span>
+                            </td>
+                            <td>
+                                <div class="f1-constructors-team">
+                                    <span class="f1-constructors-team__bar" style="background:@row.PrimaryColor;"></span>
+                                    <span class="f1-constructors-team__name">@row.DisplayName</span>
+                                    <button class="btn btn-link btn-sm f1-constructors-toggle" type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="***REMOVED***constructors-breakdown-@(row.CssKey)-@row.Position"
+                                            aria-controls="constructors-breakdown-@(row.CssKey)-@row.Position"
+                                            aria-expanded="false"
+                                            aria-label="Punkte pro Liga f&uuml;r @row.DisplayName aufklappen">
+                                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="col-num"><strong>@row.Points</strong></td>
+                            <td class="col-num">@row.Wins / @row.SecondPlaces / @row.ThirdPlaces</td>
+                            <td class="col-num">@row.Top5</td>
+                            <td class="col-num">@row.Top10</td>
+                            <td class="col-num">@(row.BestPosition > 0 ? ("P" + row.BestPosition) : "–")</td>
+                            <td class="col-num">@row.Podiums</td>
+                            <td class="col-num">@row.Events</td>
+                            <td class="col-num">@row.LeaguesRaced</td>
+                        </tr>
+                        <tr class="f1-constructors-breakdown-row">
+                            <td colspan="10" class="p-0">
+                                <div class="collapse" id="constructors-breakdown-@(row.CssKey)-@row.Position">
+                                    <div class="f1-constructors-breakdown">
+                                        <div class="f1-constructors-breakdown__title">Punkte pro Liga</div>
+                                        <ul class="f1-constructors-breakdown__list">
+                                            @foreach (var line in row.PerLeague)
+                                            {
+                                                <li>
+                                                    <span class="f1-constructors-breakdown__league">
+                                                        @(leagueById.TryGetValue(line.LeagueId, out var n) ? n : line.LeagueId)
+                                                    </span>
+                                                    <span class="f1-constructors-breakdown__pkt"><strong>@line.Points</strong> Pkt.</span>
+                                                    <span class="f1-constructors-breakdown__meta">
+                                                        @line.Events Rennen · @line.Wins Siege@(line.BestPosition > 0 ? $" · Best P{line.BestPosition}" : "")
+                                                    </span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<a class="btn btn-outline-secondary mt-4" asp-controller="Races" asp-action="Results">
+    <i class="bi bi-arrow-left me-1"></i> Zur Liga-Übersicht
+</a>

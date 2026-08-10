@@ -938,3 +938,81 @@
     .f1-btn::after,
     .f1-stat::after { animation: none !important; transition: none !important; }
 }
+
+/* =====================================================================
+   OVERALL CONSTRUCTORS · HOME-CHIP
+   Compact Top-3 Teaser, der unter "Letzte Sieger" eingeblendet wird und
+   auf /Races/Constructors verlinkt.
+   ===================================================================== */
+.f1-overall-chip {
+    margin-top: .8rem;
+    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    background: linear-gradient(135deg, rgba(245,158,11,.06) 0%, rgba(56,189,248,.05) 100%);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.f1-overall-chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-2, ***REMOVED***38bdf8);
+    box-shadow: 0 8px 24px -12px rgba(56,189,248,.5);
+}
+.f1-overall-chip .f1-timing-card__head {
+    margin-bottom: .55rem;
+}
+.f1-overall-chip__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+.f1-overall-chip__row {
+    display: grid;
+    grid-template-columns: 28px 4px 1fr auto;
+    align-items: center;
+    gap: .55rem;
+    padding: .35rem .35rem;
+    border-radius: var(--r-1, 4px);
+    background: rgba(255,255,255,.025);
+    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+}
+.f1-overall-chip__row:hover { background: rgba(255,255,255,.05); }
+.f1-overall-chip__pos {
+    width: 24px; height: 24px;
+    font-size: .72rem;
+}
+.f1-overall-chip__bar {
+    width: 4px; height: 18px;
+    border-radius: 2px;
+}
+.f1-overall-chip__name {
+    font: 700 .85rem/1.1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.f1-overall-chip__pts {
+    font: 700 .9rem/1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.f1-overall-chip__pts span {
+    font-size: .65rem;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    font-weight: 500;
+    margin-left: .15rem;
+}
+.f1-overall-chip__cta {
+    margin-top: .6rem;
+    padding-top: .55rem;
+    border-top: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    font: 600 .72rem/1 var(--ff-tech, "Inter", sans-serif);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--accent-2, ***REMOVED***38bdf8);
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}

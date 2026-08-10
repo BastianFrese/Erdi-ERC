@@ -396,8 +396,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             entity.DayOfWeek = isRecurring ? dayOfWeek : null;
             entity.TimeOfDay = isRecurring ? timeOfDay : null;
             entity.StartAt = isRecurring
-                ? ComputeNextOccurrence(dayOfWeek!.Value, timeOfDay!.Value, DateTime.Now)
-                : startAt!.Value;
+                ? ComputeNextOccurrenceUtc(dayOfWeek!.Value, timeOfDay!.Value, DateTime.UtcNow)
+                : DateTime.SpecifyKind(startAt!.Value, DateTimeKind.Utc);
             entity.DurationMinutes = Math.Max(1, durationMinutes);
             entity.Title = title.Trim();
             entity.Url = normalizedUrl;
@@ -430,11 +430,11 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             return RedirectToAction(nameof(StreamSchedules));
         }
 
-        private static DateTime ComputeNextOccurrence(int dayOfWeek, TimeSpan timeOfDay, DateTime from)
+        private static DateTime ComputeNextOccurrenceUtc(int dayOfWeek, TimeSpan timeOfDay, DateTime fromUtc)
         {
-            var daysUntil = ((dayOfWeek - (int)from.DayOfWeek) + 7) % 7;
-            var candidate = from.Date.AddDays(daysUntil).Add(timeOfDay);
-            if (candidate < from)
+            var daysUntil = ((dayOfWeek - (int)fromUtc.DayOfWeek) + 7) % 7;
+            var candidate = DateTime.SpecifyKind(fromUtc.Date.AddDays(daysUntil).Add(timeOfDay), DateTimeKind.Utc);
+            if (candidate < fromUtc)
             {
                 candidate = candidate.AddDays(7);
             }
@@ -446,7 +446,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         [HttpGet]
         [Authorize(Policy = "Admin.Community.Stewarding")]
-        public async Task<IActionResult> Stewarding(string? leagueFilter = null, string? typeFilter = null)
+        public async Task<IActionResult> Stewarding(
+            string? leagueFilter = null,
+            string? typeFilter = null,
+            string? driverLeagueFilter = null)
         {
             var query = _db.LeaguePenalties.AsQueryable();
 
@@ -469,20 +472,61 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             ViewBag.AllLeagues   = allLeagues;
             ViewBag.LeagueFilter = leagueFilter ?? "";
             ViewBag.TypeFilter   = typeFilter   ?? "";
+            ViewBag.DriverLeagueFilter = driverLeagueFilter ?? "";
 
-            var drivers = await _db.DriverStandings
-                .Where(x => !string.IsNullOrEmpty(x.Driver))
-                .Select(x => x.Driver)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync();
             var leagues = await _db.Leagues
                 .OrderBy(x => x.Id)
                 .Select(x => new { x.Id, x.Name })
                 .ToListAsync();
 
-            ViewBag.DriverList = drivers;
+            // Driver-Standings können optional auf eine Liga eingeschränkt werden, sodass
+            // das Create-Formular nur die Fahrer der gewählten Liga anbietet.
+            var driverQuery = _db.DriverStandings
+                .Where(x => !string.IsNullOrEmpty(x.Driver));
+            if (!string.IsNullOrWhiteSpace(driverLeagueFilter))
+            {
+                driverQuery = driverQuery.Where(x =>
+                    string.Equals(x.LeagueId, driverLeagueFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var driverStandings = await driverQuery
+                .Select(x => new { x.Driver, x.DriverNumber })
+                .Distinct()
+                .OrderBy(x => x.Driver)
+                .ToListAsync();
+
+            // Pro-Liga-Mapping für die Edit-Panels (jedes Dokument filtert auf seine eigene Liga).
+            // Wir laden die gefilterten DriverStandings einmalig (serverseitig) und gruppieren
+            // clientseitig. Ein korreliertes _db.DriverStandings.Where(...) innerhalb eines
+            // Select-Ausdrucks erzeugt OUTER APPLY, das Pomelo MySQL nicht übersetzt.
+            var allLeagueDriversRaw = await _db.DriverStandings
+                .Where(d => d.Driver != null && d.Driver != "")
+                .Select(d => new { d.LeagueId, d.Driver, d.DriverNumber })
+                .Distinct()
+                .OrderBy(d => d.Driver)
+                .ToListAsync();
+
+            var allDriversByLeague = allLeagueDriversRaw
+                .GroupBy(d => d.LeagueId ?? "", StringComparer.OrdinalIgnoreCase)
+                .Select(g => new
+                {
+                    LeagueId = g.Key,
+                    Drivers = g.ToList()
+                })
+                .OrderBy(x => x.LeagueId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            ViewBag.DriverNumberMap = driverStandings
+                .GroupBy(x => x.Driver, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().DriverNumber, StringComparer.OrdinalIgnoreCase);
+            ViewBag.DriverList = driverStandings
+                .Select(x => FormatDriverWithNumber(x.Driver, x.DriverNumber))
+                .ToList();
             ViewBag.LeagueList = leagues.Select(l => new { l.Id, l.Name }).ToList<dynamic>();
+            ViewBag.AllDriversByLeague = allDriversByLeague.ToDictionary(
+                x => x.LeagueId ?? "",
+                x => x.Drivers.Select(d => FormatDriverWithNumber(d.Driver, d.DriverNumber)).ToList(),
+                StringComparer.OrdinalIgnoreCase);
 
             return View("~/Views/Admin/Stewarding.cshtml");
         }
@@ -498,9 +542,10 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             int points,
             string? raceTrack,
             string? secondDriver,
+            bool isBetweenTwoDrivers,
             string? incident,
             string reason,
-            bool isPublic = true)
+            bool isPublic)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(driver) || string.IsNullOrWhiteSpace(reason))
             {
@@ -523,16 +568,22 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 _db.LeaguePenalties.Add(entity);
             }
 
-            entity.LeagueId     = leagueId.Trim();
-            entity.Date         = date;
-            entity.Driver       = driver.Trim();
-            entity.PenaltyType  = penaltyType.Trim();
-            entity.Points       = points;
-            entity.RaceTrack    = string.IsNullOrWhiteSpace(raceTrack) ? null : raceTrack.Trim();
-            entity.SecondDriver = string.IsNullOrWhiteSpace(secondDriver) ? null : secondDriver.Trim();
-            entity.Incident     = string.IsNullOrWhiteSpace(incident) ? null : incident.Trim();
-            entity.Reason       = reason.Trim();
-            entity.IsPublic     = isPublic;
+            var (driverName, driverNumber) = ParseDriverInput(driver);
+            var (secondDriverName, secondDriverNumber) = ParseDriverInput(secondDriver);
+
+            entity.LeagueId           = leagueId.Trim();
+            entity.Date               = date;
+            entity.Driver             = driverName;
+            entity.DriverNumber       = driverNumber ?? await ResolveDriverNumberAsync(driverName);
+            entity.PenaltyType        = penaltyType.Trim();
+            entity.Points             = points;
+            entity.RaceTrack          = string.IsNullOrWhiteSpace(raceTrack) ? null : raceTrack.Trim();
+            entity.SecondDriver       = secondDriverName;
+            entity.SecondDriverNumber = secondDriverNumber ?? await ResolveDriverNumberAsync(secondDriverName);
+            entity.IsBetweenTwoDrivers= isBetweenTwoDrivers;
+            entity.Incident           = string.IsNullOrWhiteSpace(incident) ? null : incident.Trim();
+            entity.Reason             = reason.Trim();
+            entity.IsPublic           = isPublic;
 
             await _db.SaveChangesAsync();
             await _audit.LogAsync(
@@ -541,7 +592,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 entity.Id.ToString(),
                 $"League={entity.LeagueId}, Driver={entity.Driver}, Type={entity.PenaltyType}, Points={entity.Points}, Public={entity.IsPublic}");
 
-            // Punkteabzug wirkt direkt auf die Tabelle → Liga neu berechnen.
+            // Zeitstrafe + Strafpunkte / Punkteabzug wirkt direkt auf die Tabelle → Liga neu berechnen.
             await RecalculateAfterPenaltyAsync(entity.LeagueId);
 
             TempData["AdminMessage"] = isNew ? "Strafe gespeichert." : "Strafe aktualisiert.";
@@ -598,6 +649,37 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             TempData["AdminMessage"] = entity.IsPublic ? "Strafe ist jetzt öffentlich." : "Strafe ist jetzt intern.";
             return RedirectToAction(nameof(Stewarding));
+        }
+
+        // ── Stewarding Helpers ────────────────────────────────────────────────────
+
+        private static string FormatDriverWithNumber(string driver, int? number) =>
+            number.HasValue ? $"{number.Value} - {driver}" : driver;
+
+        private static (string Name, int? Number) ParseDriverInput(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return (string.Empty, null);
+            var trimmed = input.Trim();
+
+            // Format "16 - Charles Leclerc" → Name = "Charles Leclerc", Number = 16
+            var dashIdx = trimmed.IndexOf(" - ");
+            if (dashIdx > 0 && int.TryParse(trimmed[..dashIdx], out var parsedNumber))
+            {
+                var name = trimmed[(dashIdx + 3)..].Trim();
+                return (name, parsedNumber);
+            }
+
+            return (trimmed, null);
+        }
+
+        private async Task<int?> ResolveDriverNumberAsync(string? driverName)
+        {
+            if (string.IsNullOrWhiteSpace(driverName)) return null;
+            var normalized = driverName.Trim();
+            var standing = await _db.DriverStandings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Driver == normalized);
+            return standing?.DriverNumber;
         }
     }
 }

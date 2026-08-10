@@ -2,6 +2,7 @@ using <OWNER_HANDLE>_ERC.Data;
 using <OWNER_HANDLE>_ERC.Helpers;
 using <OWNER_HANDLE>_ERC.Models;
 using <OWNER_HANDLE>_ERC.Options;
+using <OWNER_HANDLE>_ERC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -17,17 +18,32 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly BackgroundMusicOptions _backgroundMusic;
         private readonly IMemoryCache _cache;
+        private readonly OverallConstructorsService _overallConstructors;
+        private readonly IStreamScheduleQueryService _streamSchedules;
+        private readonly ILogger<HomeController> _logger;
+        private readonly int[] _f1PointMap;
 
         public HomeController(
             AppDbContext db,
             IWebHostEnvironment env,
             IOptions<BackgroundMusicOptions> backgroundMusic,
-            IMemoryCache cache)
+            IOptions<F1ScoringOptions> f1Scoring,
+            IMemoryCache cache,
+            OverallConstructorsService overallConstructors,
+            IStreamScheduleQueryService streamSchedules,
+            ILogger<HomeController> logger)
         {
             _db = db;
             _env = env;
             _backgroundMusic = backgroundMusic.Value;
+            var configuredMap = f1Scoring.Value.PointMap;
+            _f1PointMap = configuredMap is { Length: > 0 }
+                ? configuredMap
+                : new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
             _cache = cache;
+            _overallConstructors = overallConstructors;
+            _streamSchedules = streamSchedules;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -55,8 +71,24 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                     LeagueId = l.LeagueId
                 })
                 .FirstOrDefaultAsync();
-            ViewBag.NextStream = await GetNextStreamScheduleAsync();
+            ViewBag.NextStream = await _streamSchedules.GetNextStreamScheduleAsync();
             ViewBag.HasTrackSetups = await _db.TrackSetups.AnyAsync();
+
+            // Liga-übergreifende Constructors: Top-3 für den Chip auf der Startseite.
+            // Vollberechnung läuft nur einmal pro Request; das ist günstig genug, ohne
+            // einen eigenen Cache-Layer, weil die Seite ohnehin aggregiert rendert.
+            // Fail-open: Wenn die Aggregation hängt (z.B. defekte League-Daten), blenden
+            // wir den Chip einfach aus — die restliche Startseite muss weiterlaufen.
+            try
+            {
+                var overallRows = await _overallConstructors.ComputeAsync();
+                ViewBag.OverallConstructorsTop3 = overallRows.Take(3).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OverallConstructors.Top3 konnte nicht berechnet werden — Chip wird ausgeblendet.");
+                ViewBag.OverallConstructorsTop3 = new List<OverallConstructorRow>();
+            }
             ViewBag.CommunityNews = await _db.CommunityNewsPosts
                 .Where(x => x.IsPublished)
                 .OrderByDescending(x => x.IsPinned)
@@ -104,6 +136,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .ToList();
 
             var leaguesForWinners = await _db.Leagues
+                .AsNoTracking()
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
                 .Include(l => l.Standings)
@@ -148,7 +181,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                     var effectiveWinnerTeam = RaceTeamHelper.ResolveTeamForRaceDriver(l.Standings, lastRace, lastRace.Winner!);
                     var isReserveWinner = winnerStanding?.IsReserveDriver == true || !string.IsNullOrWhiteSpace(raceReserveMain);
                     var droveForMultipleTeams = isReserveWinner && RaceTeamHelper.HasDrivenForMultipleTeams(l, lastRace.Winner!);
-                    var teamPoints = droveForMultipleTeams ? null : RaceTeamHelper.ComputeTeamPointsForLeague(l, effectiveWinnerTeam);
+                    var teamPoints = droveForMultipleTeams ? null : RaceTeamHelper.ComputeTeamPointsForLeague(l, effectiveWinnerTeam, _f1PointMap);
 
                     return new
                     {
@@ -254,50 +287,5 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             return View("~/Views/Home/About.cshtml", profile);
         }
 
-        private async Task<StreamSchedule?> GetNextStreamScheduleAsync()
-        {
-            var schedules = await _db.StreamSchedules.ToListAsync();
-            if (schedules.Count == 0) return null;
-
-            // DateTime.Now (lokal), weil TimeOfDay in lokaler Serverzeit gespeichert ist.
-            // ToString("O") auf Local-Kind erzeugt +HH:mm-Offset statt Z → Browser interpretiert korrekt.
-            var now = DateTime.Now;
-
-            return schedules
-                .Select(x =>
-                {
-                    var nextStart = x.IsRecurring && x.DayOfWeek.HasValue && x.TimeOfDay.HasValue
-                        ? ComputeNextOccurrence(x.DayOfWeek.Value, x.TimeOfDay.Value, now)
-                        : x.StartAt;
-
-                    return new StreamSchedule
-                    {
-                        Id = x.Id,
-                        Title = x.Title,
-                        Url = x.Url,
-                        DurationMinutes = x.DurationMinutes,
-                        IsRecurring = x.IsRecurring,
-                        DayOfWeek = x.DayOfWeek,
-                        TimeOfDay = x.TimeOfDay,
-                        StartAt = nextStart,
-                        CreatedAt = x.CreatedAt
-                    };
-                })
-                .Where(x => x.StartAt >= now)
-                .OrderBy(x => x.StartAt)
-                .FirstOrDefault();
-        }
-
-        private static DateTime ComputeNextOccurrence(int dayOfWeek, TimeSpan timeOfDay, DateTime from)
-        {
-            var daysUntil = ((dayOfWeek - (int)from.DayOfWeek) + 7) % 7;
-            var candidate = from.Date.AddDays(daysUntil).Add(timeOfDay);
-            if (candidate < from)
-            {
-                candidate = candidate.AddDays(7);
-            }
-
-            return candidate;
-        }
     }
 }

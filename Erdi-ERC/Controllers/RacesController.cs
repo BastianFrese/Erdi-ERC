@@ -2,6 +2,7 @@ using <OWNER_HANDLE>_ERC.Data;
 using <OWNER_HANDLE>_ERC.Helpers;
 using <OWNER_HANDLE>_ERC.Models;
 using <OWNER_HANDLE>_ERC.Options;
+using <OWNER_HANDLE>_ERC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -13,11 +14,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
     {
         private readonly AppDbContext _db;
         private readonly ApplicationOptions _appOptions;
+        private readonly OverallConstructorsService _overallConstructors;
 
-        public RacesController(AppDbContext db, IOptions<ApplicationOptions> appOptions)
+        public RacesController(AppDbContext db, IOptions<ApplicationOptions> appOptions, OverallConstructorsService overallConstructors)
         {
             _db = db;
             _appOptions = appOptions.Value;
+            _overallConstructors = overallConstructors;
         }
 
         public async Task<IActionResult> Results()
@@ -48,6 +51,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             if (string.IsNullOrWhiteSpace(leagueId)) return NotFound();
 
             var league = await _db.Leagues
+                .AsNoTracking()
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
                 .Include(l => l.Standings)
@@ -67,11 +71,36 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             });
         }
 
+        /// <summary>
+        /// Liga-übergreifende Constructors-Meisterschaft. Aggregiert die Punkte aller Ligen
+        /// mit Opt-in <see cref="League.CountsTowardOverall"/> per <c>F1Team.CssKey</c>.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Constructors()
+        {
+            var overallRows = await _overallConstructors.ComputeAsync();
+
+            // Liste der berücksichtigten Ligen (für Subtitle / Banner) — Read-only, klein.
+            var leagues = await _db.Leagues
+                .AsNoTracking()
+                .Where(l => l.CountsTowardOverall)
+                .OrderBy(l => l.SortOrder)
+                .ThenBy(l => l.Name)
+                .Select(l => new { l.Id, l.Name })
+                .ToListAsync();
+
+            return View(new OverallConstructorsViewModel
+            {
+                Rows = overallRows,
+                OverallLeagueIds = leagues.Select(l => l.Id).ToList(),
+                OverallLeagueNames = leagues.Select(l => l.Name).ToList(),
+                TotalEvents = overallRows.Sum(r => r.Events)
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> RaceDetail(string leagueId, int raceId)
         {
-            if (string.IsNullOrWhiteSpace(leagueId) || raceId <= 0) return NotFound();
-
             var league = await _db.Leagues
                 .Include(l => l.Standings)
                 .FirstOrDefaultAsync(l => l.Id == leagueId);
@@ -141,6 +170,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         public async Task<IActionResult> AllRaces()
         {
             var leagues = await _db.Leagues
+                .AsNoTracking()
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .OrderBy(l => l.Name)
                 .ToListAsync();
