@@ -295,6 +295,11 @@
                                 <i class="bi bi-calendar-check-fill nav-ico" aria-hidden="true"></i>Kalender
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link @IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">
+                                <i class="bi bi-clipboard2-check nav-ico" aria-hidden="true"></i>Bewerbung
+                            </a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="***REMOVED***" id="partnerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-stars nav-ico" aria-hidden="true"></i>Partner
@@ -314,6 +319,10 @@
                                 <li><a class="dropdown-item" href="/about/erdi10">Über mich</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
                                 <li><a class="dropdown-item" asp-controller="Home" asp-action="Impressum">Impressum</a></li>
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <li><a class="dropdown-item" asp-controller="Application" asp-action="MyApplication"><i class="bi bi-clipboard2-check me-1"></i>Meine Bewerbungen</a></li>
+                                }
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
                                 <li><a class="dropdown-item" href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener"><OWNER_HANDLE>10 Shop</a></li>
@@ -864,6 +873,7 @@
             <div class="shortcut-row"><span>Alle Rennen</span><span class="shortcut-keys"><kbd>G</kbd><kbd>A</kbd></span></div>
             <div class="shortcut-row"><span>Setups</span><span class="shortcut-keys"><kbd>G</kbd><kbd>S</kbd></span></div>
             <div class="shortcut-row"><span>Events</span><span class="shortcut-keys"><kbd>G</kbd><kbd>E</kbd></span></div>
+            <div class="shortcut-row"><span>Bewerbung</span><span class="shortcut-keys"><kbd>G</kbd><kbd>B</kbd></span></div>
             <div class="shortcut-row"><span>Twitch</span><span class="shortcut-keys"><kbd>G</kbd><kbd>T</kbd></span></div>
             <div class="shortcut-row"><span>Diese Hilfe</span><span class="shortcut-keys"><kbd>?</kbd></span></div>
             <div class="shortcut-row"><span>Schließen</span><span class="shortcut-keys"><kbd>Esc</kbd></span></div>
@@ -883,6 +893,7 @@
                 a: '@Url.Action("AllRaces", "Races")',
                 s: '@Url.Action("TrackSetups", "Setups")',
                 e: '@Url.Action("Events", "Community")',
+                b: '@Url.Action("Apply", "Application")',
                 t: 'https://twitch.tv/erdi10'
             };
             let pendingG = false, gTimer = null;
