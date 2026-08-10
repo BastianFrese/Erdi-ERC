@@ -1,4 +1,4 @@
-@model System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.Application>
+@model <OWNER_HANDLE>_ERC.Controllers.MyApplicationsViewModel
 @using <OWNER_HANDLE>_ERC.Models
 @{
     ViewData["Title"] = "Meine Bewerbungen";
@@ -18,6 +18,9 @@
         ApplicationStatus.Rejected  => "Abgelehnt",
         _                          => s.ToString()
     };
+
+    var message = TempData["MyApplicationMessage"] as string;
+    var hasAnything = Model.Applications.Count > 0 || Model.WaitlistEntries.Count > 0;
 }
 
 @section Styles {
@@ -29,7 +32,7 @@
         <div class="app-hero__icon"><i class="bi bi-list-ul"></i></div>
         <div class="app-hero__title">
             <h1>Meine Bewerbungen</h1>
-            <p>Alle Bewerbungen, die du über Discord eingereicht hast.</p>
+            <p>Alle Bewerbungen und Wartelisten-Plätze, die du über Discord eingereicht hast.</p>
         </div>
         <div class="app-hero__action">
             <a class="btn btn-primary" asp-controller="Application" asp-action="Apply">
@@ -38,7 +41,14 @@
         </div>
     </div>
 
-    @if (Model == null || Model.Count == 0)
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="app-flash" role="status">
+            <i class="bi bi-info-circle-fill"></i> @message
+        </div>
+    }
+
+    @if (!hasAnything)
     {
         <div class="f1-panel app-empty">
             <i class="bi bi-inbox"></i>
@@ -50,38 +60,80 @@
     }
     else
     {
-        <div class="f1-panel" style="padding:0;overflow:hidden;">
-            <div class="app-table-wrap">
-                <table class="app-table">
-                    <thead>
-                        <tr>
-                            <th>Liga</th>
-                            <th>Rolle</th>
-                            <th>Gamer-Tag</th>
-                            <th>Plattform</th>
-                            <th>Eingereicht</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var app in Model.OrderByDescending(a => a.CreatedAt))
+        <div class="app-card-stack">
+            @foreach (var app in Model.Applications)
+            {
+                var isPending = app.Status == (int)ApplicationStatus.Pending;
+                <div class="f1-panel app-card">
+                    <div class="app-card__head">
+                        <span class="app-card__league">@(app.TargetLeague?.Name ?? app.TargetLeagueId)</span>
+                        <span class="@StatusChip(app.Status)">@StatusLabel(app.Status)</span>
+                    </div>
+                    <div class="app-card__meta">
+                        <span><i class="bi bi-person-badge"></i> @app.Role</span>
+                        <span><i class="bi bi-controller"></i> @app.GamerTag · @app.Platform</span>
+                        <span><i class="bi bi-calendar-plus"></i> Eingereicht @app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        @if (app.DecidedAt is not null)
                         {
-                            <tr>
-                                <td>
-                                    <span class="app-table__league">@(app.TargetLeague?.Name ?? app.TargetLeagueId)</span>
-                                </td>
-                                <td>@app.Role</td>
-                                <td>@app.GamerTag</td>
-                                <td>@app.Platform</td>
-                                <td class="app-table__date">@app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
-                                <td>
-                                    <span class="@StatusChip(app.Status)">@StatusLabel(app.Status)</span>
-                                </td>
-                            </tr>
+                            <span><i class="bi bi-calendar-check"></i> Entschieden @app.DecidedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
                         }
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(app.ReviewNote))
+                    {
+                        <div class="app-review-note">
+                            <span class="app-review-note__label"><i class="bi bi-chat-left-text"></i> Notiz vom Team</span>
+                            <blockquote>@app.ReviewNote</blockquote>
+                        </div>
+                    }
+                    @if (isPending)
+                    {
+                        <div class="app-card__actions">
+                            <form asp-controller="Application" asp-action="Withdraw" method="post"
+                                  onsubmit="return confirm('Bewerbung wirklich zurückziehen? Das kann nicht rückgängig gemacht werden.');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@app.Id" />
+                                <button type="submit" class="btn btn-ghost btn-sm app-btn-danger">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Bewerbung zurückziehen
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
         </div>
+
+        @if (Model.WaitlistEntries.Count > 0)
+        {
+            <h2 class="app-section-title"><i class="bi bi-hourglass-split"></i> Warteliste</h2>
+            <div class="app-card-stack">
+                @foreach (var entry in Model.WaitlistEntries)
+                {
+                    <div class="f1-panel app-card app-card--waitlist">
+                        <div class="app-waitlist-pos" aria-hidden="true">@entry.Position</div>
+                        <div class="app-card__body">
+                            <div class="app-card__head">
+                                <span class="app-card__league">@(entry.League?.Name ?? entry.LeagueId)</span>
+                                <span class="f1-chip f1-chip--amber">Position @entry.Position</span>
+                            </div>
+                            <div class="app-card__meta">
+                                <span><i class="bi bi-controller"></i> @entry.GamerTag · @entry.Platform</span>
+                                <span><i class="bi bi-calendar-plus"></i> Eingetragen @entry.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            </div>
+                            <p class="app-card__hint">Du rückst automatisch nach, sobald ein Stammfahrer-Platz frei wird und das Team dich promotet.</p>
+                            <div class="app-card__actions">
+                                <form asp-controller="Application" asp-action="LeaveWaitlist" method="post"
+                                      onsubmit="return confirm('Warteliste wirklich verlassen? Dein Platz geht verloren.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@entry.Id" />
+                                    <button type="submit" class="btn btn-ghost btn-sm app-btn-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Warteliste verlassen
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     }
 </div>

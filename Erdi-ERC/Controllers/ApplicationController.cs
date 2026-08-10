@@ -172,16 +172,60 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 return Challenge();
             }
 
-            var list = await _applications.ListAsync(
-                statusFilter: null,
-                leagueFilter: null,
-                skip: 0,
-                take: 50,
-                ct: HttpContext.RequestAborted);
-
-            var mine = list.Where(a => a.DiscordId == discordId).ToList();
-            return View("MyApplication", mine);
+            var vm = new MyApplicationsViewModel
+            {
+                Applications = await _applications.ListMineAsync(discordId, HttpContext.RequestAborted),
+                WaitlistEntries = await _applications.ListMyWaitlistAsync(discordId, HttpContext.RequestAborted),
+            };
+            return View("MyApplication", vm);
         }
+
+        // ── Withdraw (POST) ──────────────────────────────────────────────────────
+
+        [HttpPost("/Application/Withdraw")]
+        [ValidateAntiForgeryToken]
+        [EnableRateLimiting("forms")]
+        public async Task<IActionResult> Withdraw(string id)
+        {
+            var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(discordId))
+            {
+                return Challenge();
+            }
+
+            var result = await _applications.WithdrawAsync(id, discordId, HttpContext.RequestAborted);
+            TempData["MyApplicationMessage"] = result.Outcome == WithdrawOutcome.Ok
+                ? "Deine Bewerbung wurde zurückgezogen."
+                : result.Error;
+            return RedirectToAction(nameof(MyApplication));
+        }
+
+        // ── LeaveWaitlist (POST) ─────────────────────────────────────────────────
+
+        [HttpPost("/Application/LeaveWaitlist")]
+        [ValidateAntiForgeryToken]
+        [EnableRateLimiting("forms")]
+        public async Task<IActionResult> LeaveWaitlist(string id)
+        {
+            var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(discordId))
+            {
+                return Challenge();
+            }
+
+            var result = await _applications.LeaveWaitlistAsync(id, discordId, HttpContext.RequestAborted);
+            TempData["MyApplicationMessage"] = result.Outcome == WithdrawOutcome.Ok
+                ? "Du hast die Warteliste verlassen."
+                : result.Error;
+            return RedirectToAction(nameof(MyApplication));
+        }
+    }
+
+    /// <summary>ViewModel für MyApplication: eigene Bewerbungen + Wartelisten-Einträge.</summary>
+    public class MyApplicationsViewModel
+    {
+        public IReadOnlyList<Application> Applications { get; set; } = new List<Application>();
+        public IReadOnlyList<WaitlistEntry> WaitlistEntries { get; set; } = new List<WaitlistEntry>();
     }
 
     /// <summary>Eingabe-Modell für Apply GET/POST.</summary>
