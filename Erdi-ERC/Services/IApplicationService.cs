@@ -54,6 +54,51 @@ namespace <OWNER_HANDLE>_ERC.Services
         /// als Standing in der Liga, passiert nichts (AlreadyRegistered).
         /// </summary>
         Task<ManualRegisterResult> ManualRegisterAsync(ManualRegisterCommand cmd, string adminDiscordId, CancellationToken ct);
+
+        /// <summary>Eigene Bewerbungen des Users inkl. Liga, neueste zuerst.</summary>
+        Task<IReadOnlyList<Application>> ListMineAsync(string discordId, CancellationToken ct);
+
+        /// <summary>Eigene, noch nicht promotete Wartelisten-Einträge inkl. Liga, nach Position.</summary>
+        Task<IReadOnlyList<WaitlistEntry>> ListMyWaitlistAsync(string discordId, CancellationToken ct);
+
+        /// <summary>
+        /// Self-Service-Rückzug: löscht die eigene Bewerbung, nur solange sie Pending ist.
+        /// Audit + Webhook <see cref="WebhookEvents.ApplicationWithdrawn"/>.
+        /// </summary>
+        Task<WithdrawResult> WithdrawAsync(string applicationId, string discordId, CancellationToken ct);
+
+        /// <summary>
+        /// Self-Service: eigenen Wartelisten-Eintrag löschen; Positionen der Nachfolgenden
+        /// rücken transaktional nach (−1).
+        /// </summary>
+        Task<WithdrawResult> LeaveWaitlistAsync(string entryId, string discordId, CancellationToken ct);
+
+        /// <summary>Kapazitäts-Infos pro bewerbbarer Liga für die Liga-Karten im Formular.</summary>
+        Task<IReadOnlyList<LeagueCapacityInfo>> GetLeagueCapacityAsync(CancellationToken ct);
+    }
+
+    /// <summary>Belegungs-Snapshot einer Liga fürs Bewerbungsformular.</summary>
+    public record LeagueCapacityInfo(string LeagueId, int? Capacity, int OccupiedSeats, int WaitlistLength)
+    {
+        public bool IsFull => Capacity.HasValue && OccupiedSeats >= Capacity.Value;
+        public int? FreeSeats => Capacity.HasValue ? Math.Max(0, Capacity.Value - OccupiedSeats) : null;
+    }
+
+    /// <summary>Ergebnis von Withdraw/LeaveWaitlist.</summary>
+    public record WithdrawResult(WithdrawOutcome Outcome, string? Error)
+    {
+        public static WithdrawResult Ok() => new(WithdrawOutcome.Ok, null);
+        public static WithdrawResult NotFound() => new(WithdrawOutcome.NotFound, "Eintrag nicht gefunden.");
+        public static WithdrawResult NotOwner() => new(WithdrawOutcome.NotOwner, "Das ist nicht deine Bewerbung.");
+        public static WithdrawResult NotPending() => new(WithdrawOutcome.NotPending, "Nur offene Bewerbungen können zurückgezogen werden.");
+    }
+
+    public enum WithdrawOutcome
+    {
+        Ok = 0,
+        NotFound = 1,
+        NotOwner = 2,
+        NotPending = 3,
     }
 
     /// <summary>Eingabe für <see cref="IApplicationService.ManualRegisterAsync"/>.</summary>

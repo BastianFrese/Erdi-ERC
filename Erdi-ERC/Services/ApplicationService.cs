@@ -435,5 +435,110 @@ namespace <OWNER_HANDLE>_ERC.Services
                 throw;
             }
         }
+
+        // ── Self-Service (User) ───────────────────────────────────────────────────
+
+        public async Task<IReadOnlyList<Application>> ListMineAsync(string discordId, CancellationToken ct)
+        {
+            return await _db.Applications
+                .AsNoTracking()
+                .Include(a => a.TargetLeague)
+                .Where(a => a.DiscordId == discordId)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IReadOnlyList<WaitlistEntry>> ListMyWaitlistAsync(string discordId, CancellationToken ct)
+        {
+            return await _db.WaitlistEntries
+                .AsNoTracking()
+                .Include(w => w.League)
+                .Where(w => w.DiscordId == discordId && w.PromotedToApplicationId == null)
+                .OrderBy(w => w.Position)
+                .ToListAsync(ct);
+        }
+
+        public async Task<WithdrawResult> WithdrawAsync(string applicationId, string discordId, CancellationToken ct)
+        {
+            var app = await _db.Applications.AsTracking()
+                .Include(a => a.TargetLeague)
+                .FirstOrDefaultAsync(a => a.Id == applicationId, ct);
+            if (app is null) return WithdrawResult.NotFound();
+            if (!string.Equals(app.DiscordId, discordId, StringComparison.Ordinal)) return WithdrawResult.NotOwner();
+            if (app.Status != (int)ApplicationStatus.Pending) return WithdrawResult.NotPending();
+
+            _db.Applications.Remove(app);
+            await _audit.LogAsync("WithdrawApplication", "Application", app.Id,
+                $"League={app.TargetLeagueId}, User={discordId}");
+            await _db.SaveChangesAsync(ct);
+
+            await _webhookAuto.FireAsync(WebhookEvents.ApplicationWithdrawn, new()
+            {
+                ["DiscordName"] = app.DiscordName,
+                ["GamerTag"] = app.GamerTag,
+                ["League"] = app.TargetLeague?.Name ?? app.TargetLeagueId,
+                ["Role"] = app.Role,
+            });
+
+            return WithdrawResult.Ok();
+        }
+
+        public async Task<WithdrawResult> LeaveWaitlistAsync(string entryId, string discordId, CancellationToken ct)
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var entry = await _db.WaitlistEntries.AsTracking()
+                    .FirstOrDefaultAsync(w => w.Id == entryId, ct);
+                if (entry is null) return WithdrawResult.NotFound();
+                if (!string.Equals(entry.DiscordId, discordId, StringComparison.Ordinal)) return WithdrawResult.NotOwner();
+
+                var removedPosition = entry.Position;
+                var leagueId = entry.LeagueId;
+                _db.WaitlistEntries.Remove(entry);
+
+                // Nachfolgende rücken auf, damit die 1-basierte Reihenfolge lückenlos bleibt.
+                var followers = await _db.WaitlistEntries.AsTracking()
+                    .Where(w => w.LeagueId == leagueId && w.Position > removedPosition)
+                    .ToListAsync(ct);
+                foreach (var f in followers) f.Position--;
+
+                await _audit.LogAsync("LeaveWaitlist", "WaitlistEntry", entryId,
+                    $"League={leagueId}, Position={removedPosition}, User={discordId}");
+                await _db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                return WithdrawResult.Ok();
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<LeagueCapacityInfo>> GetLeagueCapacityAsync(CancellationToken ct)
+        {
+            var occupied = await _db.DriverStandings
+                .Where(s => !s.IsReserveDriver)
+                .GroupBy(s => s.LeagueId)
+                .Select(g => new { LeagueId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.LeagueId, x => x.Count, ct);
+
+            var waitlist = await _db.WaitlistEntries
+                .Where(w => w.PromotedToApplicationId == null)
+                .GroupBy(w => w.LeagueId)
+                .Select(g => new { LeagueId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.LeagueId, x => x.Count, ct);
+
+            var leagues = await _staticCache.GetApplicationLeaguesAsync(ct);
+            return leagues
+                .Select(l => new LeagueCapacityInfo(
+                    l.Id,
+                    l.Capacity,
+                    occupied.GetValueOrDefault(l.Id),
+                    waitlist.GetValueOrDefault(l.Id)))
+                .ToList();
+        }
     }
 }
