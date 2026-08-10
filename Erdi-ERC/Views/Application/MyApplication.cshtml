@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Meine Bewerbungen";
 
-    string StatusBadge(int s) => ((ApplicationStatus)s) switch
+    string StatusChip(int s) => ((ApplicationStatus)s) switch
     {
         ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
         ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
@@ -20,14 +20,18 @@
     };
 }
 
-<div class="myapply-page">
-    <div class="myapply-hero f1-panel">
-        <div class="myapply-hero__icon"><i class="bi bi-list-ul"></i></div>
-        <div class="myapply-hero__title">
-            <h1 class="m-0">Meine Bewerbungen</h1>
-            <p class="m-0 text-mute">Alle Bewerbungen, die du über Discord eingereicht hast.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/applications.css" asp-append-version="true" />
+}
+
+<div class="app-page">
+    <div class="app-hero">
+        <div class="app-hero__icon"><i class="bi bi-list-ul"></i></div>
+        <div class="app-hero__title">
+            <h1>Meine Bewerbungen</h1>
+            <p>Alle Bewerbungen, die du über Discord eingereicht hast.</p>
         </div>
-        <div class="myapply-hero__action">
+        <div class="app-hero__action">
             <a class="btn btn-primary" asp-controller="Application" asp-action="Apply">
                 <i class="bi bi-plus-lg"></i> Neue Bewerbung
             </a>
@@ -36,7 +40,7 @@
 
     @if (Model == null || Model.Count == 0)
     {
-        <div class="f1-panel myapply-empty">
+        <div class="f1-panel app-empty">
             <i class="bi bi-inbox"></i>
             <p>Du hast noch keine Bewerbung eingereicht.</p>
             <a class="btn btn-primary mt-3" asp-controller="Application" asp-action="Apply">
@@ -46,36 +50,38 @@
     }
     else
     {
-        <div class="myapply-list f1-panel">
-            <table class="myapply-table">
-                <thead>
-                    <tr>
-                        <th>Liga</th>
-                        <th>Rolle</th>
-                        <th>Gamer-Tag</th>
-                        <th>Plattform</th>
-                        <th>Eingereicht</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var app in Model.OrderByDescending(a => a.CreatedAt))
-                    {
+        <div class="f1-panel" style="padding:0;overflow:hidden;">
+            <div class="app-table-wrap">
+                <table class="app-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <strong>@(app.TargetLeague?.Name ?? app.TargetLeagueId)</strong>
-                            </td>
-                            <td>@app.Role</td>
-                            <td>@app.GamerTag</td>
-                            <td>@app.Platform</td>
-                            <td>@app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
-                            <td>
-                                <span class="@StatusBadge(app.Status)">@StatusLabel(app.Status)</span>
-                            </td>
+                            <th>Liga</th>
+                            <th>Rolle</th>
+                            <th>Gamer-Tag</th>
+                            <th>Plattform</th>
+                            <th>Eingereicht</th>
+                            <th>Status</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in Model.OrderByDescending(a => a.CreatedAt))
+                        {
+                            <tr>
+                                <td>
+                                    <span class="app-table__league">@(app.TargetLeague?.Name ?? app.TargetLeagueId)</span>
+                                </td>
+                                <td>@app.Role</td>
+                                <td>@app.GamerTag</td>
+                                <td>@app.Platform</td>
+                                <td class="app-table__date">@app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <span class="@StatusChip(app.Status)">@StatusLabel(app.Status)</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     }
 </div>

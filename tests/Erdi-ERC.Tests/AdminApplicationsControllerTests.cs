@@ -29,7 +29,8 @@ public class AdminApplicationsControllerTests
             new NoopWebhook(),
             cache,
             NullLogger<ApplicationService>.Instance);
-        var ctrl = new AdminApplicationsController(svc, cache, ctx.Db);
+        var ctrl = new AdminApplicationsController(svc, cache, ctx.Db,
+            Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions()));
         ctrl.TempData = new TempDataDictionary(new Microsoft.AspNetCore.Http.DefaultHttpContext(),
             new NullTempDataProvider());
         return ctrl;
@@ -268,6 +269,91 @@ public class AdminApplicationsControllerTests
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.NotNull(ctrl.TempData["AdminMessage"]);
         Assert.Empty(ctx.Db.Applications);
+    }
+
+    // ── ManualRegister ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ManualRegister_get_returnsViewWithPrefilledLeague()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var result = await ctrl.ManualRegister(leagueId: "pro");
+
+        var view = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<ManualRegisterInput>(view.Model);
+        Assert.Equal("pro", model.LeagueId);
+        Assert.NotNull(ctrl.ViewBag.Leagues);
+        Assert.NotNull(ctrl.ViewBag.AllowedPlatforms);
+    }
+
+    [Fact]
+    public async Task ManualRegister_post_registersDriver_andRedirects()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var input = new ManualRegisterInput
+        {
+            DiscordId = "123456789", DiscordName = "NewDriver", GamerTag = "NewTag",
+            Platform = "PC", LeagueId = "pro", Role = "Stammfahrer"
+        };
+        var result = await ctrl.ManualRegister(input);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(AdminApplicationsController.ManualRegister), redirect.ActionName);
+        Assert.NotNull(ctx.Db.DriverProfiles.SingleOrDefault(p => p.DiscordId == "123456789"));
+        Assert.NotNull(ctx.Db.DriverStandings.SingleOrDefault(s => s.Driver == "NewTag"));
+    }
+
+    [Fact]
+    public async Task ManualRegister_post_showsError_whenAlreadyRegistered()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        ctx.Db.DriverStandings.Add(new DriverStanding
+        {
+            LeagueId = "pro", Driver = "NewTag", Position = 0,
+            Points = 0, IsReserveDriver = false
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var input = new ManualRegisterInput
+        {
+            DiscordId = "123456789", DiscordName = "NewDriver", GamerTag = "NewTag",
+            Platform = "PC", LeagueId = "pro", Role = "Stammfahrer"
+        };
+        var result = await ctrl.ManualRegister(input);
+
+        var view = Assert.IsType<ViewResult>(result);
+        Assert.False(ctrl.ModelState.IsValid);
+        Assert.Empty(ctx.Db.DriverProfiles);
+    }
+
+    [Fact]
+    public async Task ManualRegister_post_returnsView_onInvalidModelState()
+    {
+        using var ctx = new SqliteTestContext();
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+        ctrl.ModelState.AddModelError("DiscordId", "required");
+
+        var result = await ctrl.ManualRegister(new ManualRegisterInput());
+
+        Assert.IsType<ViewResult>(result);
+        Assert.Empty(ctx.Db.DriverProfiles);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

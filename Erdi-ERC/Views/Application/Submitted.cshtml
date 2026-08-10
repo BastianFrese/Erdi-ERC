@@ -4,71 +4,66 @@
     var waitlistPos = TempData["WaitlistPosition"] as string;
     var discordWarn = (TempData["DiscordWarn"] as string) == "true";
     var discordWarnDetail = TempData["DiscordWarnDetail"] as string;
+
+    string iconClass, iconStyle, iconName, title, body;
+    switch (outcome)
+    {
+        case "Waitlisted":
+            iconClass = "app-submit-card__icon--wait";
+            iconStyle = "color:***REMOVED***ffb800;";
+            iconName = "bi-hourglass-split";
+            title = "Auf der Warteliste";
+            body = $"Die Liga ist aktuell voll. Du bist auf der Warteliste auf Position <strong>***REMOVED***{waitlistPos}</strong>. Wir melden uns, sobald ein Platz frei wird.";
+            break;
+        case "AlreadyPending":
+            iconClass = "app-submit-card__icon--info";
+            iconStyle = "color:***REMOVED***5b8cff;";
+            iconName = "bi-info-circle-fill";
+            title = "Bereits eingereicht";
+            body = "Du hast bereits eine offene Bewerbung für diese Liga. Schau in deiner Übersicht nach dem aktuellen Status.";
+            break;
+        case "AlreadyWaitlisted":
+            iconClass = "app-submit-card__icon--info";
+            iconStyle = "color:***REMOVED***5b8cff;";
+            iconName = "bi-info-circle-fill";
+            title = "Bereits auf der Warteliste";
+            body = "Du stehst für diese Liga bereits auf der Warteliste. Wir melden uns, sobald ein Platz frei wird.";
+            break;
+        default:
+            iconClass = "app-submit-card__icon--send";
+            iconStyle = "color:***REMOVED***22d3ee;";
+            iconName = "bi-send-check-fill";
+            title = "Bewerbung eingereicht";
+            body = "Vielen Dank! Wir prüfen deine Bewerbung und melden uns per Discord.";
+            break;
+    }
 }
 
-<div class="submit-page">
-    <div class="submit-card f1-panel">
-        <div class="submit-card__icon">
-            @switch (outcome)
-            {
-                case "Accepted":
-                    <i class="bi bi-check-circle-fill" style="color:***REMOVED***39ff14;"></i>
-                    break;
-                case "Waitlisted":
-                    <i class="bi bi-hourglass-split" style="color:***REMOVED***ffb800;"></i>
-                    break;
-                case "Duplicate":
-                case "AlreadyOpen":
-                    <i class="bi bi-info-circle-fill" style="color:***REMOVED***5b8cff;"></i>
-                    break;
-                default:
-                    <i class="bi bi-send-check-fill" style="color:***REMOVED***22d3ee;"></i>
-                    break;
-            }
-        </div>
-        <h1 class="submit-card__title">
-            @switch (outcome)
-            {
-                case "Accepted":          <text>Bewerbung angenommen</text> break;
-                case "Waitlisted":        <text>Auf der Warteliste</text> break;
-                case "Duplicate":         <text>Bereits eingereicht</text> break;
-                case "AlreadyOpen":       <text>Bewerbung läuft bereits</text> break;
-                default:                  <text>Bewerbung eingereicht</text> break;
-            }
-        </h1>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/applications.css" asp-append-version="true" />
+}
 
-        <div class="submit-card__body">
-            @switch (outcome)
-            {
-                case "Accepted":
-                    <p>Du bist als Fahrer aufgenommen – willkommen in der Liga!</p>
-                    break;
-                case "Waitlisted":
-                    <p>Die Liga ist aktuell voll. Du bist auf der Warteliste auf Position <strong>***REMOVED***@waitlistPos</strong>. Wir melden uns, sobald ein Platz frei wird.</p>
-                    break;
-                case "Duplicate":
-                    <p>Du hast dich kürzlich mit dem gleichen Gamer-Tag beworben. Wir prüfen das und melden uns.</p>
-                    break;
-                case "AlreadyOpen":
-                    <p>Du hast bereits eine offene Bewerbung. Schau in deiner Übersicht nach dem aktuellen Status.</p>
-                    break;
-                default:
-                    <p>Vielen Dank! Wir prüfen deine Bewerbung und melden uns per Discord.</p>
-                    break;
-            }
+<div class="app-page">
+    <div class="f1-panel app-submit-card">
+        <div class="app-submit-card__icon @iconClass">
+            <i class="bi @iconName" style="@iconStyle"></i>
+        </div>
+        <h1 class="app-submit-card__title">@title</h1>
+        <div class="app-submit-card__body">
+            <p>@Html.Raw(body)</p>
         </div>
 
         @if (discordWarn)
         {
-            <div class="submit-card__warn">
+            <div class="app-submit-card__warn">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <span>@(discordWarnDetail ?? "Discord-Beitritts-Warnung")</span>
             </div>
         }
 
-        <div class="submit-card__actions">
+        <div class="app-submit-card__actions">
             <a class="btn btn-primary" asp-controller="Application" asp-action="MyApplication">
-                <i class="bi bi-list-ul"></i> Meine Bewerbungen ansehen
+                <i class="bi bi-list-ul"></i> Meine Bewerbungen
             </a>
             <a class="btn btn-ghost" asp-controller="Home" asp-action="Index">
                 <i class="bi bi-house"></i> Zur Startseite

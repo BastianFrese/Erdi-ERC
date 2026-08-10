@@ -46,6 +46,43 @@ namespace <OWNER_HANDLE>_ERC.Services
         /// Warteliste sichtbar (Audit-Spur).
         /// </summary>
         Task<PromoteResult> PromoteFromWaitlistAsync(string waitlistEntryId, string adminDiscordId, CancellationToken ct);
+
+        /// <summary>
+        /// Registriert einen Fahrer direkt ohne Bewerbung (Admin-Aktion). Transaktional:
+        /// upsert DriverProfile + DriverGamerTag + DriverStanding + Audit. Kapazität wird
+        /// bewusst NICHT geprüft — der Admin entscheidet. Existiert der GamerTag bereits
+        /// als Standing in der Liga, passiert nichts (AlreadyRegistered).
+        /// </summary>
+        Task<ManualRegisterResult> ManualRegisterAsync(ManualRegisterCommand cmd, string adminDiscordId, CancellationToken ct);
+    }
+
+    /// <summary>Eingabe für <see cref="IApplicationService.ManualRegisterAsync"/>.</summary>
+    public record ManualRegisterCommand(
+        string DiscordId,
+        string DiscordName,
+        string GamerTag,
+        string Platform,
+        string LeagueId,
+        string Role);
+
+    /// <summary>Ergebnis einer manuellen Fahrer-Registrierung.</summary>
+    public record ManualRegisterResult(ManualRegisterOutcome Outcome, string? Error)
+    {
+        public static ManualRegisterResult Ok() =>
+            new(ManualRegisterOutcome.Ok, null);
+
+        public static ManualRegisterResult LeagueNotFound() =>
+            new(ManualRegisterOutcome.LeagueNotFound, "Liga nicht gefunden.");
+
+        public static ManualRegisterResult AlreadyRegistered() =>
+            new(ManualRegisterOutcome.AlreadyRegistered, "Dieser Gamer-Tag ist in der Liga bereits eingetragen.");
+    }
+
+    public enum ManualRegisterOutcome
+    {
+        Ok = 0,
+        LeagueNotFound = 1,
+        AlreadyRegistered = 2,
     }
 
     /// <summary>Eingabe für <see cref="IApplicationService.SubmitAsync"/>.</summary>

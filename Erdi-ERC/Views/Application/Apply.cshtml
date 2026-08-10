@@ -12,15 +12,16 @@
     var leagueInvite = DiscordGuildOptions.Value.LeagueInviteUrl;
 }
 
-<div class="apply-page">
-    <div class="apply-hero f1-panel">
-        <div class="apply-hero__icon"><i class="bi bi-envelope-paper-fill"></i></div>
-        <div class="apply-hero__title">
-            <h1 class="m-0">Bewerbung für eine Liga</h1>
-            <p class="m-0 text-mute">
-                Bewirb dich als <strong>Stammfahrer</strong>, <strong>Ersatzfahrer</strong> oder <strong>Probefahrer</strong>.
-                Wir schauen uns jede Bewerbung persönlich an.
-            </p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/applications.css" asp-append-version="true" />
+}
+
+<div class="app-page">
+    <div class="app-hero">
+        <div class="app-hero__icon"><i class="bi bi-envelope-paper-fill"></i></div>
+        <div class="app-hero__title">
+            <h1>Bewerbung</h1>
+            <p>Bewirb dich als <strong>Stammfahrer</strong>, <strong>Ersatzfahrer</strong> oder <strong>Probefahrer</strong>. Wir schauen uns jede Bewerbung persönlich an.</p>
         </div>
     </div>
 
@@ -37,38 +38,42 @@
 
     @if (leagues.Count == 0)
     {
-        <div class="f1-panel apply-empty">
+        <div class="f1-panel app-empty">
             <i class="bi bi-info-circle"></i>
             <p>Aktuell ist keine Liga für Bewerbungen geöffnet. Schau später wieder vorbei.</p>
         </div>
     }
     else
     {
-        <form asp-controller="Application" asp-action="Apply" method="post" class="apply-form f1-panel">
+        <form asp-controller="Application" asp-action="Apply" method="post" class="f1-panel app-form">
             @Html.AntiForgeryToken()
 
-            <div asp-validation-summary="ModelOnly" class="apply-validation-summary" role="alert"></div>
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="app-form__validation" asp-validation-summary="ModelOnly" role="alert"></div>
+            }
 
-            <div class="apply-form__row">
-                <div class="apply-form__field">
-                    <label class="apply-form__label" for="DiscordName">Discord-Name</label>
-                    <input id="DiscordName" name="DiscordName" class="apply-form__input" type="text"
+            <div class="app-form__grid">
+                @* Row 1: Discord-Name (readonly, full width) *@
+                <div class="app-form__field app-form__grid--full">
+                    <label class="app-form__label" for="DiscordName">Discord-Name</label>
+                    <input id="DiscordName" name="DiscordName" class="app-form__input" type="text"
                            value="@Model.DiscordName" readonly />
-                    <span class="apply-form__hint">Wird automatisch aus deinem Discord-Login übernommen.</span>
-                </div>
-            </div>
-
-            <div class="apply-form__row apply-form__row--split">
-                <div class="apply-form__field">
-                    <label class="apply-form__label" for="GamerTag">EA-Gamer-Tag *</label>
-                    <input id="GamerTag" name="GamerTag" class="apply-form__input" type="text"
-                           value="@Model.GamerTag" required maxlength="64" autocomplete="off" />
-                    <span class="apply-form__hint">Dein EA-ID-Nickname, wie er im Spiel angezeigt wird.</span>
+                    <span class="app-form__hint">Wird automatisch aus deinem Discord-Login übernommen.</span>
                 </div>
 
-                <div class="apply-form__field">
-                    <label class="apply-form__label" for="Platform">Plattform *</label>
-                    <select id="Platform" name="Platform" class="apply-form__select" required>
+                @* Row 2: GamerTag + Platform *@
+                <div class="app-form__field">
+                    <label class="app-form__label" for="GamerTag">EA-Gamer-Tag <span class="required">*</span></label>
+                    <input id="GamerTag" name="GamerTag" class="app-form__input" type="text"
+                           value="@Model.GamerTag" required maxlength="64" autocomplete="off"
+                           placeholder="Dein EA-ID-Nickname" />
+                    <span class="app-form__hint">Dein EA-ID-Nickname, wie er im Spiel angezeigt wird.</span>
+                </div>
+
+                <div class="app-form__field">
+                    <label class="app-form__label" for="Platform">Plattform <span class="required">*</span></label>
+                    <select id="Platform" name="Platform" class="app-form__select" required>
                         <option value="" disabled selected="@(string.IsNullOrEmpty(Model.Platform))">Bitte wählen</option>
                         @foreach (var p in platforms)
                         {
@@ -76,12 +81,11 @@
                         }
                     </select>
                 </div>
-            </div>
 
-            <div class="apply-form__row apply-form__row--split">
-                <div class="apply-form__field">
-                    <label class="apply-form__label" for="TargetLeagueId">Liga *</label>
-                    <select id="TargetLeagueId" name="TargetLeagueId" class="apply-form__select" required>
+                @* Row 3: Liga + Rolle *@
+                <div class="app-form__field">
+                    <label class="app-form__label" for="TargetLeagueId">Liga <span class="required">*</span></label>
+                    <select id="TargetLeagueId" name="TargetLeagueId" class="app-form__select" required>
                         <option value="" disabled selected="@(string.IsNullOrEmpty(Model.TargetLeagueId))">Bitte wählen</option>
                         @foreach (var league in leagues)
                         {
@@ -92,25 +96,24 @@
                     </select>
                 </div>
 
-                <div class="apply-form__field">
-                    <label class="apply-form__label" for="Role">Rolle *</label>
-                    <select id="Role" name="Role" class="apply-form__select" required>
+                <div class="app-form__field">
+                    <label class="app-form__label" for="Role">Rolle <span class="required">*</span></label>
+                    <select id="Role" name="Role" class="app-form__select" required>
                         <option value="Stammfahrer"   selected="@(string.Equals(Model.Role, "Stammfahrer",   StringComparison.OrdinalIgnoreCase))">Stammfahrer</option>
                         <option value="Ersatzfahrer"  selected="@(string.Equals(Model.Role, "Ersatzfahrer",  StringComparison.OrdinalIgnoreCase))">Ersatzfahrer</option>
                         <option value="Probefahrer"   selected="@(string.Equals(Model.Role, "Probefahrer",   StringComparison.OrdinalIgnoreCase))">Probefahrer</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="apply-form__row">
-                <div class="apply-form__field">
-                    <label class="apply-form__label" for="Motivation">Motivation (optional)</label>
-                    <textarea id="Motivation" name="Motivation" class="apply-form__textarea" rows="4"
-                              maxlength="1000" placeholder="Erzähl uns kurz, warum du mitfahren willst.">@Model.Motivation</textarea>
+                @* Row 4: Motivation (full width) *@
+                <div class="app-form__field app-form__grid--full">
+                    <label class="app-form__label" for="Motivation">Motivation <span style="color:var(--ink-4);font-weight:400;">(optional)</span></label>
+                    <textarea id="Motivation" name="Motivation" class="app-form__textarea" rows="4"
+                              maxlength="1000" placeholder="Erzähl uns kurz, warum du mitfahren willst…">@Model.Motivation</textarea>
                 </div>
             </div>
 
-            <div class="apply-form__actions">
+            <div class="app-form__actions">
                 <a class="btn btn-ghost" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-arrow-left"></i> Abbrechen
                 </a>
