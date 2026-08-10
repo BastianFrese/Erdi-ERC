@@ -6,16 +6,17 @@
     ViewData["Title"] = "Stewarding";
     string TypeColor(string t) => t switch
     {
-        "DSQ"         => "***REMOVED***ff6b6b",
-        "Punkteabzug" => "***REMOVED***ff8a4c",
-        "Zeitstrafe"  => "***REMOVED***ffb800",
-        "Gridstrafe"  => "***REMOVED***5b8cff",
-        "Verwarnung"  => "***REMOVED***c084fc",
-        _             => "***REMOVED***888"
+        "DSQ"                    => "***REMOVED***ff6b6b",
+        "Zeitstrafe + Strafpunkte"=> "***REMOVED***ff8a4c",
+        "Zeitstrafe"             => "***REMOVED***ffb800",
+        "Gridstrafe"             => "***REMOVED***5b8cff",
+        "Verwarnung"             => "***REMOVED***c084fc",
+        _                        => "***REMOVED***888"
     };
     var totalDocs = Model.Count;
     var dsqCount  = Model.Count(p => p.PenaltyType == "DSQ");
-    var ptsCount  = Model.Count(p => p.PenaltyType == "Punkteabzug");
+    var comboCount= Model.Count(p => p.PenaltyType == "Zeitstrafe + Strafpunkte");
+    var filterTypes = Model.Select(p => p.PenaltyType).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
 }
 
 @section Styles {
@@ -45,7 +46,7 @@
 .stw-item__body { flex: 1; min-width: 0; }
 .stw-item__driver { font: 700 .95rem/1.2 var(--ff-tech); color: var(--ink); margin: .25rem 0 .15rem; }
 .stw-item__meta { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .72rem; color: var(--ink-3); align-items: center; }
-.stw-item__reason { font-size: .74rem; color: var(--ink-3); margin-top: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 640px; }
+.stw-item__reason { font-size: .74rem; color: var(--ink-2); margin-top: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 640px; }
 .stw-item__docbadge { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .2rem; }
 .stw-item__docicon {
     width: 34px; height: 44px; background: ***REMOVED***fff; border: 1px solid ***REMOVED***ccc; border-radius: 2px;
@@ -113,7 +114,8 @@
 .fia-def__val { color: ***REMOVED***222; }
 .fia-def__decision { font-weight: 700; }
 .fia-def__decision-pts { color: ***REMOVED***c00; font-weight: 700; }
-.fia-def__reason p { margin: 0 0 .4rem; }
+.fia-def__reason { color: ***REMOVED***222; }
+.fia-def__reason p { margin: 0 0 .4rem; color: ***REMOVED***222; }
 .fia-def__reason p:last-child { margin: 0; }
 .fia-doc-footer { background: ***REMOVED***eeeee8; border-top: 1px solid ***REMOVED***ccc; padding: .45rem 1.1rem; font-size: 11px; color: ***REMOVED***666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .3rem; }
 .fia-doc-footer__stewards { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
@@ -145,10 +147,10 @@
         Sub       = "Disqualifikationen"
     })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm {
-        IconLucide = "minus-circle",
-        Label     = "Punktabz&***REMOVED***252;ge",
-        Value     = ptsCount.ToString(),
-        Sub       = "Punktestrafen"
+        IconLucide = "timer",
+        Label     = "Zeitstrafe +",
+        Value     = comboCount.ToString(),
+        Sub       = "Strafpunkte"
     })" />
 </div>
 
@@ -161,11 +163,10 @@
 
     <div class="stw-filters" id="stwFilters">
         <button class="stw-filter-btn active" data-filter="all">Alle</button>
-        <button class="stw-filter-btn" data-filter="DSQ">DSQ</button>
-        <button class="stw-filter-btn" data-filter="Zeitstrafe">Zeitstrafe</button>
-        <button class="stw-filter-btn" data-filter="Gridstrafe">Gridstrafe</button>
-        <button class="stw-filter-btn" data-filter="Punkteabzug">Punkteabzug</button>
-        <button class="stw-filter-btn" data-filter="Verwarnung">Verwarnung</button>
+        @foreach (var t in filterTypes)
+        {
+            <button class="stw-filter-btn" data-filter="@t">@t</button>
+        }
     </div>
 
     @if (!Model.Any())
@@ -185,7 +186,16 @@
                 <div class="stw-item" style="--item-color:@col;" data-type="@p.PenaltyType" onclick="openDoc(@p.Id)">
                     <div class="stw-item__body">
                         <span class="stw-item__type">@p.PenaltyType</span>
-                        <div class="stw-item__driver">@p.Driver</div>
+                        <div class="stw-item__driver">
+                            @if (p.DriverNumber.HasValue)
+                            {
+                                <span>@p.DriverNumber.Value – @p.Driver</span>
+                            }
+                            else
+                            {
+                                <span>@p.Driver</span>
+                            }
+                        </div>
                         <div class="stw-item__meta">
                             <code style="color:var(--sig-cyan);font-size:.7rem;">@p.LeagueId</code>
                             <span>@p.Date.ToString("dd.MM.yyyy")</span>
@@ -323,18 +333,21 @@
 @* JSON data island *@
 <script id="penaltiesData" type="application/json">
     @Html.Raw(JsonSerializer.Serialize(Model.Select(p => new {
-        id           = p.Id,
-        driver       = p.Driver,
-        leagueId     = p.LeagueId,
-        date         = p.Date.ToString("dd.MM.yyyy"),
-        penaltyType  = p.PenaltyType,
-        points       = p.Points,
-        raceTrack    = p.RaceTrack    ?? "",
-        secondDriver = p.SecondDriver ?? "",
-        incident     = p.Incident     ?? "",
-        reason       = p.Reason       ?? "",
-        createdBy    = p.CreatedBy    ?? "ERC Stewards",
-        createdAt    = p.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") + " Uhr"
+        id              = p.Id,
+        driver          = p.Driver,
+        driverNumber    = p.DriverNumber,
+        leagueId        = p.LeagueId,
+        date            = p.Date.ToString("dd.MM.yyyy"),
+        penaltyType     = p.PenaltyType,
+        points          = p.Points,
+        raceTrack       = p.RaceTrack       ?? "",
+        secondDriver    = p.SecondDriver    ?? "",
+        secondDriverNumber = p.SecondDriverNumber,
+        isBetweenTwoDrivers = p.IsBetweenTwoDrivers,
+        incident        = p.Incident        ?? "",
+        reason          = p.Reason          ?? "",
+        createdBy       = p.CreatedBy       ?? "ERC Stewards",
+        createdAt       = p.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") + " Uhr"
     })))
 </script>
 
@@ -360,20 +373,51 @@
         setText('fiaDocNum',     'Document ' + docNum);
         setText('fiaEvent',      gpLabel);
         setText('fiaEventDate',  p.date);
+        var mainDriverLine = p.driverNumber ? (p.driverNumber + ' \u2013 ' + p.driver) : p.driver;
+        var secondDriverLine = p.secondDriverNumber && p.secondDriver
+            ? (p.secondDriverNumber + ' \u2013 ' + p.secondDriver)
+            : (p.secondDriver || '');
+
         setText('fiaMetaTo',     p.driver + (p.secondDriver ? ' & ' + p.secondDriver : ''));
         setText('fiaMetaDocNum', docNum);
         setText('fiaMetaDate',   p.date);
         setText('fiaMetaTime',   timePart);
-        setText('fdDriver',      p.driver);
+        setText('fdDriver',      mainDriverLine);
         setText('fdLeague',      p.leagueId || '--');
         setText('fdDate',        p.date);
 
         if (p.raceTrack)    { setText('fdTrack',     p.raceTrack);    show('fdTrackRow'); } else { hide('fdTrackRow'); }
-        if (p.secondDriver) { setText('fd2ndDriver', p.secondDriver); show('fd2ndRow');   } else { hide('fd2ndRow');   }
-        if (p.incident)     { setText('fdFact',      p.incident);     show('fdFactRow');  } else { hide('fdFactRow');  }
+        if (p.secondDriver) { setText('fd2ndDriver', secondDriverLine); show('fd2ndRow');   } else { hide('fd2ndRow');   }
+
+        var factText = p.incident || '';
+        if (p.isBetweenTwoDrivers && p.secondDriver) {
+            var part1 = p.driverNumber ? ('Car ' + p.driverNumber + ' (' + p.driver + ')') : p.driver;
+            var part2 = p.secondDriverNumber ? ('Car ' + p.secondDriverNumber + ' (' + p.secondDriver + ')') : p.secondDriver;
+            var autoText = 'Incident between ' + part1 + ' and ' + part2 + '.';
+            factText = autoText + (factText ? ' ' + factText : '');
+        }
+        if (factText) { setText('fdFact', factText); show('fdFactRow'); } else { hide('fdFactRow'); }
 
         setText('fdOffence',  'Breach of ERC Sporting Regulations \u2014 ' + p.penaltyType + '.');
-        setText('fdDecision', p.penaltyType + ' imposed.');
+
+        var normalizedType = (p.penaltyType || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        var hasTime = normalizedType.indexOf('zeitstrafe') !== -1 || normalizedType.indexOf('time penalty') !== -1;
+        var hasPoints = normalizedType.indexOf('strafpunkte') !== -1 || normalizedType.indexOf('penalty points') !== -1 || normalizedType.indexOf('punkte') !== -1;
+        var decisionText = '--';
+        var penaltyPointsText = '';
+        if (hasTime && hasPoints) {
+            decisionText = 'Time penalty and ' + p.points + ' penalty points imposed.';
+            penaltyPointsText = p.points > 0 ? ' (-' + p.points + ' Championship penalty points.)' : '';
+        } else if (hasPoints) {
+            decisionText = p.points + ' penalty points imposed.';
+            penaltyPointsText = p.points > 0 ? ' (-' + p.points + ' Championship penalty points.)' : '';
+        } else if (hasTime) {
+            decisionText = 'Time penalty imposed.';
+        } else {
+            decisionText = p.penaltyType + ' imposed.';
+            penaltyPointsText = p.points > 0 ? ' (-' + p.points + ' Championship penalty points.)' : '';
+        }
+        setText('fdDecision', decisionText);
 
         var pts = document.getElementById('fdDecisionPts');
         if (p.points > 0) {

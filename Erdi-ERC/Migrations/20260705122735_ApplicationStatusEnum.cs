@@ -61,15 +61,13 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                 name: "IsRejected",
                 table: "ApplicationForms");
 
-            migrationBuilder.AddColumn<string>(
-                name: "ActiveDiscordKey",
-                table: "ApplicationForms",
-                type: "varchar(32)",
-                maxLength: 32,
-                nullable: true,
-                computedColumnSql: "(CASE WHEN `Status` <> 2 THEN `DiscordId` ELSE NULL END)",
-                stored: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+            // Workaround für Pomelo 9.0.0 / MariaDB: EF generiert für nullable generated
+            // columns ungültiges SQL (... AS ...) NULL). Hier manuell als VIRTUAL-Spalte.
+            migrationBuilder.Sql(@"
+                ALTER TABLE `ApplicationForms`
+                ADD COLUMN `ActiveDiscordKey` varchar(32) CHARACTER SET utf8mb4
+                AS (CASE WHEN `Status` <> 2 THEN `DiscordId` ELSE NULL END) VIRTUAL;
+            ");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ApplicationForms_ActiveDiscordKey",
@@ -171,15 +169,13 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                 name: "Status",
                 table: "ApplicationForms");
 
-            migrationBuilder.AddColumn<string>(
-                name: "ActiveDiscordKey",
-                table: "ApplicationForms",
-                type: "varchar(32)",
-                maxLength: 32,
-                nullable: true,
-                computedColumnSql: "(CASE WHEN `IsRejected` = 0 THEN `DiscordId` ELSE NULL END)",
-                stored: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+            // Workaround für Pomelo 9.0.0 / MariaDB: EF generiert für nullable generated
+            // columns ungültiges SQL (... AS ...) NULL). Hier manuell als VIRTUAL-Spalte.
+            migrationBuilder.Sql(@"
+                ALTER TABLE `ApplicationForms`
+                ADD COLUMN `ActiveDiscordKey` varchar(32) CHARACTER SET utf8mb4
+                AS (CASE WHEN `IsRejected` = 0 THEN `DiscordId` ELSE NULL END) VIRTUAL;
+            ");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ApplicationForms_ActiveDiscordKey",

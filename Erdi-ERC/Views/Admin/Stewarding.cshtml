@@ -10,17 +10,31 @@
     var allLeagues   = (ViewBag.AllLeagues  as List<string>)         ?? new();
     var leagueFilter = (ViewBag.LeagueFilter as string)              ?? "";
     var typeFilter   = (ViewBag.TypeFilter   as string)              ?? "";
+    var driverLeagueFilter = (ViewBag.DriverLeagueFilter as string)  ?? "";
+    var allDriversByLeague = (ViewBag.AllDriversByLeague
+        as Dictionary<string, List<string>>)
+        ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-    string[] penaltyTypes = ["Zeitstrafe", "Gridstrafe", "Punkteabzug", "DSQ", "Verwarnung"];
+    string[] suggestedTypes = ["DSQ", "Zeitstrafe", "Gridstrafe", "Verwarnung", "Zeitstrafe + Strafpunkte"];
+    var penaltyTypes = penalties.Select(p => p.PenaltyType)
+        .Concat(suggestedTypes)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(t => t)
+        .ToList();
+
+    string FormatDriverWithNumber(string? driver, int? number) =>
+        !string.IsNullOrWhiteSpace(driver) && number.HasValue
+            ? $"{number.Value} - {driver}"
+            : (driver ?? string.Empty);
 
     string TypeColor(string t) => t switch
     {
-        "DSQ"         => "***REMOVED***ff6b6b",
-        "Punkteabzug" => "***REMOVED***ff8a4c",
-        "Zeitstrafe"  => "***REMOVED***ffb800",
-        "Gridstrafe"  => "***REMOVED***5b8cff",
-        "Verwarnung"  => "***REMOVED***c084fc",
-        _             => "var(--ink-3)"
+        "DSQ"                    => "***REMOVED***ff6b6b",
+        "Zeitstrafe + Strafpunkte"=> "***REMOVED***ff8a4c",
+        "Zeitstrafe"             => "***REMOVED***ffb800",
+        "Gridstrafe"             => "***REMOVED***5b8cff",
+        "Verwarnung"             => "***REMOVED***c084fc",
+        _                        => "var(--ink-3)"
     };
     var total   = penalties.Count;
     var pub     = penalties.Count(x => x.IsPublic);
@@ -60,7 +74,8 @@
 .fia-preview__def-val { color: ***REMOVED***222; }
 .fia-preview__def-decision { font-weight: 700; }
 .fia-preview__def-pts { color: ***REMOVED***c00; font-weight: 700; }
-.fia-preview__def-reason p { margin: 0 0 .35rem; }
+.fia-preview__def-reason { color: ***REMOVED***222; }
+.fia-preview__def-reason p { margin: 0 0 .35rem; color: ***REMOVED***222; }
 .fia-preview__def-reason p:last-child { margin: 0; }
 .fia-preview__footer { background: ***REMOVED***eeeee8; border-top: 1px solid ***REMOVED***ccc; padding: .4rem .9rem; font-size: 10px; color: ***REMOVED***666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem; }
 .stw-doc-card { background: var(--surface-1); border: 1px solid var(--stroke-1); border-left: 4px solid var(--card-color, var(--stroke-1)); border-radius: var(--r-3); overflow: hidden; }
@@ -127,16 +142,32 @@
                 <form asp-controller="AdminCommunity" asp-action="SavePenalty" method="post" id="createForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="" />
+                    @* Liga kommt aus dem Liga-Filter-Select oberhalb (driverLeagueFilter) und
+                       wird beim Submit mit uebertragen. *@
+                    <input type="hidden" name="leagueId" id="f_leagueIdHidden" value="@driverLeagueFilter" />
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="adm-form-label">Liga / Meisterschaft *</label>
-                            <select class="form-select form-select-sm" name="leagueId" id="f_league" required>
-                                <option value="">-- Liga waehlen --</option>
-                                @foreach (var lg in leagueList)
+                            <form method="get" asp-controller="AdminCommunity" asp-action="Stewarding" id="f_leagueForm" class="m-0">
+                                @if (!string.IsNullOrEmpty(leagueFilter))
                                 {
-                                    <option value="@lg.Id">@lg.Name (@lg.Id)</option>
+                                    <input type="hidden" name="leagueFilter" value="@leagueFilter" />
                                 }
-                            </select>
+                                @if (!string.IsNullOrEmpty(typeFilter))
+                                {
+                                    <input type="hidden" name="typeFilter" value="@typeFilter" />
+                                }
+                                <select class="form-select form-select-sm" name="driverLeagueFilter" id="f_league" required>
+                                    <option value="">-- Liga waehlen --</option>
+                                    @foreach (var lg in leagueList)
+                                    {
+                                        <option value="@lg.Id" selected="@(string.Equals(lg.Id, driverLeagueFilter, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@lg.Name (@lg.Id)</option>
+                                    }
+                                </select>
+                            </form>
+                            <div style="font-size:.72rem;color:var(--ink-3);margin-top:.2rem;">
+                                <i class="bi bi-funnel me-1"></i>Treiberliste wird beim Auswaehlen der Liga gefiltert (Page-Reload).
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label class="adm-form-label">Strecke / Grand Prix</label>
@@ -149,6 +180,7 @@
                         <div class="col-md-6">
                             <label class="adm-form-label">Fahrer (No / Driver) *</label>
                             <input class="form-control form-control-sm" name="driver" id="f_driver" list="driverListDl" placeholder="z. B. 16 - Charles Leclerc" required />
+                            <span id="f_driver_num_badge" class="badge mt-1" style="display:none;background:rgba(0,229,255,.12);color:var(--sig-cyan);border:1px solid rgba(0,229,255,.35);"></span>
                             <datalist id="driverListDl">
                                 @foreach (var d in driverList) { <option value="@d" /> }
                             </datalist>
@@ -156,22 +188,31 @@
                         <div class="col-md-6">
                             <label class="adm-form-label">Zweiter beteiligter Fahrer</label>
                             <input class="form-control form-control-sm" name="secondDriver" id="f_driver2" list="driverListDl2" placeholder="Optional" />
+                            <span id="f_driver2_num_badge" class="badge mt-1" style="display:none;background:rgba(0,229,255,.12);color:var(--sig-cyan);border:1px solid rgba(0,229,255,.35);"></span>
                             <datalist id="driverListDl2">
                                 @foreach (var d in driverList) { <option value="@d" /> }
                             </datalist>
                         </div>
                         <div class="col-md-6">
-                            <label class="adm-form-label">Decision *</label>
-                            <select class="form-select form-select-sm" name="penaltyType" id="f_type" required>
-                                @foreach (var t in penaltyTypes)
-                                {
-                                    <option value="@t">@t</option>
-                                }
-                            </select>
+                            <label class="adm-form-label">Decision / Penalty Type *</label>
+                            <input class="form-control form-control-sm" list="penaltyTypeDl" name="penaltyType" id="f_type" required placeholder="z. B. Zeitstrafe + Strafpunkte" />
+                            <datalist id="penaltyTypeDl">
+                                @foreach (var t in suggestedTypes) { <option value="@t" /> }
+                            </datalist>
                         </div>
                         <div class="col-md-6">
-                            <label class="adm-form-label">Punkteabzug (0 = kein Abzug)</label>
+                            <label class="adm-form-label">Strafpunkte (0 = keine)</label>
                             <input class="form-control form-control-sm" type="number" name="points" id="f_points" value="0" min="0" step="1" />
+                        </div>
+                        <div class="col-12">
+                            <label class="adm-check-label">
+                                @* Hidden field must come before the checkbox so checked box overrides it. *@
+                                <input type="hidden" name="isBetweenTwoDrivers" value="false" />
+                                <input class="adm-checkbox" type="checkbox" name="isBetweenTwoDrivers" value="true" id="f_between" />
+                                <span class="adm-check-text">
+                                    <i class="bi bi-arrows-angle-expand me-1" style="color:***REMOVED***5b8cff;"></i>Vorfall zwischen 2 Fahrern
+                                </span>
+                            </label>
                         </div>
                         <div class="col-12">
                             <label class="adm-form-label">Fact <small class="text-muted">(Sachverhalt)</small></label>
@@ -184,6 +225,8 @@
                         </div>
                         <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
                             <label class="adm-check-label">
+                                @* Hidden field ensures unchecked checkbox posts false, not nothing. *@
+                                <input type="hidden" name="isPublic" value="false" />
                                 <input class="adm-checkbox" type="checkbox" name="isPublic" value="true" id="f_public" checked />
                                 <span class="adm-check-text">
                                     <i class="bi bi-eye-fill me-1" style="color:***REMOVED***39ff14;"></i>Sofort oeffentlich veroeffentlichen
@@ -382,7 +425,7 @@
                                 {
                                     <div class="stw-doc-card__reason"><i class="bi bi-chat-square-text me-1"></i>@p.Incident</div>
                                 }
-                                <div class="stw-doc-card__reason" style="font-style:normal;color:var(--ink-3);">@p.Reason</div>
+                                <div class="stw-doc-card__reason" style="font-style:normal;color:var(--ink);">@p.Reason</div>
                                 @if (!string.IsNullOrEmpty(p.CreatedBy))
                                 {
                                     <div style="font-size:.7rem;color:var(--ink-3);margin-top:.2rem;">
@@ -444,30 +487,39 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="adm-form-label">Fahrer *</label>
-                                    <input class="form-control form-control-sm" name="driver" value="@p.Driver" list="driverListEdit-@p.Id" required />
+                                    <input class="form-control form-control-sm" name="driver" value="@FormatDriverWithNumber(p.Driver, p.DriverNumber)" list="driverListEdit-@p.Id" required />
+                                    @{
+                                        var editDrivers = allDriversByLeague.TryGetValue(p.LeagueId, out var list)
+                                            ? list
+                                            : driverList;
+                                    }
                                     <datalist id="driverListEdit-@p.Id">
-                                        @foreach (var d in driverList) { <option value="@d" /> }
+                                        @foreach (var d in editDrivers) { <option value="@d" /> }
                                     </datalist>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="adm-form-label">Zweiter Fahrer</label>
-                                    <input class="form-control form-control-sm" name="secondDriver" value="@p.SecondDriver" list="driverListEdit2-@p.Id" />
+                                    <input class="form-control form-control-sm" name="secondDriver" value="@FormatDriverWithNumber(p.SecondDriver, p.SecondDriverNumber)" list="driverListEdit2-@p.Id" />
                                     <datalist id="driverListEdit2-@p.Id">
-                                        @foreach (var d in driverList) { <option value="@d" /> }
+                                        @foreach (var d in editDrivers) { <option value="@d" /> }
                                     </datalist>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="adm-form-label">Decision *</label>
-                                    <select class="form-select form-select-sm" name="penaltyType" required>
-                                        @foreach (var t in penaltyTypes)
-                                        {
-                                            <option value="@t" selected="@(t == p.PenaltyType ? "selected" : null)">@t</option>
-                                        }
-                                    </select>
+                                    <label class="adm-form-label">Decision / Penalty Type *</label>
+                                    <input class="form-control form-control-sm" list="penaltyTypeDl" name="penaltyType" value="@p.PenaltyType" required />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="adm-form-label">Punkteabzug</label>
+                                    <label class="adm-form-label">Strafpunkte</label>
                                     <input class="form-control form-control-sm" type="number" name="points" value="@p.Points" min="0" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="adm-check-label">
+                                        <input type="hidden" name="isBetweenTwoDrivers" value="false" />
+                                        <input class="adm-checkbox" type="checkbox" name="isBetweenTwoDrivers" value="true" @(p.IsBetweenTwoDrivers ? "checked" : "") />
+                                        <span class="adm-check-text">
+                                            <i class="bi bi-arrows-angle-expand me-1" style="color:***REMOVED***5b8cff;"></i>Vorfall zwischen 2 Fahrern
+                                        </span>
+                                    </label>
                                 </div>
                                 <div class="col-12">
                                     <label class="adm-form-label">Fact (Sachverhalt)</label>
@@ -479,6 +531,8 @@
                                 </div>
                                 <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
                                     <label class="adm-check-label">
+                                        @* Hidden field ensures unchecked checkbox posts false. *@
+                                        <input type="hidden" name="isPublic" value="false" />
                                         <input class="adm-checkbox" type="checkbox" name="isPublic" value="true"
                                                id="editPub-@p.Id" @(p.IsPublic ? "checked" : "") />
                                         <span class="adm-check-text">
@@ -500,6 +554,8 @@
 
 @section Scripts {
 <script>
+window.driverNumberMap = @(Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.DriverNumberMap as Dictionary<string, int?> ?? new Dictionary<string, int?>())));
+
 document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
     btn.addEventListener('click', function () {
         var panel = document.getElementById(btn.dataset.toggleEdit);
@@ -509,15 +565,29 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
 });
 
 (function () {
-    var fDate    = document.getElementById('f_date');
-    var fDriver  = document.getElementById('f_driver');
-    var fDriver2 = document.getElementById('f_driver2');
-    var fLeague  = document.getElementById('f_league');
-    var fTrack   = document.getElementById('f_track');
-    var fType    = document.getElementById('f_type');
-    var fPoints  = document.getElementById('f_points');
-    var fIncident= document.getElementById('f_incident');
-    var fReason  = document.getElementById('f_reason');
+    var fDate     = document.getElementById('f_date');
+    var fDriver   = document.getElementById('f_driver');
+    var fDriver2  = document.getElementById('f_driver2');
+    var fLeague   = document.getElementById('f_league');
+    var fLeagueHidden = document.getElementById('f_leagueIdHidden');
+    var fTrack    = document.getElementById('f_track');
+    var fType     = document.getElementById('f_type');
+    var fPoints   = document.getElementById('f_points');
+    var fIncident = document.getElementById('f_incident');
+    var fReason   = document.getElementById('f_reason');
+    var fBetween  = document.getElementById('f_between');
+    var fDriverNumBadge  = document.getElementById('f_driver_num_badge');
+    var fDriver2NumBadge = document.getElementById('f_driver2_num_badge');
+
+    // Liga-Select triggert Page-Reload (GET) mit driverLeagueFilter-Query,
+    // wodurch die Driver-Datalist serverseitig neu gefiltert wird.
+    if (fLeague) {
+        fLeague.addEventListener('change', function () {
+            if (fLeagueHidden) fLeagueHidden.value = fLeague.value;
+            var form = document.getElementById('f_leagueForm');
+            if (form) form.submit();
+        });
+    }
 
     function fmt(iso) {
         if (!iso) return '--';
@@ -530,6 +600,20 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
     }
     function set(id, v) { var e = document.getElementById(id); if (e) e.textContent = v || '--'; }
 
+    function parseDriver(input) {
+        var trimmed = (input || '').trim();
+        if (!trimmed) return { name: '', number: null };
+        var m = trimmed.match(/^(\d+)\s+-\s+(.+)$/);
+        if (m) return { name: m[2].trim(), number: parseInt(m[1], 10) };
+        return { name: trimmed, number: window.driverNumberMap ? (window.driverNumberMap[trimmed] || null) : null };
+    }
+
+    function showBadge(el, number) {
+        if (!el) return;
+        if (number) { el.textContent = 'No. ' + number; el.style.display = 'inline-block'; }
+        else { el.style.display = 'none'; }
+    }
+
     function buildReason(raw) {
         var el = document.getElementById('pv_reason');
         if (!el) return;
@@ -541,36 +625,76 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
     }
 
     function update() {
-        var driver  = fDriver.value.trim() || '--';
-        var driver2 = fDriver2.value.trim();
+        var d1      = parseDriver(fDriver.value);
+        var d2      = parseDriver(fDriver2.value);
+        var driver  = d1.name || '--';
+        var driver2 = d2.name;
         var leagueId= fLeague.value || '--';
         var track   = fTrack.value.trim();
         var type    = fType.value || '--';
         var pts     = parseInt(fPoints.value || '0', 10);
         var incident= fIncident.value.trim();
         var reason  = fReason.value.trim();
+        var between = fBetween && fBetween.checked;
         var dateVal = fDate.value;
         var t       = nowTime();
+
+        showBadge(fDriverNumBadge, d1.number);
+        showBadge(fDriver2NumBadge, d2.number);
 
         set('pv_gp', track ? track.toUpperCase()+' GRAND PRIX' : (leagueId !== '--' ? leagueId.toUpperCase() : '--'));
         set('pv_date', fmt(dateVal));
         set('pv_metadate', fmt(dateVal));
         set('pv_time', t); set('pv_time2', t);
         set('pv_ts', fmt(dateVal)+' '+t);
-        set('pv_to', driver2 ? driver+' & '+driver2 : driver);
-        set('pv_driver', driver);
+
+        var toLine = driver;
+        if (driver2) toLine += ' & ' + driver2;
+        set('pv_to', toLine);
+
+        var noDriverLine = driver;
+        if (d1.number) noDriverLine = d1.number + ' – ' + driver;
+        set('pv_driver', noDriverLine);
         set('pv_league', leagueId !== '--' ? leagueId : '--');
 
         var factRow = document.getElementById('pv_factRow');
-        if (incident) { set('pv_fact', incident); factRow.style.display = ''; }
+        var factText = incident;
+        if (between && driver2) {
+            var part1 = d1.number ? 'Car ' + d1.number + ' (' + driver + ')' : driver;
+            var part2 = d2.number ? 'Car ' + d2.number + ' (' + driver2 + ')' : driver2;
+            var autoText = 'Incident between ' + part1 + ' and ' + part2 + '.';
+            factText = autoText + (factText ? ' ' + factText : '');
+        }
+        if (factText) { set('pv_fact', factText); factRow.style.display = ''; }
         else { factRow.style.display = 'none'; }
 
-        set('pv_offence', '--');
+        set('pv_offence', type !== '--' ? 'Breach of ERC Sporting Regulations — ' + type + '.' : '--');
 
-        set('pv_decision', type !== '--' ? type+' imposed.' : '--');
         var ptsEl = document.getElementById('pv_pts');
-        if (pts > 0) { ptsEl.textContent = ' (-'+pts+' Championship points deducted.)'; ptsEl.style.display = 'inline'; }
-        else { ptsEl.textContent = ''; ptsEl.style.display = 'none'; }
+        var decisionText = '--';
+        var penaltyPointsText = '';
+        var normalizedType = type.toLowerCase().replace(/\s+/g, ' ').trim();
+        var hasTime = normalizedType.indexOf('zeitstrafe') !== -1 || normalizedType.indexOf('time penalty') !== -1;
+        var hasPoints = normalizedType.indexOf('strafpunkte') !== -1 || normalizedType.indexOf('penalty points') !== -1 || normalizedType.indexOf('punkte') !== -1;
+
+        if (type !== '--') {
+            if (hasTime && hasPoints) {
+                decisionText = 'Time penalty and ' + pts + ' penalty points imposed.';
+                penaltyPointsText = pts > 0 ? ' (-' + pts + ' Championship penalty points.)' : '';
+            } else if (hasPoints) {
+                decisionText = pts + ' penalty points imposed.';
+                penaltyPointsText = pts > 0 ? ' (-' + pts + ' Championship penalty points.)' : '';
+            } else if (hasTime) {
+                decisionText = 'Time penalty imposed.';
+                penaltyPointsText = '';
+            } else {
+                decisionText = type + ' imposed.';
+                penaltyPointsText = pts > 0 ? ' (-' + pts + ' Championship penalty points.)' : '';
+            }
+        }
+        set('pv_decision', decisionText);
+        ptsEl.textContent = penaltyPointsText;
+        ptsEl.style.display = penaltyPointsText ? 'inline' : 'none';
 
         buildReason(reason);
     }
@@ -579,6 +703,7 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
         if (el) { el.addEventListener('input', update); el.addEventListener('change', update); }
     });
     if (fReason) fReason.addEventListener('input', update);
+    if (fBetween) fBetween.addEventListener('change', update);
     update();
 })();
 </script>

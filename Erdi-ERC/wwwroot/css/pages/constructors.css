@@ -1,0 +1,306 @@
+/* =====================================================================
+   PAGE · OVERALL CONSTRUCTORS
+   Liga-übergreifende Constructors-Meisterschaft — F1-Broadcast-Style.
+   Erweitert pages/home-index.css + pages/results.css + pages/league-results.css.
+   ===================================================================== */
+
+/* ---------- Hero ---------- */
+.f1-constructors-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: var(--r-3, 12px);
+    background: linear-gradient(135deg, var(--surface-1, ***REMOVED***161821) 0%, var(--surface-2, ***REMOVED***1c1f2c) 100%);
+    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    box-shadow: var(--sh-2, 0 4px 12px rgba(0,0,0,.35));
+    margin-bottom: 1.25rem;
+}
+@media (max-width: 767.98px) {
+    .f1-constructors-hero {
+        grid-template-columns: 1fr;
+    }
+}
+.f1-constructors-hero__eyebrow {
+    font: 700 .68rem/1 var(--ff-tech, "Inter", sans-serif);
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--sig-cyan, ***REMOVED***38bdf8);
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-bottom: .4rem;
+}
+.f1-constructors-hero__title {
+    font: 800 clamp(1.6rem, 3vw, 2.4rem)/1.05 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    margin: 0 0 .35rem;
+    letter-spacing: -.01em;
+}
+.f1-constructors-hero__title-em {
+    background: linear-gradient(90deg, var(--accent-1, ***REMOVED***f59e0b), var(--accent-2, ***REMOVED***38bdf8));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.f1-constructors-hero__subtitle {
+    color: var(--ink-3, ***REMOVED***cbd5e1);
+    font: 500 .9rem/1.5 var(--ff-body, "Inter", sans-serif);
+    margin: 0;
+    max-width: 56ch;
+}
+
+/* ---------- Podium ---------- */
+.f1-constructors-podium {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: end;
+    gap: .6rem;
+}
+.f1-constructors-podium__step {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    border-top: 3px solid var(--team-color, var(--accent-1, ***REMOVED***f59e0b));
+    border-radius: var(--r-2, 8px);
+    padding: .65rem .7rem;
+    text-align: center;
+    box-shadow: 0 0 22px -10px var(--team-color, transparent);
+}
+.f1-constructors-podium__step--p1 {
+    padding-bottom: 1.1rem;
+    background: rgba(245,158,11,.07);
+}
+.f1-constructors-podium__step--p2 { padding-bottom: .85rem; }
+.f1-constructors-podium__step--p3 { padding-bottom: .7rem; }
+
+.f1-constructors-podium__rank {
+    font: 700 .68rem/1 var(--ff-tech, "Inter", sans-serif);
+    letter-spacing: .2em;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    margin-bottom: .25rem;
+}
+.f1-constructors-podium__name {
+    font: 800 1rem/1.15 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    margin-bottom: .25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.f1-constructors-podium__pts {
+    font: 700 1.2rem/1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+}
+.f1-constructors-podium__pts span {
+    font-size: .72rem;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    font-weight: 500;
+    margin-left: .15rem;
+}
+.f1-constructors-podium__meta {
+    font: 500 .68rem/1 var(--ff-body, "Inter", sans-serif);
+    color: var(--ink-3, ***REMOVED***cbd5e1);
+    margin-top: .2rem;
+}
+.f1-constructors-hero__podium-empty {
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    text-align: center;
+    padding: 1.25rem;
+    font-size: .9rem;
+}
+
+/* ---------- Card + Table ---------- */
+.f1-card--constructors {
+    background: var(--surface-1, ***REMOVED***161821);
+    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    border-radius: var(--r-3, 12px);
+    box-shadow: var(--sh-2, 0 4px 12px rgba(0,0,0,.25));
+}
+.f1-card--constructors .f1-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+}
+.f1-card--constructors .f1-card__title {
+    font: 700 1.05rem/1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    margin: 0;
+}
+.f1-card--constructors .f1-card__meta {
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    font: 500 .78rem/1 var(--ff-body, "Inter", sans-serif);
+}
+.f1-card--constructors .f1-card__empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+}
+
+.f1-table--constructors {
+    width: 100%;
+    border-collapse: collapse;
+}
+.f1-table--constructors th,
+.f1-table--constructors td {
+    padding: .65rem .9rem;
+    font: 500 .82rem/1.2 var(--ff-body, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    border-bottom: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    text-align: left;
+    vertical-align: middle;
+}
+.f1-table--constructors thead th {
+    font: 700 .68rem/1 var(--ff-tech, "Inter", sans-serif);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    background: rgba(255,255,255,.02);
+}
+.f1-table--constructors tbody tr:hover {
+    background: rgba(255,255,255,.02);
+}
+.f1-table--constructors .col-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.f1-table--constructors .col-pos {
+    width: 56px;
+}
+
+.f1-pos-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    font: 800 .82rem/1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    border: 1px solid var(--stroke-2, ***REMOVED***3b3f4b);
+    background: rgba(255,255,255,.04);
+}
+.f1-pos-badge--p1 {
+    background: linear-gradient(135deg, ***REMOVED***f59e0b, ***REMOVED***d97706);
+    border-color: ***REMOVED***f59e0b;
+    box-shadow: 0 0 12px -3px ***REMOVED***f59e0b;
+}
+.f1-pos-badge--p2 {
+    background: linear-gradient(135deg, ***REMOVED***cbd5e1, ***REMOVED***64748b);
+    border-color: ***REMOVED***cbd5e1;
+    color: ***REMOVED***111827;
+}
+.f1-pos-badge--p3 {
+    background: linear-gradient(135deg, ***REMOVED***b45309, ***REMOVED***92400e);
+    border-color: ***REMOVED***b45309;
+}
+
+.f1-constructors-team {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+}
+.f1-constructors-team__bar {
+    display: inline-block;
+    width: 4px;
+    height: 22px;
+    border-radius: 2px;
+}
+.f1-constructors-team__name {
+    font: 700 .92rem/1.1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+}
+.f1-constructors-toggle {
+    padding: 0 .25rem;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+}
+.f1-constructors-toggle:hover { color: var(--accent-2, ***REMOVED***38bdf8); }
+
+/* ---------- Per-league breakdown ---------- */
+.f1-constructors-breakdown {
+    background: rgba(0,0,0,.18);
+    padding: .9rem 1.2rem;
+    border-top: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    text-align: left;
+}
+.f1-constructors-breakdown__title {
+    font: 700 .7rem/1 var(--ff-tech, "Inter", sans-serif);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    margin-bottom: .5rem;
+}
+.f1-constructors-breakdown__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: .35rem;
+}
+.f1-constructors-breakdown__list li {
+    display: flex;
+    align-items: baseline;
+    gap: .55rem;
+    padding: .35rem .55rem;
+    background: rgba(255,255,255,.025);
+    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    border-radius: var(--r-1, 4px);
+}
+.f1-constructors-breakdown__league {
+    font: 600 .82rem/1 var(--ff-body, "Inter", sans-serif);
+    color: var(--ink, ***REMOVED***f8fafc);
+    flex: 1;
+    min-width: 0;
+}
+.f1-constructors-breakdown__pkt {
+    font: 700 .85rem/1 var(--ff-tech, "Inter", sans-serif);
+    color: var(--accent-1, ***REMOVED***f59e0b);
+}
+.f1-constructors-breakdown__pkt span {
+    font-weight: 500;
+    font-size: .72rem;
+    color: var(--ink-4, ***REMOVED***94a3b8);
+}
+.f1-constructors-breakdown__meta {
+    font: 500 .72rem/1 var(--ff-body, "Inter", sans-serif);
+    color: var(--ink-4, ***REMOVED***94a3b8);
+    white-space: nowrap;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 767.98px) {
+    .f1-table--constructors th,
+    .f1-table--constructors td {
+        padding: .5rem .55rem;
+        font-size: .75rem;
+    }
+}
+
+/* ---------- Compact Banner (auf Results.cshtml) ---------- */
+.f1-constructors-hero--compact {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 0;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.f1-constructors-hero--compact:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-2, ***REMOVED***38bdf8);
+    box-shadow: 0 10px 28px -14px rgba(56,189,248,.5);
+}
+.f1-constructors-hero__cta {
+    font: 700 .72rem/1.4 var(--ff-tech, "Inter", sans-serif);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--accent-2, ***REMOVED***38bdf8);
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+@media (max-width: 575.98px) {
+    .f1-constructors-hero--compact {
+        grid-template-columns: 1fr;
+    }
+}

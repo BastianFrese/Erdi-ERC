@@ -250,11 +250,17 @@ namespace <OWNER_HANDLE>_ERC.Models
         public string LeagueId { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public string Driver { get; set; } = string.Empty;
-        /// <summary>Zeitstrafe | Gridstrafe | Punkteabzug | DSQ | Verwarnung</summary>
-        public string PenaltyType { get; set; } = "Punkteabzug";
+        /// <summary>Startnummer des Hauptfahrers, automatisch aus den Standings übernommen.</summary>
+        public int? DriverNumber { get; set; }
+        /// <summary>Freier PenaltyType. Standardtypen: DSQ, Zeitstrafe, Gridstrafe, Verwarnung, "Zeitstrafe + Strafpunkte".</summary>
+        public string PenaltyType { get; set; } = "Zeitstrafe";
         public int Points { get; set; }
         public string? RaceTrack { get; set; }
         public string? SecondDriver { get; set; }
+        /// <summary>Startnummer des zweiten beteiligten Fahrers.</summary>
+        public int? SecondDriverNumber { get; set; }
+        /// <summary>Wenn true, wird der Vorfall als "between two drivers" dargestellt.</summary>
+        public bool IsBetweenTwoDrivers { get; set; }
         /// <summary>Kurzbeschreibung des Vorfalls (internes + öffentliches Feld)</summary>
         public string? Incident { get; set; }
         /// <summary>Offizielle Begründung / Urteil (öffentlich sichtbar)</summary>
@@ -276,6 +282,49 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int? DayOfWeek { get; set; }
         public int DurationMinutes { get; set; } = 120;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Eine Zeile der Liga-übergreifenden Constructors-Wertung. Wird von
+    /// <c>OverallConstructorsService.ComputeAsync</c> erzeugt und in
+    /// <c>Views/Races/Constructors.cshtml</c> gerendert.
+    /// </summary>
+    public class OverallConstructorRow
+    {
+        public int Position { get; set; }
+        public string CssKey { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string PrimaryColor { get; set; } = "***REMOVED***888888";
+        public string SecondaryColor { get; set; } = "***REMOVED***222222";
+        public int Points { get; set; }
+        public int Wins { get; set; }
+        public int SecondPlaces { get; set; }
+        public int ThirdPlaces { get; set; }
+        public int Top5 { get; set; }
+        public int Top10 { get; set; }
+        /// <summary>Beste je gefahrene Position. 0 = kein Treffer oder DNF-only.</summary>
+        public int BestPosition { get; set; }
+        public int Podiums { get; set; }
+        public int Events { get; set; }
+        public int LeaguesRaced { get; set; }
+        public List<OverallConstructorLeagueBreakdown> PerLeague { get; set; } = new();
+    }
+
+    public class OverallConstructorLeagueBreakdown
+    {
+        public string LeagueId { get; set; } = string.Empty;
+        public int Points { get; set; }
+        public int Events { get; set; }
+        public int Wins { get; set; }
+        public int BestPosition { get; set; }
+    }
+
+    public class OverallConstructorsViewModel
+    {
+        public List<OverallConstructorRow> Rows { get; set; } = new();
+        public List<string> OverallLeagueIds { get; set; } = new();
+        public List<string> OverallLeagueNames { get; set; } = new();
+        public int TotalEvents { get; set; }
     }
 
 }

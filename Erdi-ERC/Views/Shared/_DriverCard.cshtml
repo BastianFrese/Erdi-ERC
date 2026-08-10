@@ -32,6 +32,12 @@
     var natIso2 = RaceFlagHelper.ResolveCountryIso2(profile?.Nationality);
     var natFlag = natIso2 is not null ? $"/images/flags/{natIso2}.svg" : null;
 
+    // Fahrernummer-Farbe: vom Controller aufgelöst, sonst lokal nach derselben Regel.
+    var numberColor = ViewBag.NumberColor as string
+        ?? (profile?.DriverNumberColor is not null ? profile.DriverNumberColor.Trim() : null)
+        ?? team?.PrimaryColor
+        ?? "***REMOVED***e10600";
+
     // Stats für die FIFA-Karte (ohne Foto).
     var totalRaces    = Model?.Races?.Count ?? 0;
     var finishedRaces = Model?.Races?.Count(r => r.Position > 0) ?? 0;
@@ -57,7 +63,7 @@
             <div class="erc-photo"><img src="@photo" alt="@Model?.Driver" /></div>
             @if (number is not null)
             {
-                <div class="erc-bignum">@number</div>
+                <div class="erc-bignum" style="color:@numberColor;">@number</div>
             }
 
             <div class="erc-card__brand">
@@ -157,7 +163,7 @@ else
             <div class="erc-tower">
                 @if (number is not null)
                 {
-                    <div class="erc-tower__num">@number</div>
+                    <div class="erc-tower__num" style="color:@numberColor;">@number</div>
                 }
                 @if (natCode is not null)
                 {

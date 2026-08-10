@@ -31,6 +31,88 @@
     .btn { font-size:.68rem; letter-spacing:.08em; }
 }
 
+/* ── Mobile Navbar (< xl / 1200px) ─────────────────────────────────────── */
+@media (max-width: 1199.98px) {
+    .topbar .navbar { position:relative; }
+    .brand-word { display:none!important; }
+    .navbar-brand { margin-right:0!important; gap:.35rem!important; }
+
+    .topbar .live-race-pill { padding:.25rem .5rem; font-size:.65rem; gap:.35rem; }
+    .topbar .live-race-pill__dot { width:6px; height:6px; }
+
+    .navbar-collapse {
+        position:absolute;
+        top:calc(100% + .4rem);
+        left:.5rem;
+        right:.5rem;
+        z-index:1040;
+        background:var(--surface-2);
+        border:1px solid var(--stroke-1);
+        border-radius:14px;
+        padding:1rem;
+        box-shadow:var(--sh-3);
+        backdrop-filter:var(--glass-blur);
+        -webkit-backdrop-filter:var(--glass-blur);
+        max-height:calc(100vh - 90px);
+        overflow-y:auto;
+    }
+    .navbar-collapse .navbar-nav { gap:.5rem; }
+    .navbar-collapse .nav-link {
+        font-size:.9rem!important;
+        letter-spacing:.04em;
+        padding:.9rem 1rem!important;
+        border-radius:12px;
+        justify-content:flex-start;
+        width:100%;
+    }
+    .navbar-collapse .nav-link .nav-ico {
+        font-size:1.25rem;
+        margin-right:.85rem;
+    }
+
+    /* Mobile Dropdowns flach ausklappen */
+    .navbar-collapse .dropdown-menu {
+        position:static;
+        float:none;
+        width:100%;
+        margin:.5rem 0 0!important;
+        box-shadow:none;
+        background:rgba(0,0,0,.25)!important;
+        border-color:var(--stroke-1);
+        border-radius:12px;
+        padding:.4rem;
+    }
+    .navbar-collapse .dropdown-menu .dropdown-item {
+        padding:.8rem .85rem;
+        font-size:.85rem;
+    }
+    .navbar-collapse .dropdown-toggle { display:flex; }
+    .navbar-collapse .dropdown-toggle::after { margin-left:auto; }
+
+    /* Auth / Login Bereich als Fuß des mobilen Sheets */
+    .navbar-collapse .navbar-nav--auth {
+        margin-top:1rem;
+        padding-top:1rem;
+        border-top:1px solid var(--stroke-1);
+        flex-direction:row;
+        justify-content:space-between;
+        gap:.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-collapse .nav-link { padding:.8rem .85rem!important; font-size:.85rem!important; }
+    .navbar-collapse .nav-link .nav-ico { font-size:1.15rem; margin-right:.7rem; }
+    .navbar-collapse .navbar-nav--auth { flex-direction:column; align-items:stretch; gap:.5rem; }
+    .navbar-collapse .navbar-nav--auth .nav-item { width:100%; }
+    .navbar-collapse .navbar-nav--auth .btn,
+    .navbar-collapse .navbar-nav--auth .navbar-auth-user {
+        width:100%;
+        max-width:none;
+        justify-content:center;
+    }
+}
+
 @media (prefers-reduced-motion:reduce) {
     *,*::before,*::after { animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; scroll-behavior:auto!important; }
     .topbar::after,

@@ -54,9 +54,21 @@ namespace <OWNER_HANDLE>_ERC.Helpers
 
         public static int? ComputeTeamPointsForLeague(League league, string? teamName)
         {
-            if (string.IsNullOrWhiteSpace(teamName)) return null;
+            int[] legacyMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+            return ComputeTeamPointsForLeague(league, teamName, legacyMap);
+        }
 
-            int[] pointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+        /// <summary>
+        /// Berechnet die Team-Punkte einer Liga aus den Renn-Ergebnissen mit der übergebenen
+        /// Punkteskala. Neue Aufrufer (Overall-Constructors, Tests) sollten diese Überladung
+        /// verwenden und die Map aus <c>IOptions&lt;F1ScoringOptions&gt;</c> injizieren — sonst
+        /// weicht die Liga-Wertung von der Razor-Tabelle und der Gesamtwertung ab.
+        /// </summary>
+        public static int? ComputeTeamPointsForLeague(League league, string? teamName, int[] pointMap)
+        {
+            if (string.IsNullOrWhiteSpace(teamName)) return null;
+            if (pointMap is null || pointMap.Length == 0) return null;
+
             var normalizedTeam = teamName.Trim();
             var total = 0;
 

@@ -1,5 +1,6 @@
 using AspNet.Security.OAuth.Discord;
 using <OWNER_HANDLE>_ERC.Data;
+using <OWNER_HANDLE>_ERC.Helpers;
 using <OWNER_HANDLE>_ERC.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -58,11 +59,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             if (!string.IsNullOrEmpty(discordId))
             {
-                var isAdmin = await _db.AdminUsers.AnyAsync(a => a.DiscordId == discordId);
-                if (isAdmin)
-                {
-                    identity.AddClaim(new Claim("erdi:admin", "true"));
-                }
+                // Admin-Claims (erdi:admin, ggf. erdi:superadmin + erdi:perm) bereits beim
+                // Login setzen — sonst fehlt der Admin-Sidebar bis zum ersten Claims-Sync
+                // (RefreshDiscordMembershipMinutes) jeder Kategorie-Gruppe.
+                var adminUser = await _db.AdminUsers
+                    .Include(a => a.Permissions)
+                    .FirstOrDefaultAsync(a => a.DiscordId == discordId);
+                AdminClaimsHelper.AddAdminClaims(identity, adminUser);
 
                 var freshDiscordName = identity.FindFirst(ClaimTypes.Name)?.Value;
                 if (!string.IsNullOrWhiteSpace(freshDiscordName))

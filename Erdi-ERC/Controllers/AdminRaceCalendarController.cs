@@ -33,10 +33,12 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         {
             var settings = await GetOrCreateSettingsAsync();
             var leagues = await _db.Leagues
+                .AsNoTracking()
                 .Where(l => !l.IsArchived)
                 .OrderBy(l => l.Name)
                 .ToListAsync();
             var weekends = await _db.RaceWeekends
+                .AsNoTracking()
                 .Include(w => w.Legs)
                 .OrderBy(w => w.Order)
                 .ThenBy(w => w.Id)
@@ -140,12 +142,26 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var existingByLeague = weekend.Legs.ToDictionary(l => l.LeagueId, StringComparer.OrdinalIgnoreCase);
             var keepLeagueIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+            // User-Feedback: stillschweigend übersprungene Leg-Zeilen zählen, damit der
+            // Admin mitbekommt, wenn seine Eingabe teilweise verworfen wurde.
+            var skippedEmpty = 0;
+            var skippedInvalidDate = 0;
+
             for (var i = 0; i < ids.Length && i < dates.Length; i++)
             {
                 var leagueId = ids[i]?.Trim();
                 var rawDate  = dates[i]?.Trim();
-                if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(rawDate)) continue;
-                if (!DateTime.TryParse(rawDate, out var parsed)) continue;
+                if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(rawDate))
+                {
+                    if (!string.IsNullOrWhiteSpace(leagueId) || !string.IsNullOrWhiteSpace(rawDate))
+                        skippedEmpty++;
+                    continue;
+                }
+                if (!DateTime.TryParse(rawDate, out var parsed))
+                {
+                    skippedInvalidDate++;
+                    continue;
+                }
 
                 keepLeagueIds.Add(leagueId);
                 if (existingByLeague.TryGetValue(leagueId, out var leg))
@@ -163,7 +179,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             await _db.SaveChangesAsync();
             await _audit.LogAsync("SaveRaceWeekend", "RaceWeekend", weekend.Id.ToString(),
-                $"Track={track}, Distance={distancePercent}%, Legs={weekend.Legs.Count}");
+                $"Track={track}, Distance={distancePercent}%, Legs={weekend.Legs.Count}, SkippedEmpty={skippedEmpty}, SkippedInvalidDate={skippedInvalidDate}");
 
             if (isNew)
             {
@@ -177,7 +193,15 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 });
             }
 
-            TempData["AdminMessage"] = isNew ? "Renn-Wochenende angelegt." : "Renn-Wochenende aktualisiert.";
+            var msgParts = new List<string>
+            {
+                isNew ? "Renn-Wochenende angelegt." : "Renn-Wochenende aktualisiert."
+            };
+            if (skippedEmpty > 0)
+                msgParts.Add($"⚠ {skippedEmpty} Leg-Zeile(n) übersprungen (Liga oder Datum fehlt).");
+            if (skippedInvalidDate > 0)
+                msgParts.Add($"⚠ {skippedInvalidDate} Leg-Zeile(n) übersprungen (Datum nicht parsbar).");
+            TempData["AdminMessage"] = string.Join(" · ", msgParts);
             return RedirectToAction(nameof(Index));
         }
 

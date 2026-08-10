@@ -61,6 +61,13 @@ namespace <OWNER_HANDLE>_ERC.Models
         /// den via Discord-Rollen aufgelösten Tier, wenn höher. Null = kein manueller Grant.
         /// </summary>
         public int? ManualSetupTier { get; set; }
+
+        /// <summary>
+        /// Vom Fahrer gewählte Farbe der Fahrernummer auf der Fahrer-Karte.
+        /// Format ***REMOVED***RRGGBB; null/empty → Team-Primary oder Default ***REMOVED***e10600.
+        /// </summary>
+        [MaxLength(7)]
+        public string? DriverNumberColor { get; set; }
     }
 
     /// <summary>Plattform-spezifischer Gamer-Tag eines Driver-Profils.</summary>
