@@ -10,6 +10,13 @@ namespace <OWNER_HANDLE>_ERC.Services
         Task<IReadOnlyList<AchievementDefinition>> GetActiveAchievementDefinitionsAsync(CancellationToken cancellationToken = default);
         Task<IReadOnlyList<League>> GetAllLeaguesAsync(CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Liefert nicht-archivierte Ligen für die Bewerbungs-Dropdown-Auswahl, sortiert
+        /// nach <c>SortOrder</c>, dann <c>Name</c>. Separater Cache-Key, damit eine
+        /// Liga-Archivierung den Cache gezielt invalidieren kann.
+        /// </summary>
+        Task<IReadOnlyList<League>> GetApplicationLeaguesAsync(CancellationToken cancellationToken = default);
+
         void InvalidateAchievementDefinitions();
         void InvalidateLeagues();
     }

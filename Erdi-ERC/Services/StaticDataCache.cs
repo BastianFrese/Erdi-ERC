@@ -9,8 +9,10 @@ namespace <OWNER_HANDLE>_ERC.Services
     {
         private const string AchievementKey = "static:achievement-defs:v1";
         private const string LeaguesKey = "static:leagues:v1";
+        private const string LeaguesApplyKey = "static:leagues:apply:v1";
         private static readonly TimeSpan AchievementTtl = TimeSpan.FromMinutes(10);
         private static readonly TimeSpan LeaguesTtl = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan LeaguesApplyTtl = TimeSpan.FromMinutes(5);
 
         private readonly AppDbContext _db;
         private readonly IMemoryCache _cache;
@@ -64,7 +66,35 @@ namespace <OWNER_HANDLE>_ERC.Services
             return leagues;
         }
 
+        public async Task<IReadOnlyList<League>> GetApplicationLeaguesAsync(CancellationToken cancellationToken = default)
+        {
+            if (_cache.TryGetValue<IReadOnlyList<League>>(LeaguesApplyKey, out var cached) && cached is not null)
+            {
+                return cached;
+            }
+
+            var leagues = await _db.Leagues
+                .AsNoTracking()
+                .Where(l => !l.IsArchived)
+                .OrderBy(l => l.SortOrder)
+                .ThenBy(l => l.Name)
+                .ToListAsync(cancellationToken);
+
+            _cache.Set(LeaguesApplyKey, (IReadOnlyList<League>)leagues, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = LeaguesApplyTtl,
+                Size = 1,
+                Priority = CacheItemPriority.Low
+            });
+
+            return leagues;
+        }
+
         public void InvalidateAchievementDefinitions() => _cache.Remove(AchievementKey);
-        public void InvalidateLeagues() => _cache.Remove(LeaguesKey);
+        public void InvalidateLeagues()
+        {
+            _cache.Remove(LeaguesKey);
+            _cache.Remove(LeaguesApplyKey);
+        }
     }
 }

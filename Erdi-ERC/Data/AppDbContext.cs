@@ -49,6 +49,10 @@ namespace <OWNER_HANDLE>_ERC.Data
         public DbSet<TrollCustomGag> TrollCustomGags => Set<TrollCustomGag>();
         public DbSet<TrollSettingsEntity> TrollSettings => Set<TrollSettingsEntity>();
 
+        // ── Bewerbungs-Rebuild V1 (Commit 2) ─────────────────────────────────────────
+        public DbSet<Application> Applications => Set<Application>();
+        public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -447,6 +451,55 @@ namespace <OWNER_HANDLE>_ERC.Data
             modelBuilder.Entity<TrollSettingsEntity>(b =>
             {
                 b.HasKey(x => x.Id);
+            });
+
+            // ── Bewerbungs-Rebuild V1 (Commit 2) ─────────────────────────────────────────
+            modelBuilder.Entity<Application>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasMaxLength(64);
+                b.Property(x => x.DiscordId).HasMaxLength(32).IsRequired();
+                b.Property(x => x.DiscordName).HasMaxLength(128).IsRequired();
+                b.Property(x => x.GamerTag).HasMaxLength(128).IsRequired();
+                b.Property(x => x.Platform).HasMaxLength(64).IsRequired();
+                b.Property(x => x.TargetLeagueId).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Role).HasMaxLength(32).IsRequired();
+                b.Property(x => x.Motivation).HasMaxLength(2000);
+                b.Property(x => x.DecidedByDiscordId).HasMaxLength(32);
+                b.Property(x => x.ReviewNote).HasMaxLength(1000);
+                b.Property(x => x.DiscordJoinWarningDetail).HasMaxLength(500);
+
+                // Dedup-Lookup bei Re-Apply, Admin-Listen-Queries.
+                b.HasIndex(x => new { x.DiscordId, x.Status });
+                b.HasIndex(x => new { x.Status, x.CreatedAt });
+                b.HasIndex(x => new { x.TargetLeagueId, x.Status });
+
+                b.HasOne(x => x.TargetLeague)
+                    .WithMany()
+                    .HasForeignKey(x => x.TargetLeagueId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<WaitlistEntry>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasMaxLength(64);
+                b.Property(x => x.DiscordId).HasMaxLength(32).IsRequired();
+                b.Property(x => x.DiscordName).HasMaxLength(128).IsRequired();
+                b.Property(x => x.GamerTag).HasMaxLength(128).IsRequired();
+                b.Property(x => x.Platform).HasMaxLength(64).IsRequired();
+                b.Property(x => x.LeagueId).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Note).HasMaxLength(500);
+                b.Property(x => x.PromotedToApplicationId).HasMaxLength(64);
+
+                // Geordnete Warteliste pro Liga + Dedup pro User/Liga.
+                b.HasIndex(x => new { x.LeagueId, x.Position });
+                b.HasIndex(x => new { x.DiscordId, x.LeagueId });
+
+                b.HasOne(x => x.League)
+                    .WithMany()
+                    .HasForeignKey(x => x.LeagueId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
