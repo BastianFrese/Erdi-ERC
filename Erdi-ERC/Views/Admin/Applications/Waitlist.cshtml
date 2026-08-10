@@ -1,0 +1,97 @@
+@{
+    ViewData["Title"] = "Warteliste";
+    ViewData["Kicker"] = "Bewerbungen";
+    ViewData["HeroTitle"] = "Bewerbungs-Warteliste";
+
+    var entries = ViewBag.Entries as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.WaitlistEntry>
+                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.WaitlistEntry>();
+    var leagues = ViewBag.Leagues as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>
+                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
+    string? selectedLeagueId = ViewBag.SelectedLeagueId as string;
+}
+
+<div class="adm-dashboard">
+
+    @* Liga-Auswahl *@
+    <form method="get" class="adm-filter-bar">
+        <div class="adm-filter-bar__field">
+            <label for="leagueId">Liga</label>
+            <select id="leagueId" name="leagueId" class="adm-form-select" onchange="this.form.submit()">
+                <option value="" disabled selected="@(string.IsNullOrEmpty(selectedLeagueId))">Bitte wählen</option>
+                @foreach (var l in leagues)
+                {
+                    <option value="@l.Id" selected="@(string.Equals(selectedLeagueId, l.Id, StringComparison.OrdinalIgnoreCase))">@l.Name</option>
+                }
+            </select>
+        </div>
+        <a class="btn btn-ghost btn-sm" asp-action="List">
+            <i class="bi bi-arrow-left"></i> Zurück zur Liste
+        </a>
+    </form>
+
+    @if (string.IsNullOrEmpty(selectedLeagueId))
+    {
+        <div class="adm-empty">
+            <i class="bi bi-hourglass"></i>
+            <p>Wähle eine Liga aus, um deren Warteliste zu sehen.</p>
+        </div>
+    }
+    else if (entries.Count == 0)
+    {
+        <div class="adm-empty">
+            <i class="bi bi-check2-all"></i>
+            <p>Diese Liga hat aktuell keine Wartelisten-Einträge.</p>
+        </div>
+    }
+    else
+    {
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-hourglass-split me-2" style="color:***REMOVED***ffb800;"></i>
+                    <span>Warteliste (@entries.Count)</span>
+                </span>
+            </div>
+            <div class="adm-panel__body adm-panel__body--flush">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>***REMOVED***</th>
+                            <th>Discord</th>
+                            <th>Gamer-Tag</th>
+                            <th>Plattform</th>
+                            <th>Eingetragen</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in entries.OrderBy(w => w.Position))
+                        {
+                            <tr>
+                                <td><strong>@e.Position</strong></td>
+                                <td>
+                                    <div class="adm-table__primary">@e.DiscordName</div>
+                                    <div class="adm-table__secondary">@e.DiscordId</div>
+                                </td>
+                                <td>@e.GamerTag</td>
+                                <td>@e.Platform</td>
+                                <td>@e.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <form asp-action="PromoteFromWaitlist" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="waitlistEntryId" value="@e.Id" />
+                                        <input type="hidden" name="leagueId" value="@selectedLeagueId" />
+                                        <button type="submit" class="btn btn-sm btn-primary"
+                                                title="Erstellt eine neue offene Bewerbung aus diesem Eintrag">
+                                            <i class="bi bi-arrow-up-circle-fill"></i> Promoten
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

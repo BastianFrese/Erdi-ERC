@@ -1,107 +1,81 @@
-@model <OWNER_HANDLE>_ERC.Models.ApplicationForm
+@model System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.Application>
+@using <OWNER_HANDLE>_ERC.Models
 @{
-    ViewData["Title"] = "Meine Bewerbung";
+    ViewData["Title"] = "Meine Bewerbungen";
 
-    var status = Model is null ? "none"
-        : Model.IsAccepted ? "accepted"
-        : Model.IsRejected ? "rejected"
-        : "pending";
-
-    var (statusLabel, statusColor, statusIcon) = status switch
+    string StatusBadge(int s) => ((ApplicationStatus)s) switch
     {
-        "accepted" => ("Angenommen", "***REMOVED***39ff14", "check-circle-fill"),
-        "rejected" => ("Abgelehnt", "***REMOVED***e10600", "x-circle-fill"),
-        "pending"  => ("In Bearbeitung", "***REMOVED***ffb800", "hourglass-split"),
-        _          => ("Keine Bewerbung gefunden", "var(--ink-3)", "inbox")
+        ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
+        ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
+        ApplicationStatus.Rejected  => "f1-chip f1-chip--red",
+        _                          => "f1-chip"
+    };
+
+    string StatusLabel(int s) => ((ApplicationStatus)s) switch
+    {
+        ApplicationStatus.Pending   => "In Prüfung",
+        ApplicationStatus.Accepted  => "Angenommen",
+        ApplicationStatus.Rejected  => "Abgelehnt",
+        _                          => s.ToString()
     };
 }
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
-
-<partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "Bewerber-Status",
-    Title     = "Meine",
-    Highlight = "Bewerbung",
-    Lead      = "Hier siehst du jederzeit den aktuellen Stand deiner Liga-Bewerbung.",
-    Actions   = new() {
-        new F1ButtonVm { Label="Zur Bewerbung", Variant="ghost", IconLucide="clipboard-list", Href=Url.Action("Apply", "Application")! }
-    }
-})" />
-
-<div class="row justify-content-center reveal">
-    <div class="col-lg-7">
-        <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.75rem;box-shadow:var(--sh-2);">
-
-            <div class="d-flex align-items-center gap-3 mb-4">
-                <span class="icon-chip" style="background:rgba(255,255,255,.06);border-color:@statusColor;">
-                    <i class="bi bi-@statusIcon" style="color:@statusColor;"></i>
-                </span>
-                <div>
-                    <div class="eyebrow mb-0">Status</div>
-                    <div style="font:800 1.4rem/1.1 var(--ff-display,inherit);color:@statusColor;">@statusLabel</div>
-                </div>
-                @if (Model?.IsOnTrial == true)
-                {
-                    <span class="badge ms-auto" style="background:***REMOVED***ffb800;color:***REMOVED***04121a;align-self:flex-start;">AUF PROBE</span>
-                }
-            </div>
-
-            @if (Model is null)
-            {
-                <p style="color:var(--ink-3);">Wir konnten keine Bewerbung mit deinem Discord-Account finden.</p>
-                <a class="f1-btn f1-btn--primary" asp-action="Apply"><i class="bi bi-rocket-takeoff-fill"></i> Jetzt bewerben</a>
-            }
-            else
-            {
-                <div class="info-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.25rem;">
-                    <div>
-                        <div class="eyebrow mb-0">Liga</div>
-                        <div style="color:var(--ink);font-weight:600;">@(string.IsNullOrWhiteSpace(Model.Division) ? "—" : Model.Division)</div>
-                    </div>
-                    <div>
-                        <div class="eyebrow mb-0">Rolle</div>
-                        <div style="color:var(--ink);font-weight:600;">@(Model.AssignedRole ?? Model.Role)</div>
-                    </div>
-                    <div>
-                        <div class="eyebrow mb-0">Eingereicht</div>
-                        <div style="color:var(--ink);font-weight:600;">@Model.SubmittedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
-                    </div>
-                    @if (Model.IsAccepted && Model.AcceptedAt.HasValue)
-                    {
-                        <div>
-                            <div class="eyebrow mb-0">Angenommen am</div>
-                            <div style="color:var(--ink);font-weight:600;">@Model.AcceptedAt.Value.ToLocalTime().ToString("dd.MM.yyyy")</div>
-                        </div>
-                    }
-                    @if (Model.IsOnTrial && Model.TrialEndsAt.HasValue)
-                    {
-                        <div>
-                            <div class="eyebrow mb-0">Probezeit bis</div>
-                            <div style="color:***REMOVED***ffb800;font-weight:600;">@Model.TrialEndsAt.Value.ToLocalTime().ToString("dd.MM.yyyy")</div>
-                        </div>
-                    }
-                </div>
-
-                @if (status == "pending")
-                {
-                    <div class="alert alert-info mb-0">
-                        Deine Bewerbung ist eingegangen und wird bearbeitet. Sobald <OWNER_HANDLE> sie geprüft hat, wirst du über Discord benachrichtigt — du musst nichts weiter tun.
-                    </div>
-                }
-                else if (status == "accepted")
-                {
-                    <div class="alert alert-success mb-0">
-                        Willkommen in der Liga! @(Model.IsOnTrial ? "Du fährst aktuell auf Probe — zeig, was du kannst." : "Bei Fragen melde dich bei einem Admin auf Discord.")
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-warning mb-3">
-                        Deine Bewerbung wurde leider abgelehnt. Du kannst dich jederzeit erneut bewerben.
-                    </div>
-                    <a class="f1-btn f1-btn--primary" asp-action="Apply"><i class="bi bi-arrow-repeat"></i> Erneut bewerben</a>
-                }
-            }
+<div class="myapply-page">
+    <div class="myapply-hero f1-panel">
+        <div class="myapply-hero__icon"><i class="bi bi-list-ul"></i></div>
+        <div class="myapply-hero__title">
+            <h1 class="m-0">Meine Bewerbungen</h1>
+            <p class="m-0 text-mute">Alle Bewerbungen, die du über Discord eingereicht hast.</p>
+        </div>
+        <div class="myapply-hero__action">
+            <a class="btn btn-primary" asp-controller="Application" asp-action="Apply">
+                <i class="bi bi-plus-lg"></i> Neue Bewerbung
+            </a>
         </div>
     </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="f1-panel myapply-empty">
+            <i class="bi bi-inbox"></i>
+            <p>Du hast noch keine Bewerbung eingereicht.</p>
+            <a class="btn btn-primary mt-3" asp-controller="Application" asp-action="Apply">
+                <i class="bi bi-send"></i> Jetzt bewerben
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="myapply-list f1-panel">
+            <table class="myapply-table">
+                <thead>
+                    <tr>
+                        <th>Liga</th>
+                        <th>Rolle</th>
+                        <th>Gamer-Tag</th>
+                        <th>Plattform</th>
+                        <th>Eingereicht</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var app in Model.OrderByDescending(a => a.CreatedAt))
+                    {
+                        <tr>
+                            <td>
+                                <strong>@(app.TargetLeague?.Name ?? app.TargetLeagueId)</strong>
+                            </td>
+                            <td>@app.Role</td>
+                            <td>@app.GamerTag</td>
+                            <td>@app.Platform</td>
+                            <td>@app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>
+                                <span class="@StatusBadge(app.Status)">@StatusLabel(app.Status)</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
