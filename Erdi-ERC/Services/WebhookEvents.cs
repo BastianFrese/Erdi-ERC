@@ -18,6 +18,7 @@ namespace <OWNER_HANDLE>_ERC.Services
         public const string ApplicationAccepted   = "application.accepted";
         public const string ApplicationRejected   = "application.rejected";
         public const string ApplicationWaitlisted = "application.waitlisted";
+        public const string ApplicationWithdrawn  = "application.withdrawn";
 
         /// <summary>Human-readable labels shown in the admin UI.</summary>
         public static readonly IReadOnlyList<(string Key, string Label, string Icon, string Description)> All =
@@ -33,6 +34,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             (ApplicationAccepted,   "Bewerbung angenommen",         "bi-check-circle",                "Wird ausgelöst, wenn ein Admin eine Bewerbung annimmt."),
             (ApplicationRejected,   "Bewerbung abgelehnt",          "bi-x-circle",                    "Wird ausgelöst, wenn ein Admin eine Bewerbung ablehnt."),
             (ApplicationWaitlisted, "Bewerbung auf Warteliste",     "bi-hourglass-split",             "Wird ausgelöst, wenn eine Bewerbung wegen voller Liga auf die Warteliste umgeleitet wird."),
+            (ApplicationWithdrawn,  "Bewerbung zurückgezogen",      "bi-arrow-counterclockwise",      "Wird ausgelöst, wenn ein User seine offene Bewerbung selbst zurückzieht."),
         ];
     }
 }
