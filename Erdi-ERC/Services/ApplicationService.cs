@@ -40,7 +40,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             var league = await _db.Leagues.FirstOrDefaultAsync(l => l.Id == cmd.TargetLeagueId, ct);
             if (league is null)
                 throw new InvalidOperationException($"Liga '{cmd.TargetLeagueId}' existiert nicht.");
-            if (league.IsArchived)
+            if (league.IsArchived || !league.AcceptsApplications)
                 throw new InvalidOperationException("Diese Liga nimmt keine Bewerbungen mehr an.");
 
             // Dedup: offener Pending für dieselbe Liga?

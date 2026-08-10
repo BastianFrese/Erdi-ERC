@@ -75,7 +75,7 @@ namespace <OWNER_HANDLE>_ERC.Services
 
             var leagues = await _db.Leagues
                 .AsNoTracking()
-                .Where(l => !l.IsArchived)
+                .Where(l => !l.IsArchived && l.AcceptsApplications)
                 .OrderBy(l => l.SortOrder)
                 .ThenBy(l => l.Name)
                 .ToListAsync(cancellationToken);

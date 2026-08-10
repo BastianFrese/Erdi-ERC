@@ -135,6 +135,12 @@
                         <label class="form-check-label" for="leagueCountsOverall">In Constructors-Gesamtwertung <span class="text-muted small">(Punkte aller Ligen zusammenzählen)</span></label>
                     </div>
                 </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="acceptsApplications" value="true" id="leagueAcceptsApplications" @(Model.AcceptsApplications ? "checked" : "") />
+                        <label class="form-check-label" for="leagueAcceptsApplications">Bewerbungen offen <span class="text-muted small">(Liga erscheint im Bewerbungsformular)</span></label>
+                    </div>
+                </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" type="submit">Speichern</button>
                 </div>

@@ -225,7 +225,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, bool countsTowardOverall = true)
+        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, bool countsTowardOverall = true, bool acceptsApplications = false)
         {
             var league = await _db.Leagues.AsTracking().FirstOrDefaultAsync(l => l.Id == id);
             if (league is null) return NotFound();
@@ -244,6 +244,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             league.CurrentSeason = string.IsNullOrWhiteSpace(currentSeason) ? null : currentSeason.Trim();
             // Opt-in Liga-übergreifende Constructors-Meisterschaft (Default true).
             league.CountsTowardOverall = countsTowardOverall;
+            // Checkbox: unchecked wird nicht mitgesendet → false.
+            league.AcceptsApplications = acceptsApplications;
 
             try
             {
