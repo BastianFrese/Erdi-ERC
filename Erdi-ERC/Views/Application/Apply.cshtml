@@ -1,10 +1,12 @@
 @model <OWNER_HANDLE>_ERC.Controllers.ApplyInput
 @using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Services
 @inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.DiscordGuildOptions> DiscordGuildOptions
 @{
     ViewData["Title"] = "Bewerbung";
     var leagues = ViewBag.Leagues as IReadOnlyList<League> ?? new List<League>();
     var platforms = ViewBag.AllowedPlatforms as IReadOnlyList<string> ?? new[] { "PC", "PS5", "Xbox" };
+    var capacity = ViewBag.LeagueCapacity as IReadOnlyList<LeagueCapacityInfo> ?? new List<LeagueCapacityInfo>();
     var needsWarning = (bool)(ViewBag.NeedsGuildWarning ?? false);
     var communityClaim = User.HasClaim("erdi:on-community-guild", "true");
     var leagueClaim = User.HasClaim("erdi:on-league-guild", "true");
@@ -82,34 +84,67 @@
                     </select>
                 </div>
 
-                @* Row 3: Liga + Rolle *@
-                <div class="app-form__field">
-                    <label class="app-form__label" for="TargetLeagueId">Liga <span class="required">*</span></label>
-                    <select id="TargetLeagueId" name="TargetLeagueId" class="app-form__select" required>
-                        <option value="" disabled selected="@(string.IsNullOrEmpty(Model.TargetLeagueId))">Bitte wählen</option>
+                @* Row 3: Liga-Karten (full width) *@
+                <div class="app-form__field app-form__grid--full">
+                    <span class="app-form__label">Liga <span class="required">*</span></span>
+                    <div class="app-league-grid" role="radiogroup" aria-label="Liga wählen">
                         @foreach (var league in leagues)
                         {
-                            <option value="@league.Id" selected="@(string.Equals(Model.TargetLeagueId, league.Id, StringComparison.OrdinalIgnoreCase))">
-                                @league.Name
-                            </option>
+                            var cap = capacity.FirstOrDefault(c => c.LeagueId == league.Id);
+                            var isFull = cap?.IsFull == true;
+                            var isChecked = string.Equals(Model.TargetLeagueId, league.Id, StringComparison.OrdinalIgnoreCase);
+                            <label class="app-league-card @(isFull ? "app-league-card--full" : "")">
+                                <input type="radio" name="TargetLeagueId" value="@league.Id" required checked="@isChecked" />
+                                <span class="app-league-card__body">
+                                    <span class="app-league-card__head">
+                                        <span class="app-league-card__name">@league.Name</span>
+                                        @if (cap?.Capacity is int capTotal)
+                                        {
+                                            <span class="app-league-card__seats">@cap.OccupiedSeats/@capTotal belegt</span>
+                                        }
+                                    </span>
+                                    @if (!string.IsNullOrWhiteSpace(league.Description))
+                                    {
+                                        <span class="app-league-card__desc">@league.Description</span>
+                                    }
+                                    <span class="app-league-card__status">
+                                        @if (cap?.Capacity is null)
+                                        {
+                                            <span class="app-league-card__badge app-league-card__badge--open"><i class="bi bi-door-open"></i> Offen</span>
+                                        }
+                                        else if (isFull)
+                                        {
+                                            <span class="app-league-card__badge app-league-card__badge--wait"><i class="bi bi-hourglass-split"></i> Voll — Warteliste (Pos. ~@(cap!.WaitlistLength + 1))</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="app-league-card__badge app-league-card__badge--free"><i class="bi bi-check2"></i> @cap!.FreeSeats @(cap.FreeSeats == 1 ? "Platz" : "Plätze") frei</span>
+                                        }
+                                    </span>
+                                </span>
+                            </label>
                         }
-                    </select>
+                    </div>
+                    <span class="app-form__hint">Volle Ligen: Stammfahrer-Bewerbungen landen automatisch auf der Warteliste. Ersatz-/Probefahrer sind davon nicht betroffen.</span>
                 </div>
 
-                <div class="app-form__field">
+                @* Row 4: Rolle *@
+                <div class="app-form__field app-form__grid--full">
                     <label class="app-form__label" for="Role">Rolle <span class="required">*</span></label>
                     <select id="Role" name="Role" class="app-form__select" required>
                         <option value="Stammfahrer"   selected="@(string.Equals(Model.Role, "Stammfahrer",   StringComparison.OrdinalIgnoreCase))">Stammfahrer</option>
                         <option value="Ersatzfahrer"  selected="@(string.Equals(Model.Role, "Ersatzfahrer",  StringComparison.OrdinalIgnoreCase))">Ersatzfahrer</option>
                         <option value="Probefahrer"   selected="@(string.Equals(Model.Role, "Probefahrer",   StringComparison.OrdinalIgnoreCase))">Probefahrer</option>
                     </select>
+                    <span class="app-form__hint"><strong>Stammfahrer</strong> fahren jedes Rennen mit festem Platz · <strong>Ersatzfahrer</strong> springen ein, wenn jemand ausfällt · <strong>Probefahrer</strong> schnuppern unverbindlich rein.</span>
                 </div>
 
-                @* Row 4: Motivation (full width) *@
+                @* Row 5: Motivation (full width) *@
                 <div class="app-form__field app-form__grid--full">
                     <label class="app-form__label" for="Motivation">Motivation <span style="color:var(--ink-4);font-weight:400;">(optional)</span></label>
                     <textarea id="Motivation" name="Motivation" class="app-form__textarea" rows="4"
                               maxlength="1000" placeholder="Erzähl uns kurz, warum du mitfahren willst…">@Model.Motivation</textarea>
+                    <span class="app-form__hint app-form__counter"><span id="motivationCount">0</span>/1000 Zeichen</span>
                 </div>
             </div>
 
@@ -127,4 +162,14 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var ta = document.getElementById('Motivation');
+            var count = document.getElementById('motivationCount');
+            if (!ta || !count) return;
+            var update = function () { count.textContent = ta.value.length; };
+            ta.addEventListener('input', update);
+            update();
+        })();
+    </script>
 }

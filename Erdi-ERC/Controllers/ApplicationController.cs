@@ -43,6 +43,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var leagues = await _staticCache.GetApplicationLeaguesAsync();
             ViewBag.Leagues = leagues;
             ViewBag.AllowedPlatforms = _driverMatching.AllowedPlatforms;
+            ViewBag.LeagueCapacity = await _applications.GetLeagueCapacityAsync(HttpContext.RequestAborted);
 
             var communityJoined = User.HasClaim("erdi:on-community-guild", "true");
             var leagueJoined = User.HasClaim("erdi:on-league-guild", "true");
@@ -66,6 +67,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var leagues = await _staticCache.GetApplicationLeaguesAsync();
             ViewBag.Leagues = leagues;
             ViewBag.AllowedPlatforms = _driverMatching.AllowedPlatforms;
+            ViewBag.LeagueCapacity = await _applications.GetLeagueCapacityAsync(HttpContext.RequestAborted);
 
             if (!ModelState.IsValid)
             {
