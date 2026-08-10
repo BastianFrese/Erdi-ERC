@@ -1,263 +1,147 @@
-@model <OWNER_HANDLE>_ERC.Controllers.ApplicationListViewModel
-@using <OWNER_HANDLE>_ERC.Models
-
 @{
-    ViewData["Title"] = "Bewerbungen - Liste";
-    ViewData["Kicker"] = "Admin · Bewerbungen";
-    ViewData["HeroTitle"] = "Bewerbungen";
-    ViewData["HeroSubtitle"] = "Alle Bewerbungen mit Filterung";
+    ViewData["Title"] = "Bewerbungen";
+    ViewData["Kicker"] = "Bewerbungen";
+    ViewData["HeroTitle"] = "Bewerbungs-Übersicht";
 
-    // Route-Values der aktiven Filter (für Pagination-Links).
-    object RouteFor(int page) => new
+    var items   = ViewBag.Items as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.Application>
+                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.Application>();
+    var leagues = ViewBag.Leagues as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>
+                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
+    string? statusFilter = ViewBag.StatusFilter as string;
+    string? leagueFilter = ViewBag.LeagueFilter as string;
+    int pageNo = (int)(ViewBag.Page ?? 1);
+    bool hasMore = (bool)(ViewBag.HasMore ?? false);
+    string CurrentLeagueName(string? id) => string.IsNullOrEmpty(id)
+        ? "—"
+        : leagues.FirstOrDefault(l => string.Equals(l.Id, id, StringComparison.OrdinalIgnoreCase))?.Name ?? id;
+
+    string StatusBadge(int s) => ((<OWNER_HANDLE>_ERC.Models.ApplicationStatus)s) switch
     {
-        status = Model.Filter.Status?.ToString(),
-        leagueId = Model.Filter.LeagueId,
-        search = Model.Filter.Search,
-        sort = Model.Filter.Sort,
-        flagged = Model.Filter.FlaggedOnly ? "true" : null,
-        duplicates = Model.Filter.DuplicatesOnly ? "true" : null,
-        withoutLeague = Model.Filter.WithoutLeagueOnly ? "true" : null,
-        page
+        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
+        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
+        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Rejected  => "f1-chip f1-chip--red",
+        _                                          => "f1-chip"
+    };
+
+    string StatusLabel(int s) => ((<OWNER_HANDLE>_ERC.Models.ApplicationStatus)s) switch
+    {
+        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending   => "In Prüfung",
+        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted  => "Angenommen",
+        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Rejected  => "Abgelehnt",
+        _                                          => s.ToString()
     };
 }
 
-@section Styles {
-    <style>
-        .filter-bar {
-            background: var(--surface-1);
-            border: 1px solid var(--stroke-1);
-            border-radius: var(--r-2);
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .filter-bar form { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
-        .filter-group { display: flex; align-items: center; gap: 0.5rem; }
-        .filter-group label { font-size: 0.82rem; color: var(--ink-2); }
-        .filter-select {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--stroke-1);
-            border-radius: var(--r-1);
-            background: var(--surface-0);
-            color: var(--ink);
-            font-size: 0.875rem;
-        }
-        .filter-chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .82rem; color: var(--ink-2); cursor: pointer; }
-        .app-table { width: 100%; border-collapse: collapse; }
-        .app-table thead { background: var(--surface-2); }
-        .app-table th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 1px solid var(--stroke-1);
-            font-size: 0.875rem;
-        }
-        .app-table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--stroke-1);
-        }
-        .app-table tbody tr:hover { background: var(--surface-1); }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .status--pending { background: rgba(255, 193, 7, 0.1); color: ***REMOVED***ffc107; }
-        .status--accepted { background: rgba(76, 175, 80, 0.1); color: ***REMOVED***4caf50; }
-        .status--rejected { background: rgba(244, 67, 54, 0.1); color: ***REMOVED***f44336; }
-        .pagination { display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: center; }
-        .pagination a, .pagination span {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--stroke-1);
-            border-radius: var(--r-1);
-            background: var(--surface-1);
-            color: var(--ink);
-            text-decoration: none;
-        }
-        .pagination a:hover { background: var(--surface-2); }
-        .pagination .active { background: var(--sig-cyan); color: ***REMOVED***04121a; }
-    </style>
-}
+<div class="adm-dashboard">
 
-<div class="container-fluid py-5">
-    @{
-        var _listSuccess = TempData["Success"] as string;
-        var _listErr = TempData["Error"] as string;
-    }
-    @if (!string.IsNullOrEmpty(_listSuccess))
-    {
-        <div class="alert alert-success mb-3">@_listSuccess</div>
-    }
-    @if (!string.IsNullOrEmpty(_listErr) && _listErr.IndexOf("Konflikt", System.StringComparison.OrdinalIgnoreCase) >= 0)
-    {
-        <div class="alert alert-warning mb-3">
-            <strong>Konflikt erkannt:</strong> Die Bewerbung wurde zwischenzeitlich von jemand anderem geändert.
-            <div style="margin-top:.5rem;">
-                <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload();">Seite neu laden</button>
-            </div>
+    @* Filter-Leiste *@
+    <form method="get" class="adm-filter-bar">
+        <div class="adm-filter-bar__field">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="adm-form-select">
+                <option value="" selected="@(string.IsNullOrEmpty(statusFilter))">Alle</option>
+                <option value="Pending"   selected="@(statusFilter == "Pending")">In Prüfung</option>
+                <option value="Accepted"  selected="@(statusFilter == "Accepted")">Angenommen</option>
+                <option value="Rejected"  selected="@(statusFilter == "Rejected")">Abgelehnt</option>
+            </select>
         </div>
-    }
-    else if (!string.IsNullOrEmpty(_listErr))
-    {
-        <div class="alert alert-danger mb-3">@_listErr</div>
-    }
-
-    <div class="row mb-4">
-        <div class="col">
-            <h1>Bewerbungen</h1>
-            <p class="text-mute">
-                @Model.Statistics.TotalApplications gesamt | @Model.Statistics.OpenApplications offen |
-                @Model.Statistics.AcceptedApplications angenommen | @Model.Statistics.RejectedApplications abgelehnt
-                — Treffer: @Model.Result.TotalCount
-            </p>
-        </div>
-        <div class="col-auto">
-            <a href="@Url.Action("Dashboard", "AdminApplications")" class="btn-admin btn-admin--secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
-                <i class="bi bi-arrow-left"></i> Dashboard
-            </a>
-        </div>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <form method="get" action="@Url.Action("List", "AdminApplications")">
-            <div class="filter-group">
-                <label>Status:</label>
-                <select name="status" class="filter-select" onchange="this.form.submit()">
-                    <option value="">Alle</option>
-                    <option value="Open" selected="@(Model.Filter.Status == ApplicationStatus.Open)">Offen</option>
-                    <option value="Accepted" selected="@(Model.Filter.Status == ApplicationStatus.Accepted)">Angenommen</option>
-                    <option value="Rejected" selected="@(Model.Filter.Status == ApplicationStatus.Rejected)">Abgelehnt</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Liga:</label>
-                <select name="leagueId" class="filter-select" onchange="this.form.submit()">
-                    <option value="">Alle</option>
-                    @foreach (var league in Model.Leagues)
-                    {
-                        <option value="@league.Id" selected="@(Model.Filter.LeagueId == league.Id)">@league.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Sortierung:</label>
-                <select name="sort" class="filter-select" onchange="this.form.submit()">
-                    <option value="">Standard (Liga)</option>
-                    <option value="newest" selected="@(Model.Filter.Sort == "newest")">Neueste zuerst</option>
-                    <option value="oldest" selected="@(Model.Filter.Sort == "oldest")">Älteste zuerst</option>
-                </select>
-            </div>
-            <label class="filter-chip" title="Nur zur Überprüfung markierte">
-                <input type="checkbox" name="flagged" value="true" @(Model.Filter.FlaggedOnly ? "checked" : "") onchange="this.form.submit()" />
-                <i class="bi bi-flag"></i> Markiert
-            </label>
-            <label class="filter-chip" title="Bewerber mit mehreren Bewerbungen">
-                <input type="checkbox" name="duplicates" value="true" @(Model.Filter.DuplicatesOnly ? "checked" : "") onchange="this.form.submit()" />
-                <i class="bi bi-people"></i> Duplikate
-            </label>
-            <label class="filter-chip" title="Bewerbungen ohne Liga-Zuordnung">
-                <input type="checkbox" name="withoutLeague" value="true" @(Model.Filter.WithoutLeagueOnly ? "checked" : "") onchange="this.form.submit()" />
-                <i class="bi bi-question-circle"></i> Ohne Liga
-            </label>
-            <div class="filter-group" style="margin-left:auto;">
-                <input type="text" name="search" class="filter-select" value="@Model.Filter.Search" placeholder="Discord- oder Ingame-Name" />
-                <button type="submit" class="btn-admin btn-admin--secondary" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
-                    <i class="bi bi-search"></i>
-                </button>
-                @if (!string.IsNullOrWhiteSpace(Model.Filter.Search) || Model.Filter.Status.HasValue || Model.Filter.LeagueId != null
-                     || Model.Filter.FlaggedOnly || Model.Filter.DuplicatesOnly || Model.Filter.WithoutLeagueOnly)
+        <div class="adm-filter-bar__field">
+            <label for="leagueId">Liga</label>
+            <select id="leagueId" name="leagueId" class="adm-form-select">
+                <option value="" selected="@(string.IsNullOrEmpty(leagueFilter))">Alle</option>
+                @foreach (var l in leagues)
                 {
-                    <a href="@Url.Action("List", "AdminApplications")" class="btn-admin btn-admin--secondary" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;" title="Filter zurücksetzen">
-                        <i class="bi bi-x"></i>
-                    </a>
+                    <option value="@l.Id" selected="@(string.Equals(leagueFilter, l.Id, StringComparison.OrdinalIgnoreCase))">@l.Name</option>
                 }
-            </div>
-        </form>
-    </div>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-funnel-fill"></i> Filtern
+        </button>
+        <a class="btn btn-ghost btn-sm" asp-action="Waitlist" asp-route-leagueId="@leagueFilter">
+            <i class="bi bi-hourglass-split"></i> Warteliste
+        </a>
+    </form>
 
-    <!-- Applications Table -->
-    @if (Model.Result.Items.Count > 0)
-    {
-        <div style="overflow-x: auto;">
-            <table class="app-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Liga</th>
-                        <th>Rolle</th>
-                        <th>Ingame-Name</th>
-                        <th>Status</th>
-                        <th>Eingereicht</th>
-                        <th style="text-align: right;">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var app in Model.Result.Items)
-                    {
-                        var statusClass = app.IsAccepted ? "status--accepted" : app.IsRejected ? "status--rejected" : "status--pending";
-                        var statusText = app.IsAccepted ? "Angenommen" : app.IsRejected ? "Abgelehnt" : "Offen";
-
+    @* Tabelle *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-envelope-paper-fill me-2" style="color:***REMOVED***22d3ee;"></i>
+                <span>Bewerbungen (@items.Count)</span>
+            </span>
+        </div>
+        <div class="adm-panel__body adm-panel__body--flush">
+            @if (items.Count == 0)
+            {
+                <div class="adm-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>Keine Bewerbungen für diesen Filter.</p>
+                </div>
+            }
+            else
+            {
+                <table class="adm-table">
+                    <thead>
                         <tr>
-                            <td><strong>@app.DiscordName</strong></td>
-                            <td>
-                                @app.Division
-                                @if (app.AssignedLeagueId is null && app.AppliedLeagueId is null)
-                                {
-                                    <span class="status-badge" style="background:rgba(255,193,7,.1);color:***REMOVED***ffc107;" title="Keine Liga-Zuordnung">?</span>
-                                }
-                            </td>
-                            <td>@(app.AssignedRole ?? app.Role)</td>
-                            <td>@app.GamingName <span class="text-mute small">(@app.Platform)</span></td>
-                            <td>
-                                <span class="status-badge @statusClass">@statusText</span>
-                                @if (app.IsFlagged && !app.IsAccepted && !app.IsRejected)
-                                {
-                                    <span class="status-badge" style="background:rgba(0,188,212,.12);color:***REMOVED***00bcd4;" title="Zur Überprüfung markiert"><i class="bi bi-flag-fill"></i></span>
-                                }
-                                @if (app.IsOnTrial)
-                                {
-                                    <span class="status-badge" style="background:rgba(255,184,0,.12);color:***REMOVED***ffb800;" title="Auf Probe">P</span>
-                                }
-                            </td>
-                            <td>@app.SubmittedAt.ToString("dd.MM.yyyy HH:mm")</td>
-                            <td style="text-align: right;">
-                                <a href="@Url.Action("Detail", "AdminApplications", new { id = app.Id })" class="btn-admin btn-admin--secondary" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
-                                    <i class="bi bi-eye"></i> Detail
-                                </a>
-                            </td>
+                            <th>Liga</th>
+                            <th>Discord</th>
+                            <th>Rolle</th>
+                            <th>Gamer-Tag</th>
+                            <th>Plattform</th>
+                            <th>Eingereicht</th>
+                            <th>Status</th>
+                            <th></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in items)
+                        {
+                            <tr>
+                                <td>@CurrentLeagueName(a.TargetLeagueId)</td>
+                                <td>
+                                    <div class="adm-table__primary">@a.DiscordName</div>
+                                    <div class="adm-table__secondary">@a.DiscordId</div>
+                                </td>
+                                <td>@a.Role</td>
+                                <td>@a.GamerTag</td>
+                                <td>@a.Platform</td>
+                                <td>@a.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td><span class="@StatusBadge(a.Status)">@StatusLabel(a.Status)</span></td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Detail" asp-route-id="@a.Id">
+                                        <i class="bi bi-eye"></i> Detail
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
         </div>
+    </div>
 
-        <!-- Pagination -->
-        @if (Model.Result.TotalPages > 1)
-        {
-            <div class="pagination">
-                @if (Model.Result.Page > 1)
-                {
-                    <a href="@Url.Action("List", "AdminApplications", RouteFor(Model.Result.Page - 1))">
-                        <i class="bi bi-chevron-left"></i> Zurück
-                    </a>
-                }
-                <span class="active">Seite @Model.Result.Page / @Model.Result.TotalPages</span>
-                @if (Model.Result.Page < Model.Result.TotalPages)
-                {
-                    <a href="@Url.Action("List", "AdminApplications", RouteFor(Model.Result.Page + 1))">
-                        Weiter <i class="bi bi-chevron-right"></i>
-                    </a>
-                }
-            </div>
-        }
-    }
-    else
+    @* Pagination *@
+    @if (pageNo > 1 || hasMore)
     {
-        <div style="background: var(--surface-1); border: 1px solid var(--stroke-1); border-radius: var(--r-2); padding: 2rem; text-align: center; color: var(--ink-secondary);">
-            <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
-            <p style="margin-top: 1rem;">Keine Bewerbungen gefunden</p>
-        </div>
+        <nav class="adm-pagination">
+            @if (pageNo > 1)
+            {
+                <a class="btn btn-ghost btn-sm"
+                   asp-action="List" asp-route-page="@(pageNo - 1)"
+                   asp-route-status="@statusFilter" asp-route-leagueId="@leagueFilter">
+                    <i class="bi bi-chevron-left"></i> Zurück
+                </a>
+            }
+            <span class="adm-pagination__page">Seite @pageNo</span>
+            @if (hasMore)
+            {
+                <a class="btn btn-ghost btn-sm"
+                   asp-action="List" asp-route-page="@(pageNo + 1)"
+                   asp-route-status="@statusFilter" asp-route-leagueId="@leagueFilter">
+                    Weiter <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </nav>
     }
 </div>

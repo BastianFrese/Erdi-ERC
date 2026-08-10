@@ -35,6 +35,10 @@
     bool canDrvCards        = HasAnyPerm(AdminPermissions.DriversCards,        AdminPermissions.Drivers);
     bool canDrivers          = canDrvAchievements || canDrvDefinitions || canDrvCards;
 
+    bool canAppView     = HasAnyPerm(AdminPermissions.ApplicationsView, AdminPermissions.ApplicationsManage);
+    bool canAppManage   = HasAnyPerm(AdminPermissions.ApplicationsManage);
+    bool canApplications = canAppView || canAppManage;
+
     bool canSysMusic      = HasAnyPerm(AdminPermissions.SystemMusic,      AdminPermissions.System);
     bool canSysSetups     = HasAnyPerm(AdminPermissions.SystemSetups,     AdminPermissions.System);
     bool canSysAudit      = HasAnyPerm(AdminPermissions.SystemAuditLogs,  AdminPermissions.System);
@@ -156,6 +160,25 @@
                     {
                         <a class="@Nav("AdminDriverCards","Index")" asp-controller="AdminDriverCards" asp-action="Index">
                             <i class="bi bi-person-vcard-fill"></i> Fahrerkarten
+                        </a>
+                    }
+                </div>
+            }
+
+            @if (canApplications)
+            {
+                <div class="adm-nav-group">
+                    <span class="adm-nav-group__label">Bewerbungen</span>
+                    @if (canAppView)
+                    {
+                        <a class="@Nav("AdminApplications","List")" asp-controller="AdminApplications" asp-action="List">
+                            <i class="bi bi-list-ul"></i> Liste
+                        </a>
+                    }
+                    @if (canAppManage)
+                    {
+                        <a class="@Nav("AdminApplications","Waitlist")" asp-controller="AdminApplications" asp-action="Waitlist">
+                            <i class="bi bi-hourglass-split"></i> Warteliste
                         </a>
                     }
                 </div>
