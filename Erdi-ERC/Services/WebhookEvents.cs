@@ -13,6 +13,12 @@ namespace <OWNER_HANDLE>_ERC.Services
         public const string HighlightApproved    = "community.highlight.approved";
         public const string VotePollPublished    = "community.vote.published";
 
+        // ── Bewerbungen ──────────────────────────────────────────────────────────
+        public const string ApplicationSubmitted  = "application.submitted";
+        public const string ApplicationAccepted   = "application.accepted";
+        public const string ApplicationRejected   = "application.rejected";
+        public const string ApplicationWaitlisted = "application.waitlisted";
+
         /// <summary>Human-readable labels shown in the admin UI.</summary>
         public static readonly IReadOnlyList<(string Key, string Label, string Icon, string Description)> All =
         [
@@ -23,6 +29,10 @@ namespace <OWNER_HANDLE>_ERC.Services
             (StreamScheduled,      "Stream eingetragen",            "bi-camera-video-fill",           "Wird ausgelöst, wenn ein neuer Stream-Termin angelegt wird."),
             (HighlightApproved,    "Highlight freigegeben",         "bi-play-circle-fill",            "Wird ausgelöst, wenn ein Highlight-Clip freigegeben wird."),
             (VotePollPublished,    "Community-Voting gestartet",    "bi-bar-chart-fill",              "Wird ausgelöst, wenn ein neues Community-Voting angelegt wird."),
+            (ApplicationSubmitted,  "Bewerbung eingereicht",        "bi-envelope-paper",              "Wird ausgelöst, wenn ein User eine Bewerbung absendet."),
+            (ApplicationAccepted,   "Bewerbung angenommen",         "bi-check-circle",                "Wird ausgelöst, wenn ein Admin eine Bewerbung annimmt."),
+            (ApplicationRejected,   "Bewerbung abgelehnt",          "bi-x-circle",                    "Wird ausgelöst, wenn ein Admin eine Bewerbung ablehnt."),
+            (ApplicationWaitlisted, "Bewerbung auf Warteliste",     "bi-hourglass-split",             "Wird ausgelöst, wenn eine Bewerbung wegen voller Liga auf die Warteliste umgeleitet wird."),
         ];
     }
 }

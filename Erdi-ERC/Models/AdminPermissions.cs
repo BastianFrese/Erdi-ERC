@@ -31,6 +31,12 @@ namespace <OWNER_HANDLE>_ERC.Models
         /// <summary>Fahrerkarten anzeigen und Anzeigenamen korrigieren</summary>
         public const string DriversCards         = "drivers.cards";
 
+        // ── Bewerbungen ──────────────────────────────────────────────────────────
+        /// <summary>Bewerbungsliste und Detail-View einsehen</summary>
+        public const string ApplicationsView    = "applications.view";
+        /// <summary>Bewerbungen annehmen, ablehnen, von Warteliste promoten</summary>
+        public const string ApplicationsManage  = "applications.manage";
+
         // ── System ────────────────────────────────────────────────────────────────
         /// <summary>Hintergrundmusik verwalten</summary>
         public const string SystemMusic      = "system.music";
@@ -74,6 +80,11 @@ namespace <OWNER_HANDLE>_ERC.Models
                 new(DriversAchievements, "Achievements",  "bi-award"),
                 new(DriversDefinitions,  "Definitionen",  "bi-journal-text"),
                 new(DriversCards,        "Fahrerkarten",  "bi-person-vcard-fill"),
+            ]),
+            new("Bewerbungen", "bi-envelope-paper", "***REMOVED***22d3ee",
+            [
+                new(ApplicationsView,   "Liste einsehen",              "bi-list-ul"),
+                new(ApplicationsManage, "Entscheiden (Accept/Reject)", "bi-check2-square"),
             ]),
             new("System", "bi-gear-fill", "***REMOVED***ffb800",
             [
