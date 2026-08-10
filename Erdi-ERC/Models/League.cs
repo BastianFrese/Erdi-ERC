@@ -31,6 +31,10 @@ namespace <OWNER_HANDLE>_ERC.Models
         /// ihn ausschalten, damit ihre Ergebnisse den Gesamtkampf nicht verzerren.</summary>
         public bool CountsTowardOverall { get; set; } = true;
 
+        /// <summary>Nimmt diese Liga aktuell Bewerbungen an? Steuert die Sichtbarkeit im
+        /// Bewerbungsformular; wird zusätzlich serverseitig beim Submit erzwungen.</summary>
+        public bool AcceptsApplications { get; set; } = true;
+
         // Navigation
         public List<DriverStanding> Standings { get; set; } = new();
         public List<RaceResult> Races { get; set; } = new();
