@@ -79,6 +79,7 @@ builder.Services.AddScoped<ISetupAccessService, SetupAccessService>();
 builder.Services.AddScoped<ITrackSetupAccessPolicy, TrackSetupAccessPolicy>();
 builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
 builder.Services.AddScoped<IDiscordGuildService, DiscordGuildService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
 builder.Services.AddScoped<IStreamScheduleQueryService, StreamScheduleQueryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
@@ -511,6 +512,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin.System.Troll", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemTroll, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+
+    // ── Bewerbungen (V1) ─────────────────────────────────────────────────────────
+    options.AddPolicy("Admin.Applications.View", policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
+              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsView, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage)));
+
+    options.AddPolicy("Admin.Applications.Manage", policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
+              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage)));
 });
 var app = builder.Build();
 
