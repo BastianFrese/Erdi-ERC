@@ -1,0 +1,433 @@
+/* =====================================================================
+   PAGE · APPLICATIONS  (Apply / Submitted / MyApplication)
+   Namespace: .app-*
+   ===================================================================== */
+
+/* ── Shared Page Wrapper ─────────────────────────────────────────────── */
+.app-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+}
+
+/* ── Hero (Apply + MyApplication) ────────────────────────────────────── */
+.app-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding: 1.5rem 1.75rem;
+    background:
+        linear-gradient(165deg, rgba(255,255,255,.04) 0%, transparent 35%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    border: 1px solid var(--stroke-1);
+    clip-path: var(--clip-chamfer, polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px));
+    overflow: hidden;
+    isolation: isolate;
+}
+.app-hero::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--telemetry-stripe, linear-gradient(90deg, var(--sig-cyan), var(--accent-2), var(--sig-magenta)));
+    box-shadow: 0 0 14px rgba(225,6,0,.45);
+    z-index: 1;
+    pointer-events: none;
+}
+.app-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(110deg, transparent 30%, var(--accent-soft) 50%, transparent 70%);
+    opacity: .25;
+    z-index: -1;
+    animation: appHeroStripe 9s ease-in-out infinite alternate;
+}
+@keyframes appHeroStripe {
+    0%   { transform: translateX(-4%); opacity: .15; }
+    100% { transform: translateX(4%);  opacity: .35; }
+}
+.app-hero__icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: var(--r-3);
+    font-size: 1.5rem;
+    color: var(--accent-2);
+}
+.app-hero__title h1 {
+    font-family: var(--ff-tech);
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -.01em;
+    color: ***REMOVED***fff;
+    margin: 0 0 .2rem;
+}
+.app-hero__title p {
+    font-size: .82rem;
+    color: var(--ink-3);
+    margin: 0;
+    line-height: 1.4;
+}
+.app-hero__action {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ── Discord Join Warning ────────────────────────────────────────────── */
+.app-discord-warn {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background:
+        linear-gradient(180deg, rgba(88,101,242,.08), transparent 55%),
+        var(--surface-1);
+    border-color: rgba(88,101,242,.25);
+}
+.app-discord-warn__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(88,101,242,.15);
+    border-radius: var(--r-2);
+    font-size: 1.25rem;
+    color: ***REMOVED***5865f2;
+}
+.app-discord-warn__body strong {
+    display: block;
+    font-family: var(--ff-tech);
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: ***REMOVED***fff;
+    margin-bottom: .35rem;
+}
+.app-discord-warn__body p {
+    font-size: .82rem;
+    color: var(--ink-2);
+    margin: 0 0 .65rem;
+    line-height: 1.45;
+}
+.app-discord-warn__links {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 .5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+.app-discord-warn__body small {
+    font-size: .72rem;
+    color: var(--ink-4);
+}
+
+/* ── Apply Form ──────────────────────────────────────────────────────── */
+.app-form {
+    padding: 1.5rem 1.75rem;
+}
+.app-form__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem 1.5rem;
+}
+.app-form__grid--full {
+    grid-column: 1 / -1;
+}
+.app-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+.app-form__label {
+    font-family: var(--ff-tech);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.app-form__label .required {
+    color: var(--accent);
+    margin-left: 1px;
+}
+.app-form__input,
+.app-form__select,
+.app-form__textarea {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke-1);
+    border-radius: 8px;
+    color: ***REMOVED***fff;
+    padding: .6rem .85rem;
+    font-size: .9rem;
+    font-family: var(--ff-body);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+    width: 100%;
+}
+.app-form__input:focus,
+.app-form__select:focus,
+.app-form__textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--stroke-1));
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: rgba(255,255,255,.06);
+}
+.app-form__input::placeholder,
+.app-form__textarea::placeholder {
+    color: var(--ink-4);
+}
+.app-form__input[readonly] {
+    background: rgba(255,255,255,.02);
+    color: var(--ink-2);
+    cursor: default;
+}
+.app-form__select {
+    color-scheme: dark;
+    background-color: ***REMOVED***1a2130;
+    cursor: pointer;
+}
+.app-form__select option {
+    background-color: ***REMOVED***111722;
+    color: ***REMOVED***eaf1ff;
+}
+.app-form__textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+.app-form__hint {
+    font-size: .7rem;
+    color: var(--ink-4);
+    line-height: 1.35;
+}
+.app-form__validation {
+    grid-column: 1 / -1;
+    padding: .65rem 1rem;
+    background: rgba(255,71,87,.08);
+    border: 1px solid rgba(255,71,87,.2);
+    border-radius: var(--r-2);
+    font-size: .8rem;
+    color: var(--sig-red);
+}
+.app-form__validation ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+.app-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: .75rem;
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--stroke-1);
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────── */
+.app-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    gap: .5rem;
+}
+.app-empty i {
+    font-size: 2.5rem;
+    color: var(--ink-4);
+    margin-bottom: .5rem;
+}
+.app-empty p {
+    color: var(--ink-3);
+    margin: 0;
+    font-size: .9rem;
+}
+
+/* ── Submitted Card ──────────────────────────────────────────────────── */
+.app-submit-card {
+    max-width: 520px;
+    margin: 2rem auto 0;
+    padding: 2rem 1.75rem 1.75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+}
+.app-submit-card__icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 2rem;
+    margin-bottom: .25rem;
+}
+.app-submit-card__icon--ok {
+    background: rgba(57,255,20,.10);
+    box-shadow: 0 0 24px rgba(57,255,20,.25);
+}
+.app-submit-card__icon--wait {
+    background: rgba(255,184,0,.10);
+    box-shadow: 0 0 24px rgba(255,184,0,.25);
+}
+.app-submit-card__icon--info {
+    background: rgba(61,169,252,.10);
+    box-shadow: 0 0 24px rgba(61,169,252,.25);
+}
+.app-submit-card__icon--send {
+    background: rgba(0,229,255,.10);
+    box-shadow: 0 0 24px rgba(0,229,255,.25);
+}
+.app-submit-card__title {
+    font-family: var(--ff-tech);
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -.01em;
+    color: ***REMOVED***fff;
+    margin: 0;
+}
+.app-submit-card__body {
+    font-size: .88rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+    max-width: 38ch;
+}
+.app-submit-card__body strong {
+    color: ***REMOVED***fff;
+}
+.app-submit-card__warn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    background: rgba(255,184,0,.08);
+    border: 1px solid rgba(255,184,0,.2);
+    border-radius: var(--r-2);
+    font-size: .78rem;
+    color: var(--sig-amber);
+}
+.app-submit-card__actions {
+    display: flex;
+    gap: .75rem;
+    margin-top: .5rem;
+}
+
+/* ── My Applications Table ───────────────────────────────────────────── */
+.app-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.app-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+}
+.app-table thead th {
+    font-family: var(--ff-tech);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: left;
+    padding: .75rem .9rem;
+    border-bottom: 1px solid var(--stroke-1);
+    white-space: nowrap;
+}
+.app-table tbody td {
+    padding: .7rem .9rem;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    color: var(--ink);
+    vertical-align: middle;
+}
+.app-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.app-table tbody tr:hover td {
+    background: rgba(255,255,255,.015);
+}
+.app-table .app-table__league {
+    font-weight: 600;
+    color: ***REMOVED***fff;
+}
+.app-table .app-table__date {
+    color: var(--ink-3);
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .app-page {
+        padding: 0 .5rem 2rem;
+    }
+    .app-hero {
+        flex-wrap: wrap;
+        padding: 1.25rem;
+        gap: .75rem;
+    }
+    .app-hero__icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    .app-hero__title h1 {
+        font-size: 1.1rem;
+    }
+    .app-hero__action {
+        margin-left: 0;
+        width: 100%;
+    }
+    .app-hero__action .btn {
+        width: 100%;
+    }
+    .app-form {
+        padding: 1.25rem 1rem;
+    }
+    .app-form__grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .app-form__actions {
+        flex-direction: column-reverse;
+    }
+    .app-form__actions .btn {
+        width: 100%;
+    }
+    .app-discord-warn {
+        flex-direction: column;
+        gap: .75rem;
+    }
+    .app-discord-warn__links {
+        flex-direction: column;
+    }
+    .app-submit-card {
+        margin: 1rem .5rem 0;
+        padding: 1.5rem 1.25rem;
+    }
+    .app-submit-card__actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .app-submit-card__actions .btn {
+        width: 100%;
+    }
+    .app-table thead th,
+    .app-table tbody td {
+        padding: .55rem .6rem;
+        font-size: .78rem;
+    }
+}

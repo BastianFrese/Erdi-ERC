@@ -40,6 +40,9 @@ public sealed class SqliteTestContext : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
+            // Muss dem Prod-Default aus Program.cs entsprechen — sonst übersehen
+            // Tests Silent-Write-Bugs (untracked Entity mutiert, SaveChanges schreibt nichts).
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution)
             // SQLite generiert keine [Timestamp]/RowVersion-Werte — der Interceptor
             // füllt sie, damit Concurrency-Token-Updates nicht ins Leere greifen.
             .AddInterceptors(new RowVersionInterceptor())

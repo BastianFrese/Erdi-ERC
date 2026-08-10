@@ -242,6 +242,26 @@ public class ApplicationServiceTests
         ctx.Db.Applications.Add(new Application
         {
             Id = "app1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Ersatzfahrer",
+            Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        await svc.AcceptAsync("app1", "admin1", null, CancellationToken.None);
+
+        var standing = ctx.Db.DriverStandings.Single();
+        Assert.True(standing.IsReserveDriver);
+    }
+
+    [Fact]
+    public async Task Accept_marksDriverStandingAsReserve_whenRoleIsReservefahrer_legacy()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "app1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
             Platform = "PC", TargetLeagueId = "pro", Role = "Reservefahrer",
             Status = (int)ApplicationStatus.Pending
         });
@@ -442,6 +462,101 @@ public class ApplicationServiceTests
         var svc = BuildService(ctx);
         var app = await svc.GetByIdAsync("nope", CancellationToken.None);
         Assert.Null(app);
+    }
+
+    // ── ManualRegister ─────────────────────────────────────────────────────────
+
+    private static ManualRegisterCommand ManualCmd(string discordId = "222", string tag = "ManualRacer",
+        string leagueId = "pro", string role = "Stammfahrer")
+        => new(
+            DiscordId: discordId,
+            DiscordName: "ManualUser",
+            GamerTag: tag,
+            Platform: "PC",
+            LeagueId: leagueId,
+            Role: role);
+
+    [Fact]
+    public async Task ManualRegister_createsProfileTagAndStanding()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.ManualRegisterAsync(ManualCmd(), "admin1", CancellationToken.None);
+
+        Assert.Equal(ManualRegisterOutcome.Ok, result.Outcome);
+        Assert.NotNull(ctx.Db.DriverProfiles.SingleOrDefault(p => p.DiscordId == "222"));
+        Assert.NotNull(ctx.Db.DriverGamerTags.SingleOrDefault(t => t.DiscordId == "222" && t.GamerTag == "ManualRacer"));
+        var standing = ctx.Db.DriverStandings.SingleOrDefault(s => s.LeagueId == "pro" && s.Driver == "ManualRacer");
+        Assert.NotNull(standing);
+        Assert.False(standing!.IsReserveDriver);
+    }
+
+    [Fact]
+    public async Task ManualRegister_marksReserve_forErsatzfahrer()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.ManualRegisterAsync(ManualCmd(role: "Ersatzfahrer"), "admin1", CancellationToken.None);
+
+        Assert.Equal(ManualRegisterOutcome.Ok, result.Outcome);
+        Assert.True(ctx.Db.DriverStandings.Single().IsReserveDriver);
+    }
+
+    [Fact]
+    public async Task ManualRegister_returnsLeagueNotFound_forUnknownLeague()
+    {
+        using var ctx = new SqliteTestContext();
+        var svc = BuildService(ctx);
+        var result = await svc.ManualRegisterAsync(ManualCmd(leagueId: "nope"), "admin1", CancellationToken.None);
+
+        Assert.Equal(ManualRegisterOutcome.LeagueNotFound, result.Outcome);
+        Assert.Empty(ctx.Db.DriverProfiles);
+    }
+
+    [Fact]
+    public async Task ManualRegister_returnsAlreadyRegistered_andWritesNothing_whenStandingExists()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.DriverStandings.Add(new DriverStanding
+        {
+            LeagueId = "pro", Driver = "ManualRacer", Position = 0,
+            Points = 0, IsReserveDriver = false
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.ManualRegisterAsync(ManualCmd(), "admin1", CancellationToken.None);
+
+        Assert.Equal(ManualRegisterOutcome.AlreadyRegistered, result.Outcome);
+        Assert.Empty(ctx.Db.DriverProfiles);
+        Assert.Empty(ctx.Db.DriverGamerTags);
+        Assert.Single(ctx.Db.DriverStandings);
+    }
+
+    [Fact]
+    public async Task ManualRegister_bypassesCapacity()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", capacity: 1));
+        ctx.Db.DriverStandings.Add(new DriverStanding
+        {
+            LeagueId = "pro", Driver = "ExistingPro", Position = 0,
+            Points = 0, IsReserveDriver = false
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.ManualRegisterAsync(ManualCmd(), "admin1", CancellationToken.None);
+
+        Assert.Equal(ManualRegisterOutcome.Ok, result.Outcome);
+        Assert.Equal(2, ctx.Db.DriverStandings.Count());
     }
 
     // ── Test Doubles ───────────────────────────────────────────────────────────

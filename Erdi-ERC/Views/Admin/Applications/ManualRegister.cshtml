@@ -1,0 +1,101 @@
+@model <OWNER_HANDLE>_ERC.Controllers.ManualRegisterInput
+@{
+    ViewData["Title"] = "Fahrer registrieren";
+    ViewData["Kicker"] = "Bewerbungen";
+    ViewData["HeroTitle"] = "Fahrer manuell registrieren";
+
+    var leagues = ViewBag.Leagues as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>
+                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
+    var platforms = ViewBag.AllowedPlatforms as string[] ?? new[] { "Steam", "EA", "Xbox", "Playstation" };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/admin-applications.css" asp-append-version="true" />
+}
+
+<div class="adm-dashboard">
+
+    <div class="adm-back-bar">
+        <a class="btn btn-ghost btn-sm" asp-action="List">
+            <i class="bi bi-arrow-left"></i> Zurück zur Liste
+        </a>
+    </div>
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-person-plus-fill me-2" style="color:***REMOVED***22d3ee;"></i>
+                <span>Fahrer ohne Bewerbung registrieren</span>
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <p class="adm-hint-text">
+                Legt DriverProfile, Gamer-Tag und Standing direkt an — ohne Bewerbungs-Workflow.
+                Die Liga-Kapazität wird dabei <strong>nicht</strong> geprüft.
+            </p>
+
+            <form asp-action="ManualRegister" method="post" class="adm-manual-form">
+                @Html.AntiForgeryToken()
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="adm-form-validation" asp-validation-summary="All" role="alert"></div>
+                }
+
+                <div class="adm-manual-form__grid">
+                    <div class="adm-form-field">
+                        <label class="adm-form-label" for="DiscordId">Discord-ID</label>
+                        <input id="DiscordId" name="DiscordId" class="adm-form-input" type="text"
+                               value="@Model.DiscordId" required inputmode="numeric"
+                               placeholder="z. B. 218767861231238" />
+                    </div>
+                    <div class="adm-form-field">
+                        <label class="adm-form-label" for="DiscordName">Discord-Name</label>
+                        <input id="DiscordName" name="DiscordName" class="adm-form-input" type="text"
+                               value="@Model.DiscordName" required maxlength="64"
+                               placeholder="Anzeigename" />
+                    </div>
+                    <div class="adm-form-field">
+                        <label class="adm-form-label" for="GamerTag">EA-Gamer-Tag</label>
+                        <input id="GamerTag" name="GamerTag" class="adm-form-input" type="text"
+                               value="@Model.GamerTag" required maxlength="64"
+                               placeholder="Wie im Spiel angezeigt" />
+                    </div>
+                    <div class="adm-form-field">
+                        <label class="adm-form-label" for="Platform">Plattform</label>
+                        <select id="Platform" name="Platform" class="adm-form-select" required>
+                            <option value="" disabled selected="@(string.IsNullOrEmpty(Model.Platform))">Bitte wählen</option>
+                            @foreach (var p in platforms)
+                            {
+                                <option value="@p" selected="@(string.Equals(Model.Platform, p, StringComparison.OrdinalIgnoreCase))">@p</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="adm-form-field">
+                        <label class="adm-form-label" for="LeagueId">Liga</label>
+                        <select id="LeagueId" name="LeagueId" class="adm-form-select" required>
+                            <option value="" disabled selected="@(string.IsNullOrEmpty(Model.LeagueId))">Bitte wählen</option>
+                            @foreach (var l in leagues)
+                            {
+                                <option value="@l.Id" selected="@(string.Equals(Model.LeagueId, l.Id, StringComparison.OrdinalIgnoreCase))">@l.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="adm-form-field">
+                        <label class="adm-form-label" for="Role">Rolle</label>
+                        <select id="Role" name="Role" class="adm-form-select" required>
+                            <option value="Stammfahrer"  selected="@(Model.Role == "Stammfahrer")">Stammfahrer</option>
+                            <option value="Ersatzfahrer" selected="@(Model.Role == "Ersatzfahrer")">Ersatzfahrer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="adm-manual-form__actions">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-person-plus-fill"></i> Fahrer registrieren
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

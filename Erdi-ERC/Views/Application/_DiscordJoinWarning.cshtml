@@ -4,15 +4,15 @@
     if (!Model.JoinedCommunity) missing.Add("Community");
     if (!Model.JoinedLeague) missing.Add("Liga");
 }
-<div class="apply-discord-warn f1-panel">
-    <div class="apply-discord-warn__icon"><i class="bi bi-discord"></i></div>
-    <div class="apply-discord-warn__body">
+<div class="f1-panel app-discord-warn">
+    <div class="app-discord-warn__icon"><i class="bi bi-discord"></i></div>
+    <div class="app-discord-warn__body">
         <strong>Hinweis: Discord-Beitritt</strong>
         <p>
             Laut deinem Login bist du noch nicht im @(string.Join(" und ", missing))-Discord.
             Damit wir deine Bewerbung schnell bearbeiten können, tritt bitte jetzt bei:
         </p>
-        <ul class="apply-discord-warn__links">
+        <ul class="app-discord-warn__links">
             @if (!Model.JoinedCommunity && !string.IsNullOrWhiteSpace(Model.CommunityInviteUrl))
             {
                 <li><a class="btn btn-sm btn-outline-primary" href="@Model.CommunityInviteUrl" target="_blank" rel="noopener">
@@ -26,6 +26,6 @@
                 </a></li>
             }
         </ul>
-        <small class="text-mute">Du kannst die Bewerbung trotzdem absenden – wir kontaktieren dich alternativ per Discord-Nachricht.</small>
+        <small>Du kannst die Bewerbung trotzdem absenden – wir kontaktieren dich alternativ per Discord-Nachricht.</small>
     </div>
 </div>

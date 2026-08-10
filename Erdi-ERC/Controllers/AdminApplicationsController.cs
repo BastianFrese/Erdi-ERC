@@ -19,15 +19,18 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IApplicationService _applications;
         private readonly IStaticDataCache _staticCache;
         private readonly AppDbContext _db;
+        private readonly <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions _driverMatching;
 
         public AdminApplicationsController(
             IApplicationService applications,
             IStaticDataCache staticCache,
-            AppDbContext db)
+            AppDbContext db,
+            Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.DriverMatchingOptions> driverMatching)
         {
             _applications = applications;
             _staticCache = staticCache;
             _db = db;
+            _driverMatching = driverMatching.Value;
         }
 
         // ── List ─────────────────────────────────────────────────────────────────
@@ -160,5 +163,81 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             }
             return RedirectToAction(nameof(Waitlist), new { leagueId });
         }
+
+        // ── Manuelle Registrierung (ohne Bewerbung) ──────────────────────────────
+
+        [HttpGet("/AdminApplications/ManualRegister")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        public async Task<IActionResult> ManualRegister(string? leagueId)
+        {
+            await FillManualRegisterViewBagAsync();
+            return View("~/Views/Admin/Applications/ManualRegister.cshtml",
+                new ManualRegisterInput { LeagueId = leagueId ?? string.Empty });
+        }
+
+        [HttpPost("/AdminApplications/ManualRegister")]
+        [ValidateAntiForgeryToken]
+        [EnableRateLimiting("forms")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        public async Task<IActionResult> ManualRegister(ManualRegisterInput input)
+        {
+            if (!ModelState.IsValid)
+            {
+                await FillManualRegisterViewBagAsync();
+                return View("~/Views/Admin/Applications/ManualRegister.cshtml", input);
+            }
+
+            var admin = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+            var cmd = new ManualRegisterCommand(
+                DiscordId: input.DiscordId.Trim(),
+                DiscordName: input.DiscordName.Trim(),
+                GamerTag: input.GamerTag.Trim(),
+                Platform: input.Platform,
+                LeagueId: input.LeagueId,
+                Role: input.Role);
+
+            var result = await _applications.ManualRegisterAsync(cmd, admin, HttpContext.RequestAborted);
+
+            if (result.Outcome == ManualRegisterOutcome.Ok)
+            {
+                TempData["AdminMessage"] = $"{input.DiscordName} wurde als {input.Role} registriert.";
+                return RedirectToAction(nameof(ManualRegister), new { leagueId = input.LeagueId });
+            }
+
+            ModelState.AddModelError(string.Empty, result.Error ?? "Registrierung fehlgeschlagen.");
+            await FillManualRegisterViewBagAsync();
+            return View("~/Views/Admin/Applications/ManualRegister.cshtml", input);
+        }
+
+        private async Task FillManualRegisterViewBagAsync()
+        {
+            ViewBag.Leagues = await _staticCache.GetAllLeaguesAsync();
+            ViewBag.AllowedPlatforms = _driverMatching.AllowedPlatforms;
+        }
+    }
+
+    /// <summary>Eingabe-Modell für die manuelle Fahrer-Registrierung.</summary>
+    public class ManualRegisterInput
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Discord-ID ist erforderlich.")]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{5,25}$", ErrorMessage = "Discord-ID muss numerisch sein (5–25 Ziffern).")]
+        public string DiscordId { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Discord-Name ist erforderlich.")]
+        [System.ComponentModel.DataAnnotations.MaxLength(64)]
+        public string DiscordName { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "EA-Gamer-Tag ist erforderlich.")]
+        [System.ComponentModel.DataAnnotations.MaxLength(64)]
+        public string GamerTag { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Plattform ist erforderlich.")]
+        public string Platform { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Liga ist erforderlich.")]
+        public string LeagueId { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Role { get; set; } = "Stammfahrer";
     }
 }

@@ -1,0 +1,231 @@
+/* =====================================================================
+   PAGE · ADMIN APPLICATIONS  (List / Detail / Waitlist / ManualRegister)
+   Ergänzt die globalen adm-* Komponenten aus 06-pages-and-admin.css um
+   die bewerbungs-spezifischen Bausteine. Nur auf Admin-Bewerbungsseiten
+   geladen (@section Styles).
+   ===================================================================== */
+
+/* ── Back-Bar ────────────────────────────────────────────────────────── */
+.adm-back-bar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+/* ── Filter-Leiste ───────────────────────────────────────────────────── */
+.adm-filter-bar {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: .85rem;
+    padding: 1rem 1.2rem;
+    background: var(--surface-1, rgba(255,255,255,.03));
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3, 12px);
+}
+.adm-filter-bar__field {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    min-width: 180px;
+}
+.adm-filter-bar__field label {
+    font-family: var(--ff-tech);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+
+/* ── Formular-Controls ───────────────────────────────────────────────── */
+.adm-form-input,
+.adm-form-select,
+.adm-form-textarea {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke-1);
+    border-radius: 8px;
+    color: ***REMOVED***fff;
+    padding: .5rem .75rem;
+    font-size: .88rem;
+    font-family: var(--ff-body);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    width: 100%;
+}
+.adm-form-input:focus,
+.adm-form-select:focus,
+.adm-form-textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--stroke-1));
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.adm-form-select {
+    color-scheme: dark;
+    background-color: ***REMOVED***1a2130;
+    cursor: pointer;
+}
+.adm-form-select option {
+    background-color: ***REMOVED***111722;
+    color: ***REMOVED***eaf1ff;
+}
+.adm-form-textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+.adm-form-validation {
+    padding: .65rem 1rem;
+    margin-bottom: 1rem;
+    background: rgba(255,71,87,.08);
+    border: 1px solid rgba(255,71,87,.2);
+    border-radius: var(--r-2, 8px);
+    font-size: .82rem;
+    color: var(--sig-red, ***REMOVED***ff6b6b);
+}
+.adm-form-validation ul { margin: 0; padding-left: 1.2rem; }
+
+/* ── Tabelle ─────────────────────────────────────────────────────────── */
+.adm-panel__body--flush { padding: 0; overflow-x: auto; }
+.adm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+}
+.adm-table thead th {
+    font-family: var(--ff-tech);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: left;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--stroke-1);
+    white-space: nowrap;
+}
+.adm-table tbody td {
+    padding: .7rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    color: var(--ink);
+    vertical-align: middle;
+}
+.adm-table tbody tr:last-child td { border-bottom: none; }
+.adm-table tbody tr:hover td { background: rgba(255,255,255,.02); }
+.adm-table__primary { font-weight: 600; color: ***REMOVED***fff; }
+.adm-table__secondary {
+    font-family: var(--ff-mono, monospace);
+    font-size: .72rem;
+    color: var(--ink-4);
+}
+
+/* ── Empty-State (Views nutzen i + p direkt) ─────────────────────────── */
+.adm-empty i { font-size: 1.6rem; opacity: .4; }
+.adm-empty p { color: var(--ink-3); margin: 0; font-size: .9rem; }
+
+/* ── Detail: Definition-List, Motivation, Notiz ──────────────────────── */
+.adm-dl {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: .45rem 1rem;
+    margin: 0;
+}
+.adm-dl dt {
+    font-family: var(--ff-tech);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    align-self: center;
+}
+.adm-dl dd {
+    margin: 0;
+    font-size: .88rem;
+    color: var(--ink);
+}
+.adm-motivation,
+.adm-review-note {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--stroke-1);
+}
+.adm-motivation h3,
+.adm-review-note h3 {
+    font-family: var(--ff-tech);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 .5rem;
+}
+.adm-motivation blockquote,
+.adm-review-note blockquote {
+    margin: 0;
+    padding: .75rem 1rem;
+    background: rgba(255,255,255,.03);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: .88rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+/* ── Detail: Accept/Reject-Aktionen ──────────────────────────────────── */
+.adm-action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+.adm-action-form {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+.adm-action-form .btn { align-self: flex-start; }
+
+/* ── Pagination ──────────────────────────────────────────────────────── */
+.adm-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+.adm-pagination__page {
+    font-family: var(--ff-tech);
+    font-size: .72rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+
+/* ── Manuelle Registrierung ──────────────────────────────────────────── */
+.adm-hint-text {
+    font-size: .82rem;
+    color: var(--ink-3);
+    margin: 0 0 1.1rem;
+    line-height: 1.5;
+}
+.adm-manual-form__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.25rem;
+}
+.adm-manual-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--stroke-1);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .adm-filter-bar__field { min-width: 140px; flex: 1; }
+    .adm-dl { grid-template-columns: 1fr; gap: .15rem .5rem; }
+    .adm-dl dt { margin-top: .5rem; }
+    .adm-action-grid { grid-template-columns: 1fr; }
+    .adm-manual-form__grid { grid-template-columns: 1fr; }
+    .adm-table thead th,
+    .adm-table tbody td { padding: .55rem .6rem; font-size: .78rem; }
+}

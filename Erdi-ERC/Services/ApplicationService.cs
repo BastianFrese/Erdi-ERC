@@ -200,68 +200,17 @@ namespace <OWNER_HANDLE>_ERC.Services
             await using var tx = await _db.Database.BeginTransactionAsync(ct);
             try
             {
-                var app = await _db.Applications.FirstOrDefaultAsync(a => a.Id == applicationId, ct);
+                // AsTracking: globaler Default ist NoTracking — ohne Tracking gehen
+                // die Status-/DecidedAt-Mutationen beim SaveChanges verloren.
+                var app = await _db.Applications.AsTracking().FirstOrDefaultAsync(a => a.Id == applicationId, ct);
                 if (app is null) return AcceptRejectResult.NotFound();
 
-                // 1. DriverProfile upsert
-                var profile = await _db.DriverProfiles.FirstOrDefaultAsync(p => p.DiscordId == app.DiscordId, ct);
-                if (profile is null)
-                {
-                    profile = new DriverProfile
-                    {
-                        DiscordId = app.DiscordId,
-                        DiscordName = app.DiscordName,
-                        PreferredPlatform = app.Platform,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                    };
-                    _db.DriverProfiles.Add(profile);
-                }
-                else
-                {
-                    profile.UpdatedAt = DateTime.UtcNow;
-                    if (string.IsNullOrEmpty(profile.PreferredPlatform))
-                        profile.PreferredPlatform = app.Platform;
-                }
-
-                // 2. DriverGamerTag upsert
-                var existingTag = await _db.DriverGamerTags
-                    .FirstOrDefaultAsync(t => t.DiscordId == app.DiscordId && t.Platform == app.Platform, ct);
-                if (existingTag is null)
-                {
-                    var anyTag = await _db.DriverGamerTags.AnyAsync(t => t.DiscordId == app.DiscordId, ct);
-                    _db.DriverGamerTags.Add(new DriverGamerTag
-                    {
-                        DiscordId = app.DiscordId,
-                        Platform = app.Platform,
-                        GamerTag = app.GamerTag,
-                        IsPrimary = !anyTag,
-                        LinkedAt = DateTime.UtcNow,
-                        LinkedByDiscordId = adminDiscordId,
-                    });
-                }
+                // 1. DriverProfile + 2. DriverGamerTag upsert
+                var profile = await UpsertProfileAndTagAsync(
+                    app.DiscordId, app.DiscordName, app.GamerTag, app.Platform, adminDiscordId, ct);
 
                 // 3. DriverStanding anlegen — Dedup via Trim().ToLowerInvariant()
-                var normalized = app.GamerTag.Trim().ToLowerInvariant();
-                var existingStanding = await _db.DriverStandings.FirstOrDefaultAsync(
-                    s => s.LeagueId == app.TargetLeagueId
-                        && s.Driver.Trim().ToLower() == normalized,
-                    ct);
-                if (existingStanding is null)
-                {
-                    var isReserve = string.Equals(app.Role, "Reservefahrer", StringComparison.OrdinalIgnoreCase);
-                    _db.DriverStandings.Add(new DriverStanding
-                    {
-                        LeagueId = app.TargetLeagueId,
-                        Driver = app.GamerTag,
-                        Team = string.Empty,
-                        Position = 0,
-                        Points = 0,
-                        Wins = 0,
-                        IsReserveDriver = isReserve,
-                        ReserveForDriver = null,
-                    });
-                }
+                await UpsertStandingAsync(app.TargetLeagueId, app.GamerTag, app.Role, ct);
 
                 // 4. Application-Status
                 app.Status = (int)ApplicationStatus.Accepted;
@@ -300,11 +249,85 @@ namespace <OWNER_HANDLE>_ERC.Services
             }
         }
 
+        /// <summary>DriverProfile anlegen/aktualisieren + GamerTag für die Plattform verknüpfen.</summary>
+        private async Task<DriverProfile> UpsertProfileAndTagAsync(
+            string discordId, string discordName, string gamerTag, string platform,
+            string adminDiscordId, CancellationToken ct)
+        {
+            var profile = await _db.DriverProfiles.AsTracking().FirstOrDefaultAsync(p => p.DiscordId == discordId, ct);
+            if (profile is null)
+            {
+                profile = new DriverProfile
+                {
+                    DiscordId = discordId,
+                    DiscordName = discordName,
+                    PreferredPlatform = platform,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+                _db.DriverProfiles.Add(profile);
+            }
+            else
+            {
+                profile.UpdatedAt = DateTime.UtcNow;
+                if (string.IsNullOrEmpty(profile.PreferredPlatform))
+                    profile.PreferredPlatform = platform;
+            }
+
+            var existingTag = await _db.DriverGamerTags
+                .FirstOrDefaultAsync(t => t.DiscordId == discordId && t.Platform == platform, ct);
+            if (existingTag is null)
+            {
+                var anyTag = await _db.DriverGamerTags.AnyAsync(t => t.DiscordId == discordId, ct);
+                _db.DriverGamerTags.Add(new DriverGamerTag
+                {
+                    DiscordId = discordId,
+                    Platform = platform,
+                    GamerTag = gamerTag,
+                    IsPrimary = !anyTag,
+                    LinkedAt = DateTime.UtcNow,
+                    LinkedByDiscordId = adminDiscordId,
+                });
+            }
+
+            return profile;
+        }
+
+        /// <summary>Ersatz-/Reservefahrer zählen nicht gegen die Stammfahrer-Kapazität.</summary>
+        private static bool IsReserveRole(string role) =>
+            string.Equals(role, "Ersatzfahrer", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(role, "Reservefahrer", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Legt ein DriverStanding an, sofern der GamerTag (Trim+Lower) in der Liga noch fehlt.</summary>
+        private async Task<bool> UpsertStandingAsync(string leagueId, string gamerTag, string role, CancellationToken ct)
+        {
+            var normalized = gamerTag.Trim().ToLowerInvariant();
+            var existingStanding = await _db.DriverStandings.FirstOrDefaultAsync(
+                s => s.LeagueId == leagueId
+                    && s.Driver.Trim().ToLower() == normalized,
+                ct);
+            if (existingStanding is not null) return false;
+
+            _db.DriverStandings.Add(new DriverStanding
+            {
+                LeagueId = leagueId,
+                Driver = gamerTag,
+                Team = string.Empty,
+                Position = 0,
+                Points = 0,
+                Wins = 0,
+                IsReserveDriver = IsReserveRole(role),
+                ReserveForDriver = null,
+            });
+            return true;
+        }
+
         // ── Reject ────────────────────────────────────────────────────────────────
 
         public async Task<AcceptRejectResult> RejectAsync(string applicationId, string adminDiscordId, string? note, CancellationToken ct)
         {
-            var app = await _db.Applications.FirstOrDefaultAsync(a => a.Id == applicationId, ct);
+            // AsTracking: globaler Default ist NoTracking — sonst wird der Reject nie gespeichert.
+            var app = await _db.Applications.AsTracking().FirstOrDefaultAsync(a => a.Id == applicationId, ct);
             if (app is null) return AcceptRejectResult.NotFound();
 
             app.Status = (int)ApplicationStatus.Rejected;
@@ -333,7 +356,9 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         public async Task<PromoteResult> PromoteFromWaitlistAsync(string waitlistEntryId, string adminDiscordId, CancellationToken ct)
         {
-            var entry = await _db.WaitlistEntries.FirstOrDefaultAsync(w => w.Id == waitlistEntryId, ct);
+            // AsTracking: PromotedToApplicationId/Note müssen persistiert werden,
+            // sonst ist der Eintrag mehrfach promotebar.
+            var entry = await _db.WaitlistEntries.AsTracking().FirstOrDefaultAsync(w => w.Id == waitlistEntryId, ct);
             if (entry is null) return PromoteResult.NotFound("Wartelisten-Eintrag nicht gefunden.");
 
             var app = new Application
@@ -369,6 +394,46 @@ namespace <OWNER_HANDLE>_ERC.Services
             });
 
             return PromoteResult.Ok(app);
+        }
+
+        // ── Manuelle Registrierung (ohne Bewerbung) ───────────────────────────────
+
+        public async Task<ManualRegisterResult> ManualRegisterAsync(
+            ManualRegisterCommand cmd, string adminDiscordId, CancellationToken ct)
+        {
+            var league = await _db.Leagues.FirstOrDefaultAsync(l => l.Id == cmd.LeagueId, ct);
+            if (league is null) return ManualRegisterResult.LeagueNotFound();
+
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var profile = await UpsertProfileAndTagAsync(
+                    cmd.DiscordId, cmd.DiscordName, cmd.GamerTag, cmd.Platform, adminDiscordId, ct);
+
+                var standingCreated = await UpsertStandingAsync(cmd.LeagueId, cmd.GamerTag, cmd.Role, ct);
+                if (!standingCreated)
+                {
+                    // Pending Profile/Tag-Adds verwerfen, sonst persistiert sie ein
+                    // späterer SaveChanges im selben Request-Scope.
+                    _db.ChangeTracker.Clear();
+                    await tx.RollbackAsync(ct);
+                    return ManualRegisterResult.AlreadyRegistered();
+                }
+
+                await _audit.LogAsync("ManualRegisterDriver", "DriverProfile", profile.DiscordId,
+                    $"League={league.Name}, Role={cmd.Role}, Tag={cmd.Platform}:{cmd.GamerTag}, Actor={adminDiscordId}");
+
+                await _db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                _staticCache.InvalidateLeagues();
+                return ManualRegisterResult.Ok();
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
         }
     }
 }
