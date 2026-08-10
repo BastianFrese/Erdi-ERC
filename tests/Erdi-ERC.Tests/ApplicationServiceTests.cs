@@ -559,6 +559,185 @@ public class ApplicationServiceTests
         Assert.Equal(2, ctx.Db.DriverStandings.Count());
     }
 
+    // ── Self-Service: Withdraw / LeaveWaitlist / ListMine ──────────────────────
+
+    [Fact]
+    public async Task Withdraw_deletesOwnPendingApplication()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.WithdrawAsync("a1", "111", CancellationToken.None);
+
+        Assert.Equal(WithdrawOutcome.Ok, result.Outcome);
+        Assert.Empty(ctx.Db.Applications);
+    }
+
+    [Fact]
+    public async Task Withdraw_returnsNotOwner_forForeignApplication()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "999", DiscordName = "999", GamerTag = "R1",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.WithdrawAsync("a1", "111", CancellationToken.None);
+
+        Assert.Equal(WithdrawOutcome.NotOwner, result.Outcome);
+        Assert.Single(ctx.Db.Applications);
+    }
+
+    [Fact]
+    public async Task Withdraw_returnsNotPending_forDecidedApplication()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Status = (int)ApplicationStatus.Accepted
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.WithdrawAsync("a1", "111", CancellationToken.None);
+
+        Assert.Equal(WithdrawOutcome.NotPending, result.Outcome);
+        Assert.Single(ctx.Db.Applications);
+    }
+
+    [Fact]
+    public async Task LeaveWaitlist_removesEntry_andRenumbersFollowers()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.WaitlistEntries.AddRange(
+            new WaitlistEntry { Id = "w1", DiscordId = "1", DiscordName = "1", GamerTag = "A", Platform = "PC", LeagueId = "pro", Position = 1 },
+            new WaitlistEntry { Id = "w2", DiscordId = "2", DiscordName = "2", GamerTag = "B", Platform = "PC", LeagueId = "pro", Position = 2 },
+            new WaitlistEntry { Id = "w3", DiscordId = "3", DiscordName = "3", GamerTag = "C", Platform = "PC", LeagueId = "pro", Position = 3 });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.LeaveWaitlistAsync("w1", "1", CancellationToken.None);
+
+        Assert.Equal(WithdrawOutcome.Ok, result.Outcome);
+        var remaining = ctx.Db.WaitlistEntries.OrderBy(w => w.Position).ToList();
+        Assert.Equal(2, remaining.Count);
+        Assert.Equal(1, remaining.First(w => w.Id == "w2").Position);
+        Assert.Equal(2, remaining.First(w => w.Id == "w3").Position);
+    }
+
+    [Fact]
+    public async Task LeaveWaitlist_returnsNotOwner_forForeignEntry()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.WaitlistEntries.Add(new WaitlistEntry
+        {
+            Id = "w1", DiscordId = "999", DiscordName = "999", GamerTag = "A",
+            Platform = "PC", LeagueId = "pro", Position = 1
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.LeaveWaitlistAsync("w1", "111", CancellationToken.None);
+
+        Assert.Equal(WithdrawOutcome.NotOwner, result.Outcome);
+        Assert.Single(ctx.Db.WaitlistEntries);
+    }
+
+    [Fact]
+    public async Task ListMine_returnsOnlyOwnApplications_newestFirst()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.Applications.AddRange(
+            new Application { Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer", CreatedAt = DateTime.UtcNow.AddDays(-2) },
+            new Application { Id = "a2", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Platform = "PC", TargetLeagueId = "pro", Role = "Ersatzfahrer", CreatedAt = DateTime.UtcNow.AddDays(-1) },
+            new Application { Id = "x1", DiscordId = "999", DiscordName = "999", GamerTag = "R9", Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer" });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var mine = await svc.ListMineAsync("111", CancellationToken.None);
+
+        Assert.Equal(2, mine.Count);
+        Assert.Equal("a2", mine[0].Id);
+        Assert.NotNull(mine[0].TargetLeague);
+    }
+
+    [Fact]
+    public async Task ListMyWaitlist_excludesPromotedEntries()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.WaitlistEntries.AddRange(
+            new WaitlistEntry { Id = "w1", DiscordId = "111", DiscordName = "111", GamerTag = "A", Platform = "PC", LeagueId = "pro", Position = 1, PromotedToApplicationId = "appX" },
+            new WaitlistEntry { Id = "w2", DiscordId = "111", DiscordName = "111", GamerTag = "A", Platform = "PC", LeagueId = "pro", Position = 2 });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var mine = await svc.ListMyWaitlistAsync("111", CancellationToken.None);
+
+        var entry = Assert.Single(mine);
+        Assert.Equal("w2", entry.Id);
+    }
+
+    // ── Kapazitäts-Infos + AcceptsApplications ─────────────────────────────────
+
+    [Fact]
+    public async Task GetLeagueCapacity_countsStammAndWaitlist()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", capacity: 2));
+        ctx.Db.DriverStandings.AddRange(
+            new DriverStanding { LeagueId = "pro", Driver = "A", IsReserveDriver = false },
+            new DriverStanding { LeagueId = "pro", Driver = "B", IsReserveDriver = true });
+        ctx.Db.WaitlistEntries.Add(new WaitlistEntry
+        {
+            Id = "w1", DiscordId = "1", DiscordName = "1", GamerTag = "C",
+            Platform = "PC", LeagueId = "pro", Position = 1
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var infos = await svc.GetLeagueCapacityAsync(CancellationToken.None);
+
+        var info = Assert.Single(infos);
+        Assert.Equal(1, info.OccupiedSeats);   // Reserve zählt nicht
+        Assert.Equal(1, info.WaitlistLength);
+        Assert.False(info.IsFull);
+        Assert.Equal(1, info.FreeSeats);
+    }
+
+    [Fact]
+    public async Task Submit_throws_whenLeagueClosedForApplications()
+    {
+        using var ctx = new SqliteTestContext();
+        var league = NewLeague("pro", "ProLiga");
+        league.AcceptsApplications = false;
+        ctx.Db.Leagues.Add(league);
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.SubmitAsync(Cmd(leagueId: "pro"), CancellationToken.None));
+    }
+
     // ── Test Doubles ───────────────────────────────────────────────────────────
 
     private sealed class NoopAuditService : IAdminAuditService

@@ -226,8 +226,104 @@ public class ApplicationControllerTests
         var result = await ctrl.MyApplication();
 
         var view = Assert.IsType<ViewResult>(result);
-        var list = Assert.IsAssignableFrom<IEnumerable<Application>>(view.Model);
-        Assert.Single(list);
+        var vm = Assert.IsType<MyApplicationsViewModel>(view.Model);
+        Assert.Single(vm.Applications);
+        Assert.Equal("a1", vm.Applications[0].Id);
+    }
+
+    [Fact]
+    public async Task MyApplication_includesOwnWaitlistEntries()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        ctx.Db.WaitlistEntries.Add(new WaitlistEntry
+        {
+            Id = "w1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
+            Platform = "PC", LeagueId = "pro", Position = 2
+        });
+        ctx.Db.WaitlistEntries.Add(new WaitlistEntry
+        {
+            Id = "w2", DiscordId = "999", DiscordName = "Other", GamerTag = "R9",
+            Platform = "PC", LeagueId = "pro", Position = 1
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAuthenticatedContext("111", "User1"));
+
+        var result = await ctrl.MyApplication();
+
+        var vm = Assert.IsType<MyApplicationsViewModel>(Assert.IsType<ViewResult>(result).Model);
+        var entry = Assert.Single(vm.WaitlistEntries);
+        Assert.Equal("w1", entry.Id);
+        Assert.Equal(2, entry.Position);
+    }
+
+    // ── Withdraw / LeaveWaitlist ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Withdraw_deletesOwnPendingApplication_andRedirects()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAuthenticatedContext("111", "User1"));
+
+        var result = await ctrl.Withdraw("a1");
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(ApplicationController.MyApplication), redirect.ActionName);
+        Assert.Empty(ctx.Db.Applications);
+    }
+
+    [Fact]
+    public async Task Withdraw_doesNothing_forForeignApplication()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "999", DiscordName = "Other", GamerTag = "R9",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAuthenticatedContext("111", "User1"));
+
+        await ctrl.Withdraw("a1");
+
+        Assert.Single(ctx.Db.Applications);
+    }
+
+    [Fact]
+    public async Task LeaveWaitlist_deletesOwnEntry_andRedirects()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "pro", Name = "ProLiga" });
+        ctx.Db.WaitlistEntries.Add(new WaitlistEntry
+        {
+            Id = "w1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
+            Platform = "PC", LeagueId = "pro", Position = 1
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAuthenticatedContext("111", "User1"));
+
+        var result = await ctrl.LeaveWaitlist("w1");
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Empty(ctx.Db.WaitlistEntries);
     }
 
     [Fact]
