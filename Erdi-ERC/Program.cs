@@ -800,6 +800,9 @@ var movedRoutes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCas
     ["Admin/Admins"] = "/AdminPermissions/Admins",
     ["Admin/TrackSetups"] = "/AdminSetups/TrackSetups",
     ["Admin/TrackSetupStrategy"] = "/AdminSetups/TrackSetupStrategy",
+    ["Home/Apply"] = "/Application/Apply",
+    ["Home/Submitted"] = "/Application/Submitted",
+    ["Home/MyApplication"] = "/Application/MyApplication",
 };
 
 app.Use(async (context, next) =>
