@@ -233,6 +233,105 @@
     border-top: 1px solid var(--stroke-1);
 }
 
+/* ── Liga-Karten (Radio-Auswahl) ─────────────────────────────────────── */
+.app-league-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+}
+.app-league-card {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    margin: 0;
+}
+.app-league-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.app-league-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    padding: .85rem 1rem;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3, 10px);
+    transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+.app-league-card:hover .app-league-card__body {
+    border-color: var(--stroke-2);
+    background: rgba(255,255,255,.05);
+}
+.app-league-card input:checked + .app-league-card__body {
+    border-color: color-mix(in srgb, var(--accent) 65%, var(--stroke-1));
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.app-league-card input:focus-visible + .app-league-card__body {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.app-league-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem;
+}
+.app-league-card__name {
+    font-family: var(--ff-tech);
+    font-weight: 800;
+    font-size: .95rem;
+    color: ***REMOVED***fff;
+}
+.app-league-card__seats {
+    font-family: var(--ff-tech);
+    font-size: .66rem;
+    letter-spacing: .1em;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+.app-league-card__desc {
+    font-size: .78rem;
+    color: var(--ink-3);
+    line-height: 1.4;
+}
+.app-league-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-family: var(--ff-tech);
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: .2rem .55rem;
+    border-radius: 999px;
+    width: fit-content;
+}
+.app-league-card__badge--free {
+    background: rgba(57,255,20,.10);
+    color: ***REMOVED***39ff14;
+}
+.app-league-card__badge--wait {
+    background: rgba(255,184,0,.10);
+    color: var(--sig-amber, ***REMOVED***ffb800);
+}
+.app-league-card__badge--open {
+    background: rgba(61,169,252,.10);
+    color: ***REMOVED***3da9fc;
+}
+.app-league-card--full .app-league-card__body {
+    background: rgba(255,255,255,.015);
+}
+
+/* ── Zeichen-Zähler ──────────────────────────────────────────────────── */
+.app-form__counter {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ── Empty State ─────────────────────────────────────────────────────── */
 .app-empty {
     display: flex;
@@ -400,6 +499,9 @@
     .app-form__grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+    .app-league-grid {
+        grid-template-columns: 1fr;
     }
     .app-form__actions {
         flex-direction: column-reverse;
