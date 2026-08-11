@@ -61,6 +61,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 var latestRace = await _db.RaceResults
                     .AsNoTracking()
                     .Include(r => r.ReserveAssignments)
+                    .Include(r => r.GuestAssignments)
                     .OrderByDescending(r => r.Date)
                     .ThenByDescending(r => r.RowId)
                     .FirstOrDefaultAsync(ct);
@@ -88,9 +89,22 @@ namespace <OWNER_HANDLE>_ERC.Services
                             .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
                                 && a.ReserveDriver.ToLower() == winnerLower)?.MainDriver;
 
-                        if (string.IsNullOrWhiteSpace(resolvedTeam) && !string.IsNullOrWhiteSpace(raceMainDriver))
+                        // Cross-League-Gast: Winner ist Gastfahrer → Team erbt vom Liga-Hauptfahrer.
+                        // Sentinel "(kein Hauptfahrer)" zaehlt als "kein Team".
+                        var guestMainDriver = raceMainDriver is null
+                            ? latestRace.GuestAssignments?
+                                .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                    && g.GuestDriver.ToLower() == winnerLower
+                                    && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                    && g.MainDriver != StatsService.GuestSentinelNoMain)?
+                                .MainDriver
+                            : null;
+
+                        var effectiveMainDriver = raceMainDriver ?? guestMainDriver;
+
+                        if (string.IsNullOrWhiteSpace(resolvedTeam) && !string.IsNullOrWhiteSpace(effectiveMainDriver))
                         {
-                            var mainLower = raceMainDriver.ToLower();
+                            var mainLower = effectiveMainDriver.ToLower();
                             resolvedTeam = await _db.DriverStandings
                                 .AsNoTracking()
                                 .Where(s => s.LeagueId == leagueId
