@@ -133,5 +133,22 @@ namespace <OWNER_HANDLE>_ERC.Helpers
 
             return teams.Count > 1;
         }
+
+        /// <summary>
+        /// Liefert true, wenn <paramref name="driverName"/> in <paramref name="race"/> als
+        /// Cross-League-Gast mit gültigem Liga-Hauptfahrer eingetragen ist. Sentinel
+        /// <c>(kein Hauptfahrer)</c> zählt NICHT als gültige Zuordnung — diese Fahrer
+        /// werden weiterhin ohne Marker gerendert (Bestandsdaten ohne Auflösung).
+        /// </summary>
+        public static bool IsRaceGuest(RaceResult race, string? driverName)
+        {
+            if (string.IsNullOrWhiteSpace(driverName)) return false;
+            var trimmed = driverName.Trim();
+            return race.GuestAssignments?.Any(g =>
+                !string.IsNullOrWhiteSpace(g.GuestDriver)
+                && g.GuestDriver.Trim().Equals(trimmed, StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(g.MainDriver)
+                && g.MainDriver != Services.StatsService.GuestSentinelNoMain) ?? false;
+        }
     }
 }

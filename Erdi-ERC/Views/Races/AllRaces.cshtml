@@ -119,6 +119,11 @@ else
                                            style="color: @winnerColor;"
                                            asp-controller="Profile" asp-action="ByDriverName"
                                            asp-route-driverName="@race.Winner">@race.Winner</a>
+                                        @if (race.IsGuestWinner)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;"
+                                                  title="@($"Gastfahrer aus anderer Liga{(race.WinnerGuestForMain != null ? $" – fährt für {race.WinnerGuestForMain}" : string.Empty)}")">Gast</span>
+                                        }
                                     </td>
                                     <td style="font-size:.8rem; color:var(--ink-3);">
                                         <span class="text-mono">P1</span>
@@ -132,6 +137,11 @@ else
                                             <a class="text-decoration-none" style="color:var(--ink-2);"
                                                asp-controller="Profile" asp-action="ByDriverName"
                                                asp-route-driverName="@race.P2">@race.P2</a>
+                                            @if (race.IsGuestP2)
+                                            {
+                                                <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;"
+                                                      title="@($"Gastfahrer aus anderer Liga{(race.P2GuestForMain != null ? $" – fährt für {race.P2GuestForMain}" : string.Empty)}")">Gast</span>
+                                            }
                                         }
                                         @if (!string.IsNullOrWhiteSpace(race.P3))
                                         {
@@ -140,6 +150,11 @@ else
                                             <a class="text-decoration-none" style="color:var(--ink-2);"
                                                asp-controller="Profile" asp-action="ByDriverName"
                                                asp-route-driverName="@race.P3">@race.P3</a>
+                                            @if (race.IsGuestP3)
+                                            {
+                                                <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;"
+                                                      title="@($"Gastfahrer aus anderer Liga{(race.P3GuestForMain != null ? $" – fährt für {race.P3GuestForMain}" : string.Empty)}")">Gast</span>
+                                            }
                                         }
                                     </td>
                                     <td class="text-mono is-center" style="font-size:.8rem;">

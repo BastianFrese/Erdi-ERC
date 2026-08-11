@@ -164,6 +164,12 @@
                                                 Ersatzfahrer@(w.ReserveForInRace != null ? $" f&uuml;r {w.ReserveForInRace}" : (w.ReserveForDriver != null ? $" f&uuml;r {w.ReserveForDriver}" : ""))
                                             </div>
                                         }
+                                        @if (w.IsGuestWinner == true)
+                                        {
+                                            <div class="f1-timing-row__reserve" style="color:@teamColor;">
+                                                Gastfahrer@(w.GuestForMain != null ? $" f&uuml;r {w.GuestForMain}" : "")
+                                            </div>
+                                        }
                                         @if (w.WinnerTeam != null)
                                         {
                                             <div class="f1-timing-row__team" style="color:@teamColor;">@w.WinnerTeam</div>

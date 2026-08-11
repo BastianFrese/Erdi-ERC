@@ -27,6 +27,12 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int? WinnerRaceTimeMs { get; set; }
         public string? P2 { get; set; }
         public string? P3 { get; set; }
+        public bool IsGuestWinner { get; set; }
+        public string? WinnerGuestForMain { get; set; }
+        public bool IsGuestP2 { get; set; }
+        public string? P2GuestForMain { get; set; }
+        public bool IsGuestP3 { get; set; }
+        public string? P3GuestForMain { get; set; }
     }
 
     public class TrackSetup

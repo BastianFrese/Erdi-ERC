@@ -530,6 +530,19 @@
                                         }
                                     </div>
                                 }
+                                @if (r.GuestAssignments?.Any(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                    && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                    && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain) ?? false)
+                                {
+                                    <div class="small d-flex flex-column gap-1 mt-1">
+                                        @foreach (var ga in r.GuestAssignments.Where(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                            && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                            && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain))
+                                        {
+                                            <span class="badge text-bg-warning text-start text-dark" title="Cross-League-Gast">@ga.GuestDriver → @ga.MainDriver</span>
+                                        }
+                                    </div>
+                                }
                             </td>
                             <td>
                                 <a class="btn btn-sm btn-outline-primary" asp-controller="AdminLeague" asp-action="EditRace" asp-route-rowId="@r.RowId" title="Positionen, Zeiten, DNF & Reserve vollständig bearbeiten">

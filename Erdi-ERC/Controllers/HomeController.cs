@@ -139,6 +139,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .AsNoTracking()
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
+                .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
                 .Include(l => l.Standings)
                 .OrderBy(l => l.Name)
                 .ToListAsync();
@@ -166,7 +167,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                             TeamPoints = (int?)null,
                             IsReserveWinner = false,
                             ReserveForDriver = (string?)null,
-                            ReserveForInRace = (string?)null
+                            ReserveForInRace = (string?)null,
+                            IsGuestWinner = false,
+                            GuestForMain = (string?)null
                         };
                     }
 
@@ -178,8 +181,16 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                         !string.IsNullOrWhiteSpace(a.ReserveDriver) &&
                         a.ReserveDriver.Trim().Equals(lastRace.Winner!.Trim(), StringComparison.OrdinalIgnoreCase))?.MainDriver;
 
+                    // Cross-League-Gast: Winner kommt aus anderer Liga → Marker im View.
+                    var raceGuestMain = lastRace.GuestAssignments?.FirstOrDefault(g =>
+                        !string.IsNullOrWhiteSpace(g.GuestDriver) &&
+                        g.GuestDriver.Trim().Equals(lastRace.Winner!.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrWhiteSpace(g.MainDriver) &&
+                        g.MainDriver != StatsService.GuestSentinelNoMain)?.MainDriver;
+
                     var effectiveWinnerTeam = RaceTeamHelper.ResolveTeamForRaceDriver(l.Standings, lastRace, lastRace.Winner!);
                     var isReserveWinner = winnerStanding?.IsReserveDriver == true || !string.IsNullOrWhiteSpace(raceReserveMain);
+                    var isGuestWinner  = !isReserveWinner && !string.IsNullOrWhiteSpace(raceGuestMain);
                     var droveForMultipleTeams = isReserveWinner && RaceTeamHelper.HasDrivenForMultipleTeams(l, lastRace.Winner!);
                     var teamPoints = droveForMultipleTeams ? null : RaceTeamHelper.ComputeTeamPointsForLeague(l, effectiveWinnerTeam, _f1PointMap);
 
@@ -195,7 +206,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                         TeamPoints = teamPoints,
                         IsReserveWinner = isReserveWinner,
                         ReserveForDriver = (string?)(raceReserveMain ?? winnerStanding?.ReserveForDriver),
-                        ReserveForInRace = (string?)raceReserveMain
+                        ReserveForInRace = (string?)raceReserveMain,
+                        IsGuestWinner = isGuestWinner,
+                        GuestForMain = (string?)raceGuestMain
                     };
                 })
                 .ToList();

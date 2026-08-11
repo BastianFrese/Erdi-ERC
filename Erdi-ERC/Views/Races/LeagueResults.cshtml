@@ -22,6 +22,22 @@
             if (!string.IsNullOrWhiteSpace(mainTeam)) return mainTeam.Trim();
         }
 
+        // Pfad 1.5: Cross-League-Gast → Liga-Hauptfahrer → dessen Team. Spiegelung der
+        // Helper-Logik aus RaceTeamHelper.ResolveTeamForRaceDriver (Commit 3).
+        var guestMain = race.GuestAssignments?
+            .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                 && g.GuestDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)
+                                 && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                 && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain)?.MainDriver;
+
+        if (!string.IsNullOrWhiteSpace(guestMain))
+        {
+            var guestMainTeam = Model.League.Standings.FirstOrDefault(s =>
+                !string.IsNullOrWhiteSpace(s.Driver)
+                && s.Driver.Trim().Equals(guestMain.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+            if (!string.IsNullOrWhiteSpace(guestMainTeam)) return guestMainTeam.Trim();
+        }
+
         var standing = Model.League.Standings.FirstOrDefault(s =>
             !string.IsNullOrWhiteSpace(s.Driver)
             && s.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase));
@@ -197,6 +213,11 @@
                                 <a class="f1-race-card__winner-name"
                                    asp-controller="Profile" asp-action="ByDriverName"
                                    asp-route-driverName="@race.Winner">@race.Winner</a>
+                                @if (RaceTeamHelper.IsRaceGuest(race, race.Winner))
+                                {
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size:.6rem;"
+                                          title="Gastfahrer aus anderer Liga">Gast</span>
+                                }
                                 @if (race.FastestLap is { } fl && !string.IsNullOrWhiteSpace(fl))
                                 {
                                     <span class="sector sector--purple ms-auto" title="Fastest Lap">
