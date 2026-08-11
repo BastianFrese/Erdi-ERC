@@ -20,6 +20,7 @@ namespace <OWNER_HANDLE>_ERC.Data
         public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
         public DbSet<RaceUndoEntry> RaceUndoEntries => Set<RaceUndoEntry>();
         public DbSet<RaceReserveAssignment> RaceReserveAssignments => Set<RaceReserveAssignment>();
+        public DbSet<RaceGuestAssignment> RaceGuestAssignments => Set<RaceGuestAssignment>();
         public DbSet<LeaguePenalty> LeaguePenalties => Set<LeaguePenalty>();
         public DbSet<StreamSchedule> StreamSchedules => Set<StreamSchedule>();
         public DbSet<TrackSetup> TrackSetups => Set<TrackSetup>();
@@ -107,6 +108,10 @@ namespace <OWNER_HANDLE>_ERC.Data
                     .HasForeignKey(x => x.RaceResultId)
                     .OnDelete(DeleteBehavior.Cascade);
                 b.HasMany(x => x.ReserveAssignments)
+                    .WithOne()
+                    .HasForeignKey(x => x.RaceResultId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(x => x.GuestAssignments)
                     .WithOne()
                     .HasForeignKey(x => x.RaceResultId)
                     .OnDelete(DeleteBehavior.Cascade);
@@ -210,6 +215,15 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.ReserveDriver).HasMaxLength(128).IsRequired();
                 b.Property(x => x.MainDriver).HasMaxLength(128).IsRequired();
                 b.HasIndex(x => new { x.RaceResultId, x.ReserveDriver }).IsUnique();
+                b.HasIndex(x => new { x.RaceResultId, x.MainDriver });
+            });
+
+            modelBuilder.Entity<RaceGuestAssignment>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.GuestDriver).HasMaxLength(128).IsRequired();
+                b.Property(x => x.MainDriver).HasMaxLength(128).IsRequired();
+                b.HasIndex(x => new { x.RaceResultId, x.GuestDriver }).IsUnique();
                 b.HasIndex(x => new { x.RaceResultId, x.MainDriver });
             });
 
