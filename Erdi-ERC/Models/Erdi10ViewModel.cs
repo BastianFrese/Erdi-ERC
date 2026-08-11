@@ -98,6 +98,7 @@ namespace <OWNER_HANDLE>_ERC.Models
 
         public List<RaceFinish> Finishes { get; set; } = new();
         public List<RaceReserveAssignment> ReserveAssignments { get; set; } = new();
+        public List<RaceGuestAssignment> GuestAssignments { get; set; } = new();
     }
 
     public class RaceFinish
@@ -119,6 +120,21 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int Id { get; set; }
         public int RaceResultId { get; set; }
         public string ReserveDriver { get; set; } = string.Empty;
+        public string MainDriver { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Cross-League-Gastfahrer in einem Rennen dieser Liga. Pflicht-Zuordnung:
+    /// <see cref="GuestDriver"/> MUSS einem <see cref="MainDriver"/> zugewiesen werden, der
+    /// Liga-Hauptfahrer (kein Reserve) ist. Sentinel-Wert <c>(kein Hauptfahrer)</c>
+    /// markiert Bestandsdaten ohne Zuordnung — diese zählen weder in Standings noch
+    /// in Team-Punkten.
+    /// </summary>
+    public class RaceGuestAssignment
+    {
+        public int Id { get; set; }
+        public int RaceResultId { get; set; }
+        public string GuestDriver { get; set; } = string.Empty;
         public string MainDriver { get; set; } = string.Empty;
     }
 
