@@ -29,6 +29,27 @@ namespace <OWNER_HANDLE>_ERC.Helpers
                 }
             }
 
+            // Pfad 1.5: Cross-League-Gastfahrer → Liga-Hauptfahrer → dessen Team.
+            // Sentinel "(kein Hauptfahrer)" (Bestandsdaten ohne Zuordnung) wird ignoriert.
+            var guestMainDriver = race.GuestAssignments?
+                .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                     && g.GuestDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)
+                                     && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                     && g.MainDriver.Trim() != Services.StatsService.GuestSentinelNoMain)?
+                .MainDriver;
+
+            if (!string.IsNullOrWhiteSpace(guestMainDriver))
+            {
+                var guestMainTeam = standings.FirstOrDefault(s =>
+                    !string.IsNullOrWhiteSpace(s.Driver) &&
+                    s.Driver.Trim().Equals(guestMainDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
+
+                if (!string.IsNullOrWhiteSpace(guestMainTeam))
+                {
+                    return guestMainTeam.Trim();
+                }
+            }
+
             var standing = standings.FirstOrDefault(s =>
                 !string.IsNullOrWhiteSpace(s.Driver) &&
                 s.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase));
