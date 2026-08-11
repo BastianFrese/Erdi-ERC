@@ -51,6 +51,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
+                .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
                 .OrderBy(l => l.SortOrder)
                 .ThenBy(l => l.Name)
                 .ToListAsync(cancellationToken);
