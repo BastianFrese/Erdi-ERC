@@ -3,6 +3,7 @@ using <OWNER_HANDLE>_ERC.Data;
 using <OWNER_HANDLE>_ERC.Helpers;
 using <OWNER_HANDLE>_ERC.Models;
 using <OWNER_HANDLE>_ERC.Options;
+using <OWNER_HANDLE>_ERC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -212,7 +213,48 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var races = await _db.RaceResults
                 .Include(x => x.Finishes)
                 .Include(x => x.ReserveAssignments)
+                .Include(x => x.GuestAssignments)
                 .ToListAsync();
+
+            // Liga-Stammfahrer (Haupt + Reserve) pro League. Wird genutzt, um Ghost-Einträge
+            // (Driver-String ohne Liga-Standing) aus der globalen Aggregation zu filtern.
+            var driversByLeague = standings
+                .Where(s => !string.IsNullOrWhiteSpace(s.Driver))
+                .GroupBy(s => s.LeagueId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new HashSet<string>(
+                        g.Select(s => s.Driver!.Trim()),
+                        StringComparer.OrdinalIgnoreCase),
+                    StringComparer.OrdinalIgnoreCase);
+
+            // Mappt einen RaceFinish.Driver auf den Liga-Hauptfahrer, falls es ein
+            // Cross-League-Gast mit gültiger Zuordnung ist; sonst bleibt der Originalname.
+            // Sentinel "(kein Hauptfahrer)" und nicht-auflösbare Gäste lösen unten den
+            // Ghost-Filter aus und tauchen NICHT in der globalen Aggregation auf.
+            static string ResolveHostDriver(
+                HashSet<string>? leagueDrivers,
+                RaceResult race,
+                string finishDriver)
+            {
+                if (string.IsNullOrWhiteSpace(finishDriver)) return string.Empty;
+
+                var trimmed = finishDriver.Trim();
+
+                var guestMain = race.GuestAssignments?
+                    .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                        && g.GuestDriver.Trim().Equals(trimmed, StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(g.MainDriver)
+                        && g.MainDriver != StatsService.GuestSentinelNoMain)?
+                    .MainDriver?.Trim();
+
+                if (guestMain is not null && leagueDrivers is not null && leagueDrivers.Contains(guestMain))
+                {
+                    return guestMain;
+                }
+
+                return trimmed;
+            }
 
             var reserveWins = races
                 .SelectMany(r => r.Finishes.Where(f => f.Position == 1).Select(f => new { Finish = f, Race = r }))
@@ -224,8 +266,17 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             // Podiums-König: gemeinsame LINQ-Kette für Driver + Count, damit die Logik
             // nicht viermal parallel läuft (Performance + Lesbarkeit).
-            var topPodium = races.SelectMany(r => r.Finishes)
+            // Cross-League-Gäste werden auf ihren Liga-Hauptfahrer gemappt; Ghosts (kein
+            // Liga-Standing) fliegen raus.
+            var topPodium = races
+                .SelectMany(r => r.Finishes.Select(f => new
+                {
+                    Driver = ResolveHostDriver(driversByLeague.GetValueOrDefault(r.LeagueId), r, f.Driver),
+                    Position = f.Position
+                }))
                 .Where(f => f.Position is >= 1 and <= 3)
+                .Where(f => !string.IsNullOrEmpty(f.Driver))
+                .Where(f => driversByLeague.Values.Any(set => set.Contains(f.Driver)))
                 .GroupBy(f => f.Driver, StringComparer.OrdinalIgnoreCase)
                 .Select(g => new { Driver = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
