@@ -77,9 +77,11 @@ public class StatsServiceTests
     }
 
     [Fact]
-    public async Task RebuildLeagueStandings_createsStandingForGuestDriverInHostLeague()
+    public async Task RebuildLeagueStandings_keepsCrossLeagueGuestOutOfStandings_withoutAssignment()
     {
-        // Arrange — "Guest" fährt ein Rennen in Liga l1, hat dort aber keine Stammwertung.
+        // Arrange — "Guest" faehrt ein Rennen in Liga l1, hat dort aber keine Stammwertung
+        // und keine RaceGuestAssignment. Mit dem Cross-League-Gate soll er NICHT in den
+        // Liga-Standings erscheinen.
         using var ctx = new SqliteTestContext();
         await SeedLeagueAsync(ctx, "l1");
         ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Stamm" });
@@ -91,11 +93,42 @@ public class StatsServiceTests
         // Act
         await service.RebuildLeagueStandingsAsync("l1");
 
-        // Assert — Gast bekommt eine Wertung in der Gastgeber-Liga mit seinen Punkten.
+        // Assert — Gast wird NICHT als Liga-Standing angelegt. Nur "Stamm" fuehrt die Tabelle an.
         await using var verify = ctx.NewContext();
         var guest = await verify.DriverStandings.SingleOrDefaultAsync(s => s.LeagueId == "l1" && s.Driver == "Guest");
-        Assert.NotNull(guest);
-        Assert.Equal(25, guest!.Points);
-        Assert.Equal(1, guest.Position); // führt die Tabelle an
+        Assert.Null(guest);
+
+        var stamm = await verify.DriverStandings.SingleAsync(s => s.Driver == "Stamm");
+        Assert.Equal(21, stamm.Points);
+        Assert.Equal(1, stamm.Position); // Stamm fuehrt jetzt die Tabelle an
+    }
+
+    [Fact]
+    public async Task RebuildLeagueStandings_crossLeagueGuestWithMainAssignment_doesNotCreateStanding_butMainInheritsTeam()
+    {
+        // Arrange — Cross-League-Guest ist einem Liga-Hauptfahrer zugeordnet.
+        // Er bleibt aus der Liga-Bestenliste raus, aber RaceTeamHelper liefert das Team.
+        using var ctx = new SqliteTestContext();
+        await SeedLeagueAsync(ctx, "l1");
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Stamm", Team = "Ferrari" });
+        await ctx.Db.SaveChangesAsync();
+
+        var race = new RaceResult { LeagueId = "l1", Date = DateTime.UtcNow, Track = "Test" };
+        ctx.Db.RaceResults.Add(race);
+        await ctx.Db.SaveChangesAsync();
+        ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = "Stamm", Position = 2 });
+        ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = "Guest", Position = 1 });
+        ctx.Db.RaceGuestAssignments.Add(new RaceGuestAssignment { RaceResultId = race.RowId, GuestDriver = "Guest", MainDriver = "Stamm" });
+        await ctx.Db.SaveChangesAsync();
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert — kein Standing fuer Guest.
+        await using var verify = ctx.NewContext();
+        var guest = await verify.DriverStandings.SingleOrDefaultAsync(s => s.Driver == "Guest");
+        Assert.Null(guest);
     }
 }
