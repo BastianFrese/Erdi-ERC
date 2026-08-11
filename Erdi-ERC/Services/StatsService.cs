@@ -9,6 +9,13 @@ namespace <OWNER_HANDLE>_ERC.Services
     public class StatsService : IStatsService
     {
         private static readonly int[] DefaultPointMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
+
+        /// <summary>
+        /// Sentinel-MainDriver fuer Gastfahrer ohne Liga-Zuordnung (Bestandsdaten-Backfill).
+        /// Wird bei Gate, Helper und Aggregation bewusst ignoriert.
+        /// </summary>
+        public const string GuestSentinelNoMain = "(kein Hauptfahrer)";
+
         private readonly AppDbContext _db;
         private readonly int[] _pointMap;
 
@@ -52,6 +59,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             var races = await racesQuery
                 .Include(r => r.Finishes)
                 .Include(r => r.ReserveAssignments)
+                .Include(r => r.GuestAssignments)
                 .OrderBy(r => r.Date)
                 .ThenBy(r => r.RowId)
                 .ToListAsync(cancellationToken);
@@ -67,6 +75,12 @@ namespace <OWNER_HANDLE>_ERC.Services
                 {
                     assignment.ReserveDriver = Normalize(assignment.ReserveDriver);
                     assignment.MainDriver = Normalize(assignment.MainDriver);
+                }
+
+                foreach (var guest in race.GuestAssignments)
+                {
+                    guest.GuestDriver = Normalize(guest.GuestDriver);
+                    guest.MainDriver = Normalize(guest.MainDriver);
                 }
             }
 
@@ -85,6 +99,17 @@ namespace <OWNER_HANDLE>_ERC.Services
                 .GroupBy(s => s.Driver, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+            // Liga-weites Mapping Cross-League-Gast → Liga-Hauptfahrer.
+            // Wird sowohl fuer den Gate-Check (darf dieser Driver ueberhaupt ein
+            // Standing bekommen?) als auch fuer das pro-Rennen-Mapping verwendet.
+            var guestHostsByDriver = races
+                .SelectMany(r => r.GuestAssignments)
+                .Where(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                    && !string.IsNullOrWhiteSpace(g.MainDriver)
+                    && g.MainDriver != GuestSentinelNoMain)
+                .GroupBy(g => g.GuestDriver, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().MainDriver, StringComparer.OrdinalIgnoreCase);
+
             // Punkte je Fahrer pro Rennen sammeln, damit Streichresultate (Drop-Scores)
             // nach der vollständigen Saison angewendet werden können.
             var racePointsByStanding = new Dictionary<DriverStanding, List<int>>();
@@ -94,6 +119,13 @@ namespace <OWNER_HANDLE>_ERC.Services
                 var raceReserveToMain = race.ReserveAssignments
                     .Where(a => !string.IsNullOrWhiteSpace(a.ReserveDriver) && !string.IsNullOrWhiteSpace(a.MainDriver))
                     .GroupBy(a => a.ReserveDriver, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First().MainDriver, StringComparer.OrdinalIgnoreCase);
+
+                var raceGuestToMain = race.GuestAssignments
+                    .Where(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                        && !string.IsNullOrWhiteSpace(g.MainDriver)
+                        && g.MainDriver != GuestSentinelNoMain)
+                    .GroupBy(g => g.GuestDriver, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(g => g.Key, g => g.First().MainDriver, StringComparer.OrdinalIgnoreCase);
 
                 var orderedFinishes = race.Finishes
@@ -109,9 +141,15 @@ namespace <OWNER_HANDLE>_ERC.Services
                         continue;
                     }
 
-                    var standing = GetOrCreateStanding(leagueId, standings, standingsByDriver, driverName);
+                    // Gate: unbekannter Driver ohne echte Gast-Zuordnung → ueberspringen,
+                    // kein Standing anlegen, keine Punkte.
+                    var standing = GetOrCreateStanding(leagueId, standings, standingsByDriver, driverName, guestHostsByDriver);
+                    if (standing == null)
+                    {
+                        continue;
+                    }
 
-                    var mappedMainDriver = GetMappedMainDriverForRace(standing, raceReserveToMain, standingsByDriver);
+                    var mappedMainDriver = GetMappedMainDriverForRace(standing, raceReserveToMain, raceGuestToMain, standingsByDriver);
                     if (!string.IsNullOrWhiteSpace(mappedMainDriver)
                         && standingsByDriver.TryGetValue(mappedMainDriver, out var mainStanding)
                         && !string.IsNullOrWhiteSpace(mainStanding.Team)
@@ -204,29 +242,35 @@ namespace <OWNER_HANDLE>_ERC.Services
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        private DriverStanding GetOrCreateStanding(
+        /// <summary>
+        /// Liefert das Standing eines Drivers in dieser Liga. Cross-League-Gastfahrer
+        /// (Driver ohne Liga-Standing, aber mit
+        /// <see cref="GuestSentinelNoMain"/>-ausgenommener Zuordnung) werden
+        /// bewusst NICHT als Standing angelegt — sie erscheinen nur im
+        /// Rennergebnis und in den Team-Punkten des MainDrivers (ueber
+        /// <see cref="RaceTeamHelper.ResolveTeamForRaceDriver"/>), aber nicht
+        /// in der Liga-Bestenliste.
+        /// </summary>
+        private DriverStanding? GetOrCreateStanding(
             string leagueId,
             List<DriverStanding> standings,
             Dictionary<string, DriverStanding> standingsByDriver,
-            string driverName)
+            string driverName,
+            Dictionary<string, string> guestHostsByDriver)
         {
             if (standingsByDriver.TryGetValue(driverName, out var existing))
             {
                 return existing;
             }
 
-            var standing = new DriverStanding
-            {
-                LeagueId = leagueId,
-                Driver = driverName,
-                Team = string.Empty,
-                ReserveForDriver = null
-            };
-
-            _db.DriverStandings.Add(standing);
-            standings.Add(standing);
-            standingsByDriver[driverName] = standing;
-            return standing;
+            // Unbekannter Driver: Liga-Standing verweigern.
+            // Echte Cross-League-Gaeste erscheinen im Rennergebnis + Team-Punkten,
+            // aber NICHT in der Liga-Bestenliste — deshalb kein Auto-Create mehr.
+            // Der Parameter guestHostsByDriver wird hier nur protokolliert,
+            // damit der Aufrufer konsistent bleiben kann; ein Gate-Stand ist
+            // nicht noetig, weil jeder unbekannte Driver hier abgewiesen wird.
+            _ = guestHostsByDriver;
+            return null;
         }
 
         private static string Normalize(string? value)
@@ -299,8 +343,10 @@ namespace <OWNER_HANDLE>_ERC.Services
         private static string? GetMappedMainDriverForRace(
             DriverStanding standing,
             Dictionary<string, string> raceReserveToMain,
+            Dictionary<string, string> raceGuestToMain,
             Dictionary<string, DriverStanding> standingsByDriver)
         {
+            // 1) Renn-spezifische Reserven (Override) → Main-Driver-Map
             if (raceReserveToMain.TryGetValue(standing.Driver, out var mappedMain)
                 && !string.IsNullOrWhiteSpace(mappedMain)
                 && standingsByDriver.TryGetValue(mappedMain, out var mappedMainStanding)
@@ -309,6 +355,16 @@ namespace <OWNER_HANDLE>_ERC.Services
                 return mappedMainStanding.Driver;
             }
 
+            // 1.5) Cross-League-Gast → Liga-Hauptfahrer (Override)
+            if (raceGuestToMain.TryGetValue(standing.Driver, out var guestMain)
+                && !string.IsNullOrWhiteSpace(guestMain)
+                && standingsByDriver.TryGetValue(guestMain, out var guestMainStanding)
+                && !guestMainStanding.IsReserveDriver)
+            {
+                return guestMainStanding.Driver;
+            }
+
+            // 2) Stammdaten-Fallback
             if (standing.IsReserveDriver
                 && !string.IsNullOrWhiteSpace(standing.ReserveForDriver)
                 && standingsByDriver.TryGetValue(standing.ReserveForDriver, out var fallbackMainStanding)
