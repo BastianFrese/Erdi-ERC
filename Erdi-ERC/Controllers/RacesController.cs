@@ -172,6 +172,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var leagues = await _db.Leagues
                 .AsNoTracking()
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
+                .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
                 .OrderBy(l => l.Name)
                 .ToListAsync();
 
@@ -193,6 +194,22 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                                     .Take(3)
                                     .ToList();
 
+                                static (bool isGuest, string? forMain) ResolveGuest(
+                                    IEnumerable<RaceGuestAssignment> assignments, string? driver)
+                                {
+                                    if (string.IsNullOrWhiteSpace(driver)) return (false, null);
+                                    var hit = assignments.FirstOrDefault(g =>
+                                        !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                        && g.GuestDriver.Trim().Equals(driver.Trim(), StringComparison.OrdinalIgnoreCase)
+                                        && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                        && g.MainDriver != StatsService.GuestSentinelNoMain);
+                                    return hit is null ? (false, null) : (true, hit.MainDriver);
+                                }
+
+                                var (isGuestWinner, winnerForMain) = ResolveGuest(r.GuestAssignments, r.Winner);
+                                var (isGuestP2, p2ForMain) = ResolveGuest(r.GuestAssignments, podium.Count > 1 ? podium[1].Driver : null);
+                                var (isGuestP3, p3ForMain) = ResolveGuest(r.GuestAssignments, podium.Count > 2 ? podium[2].Driver : null);
+
                                 return new AllRaceItem
                                 {
                                     RaceId = r.RowId,
@@ -201,7 +218,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                                     Winner = r.Winner,
                                     WinnerRaceTimeMs = podium.FirstOrDefault()?.RaceTimeMs,
                                     P2 = podium.Count > 1 ? podium[1].Driver : null,
-                                    P3 = podium.Count > 2 ? podium[2].Driver : null
+                                    P3 = podium.Count > 2 ? podium[2].Driver : null,
+                                    IsGuestWinner = isGuestWinner,
+                                    WinnerGuestForMain = winnerForMain,
+                                    IsGuestP2 = isGuestP2,
+                                    P2GuestForMain = p2ForMain,
+                                    IsGuestP3 = isGuestP3,
+                                    P3GuestForMain = p3ForMain
                                 };
                             })
                             .ToList()

@@ -36,6 +36,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
+                .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
                 .OrderBy(l => l.Name)
                 .ToListAsync();
 

@@ -1,6 +1,7 @@
 @model <OWNER_HANDLE>_ERC.Models.<OWNER_HANDLE>10ViewModel
 @using <OWNER_HANDLE>_ERC.Helpers
 @using <OWNER_HANDLE>_ERC.Models
+@using <OWNER_HANDLE>_ERC.Services
 @{
     ViewData["Title"] = "<OWNER_HANDLE>10 · F1 26 Racing Hub";
     var host = Context.Request.Host.Host;
@@ -122,7 +123,18 @@
             </div>
             <div class="f1-winner-card__info">
                 <div class="f1-winner-card__eyebrow">Rennsieger</div>
-                <div class="f1-winner-card__name">@latestWinner</div>
+                <div class="f1-winner-card__name">
+                                @latestWinner
+                                @if (latestRace?.GuestAssignments?.Any(g =>
+                                    !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                    && g.GuestDriver.Trim().Equals(latestWinner?.Trim() ?? string.Empty, StringComparison.OrdinalIgnoreCase)
+                                    && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                    && g.MainDriver != StatsService.GuestSentinelNoMain) ?? false)
+                                {
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size:.7rem; vertical-align:middle;"
+                                          title="Gastfahrer aus anderer Liga">Gast</span>
+                                }
+                            </div>
                 <div class="f1-winner-card__team" style="color: var(--winner-color);">@(winnerF1Team?.Name ?? "Unbekanntes Team")</div>
             </div>
             <div class="f1-winner-card__race">
@@ -217,10 +229,17 @@
                                                                     !string.IsNullOrWhiteSpace(a.ReserveDriver)
                                                                     && a.ReserveDriver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase))?.MainDriver
                                                                 : null;
+                                                            var raceGuestForWinner = !string.IsNullOrWhiteSpace(r.Winner)
+                                                                ? r.GuestAssignments?.FirstOrDefault(g =>
+                                                                    !string.IsNullOrWhiteSpace(g.GuestDriver)
+                                                                    && g.GuestDriver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase)
+                                                                    && !string.IsNullOrWhiteSpace(g.MainDriver)
+                                                                    && g.MainDriver != StatsService.GuestSentinelNoMain)?.MainDriver
+                                                                : null;
                                                             var raceTeamKey = F1TeamsHelper.GetCssKeyForDriver(r.Winner)
                                                                 ?? F1TeamsHelper.GetTeamByName(
                                                                     league.Standings.FirstOrDefault(s =>
-                                                                        s.Driver.Trim().Equals((raceMainForWinner ?? r.Winner)?.Trim(), StringComparison.OrdinalIgnoreCase))?.Team)?.CssKey;
+                                                                        s.Driver.Trim().Equals((raceMainForWinner ?? raceGuestForWinner ?? r.Winner)?.Trim(), StringComparison.OrdinalIgnoreCase))?.Team)?.CssKey;
                                                             var teamInfo       = raceTeamKey != null ? F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == raceTeamKey) : null;
                                                             var rowColor       = teamInfo?.PrimaryColor ?? "transparent";
                                                             var winnerStanding = !string.IsNullOrWhiteSpace(r.Winner)
@@ -228,6 +247,7 @@
                                                                 : null;
                                                             var reserveForDisplay = raceMainForWinner ?? winnerStanding?.ReserveForDriver;
                                                             var isReserveWinner   = !string.IsNullOrWhiteSpace(raceMainForWinner) || winnerStanding?.IsReserveDriver == true;
+                                                            var isGuestWinner     = !isReserveWinner && !string.IsNullOrWhiteSpace(raceGuestForWinner);
                                                             var winnerFinish      = !string.IsNullOrWhiteSpace(r.Winner)
                                                                 ? r.Finishes.FirstOrDefault(f => f.Driver.Trim().Equals(r.Winner.Trim(), StringComparison.OrdinalIgnoreCase))
                                                                 : null;
@@ -249,6 +269,15 @@
                                                                         @if (!string.IsNullOrWhiteSpace(reserveForDisplay))
                                                                         {
                                                                             <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@reserveForDisplay">@reserveForDisplay</a></span>
+                                                                        }
+                                                                    }
+                                                                    @if (isGuestWinner)
+                                                                    {
+                                                                        <span class="badge bg-warning text-dark ms-1"
+                                                                              title="Gastfahrer aus anderer Liga">Gast</span>
+                                                                        @if (!string.IsNullOrWhiteSpace(raceGuestForWinner))
+                                                                        {
+                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@raceGuestForWinner">@raceGuestForWinner</a></span>
                                                                         }
                                                                     }
                                                                 </td>

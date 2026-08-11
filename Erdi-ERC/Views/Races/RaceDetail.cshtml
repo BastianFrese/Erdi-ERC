@@ -205,6 +205,11 @@
                                         <span class="badge bg-info ms-1"
                                               title="Ersatzfahrer@(string.IsNullOrWhiteSpace(reserveForDisplay) ? "" : $" für {reserveForDisplay}")">Ersatz</span>
                                     }
+                                    @if (RaceTeamHelper.IsRaceGuest(Model.Race, row.Driver))
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1"
+                                              title="Gastfahrer aus anderer Liga">Gast</span>
+                                    }
                                     @if (row.FastestLap)
                                     {
                                         <span class="sector sector--purple ms-1" title="Fastest Lap">
