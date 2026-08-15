@@ -717,7 +717,6 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
 
         var ptsEl = document.getElementById('pv_pts');
         var decisionText = '--';
-        var penaltyPointsText = '';
         var normalizedType = type.toLowerCase().replace(/\s+/g, ' ').trim();
         var hasTime = normalizedType.indexOf('zeitstrafe') !== -1 || normalizedType.indexOf('time penalty') !== -1;
         var hasPoints = normalizedType.indexOf('strafpunkte') !== -1 || normalizedType.indexOf('penalty points') !== -1 || normalizedType.indexOf('punkte') !== -1;
@@ -725,21 +724,19 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
         if (type !== '--') {
             if (hasTime && hasPoints) {
                 decisionText = 'Time penalty and ' + pts + ' penalty points imposed.';
-                penaltyPointsText = pts > 0 ? ' (-' + pts + ' Championship penalty points.)' : '';
             } else if (hasPoints) {
                 decisionText = pts + ' penalty points imposed.';
-                penaltyPointsText = pts > 0 ? ' (-' + pts + ' Championship penalty points.)' : '';
             } else if (hasTime) {
                 decisionText = 'Time penalty imposed.';
-                penaltyPointsText = '';
             } else {
                 decisionText = type + ' imposed.';
-                penaltyPointsText = pts > 0 ? ' (-' + pts + ' Championship penalty points.)' : '';
             }
         }
         set('pv_decision', decisionText);
-        ptsEl.textContent = penaltyPointsText;
-        ptsEl.style.display = penaltyPointsText ? 'inline' : 'none';
+        // Penalty-Punkte sind ein dokumentarischer Wert im Stewarding-Bericht.
+        // Sie fließen NICHT in die Meisterschaftswertung ein — daher kein
+        // "Championship"-Suffix mehr (siehe StatsService.RebuildLeagueStandingsAsync).
+        ptsEl.style.display = 'none';
 
         buildReason(reason);
     }
