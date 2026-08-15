@@ -40,6 +40,7 @@ namespace Erdi_ERC.Controllers
         {
             var leagues = await _db.Leagues
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
@@ -177,6 +178,7 @@ namespace Erdi_ERC.Controllers
         {
             var leagues = await _db.Leagues
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Where(l => !l.IsArchived)
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
@@ -260,6 +262,7 @@ namespace Erdi_ERC.Controllers
         {
             var standings = await _db.DriverStandings.ToListAsync();
             var races = await _db.RaceResults
+                .AsSplitQuery()
                 .Include(x => x.Finishes)
                 .Include(x => x.ReserveAssignments)
                 .Include(x => x.GuestAssignments)
@@ -597,6 +600,7 @@ namespace Erdi_ERC.Controllers
             var result = new List<EwigeListeSheetViewModel>();
 
             var leagues = await _db.Leagues
+                .AsSplitQuery()
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)

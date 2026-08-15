@@ -47,6 +47,7 @@ namespace Erdi_ERC.Services
         {
             var leagues = await _db.Leagues
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Where(l => l.CountsTowardOverall)
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)

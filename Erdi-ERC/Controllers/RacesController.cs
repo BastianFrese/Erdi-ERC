@@ -26,6 +26,7 @@ namespace Erdi_ERC.Controllers
         public async Task<IActionResult> Results()
         {
             var leagues = await _db.Leagues
+                .AsSplitQuery()
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
@@ -171,6 +172,7 @@ namespace Erdi_ERC.Controllers
         {
             var leagues = await _db.Leagues
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
                 .OrderBy(l => l.Name)

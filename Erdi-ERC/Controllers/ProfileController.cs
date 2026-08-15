@@ -53,6 +53,7 @@ namespace Erdi_ERC.Controllers
             var aliasSet = new HashSet<string>(aliases, StringComparer.OrdinalIgnoreCase);
 
             var leagues = await _db.Leagues
+                .AsSplitQuery()
                 .Include(l => l.Standings)
                 .Include(l => l.Races).ThenInclude(r => r.Finishes)
                 .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
