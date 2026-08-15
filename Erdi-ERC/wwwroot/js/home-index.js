@@ -1,3 +1,46 @@
+// --- Visibility-aware interval wrapper -------------------------------------
+// Hintergrund-Tabs drosseln setInterval zwar auf max. 1 Hz, aber selbst ein
+// 1-Hz-Tick pro Countdown = mehrere textContent-Writes pro Sekunde auf
+// unsichtbaren Nodes, die beim Wechsel zurück zu "visible" Layout/Paint
+// anstoßen. Wir pausieren Intervalle komplett, solange der Tab hidden ist.
+// Beim Sichtbarwerden wird ein "erc:visible"-Event gefeuert, damit die
+// einzelnen Module ihre Render-Funktionen einmal frisch aufrufen können.
+(() => {
+    if (typeof window === 'undefined') return;
+    if (window.__ercVisibilityIntervalsPatched) return;
+    window.__ercVisibilityIntervalsPatched = true;
+
+    const tracked = new Set();
+    const origSetInterval = window.setInterval;
+    const origClearInterval = window.clearInterval;
+
+    window.setInterval = function (handler, delay, ...args) {
+        const id = origSetInterval.call(window, handler, delay, ...args);
+        tracked.add(id);
+        return id;
+    };
+    window.clearInterval = function (id) {
+        tracked.delete(id);
+        return origClearInterval.call(window, id);
+    };
+
+    const pauseAll = () => {
+        tracked.forEach(id => origClearInterval.call(window, id));
+        tracked.clear();
+    };
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            pauseAll();
+        } else {
+            // Re-Render-Trigger: jedes Modul, das `erc:visible` hört, ruft seinen
+            // Render-Code einmal auf. So sehen die User nach Tab-Wechsel
+            // sofort den aktuellen Countdown-Stand, statt 1s warten zu müssen.
+            document.dispatchEvent(new CustomEvent('erc:visible'));
+        }
+    });
+})();
+
 (() => {
     const storageKey = 'erc.intro.video.seen.v1';
     const overlay = document.getElementById('introVideoOverlay');
@@ -98,6 +141,10 @@
 
             renderCountdown();
             window.setInterval(renderCountdown, 1000);
+            // Re-Render nach jedem Tab-Wechsel hidden→visible (das visibility-Wrapper-IIFE
+            // oben hat die Intervalle im Hintergrund gepaused; beim Sichtbarwerden
+            // springt der Countdown so auf den aktuellen Stand, ohne 1s warten zu müssen).
+            document.addEventListener('erc:visible', renderCountdown);
         }
     }
 })();
@@ -132,6 +179,7 @@
 
     renderCountdown();
     window.setInterval(renderCountdown, 1000);
+    document.addEventListener('erc:visible', renderCountdown);
 })();
 
 (function () {
@@ -293,4 +341,5 @@
 
     renderCountdown();
     window.setInterval(renderCountdown, 1000);
+    document.addEventListener('erc:visible', renderCountdown);
 })();

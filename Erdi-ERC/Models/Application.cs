@@ -32,6 +32,13 @@ public class Application
     [MaxLength(64)]
     public string TargetLeagueId { get; set; } = string.Empty;
 
+    /// <summary>Season-Kennung (z.B. "2026", "2026-H2", "Saison 5"). Wird serverseitig via
+    /// <see cref="<OWNER_HANDLE>_ERC.Services.IApplicationTargetingService"/> aus Liga.NextSeason bzw.
+    /// Liga.CurrentSeason abgeleitet — Client kann sie nicht manipulieren.</summary>
+    [Required]
+    [MaxLength(16)]
+    public string Season { get; set; } = string.Empty;
+
     /// <summary>"Stammfahrer" oder "Reservefahrer".</summary>
     [Required]
     [MaxLength(32)]

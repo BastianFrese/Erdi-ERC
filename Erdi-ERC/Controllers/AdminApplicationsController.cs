@@ -36,12 +36,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         // ── List ─────────────────────────────────────────────────────────────────
 
         [HttpGet("/AdminApplications/List")]
-        public async Task<IActionResult> List(string? status, string? leagueId, int page = 1)
+        public async Task<IActionResult> List(string? status, string? leagueId, string? season, int page = 1)
         {
             var allLeagues = await _staticCache.GetAllLeaguesAsync();
             ViewBag.Leagues = allLeagues;
             ViewBag.StatusFilter = status;
             ViewBag.LeagueFilter = leagueId;
+            ViewBag.SeasonFilter = season;
             ViewBag.Page = page;
 
             ApplicationStatus? statusFilter = null;
@@ -53,7 +54,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             const int PageSize = 25;
             var skip = (Math.Max(1, page) - 1) * PageSize;
-            var items = await _applications.ListAsync(statusFilter, leagueId, skip, PageSize, HttpContext.RequestAborted);
+            var items = await _applications.ListAsync(statusFilter, leagueId, season, skip, PageSize, HttpContext.RequestAborted);
             ViewBag.Items = items;
             ViewBag.HasMore = items.Count == PageSize;
 
@@ -125,11 +126,12 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         [HttpGet("/AdminApplications/Waitlist")]
         [Authorize(Policy = "Admin.Applications.Manage")]
-        public async Task<IActionResult> Waitlist(string leagueId)
+        public async Task<IActionResult> Waitlist(string leagueId, string? season)
         {
             var allLeagues = await _staticCache.GetAllLeaguesAsync();
             ViewBag.Leagues = allLeagues;
             ViewBag.SelectedLeagueId = leagueId;
+            ViewBag.SeasonFilter = season;
 
             if (string.IsNullOrWhiteSpace(leagueId))
             {
@@ -137,7 +139,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 return View("~/Views/Admin/Applications/Waitlist.cshtml");
             }
 
-            var entries = await _applications.ListWaitlistAsync(leagueId, HttpContext.RequestAborted);
+            var entries = await _applications.ListWaitlistAsync(leagueId, season, HttpContext.RequestAborted);
             ViewBag.Entries = entries;
             return View("~/Views/Admin/Applications/Waitlist.cshtml");
         }
@@ -162,6 +164,80 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 TempData["AdminMessage"] = result.Error ?? "Promotion fehlgeschlagen.";
             }
             return RedirectToAction(nameof(Waitlist), new { leagueId });
+        }
+
+        // ── Saison-Übersicht (Admin) ─────────────────────────────────────────────
+
+        [HttpGet("/AdminApplications/Seasons")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        public async Task<IActionResult> Seasons(string? season)
+        {
+            // Default: aktuelle Season aus der ersten Liga mit CurrentSeason.
+            var allLeagues = await _staticCache.GetAllLeaguesAsync();
+            if (string.IsNullOrWhiteSpace(season))
+            {
+                season = allLeagues.FirstOrDefault(l => !string.IsNullOrWhiteSpace(l.CurrentSeason))?.CurrentSeason
+                    ?? "current";
+            }
+            ViewBag.Season = season;
+            ViewBag.AvailableSeasons = allLeagues
+                .SelectMany(l => new[] { l.CurrentSeason, l.NextSeason }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)))
+                .Distinct()
+                .OrderByDescending(s => s)
+                .ToList();
+            ViewBag.Rows = await _applications.GetSeasonSummaryAsync(season, HttpContext.RequestAborted);
+            return View("~/Views/Admin/Applications/Seasons.cshtml");
+        }
+
+        [HttpGet("/AdminApplications/LeagueSeasons/{leagueId}")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        public async Task<IActionResult> LeagueSeasons(string leagueId)
+        {
+            var allLeagues = await _staticCache.GetAllLeaguesAsync();
+            var league = allLeagues.FirstOrDefault(l => l.Id == leagueId);
+            if (league is null) return NotFound();
+
+            var seasons = new[] { league.CurrentSeason, league.NextSeason }
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct()
+                .ToList();
+
+            var perSeason = new Dictionary<string, IReadOnlyList<Application>>();
+            foreach (var s in seasons)
+            {
+                perSeason[s!] = await _applications.ListAsync(null, leagueId, s, 0, 500, HttpContext.RequestAborted);
+            }
+
+            ViewBag.League = league;
+            ViewBag.Seasons = seasons!;
+            ViewBag.PerSeason = perSeason;
+            return View("~/Views/Admin/Applications/LeagueSeasons.cshtml");
+        }
+
+        [HttpPost("/AdminApplications/CloseSeason")]
+        [ValidateAntiForgeryToken]
+        [EnableRateLimiting("forms")]
+        [Authorize(Policy = "Admin.Applications.Manage")]
+        public async Task<IActionResult> CloseSeason(string leagueId, string fromSeason, string toSeason, string mode)
+        {
+            var admin = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+            if (!Enum.TryParse<SeasonCloseMode>(mode, ignoreCase: true, out var parsed))
+            {
+                TempData["AdminMessage"] = "Unbekannter Modus.";
+                return RedirectToAction(nameof(LeagueSeasons), new { leagueId });
+            }
+
+            var result = await _applications.CloseSeasonAsync(leagueId, fromSeason, toSeason, parsed, admin, HttpContext.RequestAborted);
+            if (result.Outcome == CloseSeasonOutcome.Ok)
+            {
+                TempData["AdminMessage"] = $"Saison {fromSeason} geschlossen: {result.MovedApplications} Bewerbungen verschoben, {result.RejectedApplications} abgelehnt, {result.RemovedWaitlistEntries} Wartelisten gelöscht.";
+            }
+            else
+            {
+                TempData["AdminMessage"] = result.Error ?? "Saison-Schließen fehlgeschlagen.";
+            }
+            return RedirectToAction(nameof(LeagueSeasons), new { leagueId });
         }
 
         // ── Manuelle Registrierung (ohne Bewerbung) ──────────────────────────────

@@ -33,7 +33,12 @@ public class WaitlistEntry
     [MaxLength(64)]
     public string LeagueId { get; set; } = string.Empty;
 
-    /// <summary>1-indexed Reihenfolge pro Liga.</summary>
+    /// <summary>Season-Kennung (z.B. "2026"). Position wird pro (Liga, Season) vergeben.</summary>
+    [Required]
+    [MaxLength(16)]
+    public string Season { get; set; } = string.Empty;
+
+    /// <summary>1-indexed Reihenfolge pro (Liga, Season).</summary>
     public int Position { get; set; }
 
     [MaxLength(500)]

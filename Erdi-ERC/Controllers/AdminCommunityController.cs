@@ -446,11 +446,20 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
         [HttpGet]
         [Authorize(Policy = "Admin.Community.Stewarding")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public async Task<IActionResult> Stewarding(
             string? leagueFilter = null,
             string? typeFilter = null,
-            string? driverLeagueFilter = null)
+            string? driverLeagueFilter = null,
+            // Fallback: SavePenalty redirectet mit "leagueId" (Body-Param), damit der
+            // Datalist-Filter nach dem Speichern erhalten bleibt.
+            string? leagueId = null)
         {
+            // Wenn die Liga explizit per leagueId mitkommt (POST-Redirect),
+            // uebernimm sie als driverLeagueFilter.
+            if (string.IsNullOrWhiteSpace(driverLeagueFilter) && !string.IsNullOrWhiteSpace(leagueId))
+                driverLeagueFilter = leagueId;
+
             var query = _db.LeaguePenalties.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(leagueFilter))
@@ -481,12 +490,15 @@ namespace <OWNER_HANDLE>_ERC.Controllers
 
             // Driver-Standings können optional auf eine Liga eingeschränkt werden, sodass
             // das Create-Formular nur die Fahrer der gewählten Liga anbietet.
+            // Hinweis: string.Equals(..., StringComparison.OrdinalIgnoreCase) wird von Pomelo
+            // MySQL nicht in SQL übersetzt → stattdessen ToLower()-Vergleich, der sauber zu
+            // LOWER(col) = LOWER(@p) translatiert.
             var driverQuery = _db.DriverStandings
                 .Where(x => !string.IsNullOrEmpty(x.Driver));
             if (!string.IsNullOrWhiteSpace(driverLeagueFilter))
             {
-                driverQuery = driverQuery.Where(x =>
-                    string.Equals(x.LeagueId, driverLeagueFilter, StringComparison.OrdinalIgnoreCase));
+                var needle = driverLeagueFilter.ToLower();
+                driverQuery = driverQuery.Where(x => x.LeagueId != null && x.LeagueId.ToLower() == needle);
             }
 
             var driverStandings = await driverQuery
@@ -551,6 +563,28 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             {
                 TempData["AdminMessage"] = "Liga, Fahrer und Begründung sind Pflichtfelder.";
                 return RedirectToAction(nameof(Stewarding));
+            }
+
+            // Server-side Guard: der eingetragene Fahrer MUSS in den DriverStandings
+            // der gewaehlten Liga existieren. Verhindert, dass ein User per direktem
+            // POST oder Browser-Manipulation einen Fahrer aus einer fremden Liga
+            // (oder einen Fantasienamen) eintragen kann. Der Driver-Select im UI
+            // bietet zwar nur die Liga-Fahrer an, aber der Controller ist die
+            // letzte Verteidigungslinie.
+            var (driverNameCheck, _) = ParseDriverInput(driver);
+            if (!await IsDriverInLeagueAsync(leagueId, driverNameCheck))
+            {
+                TempData["AdminMessage"] = $"Fahrer \"{driverNameCheck}\" gehoert nicht zur Liga \"{leagueId}\" oder existiert nicht. Bitte einen Fahrer der gewaehlten Liga auswaehlen.";
+                return RedirectToAction(nameof(Stewarding), new { leagueId = leagueId });
+            }
+            if (!string.IsNullOrWhiteSpace(secondDriver))
+            {
+                var (secondNameCheck, _) = ParseDriverInput(secondDriver);
+                if (!await IsDriverInLeagueAsync(leagueId, secondNameCheck))
+                {
+                    TempData["AdminMessage"] = $"Zweiter Fahrer \"{secondNameCheck}\" gehoert nicht zur Liga \"{leagueId}\" oder existiert nicht. Bitte einen Fahrer der gewaehlten Liga auswaehlen.";
+                    return RedirectToAction(nameof(Stewarding), new { leagueId = leagueId });
+                }
             }
 
             LeaguePenalty? entity = id.HasValue && id.Value > 0
@@ -639,16 +673,26 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         [Authorize(Policy = "Admin.Community.Stewarding")]
         public async Task<IActionResult> TogglePenaltyPublic(int id)
         {
-            var entity = await _db.LeaguePenalties.FindAsync(id);
-            if (entity is null) return RedirectToAction(nameof(Stewarding));
+            // Pessimistisches UPDATE via raw SQL, um Change-Tracker-Eigenheiten
+            // (z. B. bei getrackten Entities aus vorangegangenen Queries im selben
+            // Request-Scope) sicher zu umgehen. Das ExecuteSqlInterpolated nutzt
+            // parameterisierte Queries — kein SQL-Injection-Risiko.
+            var before = await _db.LeaguePenalties
+                .AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => x.IsPublic)
+                .FirstOrDefaultAsync();
 
-            entity.IsPublic = !entity.IsPublic;
-            await _db.SaveChangesAsync();
+            var newValue = !before;
+            await _db.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE LeaguePenalties SET IsPublic = {newValue} WHERE Id = {id}");
+
             await _audit.LogAsync("TogglePenaltyPublic", "LeaguePenalty", id.ToString(),
-                $"IsPublic={entity.IsPublic}");
+                $"Before={before}, After={newValue}");
 
-            TempData["AdminMessage"] = entity.IsPublic ? "Strafe ist jetzt öffentlich." : "Strafe ist jetzt intern.";
-            return RedirectToAction(nameof(Stewarding));
+            TempData["AdminMessage"] = newValue ? "Strafe ist jetzt öffentlich." : "Strafe ist jetzt intern.";
+            // Cache-Buster: bfcache speichert HTML unter URL → neue URL erzwingt Frische.
+            return RedirectToAction(nameof(Stewarding), new { ts = Guid.NewGuid().ToString("N") });
         }
 
         // ── Stewarding Helpers ────────────────────────────────────────────────────
@@ -680,6 +724,25 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Driver == normalized);
             return standing?.DriverNumber;
+        }
+
+        /// <summary>
+        /// Prueft, ob ein Fahrername in der angegebenen Liga in den DriverStandings
+        /// existiert. Wird in SavePenalty als harter Server-Side-Guard benutzt,
+        /// damit niemand einen Fahrer einer fremden Liga (oder einen Fantasienamen)
+        /// eintragen kann — selbst wenn das Form-Frontend umgangen wird.
+        /// </summary>
+        private async Task<bool> IsDriverInLeagueAsync(string? leagueId, string? driverName)
+        {
+            if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(driverName)) return false;
+            var l = leagueId.Trim();
+            var d = driverName.Trim();
+            return await _db.DriverStandings
+                .AsNoTracking()
+                .AnyAsync(s => s.Driver != null
+                            && s.Driver.ToLower() == d.ToLower()
+                            && s.LeagueId != null
+                            && s.LeagueId.ToLower() == l.ToLower());
         }
     }
 }

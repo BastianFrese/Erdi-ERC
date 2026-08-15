@@ -531,11 +531,32 @@
                     }
                 };
 
+                // Nach der Sequenz das Rig komplett aus dem DOM entfernen — nicht nur
+                // verstecken. Verstecktes Markup (5 Lampen + 12 Icons + SVG + 3
+                // Background-Layer) kostet bei jedem Repaint ein paar CPU-Cycles
+                // (Style-Recalc, Compositor-Layer-Verwaltung). Einmal gezeigt + fertig
+                // → weg. Erneute Anzeige (z. B. via Nav-Continue) rekonstruiert das
+                // Rig per Klon aus dem data-Attribut. So bleibt die Markup-Größe
+                // nach der ersten Anzeige dauerhaft klein.
+                let rigTemplate = null;
+                const destroyRig = () => {
+                    if (rig && rig.parentNode) {
+                        if (!rigTemplate) rigTemplate = rig.cloneNode(true);
+                        rig.parentNode.removeChild(rig);
+                    }
+                };
+                const restoreRig = () => {
+                    if (!rigTemplate || !rigTemplate.parentNode) {
+                        if (!rigTemplate) rigTemplate = document.getElementById('raceStartLights')?.cloneNode(true);
+                        if (rigTemplate && document.body) document.body.appendChild(rigTemplate);
+                    }
+                };
+
                 const finish = () => {
                     rig.classList.add('is-go');
                     if (label) label.textContent = labelGoText;
                     sessionStorage.setItem(sessionKey, '1');
-                    setTimeout(() => hideRig(false), 520);
+                    setTimeout(() => { hideRig(false); destroyRig(); }, 520);
                 };
 
                 let running = false;
@@ -578,10 +599,12 @@
 
                 if (reduce) {
                     hideRig(true);
+                    destroyRig();
                 } else if (continueFromNav || !alreadyShown) {
                     playSequence();
                 } else {
                     hideRig(true);
+                    destroyRig();
                 }
 
                 // ---- Slow-navigation overlay ----
@@ -810,6 +833,31 @@
                     }));
                 };
 
+                // localStorage ist synchrone I/O. `timeupdate` feuert je nach Browser
+                // 4–66 mal/Sekunde → würde auf jedem Tick einen blockierenden Disk-Write
+                // auslösen und das Scrollen sichtbar ruckeln lassen. Stattdessen:
+                // mindestens 5s Abstand zwischen Writes (ausreichend für Resume-Qualität),
+                // und zwingend bei pause/ended/beforeunload (sonst gehen die letzten
+                // Sekunden beim Tab-Wechsel verloren).
+                const PERSIST_MIN_INTERVAL_MS = 5000;
+                let lastPersistAt = 0;
+                let persistPending = false;
+                const persistStateThrottled = () => {
+                    const now = performance.now();
+                    if (now - lastPersistAt >= PERSIST_MIN_INTERVAL_MS) {
+                        lastPersistAt = now;
+                        persistState();
+                    } else if (!persistPending) {
+                        persistPending = true;
+                        const wait = PERSIST_MIN_INTERVAL_MS - (now - lastPersistAt);
+                        setTimeout(() => {
+                            persistPending = false;
+                            lastPersistAt = performance.now();
+                            persistState();
+                        }, wait);
+                    }
+                };
+
                 let state = readState();
                 let currentIndex = Math.min(Math.max(state.index, 0), tracks.length - 1);
 
@@ -855,7 +903,10 @@
 
                 audio.addEventListener('play',  () => { setIcon(); persistState(); });
                 audio.addEventListener('pause', () => { setIcon(); persistState(); });
-                audio.addEventListener('timeupdate', persistState);
+                // timeupdate: throttled statt synchron — siehe persistStateThrottled.
+                // play/pause/ended/beforeunload oben/unten bleiben synchron (seltene
+                // Ereignisse, müssen aber zuverlässig landen, damit Resume klappt).
+                audio.addEventListener('timeupdate', persistStateThrottled);
                 audio.addEventListener('ended', () => { setTrack(currentIndex + 1, false); audio.play().catch(()=>{}); persistState(); });
 
                 window.addEventListener('beforeunload', persistState);

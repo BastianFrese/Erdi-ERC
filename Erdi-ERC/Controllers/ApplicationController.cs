@@ -18,6 +18,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IApplicationService _applications;
         private readonly IStaticDataCache _staticCache;
         private readonly IDiscordGuildService _discordGuildService;
+        private readonly IApplicationTargetingService _targeting;
         private readonly <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions _driverMatching;
         private readonly ILogger<ApplicationController> _logger;
 
@@ -25,12 +26,14 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             IApplicationService applications,
             IStaticDataCache staticCache,
             IDiscordGuildService discordGuildService,
+            IApplicationTargetingService targeting,
             Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.DriverMatchingOptions> driverMatching,
             ILogger<ApplicationController> logger)
         {
             _applications = applications;
             _staticCache = staticCache;
             _discordGuildService = discordGuildService;
+            _targeting = targeting;
             _driverMatching = driverMatching.Value;
             _logger = logger;
         }
@@ -48,6 +51,17 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var communityJoined = User.HasClaim("erdi:on-community-guild", "true");
             var leagueJoined = User.HasClaim("erdi:on-league-guild", "true");
             ViewBag.NeedsGuildWarning = !communityJoined || !leagueJoined;
+
+            // Saison-Banner: zeige die Zielseason, falls ALLE offenen Ligen auf
+            // dieselbe Season mappen. Sonst bleibt der Banner generisch.
+            var targeting = await _targeting.GetTargetingInfoAsync(HttpContext.RequestAborted);
+            var distinctSeasons = targeting.Select(t => t.TargetSeason).Distinct().ToList();
+            if (distinctSeasons.Count == 1)
+            {
+                var only = targeting[0];
+                ViewBag.TargetSeason = only.TargetSeason;
+                ViewBag.IsNextSeason = only.IsNextSeason;
+            }
 
             return View("Apply", new ApplyInput
             {

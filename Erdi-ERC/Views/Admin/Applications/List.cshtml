@@ -9,8 +9,13 @@
                   ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
     string? statusFilter = ViewBag.StatusFilter as string;
     string? leagueFilter = ViewBag.LeagueFilter as string;
+    string? seasonFilter = ViewBag.SeasonFilter as string;
     int pageNo = (int)(ViewBag.Page ?? 1);
     bool hasMore = (bool)(ViewBag.HasMore ?? false);
+
+    var statusQs = string.IsNullOrEmpty(statusFilter) ? "" : $"&status={Uri.EscapeDataString(statusFilter)}";
+    var leagueQs = string.IsNullOrEmpty(leagueFilter) ? "" : $"&leagueId={Uri.EscapeDataString(leagueFilter)}";
+    var seasonQs = string.IsNullOrEmpty(seasonFilter) ? "" : $"&season={Uri.EscapeDataString(seasonFilter)}";
     string CurrentLeagueName(string? id) => string.IsNullOrEmpty(id)
         ? "—"
         : leagues.FirstOrDefault(l => string.Equals(l.Id, id, StringComparison.OrdinalIgnoreCase))?.Name ?? id;
@@ -59,11 +64,19 @@
                 }
             </select>
         </div>
+        <div class="adm-filter-bar__field">
+            <label for="season">Season</label>
+            <input id="season" name="season" type="text" class="adm-form-input"
+                   placeholder="z.B. 2026" value="@seasonFilter" maxlength="16" />
+        </div>
         <button type="submit" class="btn btn-primary btn-sm">
             <i class="bi bi-funnel-fill"></i> Filtern
         </button>
         <a class="btn btn-ghost btn-sm" asp-action="Waitlist" asp-route-leagueId="@leagueFilter">
             <i class="bi bi-hourglass-split"></i> Warteliste
+        </a>
+        <a class="btn btn-ghost btn-sm" asp-action="Seasons">
+            <i class="bi bi-calendar-event"></i> Saison-Übersicht
         </a>
     </form>
 
@@ -89,6 +102,7 @@
                     <thead>
                         <tr>
                             <th>Liga</th>
+                            <th>Season</th>
                             <th>Discord</th>
                             <th>Rolle</th>
                             <th>Gamer-Tag</th>
@@ -103,6 +117,7 @@
                         {
                             <tr>
                                 <td>@CurrentLeagueName(a.TargetLeagueId)</td>
+                                <td><span class="f1-chip f1-chip--ghost">@a.Season</span></td>
                                 <td>
                                     <div class="adm-table__primary">@a.DiscordName</div>
                                     <div class="adm-table__secondary">@a.DiscordId</div>
@@ -132,8 +147,7 @@
             @if (pageNo > 1)
             {
                 <a class="btn btn-ghost btn-sm"
-                   asp-action="List" asp-route-page="@(pageNo - 1)"
-                   asp-route-status="@statusFilter" asp-route-leagueId="@leagueFilter">
+                   href="@($"/AdminApplications/List?page={pageNo - 1}{statusQs}{leagueQs}{seasonQs}")">
                     <i class="bi bi-chevron-left"></i> Zurück
                 </a>
             }
@@ -141,8 +155,7 @@
             @if (hasMore)
             {
                 <a class="btn btn-ghost btn-sm"
-                   asp-action="List" asp-route-page="@(pageNo + 1)"
-                   asp-route-status="@statusFilter" asp-route-leagueId="@leagueFilter">
+                   href="@($"/AdminApplications/List?page={pageNo + 1}{statusQs}{leagueQs}{seasonQs}")">
                     Weiter <i class="bi bi-chevron-right"></i>
                 </a>
             }

@@ -80,6 +80,7 @@ builder.Services.AddScoped<ITrackSetupAccessPolicy, TrackSetupAccessPolicy>();
 builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
 builder.Services.AddScoped<IDiscordGuildService, DiscordGuildService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
+builder.Services.AddScoped<IApplicationTargetingService, ApplicationTargetingService>();
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
 builder.Services.AddScoped<IStreamScheduleQueryService, StreamScheduleQueryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
