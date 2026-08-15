@@ -72,6 +72,14 @@ dotnet run --project Erdi-ERC/Erdi-ERC.csproj --launch-profile http
 Profile → jedes `dotnet ef …` Kommando aus VS/Rider heraus zeigt
 **automatisch** auf `erditest`, nie auf `erdierc`.
 
+> ⚠️ **Wenn die `ASPNETCORE_ENVIRONMENT`-Variable leer ist, defaultet ASP.NET
+> Core auf `Production`.** Dann werden weder `appsettings.Development.json`
+> noch die Dev-User-Secrets korrekt zusammengeführt, und Discord-OAuth gibt
+> `invalid_client` zurück. Der Pre-Build-Hook `WarnIfUserSecretsEmpty`
+> warnt in dem Fall mit `SEC002`. Fix: immer mit
+> `dotnet run --project Erdi-ERC --launch-profile http` starten oder die
+> env-Var explizit setzen.
+
 ## Datenbank & EF-Migrationen
 
 ### Die zwei Datenbanken
@@ -151,6 +159,41 @@ Detail-Doku pro Feature in `Docs/Features/*.md`.
 - [ ] `db.Database.Migrate()` niemals unconditional in `Program.cs`
 - [ ] Vor jeder EF-Migration: `Docs/MIGRATION-SAFETY.md` lesen
 - [ ] Prod-Migrationen nur manuell durch Server-Owner
+
+## Troubleshooting
+
+### Discord-Login: `invalid_client`
+
+Tritt auf, wenn `Discord:ClientId` / `Discord:ClientSecret` beim
+OAuth-Token-Endpoint leer oder falsch ankommen. Häufigste Ursachen
+(in absteigender Wahrscheinlichkeit):
+
+1. **`ASPNETCORE_ENVIRONMENT` ist nicht gesetzt** → `Production`-Default
+   → `appsettings.Development.json` wird nicht geladen. **SEC002**-Warnung
+   sollte beim Build erscheinen. Fix: `dotnet run --launch-profile http`
+   oder `$env:ASPNETCORE_ENVIRONMENT = "Development"`.
+2. **User-Secrets sind leer oder falsch geschrieben.** Prüfen mit
+   `dotnet user-secrets list --project Erdi-ERC/Erdi-ERC.csproj`. **SEC001**
+   warnt beim Build, falls leer. Siehe `Erdi-ERC/SETUP.md`.
+3. **Discord-Secret wurde im Portal rotiert** oder die App-ID stimmt nicht
+   mit der App überein, aus der das Secret stammt. Im
+   [Discord Developer Portal](https://discord.com/developers/applications)
+   nachprüfen und ggf. neu setzen.
+4. **Whitespace oder BOM** vor/nach dem Secret (Copy-Paste aus Browser).
+   Secret nochmal komplett neu eintippen.
+
+### Pre-Build-Warnungen `SEC001` / `SEC002`
+
+Das MSBuild-Target `WarnIfUserSecretsEmpty` läuft bei `dotnet build` und
+`dotnet run`. Es warnt:
+- **SEC001** — User-Secrets sind leer → App-Start crasht mit
+  `MySqlException: Unable to connect`.
+- **SEC002** — `ASPNETCORE_ENVIRONMENT` ist nicht gesetzt →
+  Production-Default → `invalid_client` + falsche DB für EF.
+
+Beide Checks sind lokal harmlos und via `DisableUserSecretsCheck=true`
+deaktivierbar (für CI-Setups ohne lokale Secrets). In GitHub-Actions ist
+`CI=true` gesetzt → Target überspringt sich automatisch.
 
 ## Mitwirkende
 
