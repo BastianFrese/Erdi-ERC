@@ -1,5 +1,6 @@
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
+using Erdi_ERC.Services.ImageProcessing;
 
 namespace Erdi_ERC.Services
 {
@@ -7,11 +8,19 @@ namespace Erdi_ERC.Services
     {
         private readonly IWebHostEnvironment _env;
         private readonly IAdminAuditService _audit;
+        private readonly ImageVariantGenerator _variants;
+        private readonly ILogger<MediaService> _log;
 
-        public MediaService(IWebHostEnvironment env, IAdminAuditService audit)
+        public MediaService(
+            IWebHostEnvironment env,
+            IAdminAuditService audit,
+            ImageVariantGenerator variants,
+            ILogger<MediaService> log)
         {
             _env = env;
             _audit = audit;
+            _variants = variants;
+            _log = log;
         }
 
         // ---- Background Music ----
@@ -118,6 +127,7 @@ namespace Erdi_ERC.Services
 
             await using var fs = new FileStream(fullPath, FileMode.CreateNew);
             await image.CopyToAsync(fs);
+            EnqueueVariantGeneration(fullPath);
             return fileName;
         }
 
@@ -136,6 +146,7 @@ namespace Erdi_ERC.Services
                 var full = Path.Combine(_env.WebRootPath, "uploads", "events", safe);
                 if (System.IO.File.Exists(full))
                     System.IO.File.Delete(full);
+                DeleteVariantsFor(full);
             }
             catch { /* best effort */ }
         }
@@ -160,6 +171,7 @@ namespace Erdi_ERC.Services
 
             await using var fs = new FileStream(fullPath, FileMode.CreateNew);
             await image.CopyToAsync(fs);
+            EnqueueVariantGeneration(fullPath);
             return fileName;
         }
 
@@ -175,6 +187,7 @@ namespace Erdi_ERC.Services
                 var full = Path.Combine(_env.WebRootPath, "uploads", "calendar", safe);
                 if (System.IO.File.Exists(full))
                     System.IO.File.Delete(full);
+                DeleteVariantsFor(full);
             }
             catch { /* best effort */ }
         }
@@ -201,6 +214,7 @@ namespace Erdi_ERC.Services
 
             await using var fs = new FileStream(fullPath, FileMode.CreateNew);
             await image.CopyToAsync(fs);
+            EnqueueVariantGeneration(fullPath);
 
             return $"/uploads/about/{fileName}";
         }
@@ -214,6 +228,7 @@ namespace Erdi_ERC.Services
                 var full = Path.Combine(_env.WebRootPath, fileName.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
                 if (System.IO.File.Exists(full))
                     System.IO.File.Delete(full);
+                DeleteVariantsFor(full);
             }
             catch { /* best effort */ }
         }
@@ -244,6 +259,7 @@ namespace Erdi_ERC.Services
 
             await using var fs = new FileStream(fullPath, FileMode.CreateNew);
             await image.CopyToAsync(fs);
+            EnqueueVariantGeneration(fullPath);
 
             await _audit.LogAsync("UploadDriverPhoto", "DriverProfile", discordId ?? safeId, $"File=/uploads/drivers/{fileName}, Size={image.Length}");
             return $"/uploads/drivers/{fileName}";
@@ -258,6 +274,7 @@ namespace Erdi_ERC.Services
                 var full = Path.Combine(_env.WebRootPath, url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
                 if (System.IO.File.Exists(full))
                     System.IO.File.Delete(full);
+                DeleteVariantsFor(full);
             }
             catch { /* best effort */ }
         }
@@ -292,6 +309,40 @@ namespace Erdi_ERC.Services
             System.IO.File.Move(tempPath, targetPath);
             await _audit.LogAsync("UploadEwigeListe", "Workbook", "active.xlsx", $"File={workbook.FileName}, Size={workbook.Length}");
             return true;
+        }
+
+        // ---- Image variant generation (Block 2) ----
+        // Fire-and-forget: do not block the upload response on CPU-bound image processing.
+        // Failures are logged but never surfaced to the user (the original image is the
+        // master; the <picture> markup falls back gracefully if variants are missing).
+        private void EnqueueVariantGeneration(string sourcePath)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _variants.GenerateWebpVariantsAsync(sourcePath);
+                }
+                catch (Exception ex)
+                {
+                    _log.LogError(ex, "Background variant generation failed for {Source}", sourcePath);
+                }
+            });
+        }
+
+        private void DeleteVariantsFor(string originalPath)
+        {
+            try
+            {
+                var dir = Path.GetDirectoryName(originalPath);
+                var stem = Path.GetFileNameWithoutExtension(originalPath);
+                if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(stem)) return;
+                foreach (var p in Directory.EnumerateFiles(dir, $"{stem}-*.webp"))
+                {
+                    try { File.Delete(p); } catch { /* best effort */ }
+                }
+            }
+            catch { /* best effort */ }
         }
     }
 }

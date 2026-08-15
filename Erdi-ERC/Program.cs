@@ -84,6 +84,9 @@ builder.Services.AddScoped<IApplicationTargetingService, ApplicationTargetingSer
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
 builder.Services.AddScoped<IStreamScheduleQueryService, StreamScheduleQueryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<Erdi_ERC.Services.ImageProcessing.ImageVariantGenerator>();
+builder.Services.Configure<Erdi_ERC.Services.ImageProcessing.ImageProcessingOptions>(
+    builder.Configuration.GetSection(Erdi_ERC.Services.ImageProcessing.ImageProcessingOptions.SectionName));
 builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<OverallConstructorsService>();
 builder.Services.AddScoped<DatabaseTransactionHelper>();
@@ -815,8 +818,11 @@ Directory.CreateDirectory(uploadsPath);
         ContentTypeProvider = provider,
         OnPrepareResponse = ctx =>
         {
-            // Cache uploaded images for 7 days (they have unique names based on Guid)
-            ctx.Context.Response.Headers.CacheControl = "public, max-age=604800";
+            // Cache uploaded images for 1 year, immutable. Filenames are GUIDs (see
+            // MediaService.SaveEventImageAsync / SaveDriverPhotoAsync / SaveAboutImageAsync /
+            // SaveCalendarBackgroundAsync), so the URL is content-addressed and safe to
+            // cache forever. Permits push of long-lived AVIF/WebP variants in Block 2.
+            ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
         }
     });
 }
