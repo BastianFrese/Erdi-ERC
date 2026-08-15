@@ -210,23 +210,11 @@ namespace <OWNER_HANDLE>_ERC.Services
                 standing.Points += standing.PointsAdjustment;
             }
 
-            // Stewarding-Strafen vom Typ "Punkteabzug" automatisch auf die Tabelle anwenden,
-            // damit Stewards keine zusätzliche manuelle Korrektur (PointsAdjustment) pflegen müssen.
-            // Andere Strafarten (Zeitstrafe/Grid/Verwarnung) wirken im Rennen selbst, nicht hier.
-            var penaltyPointsByDriver = (await _db.LeaguePenalties
-                    .Where(p => p.LeagueId == leagueId && p.PenaltyType == "Punkteabzug")
-                    .ToListAsync(cancellationToken))
-                .GroupBy(p => Normalize(p.Driver), StringComparer.OrdinalIgnoreCase)
-                .Where(g => !string.IsNullOrWhiteSpace(g.Key))
-                .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.Points)), StringComparer.OrdinalIgnoreCase);
-
-            foreach (var standing in standings)
-            {
-                if (penaltyPointsByDriver.TryGetValue(standing.Driver, out var deduction))
-                {
-                    standing.Points -= deduction;
-                }
-            }
+            // Stewarding-Strafpunkte werden NICHT auf DriverStanding.Points angewendet:
+            // Stewarding-Berichte sind eigenständige Dokumente (siehe /Stewarding, Liga-Steward),
+            // deren "Points"-Feld rein informativ ist und keinen Einfluss auf die
+            // Meisterschaftswertung hat. Soll ein Fahrer manuell Korrekturpunkte erhalten,
+            // ist weiterhin DriverStanding.PointsAdjustment (Admin-Liga-Edit) der Weg.
 
             var ranked = standings
                 .OrderByDescending(s => s.Points)

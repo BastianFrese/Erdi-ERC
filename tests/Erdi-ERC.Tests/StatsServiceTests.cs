@@ -131,4 +131,49 @@ public class StatsServiceTests
         var guest = await verify.DriverStandings.SingleOrDefaultAsync(s => s.Driver == "Guest");
         Assert.Null(guest);
     }
+
+    [Fact]
+    public async Task RebuildLeagueStandings_stewardingPenaltyDoesNotSubtractFromDriverPoints()
+    {
+        // Regression (User-Report 2026-08-15): Stewarding-Penalty-Points duerfen NICHT
+        // von der Gesamtpunktzahl des Fahrers abgezogen werden. Stewarding-Berichte sind
+        // eigenstaendige Dokumente; das "Points"-Feld im Bericht ist informativ.
+        // Korrekturen muessen explizit ueber DriverStanding.PointsAdjustment laufen.
+        using var ctx = new SqliteTestContext();
+        await SeedLeagueAsync(ctx, "l1");
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Alpha" });
+        await ctx.Db.SaveChangesAsync();
+        await AddRaceAsync(ctx, "l1", ("Alpha", 1)); // P1 = 25 Punkte
+
+        // Mehrere Strafen verschiedener Typen — keine darf abziehen.
+        ctx.Db.LeaguePenalties.Add(new LeaguePenalty
+        {
+            LeagueId = "l1", Driver = "Alpha",
+            PenaltyType = "Punkteabzug", Points = 5,
+            Date = DateTime.UtcNow, Reason = "Kollision"
+        });
+        ctx.Db.LeaguePenalties.Add(new LeaguePenalty
+        {
+            LeagueId = "l1", Driver = "Alpha",
+            PenaltyType = "Punkteabzug", Points = 3,
+            Date = DateTime.UtcNow, Reason = "Track-Limits"
+        });
+        ctx.Db.LeaguePenalties.Add(new LeaguePenalty
+        {
+            LeagueId = "l1", Driver = "Alpha",
+            PenaltyType = "Zeitstrafe", Points = 10,
+            Date = DateTime.UtcNow, Reason = "Verwarnung"
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert — Penalty-Summe (5+3+10) bleibt unberuecksichtigt.
+        await using var verify = ctx.NewContext();
+        var alpha = await verify.DriverStandings.SingleAsync(s => s.Driver == "Alpha");
+        Assert.Equal(25, alpha.Points); // nur Renn-Punkte, kein Penalty-Abzug
+    }
 }
