@@ -19,6 +19,7 @@ namespace <OWNER_HANDLE>_ERC.Services
         public const string ApplicationRejected   = "application.rejected";
         public const string ApplicationWaitlisted = "application.waitlisted";
         public const string ApplicationWithdrawn  = "application.withdrawn";
+        public const string ApplicationSeasonClosed = "application.season.closed";
 
         /// <summary>Human-readable labels shown in the admin UI.</summary>
         public static readonly IReadOnlyList<(string Key, string Label, string Icon, string Description)> All =
@@ -35,6 +36,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             (ApplicationRejected,   "Bewerbung abgelehnt",          "bi-x-circle",                    "Wird ausgelöst, wenn ein Admin eine Bewerbung ablehnt."),
             (ApplicationWaitlisted, "Bewerbung auf Warteliste",     "bi-hourglass-split",             "Wird ausgelöst, wenn eine Bewerbung wegen voller Liga auf die Warteliste umgeleitet wird."),
             (ApplicationWithdrawn,  "Bewerbung zurückgezogen",      "bi-arrow-counterclockwise",      "Wird ausgelöst, wenn ein User seine offene Bewerbung selbst zurückzieht."),
+            (ApplicationSeasonClosed, "Saison geschlossen",         "bi-calendar-x",                 "Wird ausgelöst, wenn ein Admin eine Saison für eine Liga schließt (Rollover oder RejectAll)."),
         ];
     }
 }

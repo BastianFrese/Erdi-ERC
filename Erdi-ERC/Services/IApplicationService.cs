@@ -21,6 +21,7 @@ namespace <OWNER_HANDLE>_ERC.Services
         Task<IReadOnlyList<Application>> ListAsync(
             ApplicationStatus? statusFilter,
             string? leagueFilter,
+            string? seasonFilter,
             int skip,
             int take,
             CancellationToken ct);
@@ -38,7 +39,7 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         Task<bool> HasOpenApplicationAsync(string discordId, string targetLeagueId, CancellationToken ct);
 
-        Task<IReadOnlyList<WaitlistEntry>> ListWaitlistAsync(string leagueId, CancellationToken ct);
+        Task<IReadOnlyList<WaitlistEntry>> ListWaitlistAsync(string leagueId, string? seasonFilter, CancellationToken ct);
 
         /// <summary>
         /// Kopiert einen Wartelisten-Eintrag in eine echte Application (Status=Pending),
@@ -75,6 +76,26 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         /// <summary>Kapazitäts-Infos pro bewerbbarer Liga für die Liga-Karten im Formular.</summary>
         Task<IReadOnlyList<LeagueCapacityInfo>> GetLeagueCapacityAsync(CancellationToken ct);
+
+        /// <summary>
+        /// Aggregiert pro Liga und Season die Counts (Pending/Accepted/Rejected/Waitlist).
+        /// Wird für die Admin-Saison-Übersicht verwendet.
+        /// </summary>
+        Task<IReadOnlyList<SeasonSummaryRow>> GetSeasonSummaryAsync(
+            string season, CancellationToken ct);
+
+        /// <summary>
+        /// Schließt eine Saison für eine Liga. <c>Rollover</c>: offene Bewerbungen + Waitlist
+        /// werden in <paramref name="toSeason"/> übernommen. <c>RejectAll</c>: offene Bewerbungen
+        /// werden als Rejected markiert, Waitlist gelöscht. Transaktional, mit Audit + Webhook.
+        /// </summary>
+        Task<CloseSeasonResult> CloseSeasonAsync(
+            string leagueId,
+            string fromSeason,
+            string toSeason,
+            SeasonCloseMode mode,
+            string adminDiscordId,
+            CancellationToken ct);
     }
 
     /// <summary>Belegungs-Snapshot einer Liga fürs Bewerbungsformular.</summary>
@@ -205,5 +226,49 @@ namespace <OWNER_HANDLE>_ERC.Services
     {
         Ok = 0,
         NotFound = 1,
+    }
+
+    /// <summary>Aggregierte Counts einer Season, pro Liga.</summary>
+    public record SeasonSummaryRow(
+        string LeagueId,
+        string LeagueName,
+        string Season,
+        int PendingCount,
+        int AcceptedCount,
+        int RejectedCount,
+        int WaitlistCount);
+
+    /// <summary>Modi für <see cref="IApplicationService.CloseSeasonAsync"/>.</summary>
+    public enum SeasonCloseMode
+    {
+        /// <summary>Offene Bewerbungen + Waitlist in <c>ToSeason</c> übernehmen, abgeschlossene bleiben.</summary>
+        Rollover = 0,
+        /// <summary>Alle offenen Bewerbungen + Waitlist der <c>FromSeason</c> als Rejected markieren,
+        /// Waitlist löschen.</summary>
+        RejectAll = 1,
+    }
+
+    /// <summary>Ergebnis einer Saison-Schließung.</summary>
+    public record CloseSeasonResult(
+        CloseSeasonOutcome Outcome,
+        int MovedApplications,
+        int MovedWaitlistEntries,
+        int RejectedApplications,
+        int RemovedWaitlistEntries,
+        string? Error)
+    {
+        public static CloseSeasonResult Ok(int movedApp, int movedWl, int rejApp, int remWl) =>
+            new(CloseSeasonOutcome.Ok, movedApp, movedWl, rejApp, remWl, null);
+        public static CloseSeasonResult LeagueNotFound() =>
+            new(CloseSeasonOutcome.LeagueNotFound, 0, 0, 0, 0, "Liga nicht gefunden.");
+        public static CloseSeasonResult InvalidSeasons(string err) =>
+            new(CloseSeasonOutcome.InvalidSeasons, 0, 0, 0, 0, err);
+    }
+
+    public enum CloseSeasonOutcome
+    {
+        Ok = 0,
+        LeagueNotFound = 1,
+        InvalidSeasons = 2,
     }
 }

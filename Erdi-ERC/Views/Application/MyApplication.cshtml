@@ -21,6 +21,16 @@
 
     var message = TempData["MyApplicationMessage"] as string;
     var hasAnything = Model.Applications.Count > 0 || Model.WaitlistEntries.Count > 0;
+
+    // Gruppierung nach Season, neueste zuerst.
+    var appsBySeason = Model.Applications
+        .GroupBy(a => string.IsNullOrWhiteSpace(a.Season) ? "—" : a.Season)
+        .OrderByDescending(g => g.Key)
+        .ToList();
+    var wlBySeason = Model.WaitlistEntries
+        .GroupBy(w => string.IsNullOrWhiteSpace(w.Season) ? "—" : w.Season)
+        .OrderBy(g => g.Key)
+        .ToList();
 }
 
 @section Styles {
@@ -60,53 +70,63 @@
     }
     else
     {
-        <div class="app-card-stack">
-            @foreach (var app in Model.Applications)
-            {
-                var isPending = app.Status == (int)ApplicationStatus.Pending;
-                <div class="f1-panel app-card">
-                    <div class="app-card__head">
-                        <span class="app-card__league">@(app.TargetLeague?.Name ?? app.TargetLeagueId)</span>
-                        <span class="@StatusChip(app.Status)">@StatusLabel(app.Status)</span>
-                    </div>
-                    <div class="app-card__meta">
-                        <span><i class="bi bi-person-badge"></i> @app.Role</span>
-                        <span><i class="bi bi-controller"></i> @app.GamerTag · @app.Platform</span>
-                        <span><i class="bi bi-calendar-plus"></i> Eingereicht @app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
-                        @if (app.DecidedAt is not null)
+        @* Gruppierung nach Season, neueste zuerst. *@
+
+        @foreach (var seasonGroup in appsBySeason)
+        {
+            <h2 class="app-section-title">
+                <i class="bi bi-calendar-event"></i> Season @seasonGroup.Key
+            </h2>
+            <div class="app-card-stack">
+                @foreach (var app in seasonGroup)
+                {
+                    var isPending = app.Status == (int)ApplicationStatus.Pending;
+                    <div class="f1-panel app-card">
+                        <div class="app-card__head">
+                            <span class="app-card__league">@(app.TargetLeague?.Name ?? app.TargetLeagueId)</span>
+                            <span class="@StatusChip(app.Status)">@StatusLabel(app.Status)</span>
+                        </div>
+                        <div class="app-card__meta">
+                            <span><i class="bi bi-person-badge"></i> @app.Role</span>
+                            <span><i class="bi bi-controller"></i> @app.GamerTag · @app.Platform</span>
+                            <span><i class="bi bi-calendar-plus"></i> Eingereicht @app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            @if (app.DecidedAt is not null)
+                            {
+                                <span><i class="bi bi-calendar-check"></i> Entschieden @app.DecidedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(app.ReviewNote))
                         {
-                            <span><i class="bi bi-calendar-check"></i> Entschieden @app.DecidedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            <div class="app-review-note">
+                                <span class="app-review-note__label"><i class="bi bi-chat-left-text"></i> Notiz vom Team</span>
+                                <blockquote>@app.ReviewNote</blockquote>
+                            </div>
+                        }
+                        @if (isPending)
+                        {
+                            <div class="app-card__actions">
+                                <form asp-controller="Application" asp-action="Withdraw" method="post"
+                                      onsubmit="return confirm('Bewerbung wirklich zurückziehen? Das kann nicht rückgängig gemacht werden.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@app.Id" />
+                                    <button type="submit" class="btn btn-ghost btn-sm app-btn-danger">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Bewerbung zurückziehen
+                                    </button>
+                                </form>
+                            </div>
                         }
                     </div>
-                    @if (!string.IsNullOrWhiteSpace(app.ReviewNote))
-                    {
-                        <div class="app-review-note">
-                            <span class="app-review-note__label"><i class="bi bi-chat-left-text"></i> Notiz vom Team</span>
-                            <blockquote>@app.ReviewNote</blockquote>
-                        </div>
-                    }
-                    @if (isPending)
-                    {
-                        <div class="app-card__actions">
-                            <form asp-controller="Application" asp-action="Withdraw" method="post"
-                                  onsubmit="return confirm('Bewerbung wirklich zurückziehen? Das kann nicht rückgängig gemacht werden.');">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@app.Id" />
-                                <button type="submit" class="btn btn-ghost btn-sm app-btn-danger">
-                                    <i class="bi bi-arrow-counterclockwise"></i> Bewerbung zurückziehen
-                                </button>
-                            </form>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
 
-        @if (Model.WaitlistEntries.Count > 0)
+        @foreach (var seasonGroup in wlBySeason)
         {
-            <h2 class="app-section-title"><i class="bi bi-hourglass-split"></i> Warteliste</h2>
+            <h2 class="app-section-title">
+                <i class="bi bi-hourglass-split"></i> Warteliste · Season @seasonGroup.Key
+            </h2>
             <div class="app-card-stack">
-                @foreach (var entry in Model.WaitlistEntries)
+                @foreach (var entry in seasonGroup)
                 {
                     <div class="f1-panel app-card app-card--waitlist">
                         <div class="app-waitlist-pos" aria-hidden="true">@entry.Position</div>

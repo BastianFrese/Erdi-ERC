@@ -148,15 +148,13 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="adm-form-label">Liga / Meisterschaft *</label>
-                            <form method="get" asp-controller="AdminCommunity" asp-action="Stewarding" id="f_leagueForm" class="m-0">
-                                @if (!string.IsNullOrEmpty(leagueFilter))
-                                {
-                                    <input type="hidden" name="leagueFilter" value="@leagueFilter" />
-                                }
-                                @if (!string.IsNullOrEmpty(typeFilter))
-                                {
-                                    <input type="hidden" name="typeFilter" value="@typeFilter" />
-                                }
+                            @* Liga-Selector: loest nur einen GET-Reload der Stewarding-Page aus
+                               (damit die Driver-Datalist auf die ausgewaehlte Liga gefiltert wird).
+                               Darf NICHT als <form> markiert sein, weil das Create-Form
+                               (createForm, POST SavePenalty) aussen herum liegt und HTML
+                               keine verschachtelten Forms erlaubt — sonst gehen beim
+                               "Dokument speichern"-POST driver/reason/etc. verloren. *@
+                            <div id="f_leagueForm" class="m-0">
                                 <select class="form-select form-select-sm" name="driverLeagueFilter" id="f_league" required>
                                     <option value="">-- Liga waehlen --</option>
                                     @foreach (var lg in leagueList)
@@ -164,7 +162,7 @@
                                         <option value="@lg.Id" selected="@(string.Equals(lg.Id, driverLeagueFilter, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@lg.Name (@lg.Id)</option>
                                     }
                                 </select>
-                            </form>
+                            </div>
                             <div style="font-size:.72rem;color:var(--ink-3);margin-top:.2rem;">
                                 <i class="bi bi-funnel me-1"></i>Treiberliste wird beim Auswaehlen der Liga gefiltert (Page-Reload).
                             </div>
@@ -179,19 +177,37 @@
                         </div>
                         <div class="col-md-6">
                             <label class="adm-form-label">Fahrer (No / Driver) *</label>
-                            <input class="form-control form-control-sm" name="driver" id="f_driver" list="driverListDl" placeholder="z. B. 16 - Charles Leclerc" required />
+                            @* Statt Freitext + datalist: harter select, der nur die Fahrer
+                               der gewaehlten Liga anbietet. Server validiert zusaetzlich. *@
+                            <select class="form-select form-select-sm" name="driver" id="f_driver" required
+                                    @((string.IsNullOrWhiteSpace(driverLeagueFilter) || !driverList.Any()) ? "disabled" : null)>
+                                @if (string.IsNullOrWhiteSpace(driverLeagueFilter) || !driverList.Any())
+                                {
+                                    <option value="">-- zuerst Liga waehlen --</option>
+                                }
+                                else
+                                {
+                                    <option value="">-- Fahrer waehlen --</option>
+                                    foreach (var d in driverList) { <option value="@d">@d</option> }
+                                }
+                            </select>
                             <span id="f_driver_num_badge" class="badge mt-1" style="display:none;background:rgba(0,229,255,.12);color:var(--sig-cyan);border:1px solid rgba(0,229,255,.35);"></span>
-                            <datalist id="driverListDl">
-                                @foreach (var d in driverList) { <option value="@d" /> }
-                            </datalist>
                         </div>
                         <div class="col-md-6">
                             <label class="adm-form-label">Zweiter beteiligter Fahrer</label>
-                            <input class="form-control form-control-sm" name="secondDriver" id="f_driver2" list="driverListDl2" placeholder="Optional" />
+                            <select class="form-select form-select-sm" name="secondDriver" id="f_driver2"
+                                    @((string.IsNullOrWhiteSpace(driverLeagueFilter) || !driverList.Any()) ? "disabled" : null)>
+                                @if (string.IsNullOrWhiteSpace(driverLeagueFilter) || !driverList.Any())
+                                {
+                                    <option value="">-- zuerst Liga waehlen --</option>
+                                }
+                                else
+                                {
+                                    <option value="">-- keiner / optional --</option>
+                                    foreach (var d in driverList) { <option value="@d">@d</option> }
+                                }
+                            </select>
                             <span id="f_driver2_num_badge" class="badge mt-1" style="display:none;background:rgba(0,229,255,.12);color:var(--sig-cyan);border:1px solid rgba(0,229,255,.35);"></span>
-                            <datalist id="driverListDl2">
-                                @foreach (var d in driverList) { <option value="@d" /> }
-                            </datalist>
                         </div>
                         <div class="col-md-6">
                             <label class="adm-form-label">Decision / Penalty Type *</label>
@@ -487,22 +503,43 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="adm-form-label">Fahrer *</label>
-                                    <input class="form-control form-control-sm" name="driver" value="@FormatDriverWithNumber(p.Driver, p.DriverNumber)" list="driverListEdit-@p.Id" required />
                                     @{
                                         var editDrivers = allDriversByLeague.TryGetValue(p.LeagueId, out var list)
                                             ? list
                                             : driverList;
+                                        var editDriverValue = FormatDriverWithNumber(p.Driver, p.DriverNumber);
                                     }
-                                    <datalist id="driverListEdit-@p.Id">
-                                        @foreach (var d in editDrivers) { <option value="@d" /> }
-                                    </datalist>
+                                    <select class="form-select form-select-sm" name="driver" required
+                                            @((!editDrivers.Any()) ? "disabled" : null)>
+                                        @if (!editDrivers.Any())
+                                        {
+                                            <option value="@editDriverValue">@editDriverValue</option>
+                                        }
+                                        else
+                                        {
+                                            foreach (var d in editDrivers)
+                                            {
+                                                <option value="@d" selected="@(string.Equals(d, editDriverValue, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@d</option>
+                                            }
+                                        }
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="adm-form-label">Zweiter Fahrer</label>
-                                    <input class="form-control form-control-sm" name="secondDriver" value="@FormatDriverWithNumber(p.SecondDriver, p.SecondDriverNumber)" list="driverListEdit2-@p.Id" />
-                                    <datalist id="driverListEdit2-@p.Id">
-                                        @foreach (var d in editDrivers) { <option value="@d" /> }
-                                    </datalist>
+                                    @{
+                                        var editSecondValue = FormatDriverWithNumber(p.SecondDriver, p.SecondDriverNumber);
+                                    }
+                                    <select class="form-select form-select-sm" name="secondDriver"
+                                            @((!editDrivers.Any()) ? "disabled" : null)>
+                                        <option value="">-- keiner / optional --</option>
+                                        @if (editDrivers.Any())
+                                        {
+                                            foreach (var d in editDrivers)
+                                            {
+                                                <option value="@d" selected="@(string.Equals(d, editSecondValue, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@d</option>
+                                            }
+                                        }
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="adm-form-label">Decision / Penalty Type *</label>
@@ -581,11 +618,19 @@ document.querySelectorAll('[data-toggle-edit]').forEach(function (btn) {
 
     // Liga-Select triggert Page-Reload (GET) mit driverLeagueFilter-Query,
     // wodurch die Driver-Datalist serverseitig neu gefiltert wird.
+    // Achtung: das umschliessende <form> ist das POST-SavePenalty-Form, also
+    // bauen wir die URL manuell und navigieren per location.assign —
+    // sonst wuerden wir den POST ausloesen statt die Seite neu zu laden.
     if (fLeague) {
         fLeague.addEventListener('change', function () {
             if (fLeagueHidden) fLeagueHidden.value = fLeague.value;
-            var form = document.getElementById('f_leagueForm');
-            if (form) form.submit();
+            var params = new URLSearchParams();
+            params.set('driverLeagueFilter', fLeague.value);
+            var lf = '@(leagueFilter ?? "")';
+            if (lf) params.set('leagueFilter', lf);
+            var tf = '@(typeFilter ?? "")';
+            if (tf) params.set('typeFilter', tf);
+            window.location.assign('@(Url.Action("Stewarding", "AdminCommunity"))' + '?' + params.toString());
         });
     }
 

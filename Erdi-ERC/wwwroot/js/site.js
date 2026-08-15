@@ -94,6 +94,18 @@
             menu.style.zIndex = '5000';
         };
 
+        // Nur neu positionieren, wenn das Menü tatsächlich offen ist — und
+        // rAF-gedrosselt, damit ein Scroll-Burst (Mausrad, Touch) nicht 60×
+        // pro Frame getBoundingClientRect() + Style-Writes auslöst.
+        // Vorher: positionMenu hing an window-scroll (capture), rief für jede
+        // offene .erdi-select getBoundingClientRect auf → Layout-Thrash beim Scrollen.
+        let repositionTicking = false;
+        const scheduleReposition = () => {
+            if (repositionTicking) return;
+            repositionTicking = true;
+            requestAnimationFrame(() => { repositionTicking = false; positionMenu(); });
+        };
+
         const rebuildOptions = () => {
             menu.innerHTML = '';
             Array.from(select.options).forEach((opt, optionIndex) => {
@@ -153,8 +165,15 @@
 
         rebuildOptions();
 
-        window.addEventListener('resize', positionMenu, { passive: true });
-        window.addEventListener('scroll', positionMenu, true);
+        window.addEventListener('resize', scheduleReposition, { passive: true });
+        // Nur Scroll repositionieren, wenn überhaupt ein Menü offen ist — der
+        // rAF-Throttle (scheduleReposition) sorgt zusätzlich dafür, dass selbst
+        // bei mehreren offenen Selects höchstens ein Style-Write pro Frame passiert.
+        // Vorher: synchron auf jedem Scroll-Tick, mit getBoundingClientRect() pro
+        // offener .erdi-select → massiver Layout-Thrash beim Scrollen.
+        document.addEventListener('scroll', () => {
+            if (wrapper.classList.contains('is-open')) scheduleReposition();
+        }, { passive: true, capture: true });
     };
 
     document.querySelectorAll('select').forEach((select, index) => build(select, index));

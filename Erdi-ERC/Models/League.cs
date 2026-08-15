@@ -26,6 +26,17 @@ namespace <OWNER_HANDLE>_ERC.Models
         /// dieser Saison; neue Rennen werden automatisch damit getaggt. Null = alle Rennen zählen.</summary>
         public string? CurrentSeason { get; set; }
 
+        /// <summary>Saison, für die sich Bewerber aktuell bewerben können (z.B. "2027"). Null =
+        /// keine Vorschau-Saison aktiv. Wird via IApplicationTargetingService ausgewertet; wenn
+        /// gesetzt UND <see cref="ApplicationsOpenForNextSeason"/> true, dann gilt die Liga als
+        /// offen für die nächste Season.</summary>
+        public string? NextSeason { get; set; }
+
+        /// <summary>Opt-in: Diese Liga nimmt aktuell Bewerbungen für <see cref="NextSeason"/> an.
+        /// Steuert die Sichtbarkeit im Bewerbungsformular (zusätzliche Season-Auswahl).
+        /// Default false. Hat keinen Einfluss auf <see cref="AcceptsApplications"/>.</summary>
+        public bool ApplicationsOpenForNextSeason { get; set; }
+
         /// <summary>Opt-in: Diese Liga zählt in die Liga-übergreifende Constructors-Meisterschaft
         /// (Punkte aller Ligen werden hier aggregiert). Default true; Spaß-/Probier-Ligen können
         /// ihn ausschalten, damit ihre Ergebnisse den Gesamtkampf nicht verzerren.</summary>

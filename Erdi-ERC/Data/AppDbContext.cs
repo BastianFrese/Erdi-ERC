@@ -66,6 +66,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Description).HasMaxLength(1024);
                 b.Property(x => x.ArchivedName).HasMaxLength(128);
                 b.Property(x => x.CurrentSeason).HasMaxLength(32);
+                b.Property(x => x.NextSeason).HasMaxLength(16);
 
                 b.HasMany(x => x.Standings)
                     .WithOne()
@@ -478,6 +479,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.Platform).HasMaxLength(64).IsRequired();
                 b.Property(x => x.TargetLeagueId).HasMaxLength(64).IsRequired();
                 b.Property(x => x.Role).HasMaxLength(32).IsRequired();
+                b.Property(x => x.Season).HasMaxLength(16).IsRequired();
                 b.Property(x => x.Motivation).HasMaxLength(2000);
                 b.Property(x => x.DecidedByDiscordId).HasMaxLength(32);
                 b.Property(x => x.ReviewNote).HasMaxLength(1000);
@@ -487,6 +489,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.HasIndex(x => new { x.DiscordId, x.Status });
                 b.HasIndex(x => new { x.Status, x.CreatedAt });
                 b.HasIndex(x => new { x.TargetLeagueId, x.Status });
+                b.HasIndex(x => new { x.TargetLeagueId, x.Season, x.Status });
 
                 b.HasOne(x => x.TargetLeague)
                     .WithMany()
@@ -503,12 +506,13 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.Property(x => x.GamerTag).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Platform).HasMaxLength(64).IsRequired();
                 b.Property(x => x.LeagueId).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Season).HasMaxLength(16).IsRequired();
                 b.Property(x => x.Note).HasMaxLength(500);
                 b.Property(x => x.PromotedToApplicationId).HasMaxLength(64);
 
-                // Geordnete Warteliste pro Liga + Dedup pro User/Liga.
-                b.HasIndex(x => new { x.LeagueId, x.Position });
-                b.HasIndex(x => new { x.DiscordId, x.LeagueId });
+                // Geordnete Warteliste pro (Liga, Season) + Dedup pro User/Liga/Season.
+                b.HasIndex(x => new { x.LeagueId, x.Season, x.Position });
+                b.HasIndex(x => new { x.DiscordId, x.LeagueId, x.Season });
 
                 b.HasOne(x => x.League)
                     .WithMany()

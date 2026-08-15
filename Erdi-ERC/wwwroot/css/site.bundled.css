@@ -1212,6 +1212,13 @@ overflow:hidden;
 backdrop-filter:var(--glass-blur-sm);
 -webkit-backdrop-filter:var(--glass-blur-sm);
 transition:transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+/* Setup-Listen können 50+ Karten enthalten. Mit content-visibility: auto
+   überspringt der Browser Layout/Paint/Compositing für Off-Screen-Karten
+   komplett — massiver Scroll-Gewinn auf langen Seiten. contain-intrinsic-size
+   hält die Scrollbar-Dimension stabil, während der Browser die echte Höhe
+   beim Sichten ermittelt. */
+content-visibility: auto;
+contain-intrinsic-size: 0 480px;
 }
 .setup-card:hover { transform:translateY(-3px); box-shadow:var(--sh-3); border-color:var(--stroke-2); }
 .setup-card--collapsible { cursor:pointer; }
@@ -3466,6 +3473,11 @@ linear-gradient(90deg, transparent 0 35%, rgba(255,255,255,.06) 50%, transparent
 opacity: .06;
 transform: skewX(-12deg) translateX(-30%);
 animation: chequered-pan 14s linear infinite;
+/* conic-gradient + infinite transform-Animation ist teuer: explizit auf eigenen
+   Compositor-Layer heben und Repaint strikt auf das Pseudo-Element begrenzen,
+   damit der Scroll-Pfad nichts mit-animiert bekommt. */
+will-change: transform;
+contain: paint;
 pointer-events: none;
 z-index: 0;
 }

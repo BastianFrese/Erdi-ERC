@@ -23,7 +23,21 @@
         <div class="app-hero__icon"><i class="bi bi-envelope-paper-fill"></i></div>
         <div class="app-hero__title">
             <h1>Bewerbung</h1>
-            <p>Bewirb dich als <strong>Stammfahrer</strong>, <strong>Ersatzfahrer</strong> oder <strong>Probefahrer</strong>. Wir schauen uns jede Bewerbung persönlich an.</p>
+            <p>
+                Bewirb dich als <strong>Stammfahrer</strong>, <strong>Ersatzfahrer</strong> oder <strong>Probefahrer</strong>.
+                Wir schauen uns jede Bewerbung persönlich an.
+            </p>
+            @if (ViewBag.TargetSeason is string targetSeason && !string.IsNullOrWhiteSpace(targetSeason))
+            {
+                <p class="app-hero__season">
+                    <i class="bi bi-calendar-event"></i>
+                    Du bewirbst dich für <strong>Season @targetSeason</strong>
+                    @if (ViewBag.IsNextSeason == true)
+                    {
+                        <span class="f1-chip f1-chip--info">Vorschau</span>
+                    }
+                </p>
+            }
         </div>
     </div>
 
@@ -101,6 +115,16 @@
                                         @if (cap?.Capacity is int capTotal)
                                         {
                                             <span class="app-league-card__seats">@cap.OccupiedSeats/@capTotal belegt</span>
+                                        }
+                                    </span>
+                                    <span class="app-league-card__season">
+                                        @if (!string.IsNullOrWhiteSpace(league.NextSeason) && league.ApplicationsOpenForNextSeason)
+                                        {
+                                            <span class="f1-chip f1-chip--info">Season @league.NextSeason</span>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(league.CurrentSeason))
+                                        {
+                                            <span class="f1-chip f1-chip--ghost">Season @league.CurrentSeason</span>
                                         }
                                     </span>
                                     @if (!string.IsNullOrWhiteSpace(league.Description))

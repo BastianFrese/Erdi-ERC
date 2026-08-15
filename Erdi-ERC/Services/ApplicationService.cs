@@ -17,6 +17,7 @@ namespace <OWNER_HANDLE>_ERC.Services
         private readonly IAdminAuditService _audit;
         private readonly IWebhookAutomationService _webhookAuto;
         private readonly IStaticDataCache _staticCache;
+        private readonly IApplicationTargetingService _targeting;
         private readonly ILogger<ApplicationService> _logger;
 
         public ApplicationService(
@@ -24,12 +25,14 @@ namespace <OWNER_HANDLE>_ERC.Services
             IAdminAuditService audit,
             IWebhookAutomationService webhookAuto,
             IStaticDataCache staticCache,
+            IApplicationTargetingService targeting,
             ILogger<ApplicationService> logger)
         {
             _db = db;
             _audit = audit;
             _webhookAuto = webhookAuto;
             _staticCache = staticCache;
+            _targeting = targeting;
             _logger = logger;
         }
 
@@ -43,29 +46,48 @@ namespace <OWNER_HANDLE>_ERC.Services
             if (league.IsArchived || !league.AcceptsApplications)
                 throw new InvalidOperationException("Diese Liga nimmt keine Bewerbungen mehr an.");
 
-            // Dedup: offener Pending für dieselbe Liga?
-            var hasOpen = await HasOpenApplicationAsync(cmd.DiscordId, cmd.TargetLeagueId, ct);
+            // Season serverseitig ermitteln — Client kann sie NICHT manipulieren.
+            var season = await _targeting.ResolveTargetSeasonAsync(league.Id, ct);
+
+            // Dedup: offener Pending für (User, Liga, Season)?
+            var hasOpen = await _db.Applications.AsNoTracking().AnyAsync(
+                a => a.DiscordId == cmd.DiscordId
+                    && a.TargetLeagueId == cmd.TargetLeagueId
+                    && a.Season == season
+                    && a.Status == (int)ApplicationStatus.Pending,
+                ct);
             if (hasOpen)
             {
-                var existing = await _db.Applications.FirstAsync(
+                var existing = await _db.Applications.AsNoTracking().FirstAsync(
                     a => a.DiscordId == cmd.DiscordId
                         && a.TargetLeagueId == cmd.TargetLeagueId
+                        && a.Season == season
                         && a.Status == (int)ApplicationStatus.Pending,
                     ct);
                 return SubmitApplicationResult.AlreadyPending(existing);
             }
 
-            // Capacity-Check: nur für Stammfahrer → ggf. Warteliste
+            // Capacity-Check: nur für Stammfahrer → ggf. Warteliste (pro Season gescoped).
             var isStamm = string.Equals(cmd.Role, "Stammfahrer", StringComparison.OrdinalIgnoreCase);
             if (isStamm && league.Capacity.HasValue)
             {
-                var currentStamm = await _db.DriverStandings
+                // Akzeptierte Bewerbungen dieser Season zählen, nicht die Standing-Counts
+                // (Accept erzeugt ein Standing — die doppelte Zählung würde zu false-positives führen).
+                var acceptedInSeason = await _db.Applications
+                    .Where(a => a.TargetLeagueId == league.Id
+                        && a.Season == season
+                        && a.Status == (int)ApplicationStatus.Accepted)
+                    .CountAsync(ct);
+                // Zusätzlich existierende Standings aus früheren Seasons, die noch in der Liga
+                // aktiv sind (z.B. wenn die Liga keine eigene Standings-Cleanup pro Season hat).
+                var historicalStandings = await _db.DriverStandings
                     .Where(s => s.LeagueId == league.Id && !s.IsReserveDriver)
                     .CountAsync(ct);
+                var occupied = Math.Max(acceptedInSeason, historicalStandings);
 
-                if (currentStamm >= league.Capacity.Value)
+                if (occupied >= league.Capacity.Value)
                 {
-                    return await AddToWaitlistAsync(cmd, league, ct);
+                    return await AddToWaitlistAsync(cmd, league, season, ct);
                 }
             }
 
@@ -78,6 +100,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 GamerTag = cmd.GamerTag,
                 Platform = cmd.Platform,
                 TargetLeagueId = league.Id,
+                Season = season,
                 Role = cmd.Role,
                 Motivation = cmd.Motivation,
                 Status = (int)ApplicationStatus.Pending,
@@ -89,7 +112,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             await _db.SaveChangesAsync(ct);
 
             await _audit.LogAsync("SubmitApplication", "Application", app.Id,
-                $"League={league.Name}, Role={cmd.Role}");
+                $"League={league.Name}, Season={season}, Role={cmd.Role}");
             await _db.SaveChangesAsync(ct);
 
             await _webhookAuto.FireAsync(WebhookEvents.ApplicationSubmitted, new()
@@ -98,6 +121,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 ["GamerTag"] = cmd.GamerTag,
                 ["Platform"] = cmd.Platform,
                 ["League"] = league.Name,
+                ["Season"] = season,
                 ["Role"] = cmd.Role,
             });
 
@@ -105,15 +129,20 @@ namespace <OWNER_HANDLE>_ERC.Services
         }
 
         private async Task<SubmitApplicationResult> AddToWaitlistAsync(
-            SubmitApplicationCommand cmd, League league, CancellationToken ct)
+            SubmitApplicationCommand cmd, League league, string season, CancellationToken ct)
         {
-            var existingWaitlist = await _db.WaitlistEntries.FirstOrDefaultAsync(
-                w => w.DiscordId == cmd.DiscordId && w.LeagueId == league.Id, ct);
+            // Dedup: offener Wartelisten-Eintrag pro (User, Liga, Season).
+            var existingWaitlist = await _db.WaitlistEntries.AsNoTracking().FirstOrDefaultAsync(
+                w => w.DiscordId == cmd.DiscordId
+                    && w.LeagueId == league.Id
+                    && w.Season == season,
+                ct);
             if (existingWaitlist is not null)
                 return SubmitApplicationResult.AlreadyWaitlisted(existingWaitlist);
 
+            // Position pro (Liga, Season).
             var position = await _db.WaitlistEntries
-                .Where(w => w.LeagueId == league.Id)
+                .Where(w => w.LeagueId == league.Id && w.Season == season)
                 .CountAsync(ct) + 1;
 
             var entry = new WaitlistEntry
@@ -124,6 +153,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 GamerTag = cmd.GamerTag,
                 Platform = cmd.Platform,
                 LeagueId = league.Id,
+                Season = season,
                 Position = position,
                 CreatedAt = DateTime.UtcNow,
             };
@@ -131,7 +161,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             await _db.SaveChangesAsync(ct);
 
             await _audit.LogAsync("AddWaitlistEntry", "WaitlistEntry", entry.Id,
-                $"League={league.Name}, Position={position}");
+                $"League={league.Name}, Season={season}, Position={position}");
             await _db.SaveChangesAsync(ct);
 
             await _webhookAuto.FireAsync(WebhookEvents.ApplicationWaitlisted, new()
@@ -139,6 +169,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 ["DiscordName"] = cmd.DiscordName,
                 ["GamerTag"] = cmd.GamerTag,
                 ["League"] = league.Name,
+                ["Season"] = season,
                 ["Position"] = position.ToString(),
             });
 
@@ -157,6 +188,7 @@ namespace <OWNER_HANDLE>_ERC.Services
         public async Task<IReadOnlyList<Application>> ListAsync(
             ApplicationStatus? statusFilter,
             string? leagueFilter,
+            string? seasonFilter,
             int skip,
             int take,
             CancellationToken ct)
@@ -167,6 +199,8 @@ namespace <OWNER_HANDLE>_ERC.Services
                 q = q.Where(a => a.Status == (int)statusFilter.Value);
             if (!string.IsNullOrWhiteSpace(leagueFilter))
                 q = q.Where(a => a.TargetLeagueId == leagueFilter);
+            if (!string.IsNullOrWhiteSpace(seasonFilter))
+                q = q.Where(a => a.Season == seasonFilter);
 
             return await q
                 .OrderByDescending(a => a.CreatedAt)
@@ -177,19 +211,27 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         public async Task<bool> HasOpenApplicationAsync(string discordId, string targetLeagueId, CancellationToken ct)
         {
+            // Season-aware: ermittle aktuelle Zielseason, damit der Dedup pro Saison gilt.
+            // (User kann gleichzeitig für 2026 + 2027 offen sein.)
+            var season = await _targeting.ResolveTargetSeasonAsync(targetLeagueId, ct);
             return await _db.Applications.AnyAsync(
                 a => a.DiscordId == discordId
                     && a.TargetLeagueId == targetLeagueId
+                    && a.Season == season
                     && a.Status == (int)ApplicationStatus.Pending,
                 ct);
         }
 
-        public async Task<IReadOnlyList<WaitlistEntry>> ListWaitlistAsync(string leagueId, CancellationToken ct)
+        public async Task<IReadOnlyList<WaitlistEntry>> ListWaitlistAsync(string leagueId, string? seasonFilter, CancellationToken ct)
         {
-            return await _db.WaitlistEntries
-                .AsNoTracking()
-                .Where(w => w.LeagueId == leagueId)
-                .OrderBy(w => w.Position)
+            IQueryable<WaitlistEntry> q = _db.WaitlistEntries.AsNoTracking()
+                .Where(w => w.LeagueId == leagueId);
+            if (!string.IsNullOrWhiteSpace(seasonFilter))
+                q = q.Where(w => w.Season == seasonFilter);
+
+            return await q
+                .OrderBy(w => w.Season)
+                .ThenBy(w => w.Position)
                 .ToListAsync(ct);
         }
 
@@ -539,6 +581,158 @@ namespace <OWNER_HANDLE>_ERC.Services
                     occupied.GetValueOrDefault(l.Id),
                     waitlist.GetValueOrDefault(l.Id)))
                 .ToList();
+        }
+
+        // ── Season-Aggregation (Admin) ───────────────────────────────────────────
+
+        public async Task<IReadOnlyList<SeasonSummaryRow>> GetSeasonSummaryAsync(
+            string season, CancellationToken ct)
+        {
+            var leagueDict = await _staticCache.GetAllLeaguesAsync(ct)
+                .ContinueWith(t => t.Result.ToDictionary(l => l.Id, l => l.Name), ct);
+
+            var appCounts = await _db.Applications.AsNoTracking()
+                .Where(a => a.Season == season)
+                .GroupBy(a => new { a.TargetLeagueId, a.Status })
+                .Select(g => new { g.Key.TargetLeagueId, g.Key.Status, Count = g.Count() })
+                .ToListAsync(ct);
+
+            var waitlistCounts = await _db.WaitlistEntries.AsNoTracking()
+                .Where(w => w.Season == season && w.PromotedToApplicationId == null)
+                .GroupBy(w => w.LeagueId)
+                .Select(g => new { LeagueId = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+
+            var byLeague = appCounts
+                .GroupBy(x => x.TargetLeagueId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new
+                    {
+                        Pending = g.Where(x => x.Status == (int)ApplicationStatus.Pending).Sum(x => x.Count),
+                        Accepted = g.Where(x => x.Status == (int)ApplicationStatus.Accepted).Sum(x => x.Count),
+                        Rejected = g.Where(x => x.Status == (int)ApplicationStatus.Rejected).Sum(x => x.Count),
+                    });
+
+            var result = new List<SeasonSummaryRow>();
+            foreach (var leagueId in leagueDict.Keys)
+            {
+                var counts = byLeague.GetValueOrDefault(leagueId);
+                var waitlist = waitlistCounts.FirstOrDefault(w => w.LeagueId == leagueId)?.Count ?? 0;
+                result.Add(new SeasonSummaryRow(
+                    leagueId,
+                    leagueDict[leagueId],
+                    season,
+                    counts?.Pending ?? 0,
+                    counts?.Accepted ?? 0,
+                    counts?.Rejected ?? 0,
+                    waitlist));
+            }
+            return result;
+        }
+
+        // ── Saison-Wechsel (Admin) ────────────────────────────────────────────────
+
+        public async Task<CloseSeasonResult> CloseSeasonAsync(
+            string leagueId,
+            string fromSeason,
+            string toSeason,
+            SeasonCloseMode mode,
+            string adminDiscordId,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(fromSeason) || string.IsNullOrWhiteSpace(toSeason))
+                return CloseSeasonResult.InvalidSeasons("fromSeason und toSeason sind erforderlich.");
+            if (string.Equals(fromSeason, toSeason, StringComparison.Ordinal))
+                return CloseSeasonResult.InvalidSeasons("fromSeason und toSeason müssen verschieden sein.");
+
+            var league = await _db.Leagues.AsNoTracking().FirstOrDefaultAsync(l => l.Id == leagueId, ct);
+            if (league is null) return CloseSeasonResult.LeagueNotFound();
+
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                int movedApp = 0, movedWl = 0, rejApp = 0, remWl = 0;
+
+                if (mode == SeasonCloseMode.Rollover)
+                {
+                    // Offene Pending-Applications in Zielseason übernehmen.
+                    var openApps = await _db.Applications.AsTracking()
+                        .Where(a => a.TargetLeagueId == leagueId
+                            && a.Season == fromSeason
+                            && a.Status == (int)ApplicationStatus.Pending)
+                        .ToListAsync(ct);
+                    foreach (var a in openApps)
+                    {
+                        a.Season = toSeason;
+                        movedApp++;
+                    }
+
+                    // Offene Waitlist-Einträge mitnehmen.
+                    var openWl = await _db.WaitlistEntries.AsTracking()
+                        .Where(w => w.LeagueId == leagueId
+                            && w.Season == fromSeason
+                            && w.PromotedToApplicationId == null)
+                        .ToListAsync(ct);
+                    foreach (var w in openWl)
+                    {
+                        w.Season = toSeason;
+                        movedWl++;
+                    }
+                }
+                else // RejectAll
+                {
+                    // Offene Pending-Applications als Rejected markieren.
+                    var openApps = await _db.Applications.AsTracking()
+                        .Where(a => a.TargetLeagueId == leagueId
+                            && a.Season == fromSeason
+                            && a.Status == (int)ApplicationStatus.Pending)
+                        .ToListAsync(ct);
+                    foreach (var a in openApps)
+                    {
+                        a.Status = (int)ApplicationStatus.Rejected;
+                        a.DecidedAt = DateTime.UtcNow;
+                        a.DecidedByDiscordId = adminDiscordId;
+                        a.ReviewNote = $"Saison {fromSeason} geschlossen durch {adminDiscordId}";
+                        rejApp++;
+                    }
+
+                    // Offene Waitlist löschen.
+                    var openWl = await _db.WaitlistEntries.AsTracking()
+                        .Where(w => w.LeagueId == leagueId
+                            && w.Season == fromSeason
+                            && w.PromotedToApplicationId == null)
+                        .ToListAsync(ct);
+                    _db.WaitlistEntries.RemoveRange(openWl);
+                    remWl = openWl.Count;
+                }
+
+                await _audit.LogAsync("CloseSeason", "League", leagueId,
+                    $"From={fromSeason}, To={toSeason}, Mode={mode}, MovedApp={movedApp}, MovedWl={movedWl}, RejApp={rejApp}, RemWl={remWl}, Actor={adminDiscordId}");
+                await _db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                _staticCache.InvalidateLeagues();
+
+                await _webhookAuto.FireAsync(WebhookEvents.ApplicationSeasonClosed, new()
+                {
+                    ["League"] = league.Name,
+                    ["FromSeason"] = fromSeason,
+                    ["ToSeason"] = toSeason,
+                    ["Mode"] = mode.ToString(),
+                    ["MovedApplications"] = movedApp.ToString(),
+                    ["MovedWaitlist"] = movedWl.ToString(),
+                    ["RejectedApplications"] = rejApp.ToString(),
+                    ["Actor"] = adminDiscordId,
+                });
+
+                return CloseSeasonResult.Ok(movedApp, movedWl, rejApp, remWl);
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
         }
     }
 }
