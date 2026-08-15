@@ -42,6 +42,19 @@ else if (Model.Sheets.Count == 0)
 }
 else
 {
+    @if (!string.IsNullOrWhiteSpace(Model.WarningMessage))
+    {
+        // Nicht-blockierender Hinweis: Live-Sheets rendern trotzdem, aber Admin sieht,
+        // dass die Legacy-XLSX ersetzt werden muss. Kein leerer Empty-State, kein 500.
+        <div class="f1-stat-grid reveal mb-3" role="status" aria-live="polite">
+            <partial name="_F1StatTile" model="@(new F1StatTileVm {
+                IconLucide = "alert-triangle",
+                Label = "Hinweis",
+                Value = "Legacy-XLSX",
+                Sub = Model.WarningMessage
+            })" />
+        </div>
+    }
     <div class="f1-stat-grid reveal mb-4">
         <partial name="_F1StatTile" model="@(new F1StatTileVm {
             IconLucide = "layers",

@@ -16,13 +16,20 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
         private readonly ApplicationOptions _appOptions;
+        private readonly ILogger<StatsController> _logger;
         private readonly int[] _f1PointMap;
 
-        public StatsController(AppDbContext db, IWebHostEnvironment env, IOptions<ApplicationOptions> appOptions, IOptions<F1ScoringOptions> f1Scoring)
+        public StatsController(
+            AppDbContext db,
+            IWebHostEnvironment env,
+            IOptions<ApplicationOptions> appOptions,
+            IOptions<F1ScoringOptions> f1Scoring,
+            ILogger<StatsController> logger)
         {
             _db = db;
             _env = env;
             _appOptions = appOptions.Value;
+            _logger = logger;
             var configuredMap = f1Scoring.Value.PointMap;
             _f1PointMap = configuredMap is { Length: > 0 }
                 ? configuredMap
@@ -70,6 +77,11 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var vm = new EwigeListeViewModel();
             vm.Sheets.AddRange(await BuildLiveEwigeSheetsAsync());
 
+            // Legacy-XLSX-Pfad: nur ein optionales Add-on zu den Live-Daten. Wenn die Datei
+            // fehlt oder nicht parsbar ist (ClosedXML/OpenXML werfen bei korrupten/0-Byte-Files
+            // z.B. ArgumentOutOfRangeException in GetPartById), brechen wir NICHT die ganze
+            // Seite ab — Live-Daten reichen. OperationCanceledException (Request-Abbruch)
+            // lassen wir bewusst durch, damit Middleware sauber aufräumt.
             var filePath = EwigeWorkbookHelper.GetPath(_env);
             if (!System.IO.File.Exists(filePath))
             {
@@ -80,41 +92,77 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 }
             }
 
+            var legacyWorkbookBroken = false;
+            var legacyWorkbookBytes = 0L;
+
             if (System.IO.File.Exists(filePath))
             {
-                using var workbook = new XLWorkbook(filePath);
-                foreach (var ws in workbook.Worksheets)
+                try
                 {
-                    var usedRange = ws.RangeUsed();
-                    var sheetVm = new EwigeListeSheetViewModel { Name = ws.Name };
-
-                    if (usedRange != null)
+                    using var workbook = new XLWorkbook(filePath);
+                    foreach (var ws in workbook.Worksheets)
                     {
-                        var firstRow = usedRange.RangeAddress.FirstAddress.RowNumber;
-                        var lastRow = usedRange.RangeAddress.LastAddress.RowNumber;
-                        var firstCol = usedRange.RangeAddress.FirstAddress.ColumnNumber;
-                        var lastCol = usedRange.RangeAddress.LastAddress.ColumnNumber;
+                        var usedRange = ws.RangeUsed();
+                        var sheetVm = new EwigeListeSheetViewModel { Name = ws.Name };
 
-                        for (int r = firstRow; r <= lastRow; r++)
+                        if (usedRange != null)
                         {
-                            var row = new List<string>();
-                            for (int c = firstCol; c <= lastCol; c++)
-                            {
-                                row.Add(ws.Cell(r, c).GetFormattedString());
-                            }
-                            sheetVm.Rows.Add(row);
-                        }
-                    }
+                            var firstRow = usedRange.RangeAddress.FirstAddress.RowNumber;
+                            var lastRow = usedRange.RangeAddress.LastAddress.RowNumber;
+                            var firstCol = usedRange.RangeAddress.FirstAddress.ColumnNumber;
+                            var lastCol = usedRange.RangeAddress.LastAddress.ColumnNumber;
 
-                    vm.Sheets.Add(sheetVm);
+                            for (int r = firstRow; r <= lastRow; r++)
+                            {
+                                var row = new List<string>();
+                                for (int c = firstCol; c <= lastCol; c++)
+                                {
+                                    row.Add(ws.Cell(r, c).GetFormattedString());
+                                }
+                                sheetVm.Rows.Add(row);
+                            }
+                        }
+
+                        vm.Sheets.Add(sheetVm);
+                    }
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // Korruptes/leeres/0-Byte-Workbook darf die Seite nicht mehr killen —
+                    // Live-Daten sind die primäre Quelle. Sichtbarer Admin-Hinweis im UI,
+                    // damit ein wiederkehrender Upload-Bug nicht im stillen Self-Heal versauert.
+                    legacyWorkbookBroken = true;
+                    try { legacyWorkbookBytes = new FileInfo(filePath).Length; } catch { /* ignore */ }
+                    _logger.LogWarning(ex,
+                        "[EwigeListe] Überspringe kaputte Legacy-Workbook '{Path}' ({Bytes} Byte). Live-Daten reichen.",
+                        filePath, legacyWorkbookBytes);
                 }
             }
 
-            AppendGlobalDriverOverviewSheets(vm.Sheets);
+            try
+            {
+                AppendGlobalDriverOverviewSheets(vm.Sheets);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Global-Overview ist ein optionales Add-on; ein Throw hier ist mit hoher
+                // Wahrscheinlichkeit ein Programmierfehler (rein statisch, kein I/O), also
+                // laut loggen — aber die Seite nicht abreißen, wenn Live-Sheets vorhanden sind.
+                _logger.LogWarning(ex, "[EwigeListe] Überspringe GlobalDriverOverview.");
+            }
 
             if (vm.Sheets.Count == 0)
             {
                 vm.ErrorMessage = "Es wurden weder Live-Daten noch eine Excel-Daten für die Ewige Liste gefunden.";
+            }
+            else if (legacyWorkbookBroken)
+            {
+                // Sichtbarer Admin-Hinweis: Live-Daten rendern, aber die kaputte Legacy-XLSX
+                // braucht einen Re-Upload. Nicht-modal, kein 500 — einfach Info-Banner oben.
+                vm.WarningMessage =
+                    $"Die hochgeladene Excel-Datei ({legacyWorkbookBytes} Byte) konnte nicht gelesen werden "
+                    + "und wurde übersprungen. Bitte im Admin-Bereich eine neue Datei hochladen — "
+                    + "die Live-Daten sind vollständig verfügbar.";
             }
 
             return View(vm);
