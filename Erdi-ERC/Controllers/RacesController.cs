@@ -168,6 +168,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> AllRaces()
         {
             var leagues = await _db.Leagues
