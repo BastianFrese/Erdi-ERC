@@ -64,3 +64,18 @@ applicationforms-backup-*.json
 <OWNER_HANDLE>-ERC/wwwroot/_header-preview.html
 <OWNER_HANDLE>-ERC/wwwroot/_preview-f1.html
 <OWNER_HANDLE>-ERC/wwwroot/_preview_*.png
+
+***REMOVED*** --- Lokale Claude / Agent Sessions (lokal; nicht einchecken) ---
+.claude/
+scheduled_tasks.lock
+
+***REMOVED*** --- Session-Scratch-Files (Migrations-Tools, DB-Backups, Logs) ---
+apply_season.sql
+orphan-backup-*.csv
+test_output.txt
+prod-migrations-list.txt
+prod-migration-*.log
+bindefinitivamarbeiten.txt
+<OWNER_HANDLE>-ERC/TestPdfExtraction.csproj
+<OWNER_HANDLE>-ERC/log.txt
+<OWNER_HANDLE>-ERC/bindefinitivamarbeiten.txt
