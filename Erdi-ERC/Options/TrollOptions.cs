@@ -1,7 +1,7 @@
-namespace <OWNER_HANDLE>_ERC.Options
+namespace Erdi_ERC.Options
 {
     /// <summary>
-    /// Konfiguration für das <OWNER_HANDLE>-Troll-System: kleine Login-Pranks, die nach
+    /// Konfiguration für das Erdi-Troll-System: kleine Login-Pranks, die nach
     /// erfolgreichem Discord-Login mit geringer Wahrscheinlichkeit auslösen.
     /// Sektion: <c>Troll</c>
     /// </summary>
@@ -22,7 +22,7 @@ namespace <OWNER_HANDLE>_ERC.Options
         public bool ApplyToAdmins { get; set; } = true;
 
         /// <summary>
-        /// Anzahl Fehlversuche bei Pflicht-Gags (Mathe/Quiz), nach der „<OWNER_HANDLE> gnädig wird"
+        /// Anzahl Fehlversuche bei Pflicht-Gags (Mathe/Quiz), nach der „Erdi gnädig wird"
         /// und einen Durchlass-Button anbietet. Verhindert, dass sich jemand aussperrt.
         /// </summary>
         public int MercyAfterAttempts { get; set; } = 3;

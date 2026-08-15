@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public interface IAdminAuditService
     {

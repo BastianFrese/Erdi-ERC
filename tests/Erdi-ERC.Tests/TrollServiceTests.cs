@@ -1,8 +1,8 @@
-using <OWNER_HANDLE>_ERC.Models.Troll;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Models.Troll;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Sichert die reine Logik des <see cref="TrollService"/> ab: Auslöse-Würfel,
@@ -118,8 +118,8 @@ public class TrollServiceTests
     }
 
     [Fact]
-    public void BuildChallenge_BestDriver_Expects<OWNER_HANDLE>()
-        => Assert.Equal("<OWNER_HANDLE>", Make().BuildChallenge(Make().FindGag("best-driver")!).ExpectedAnswer);
+    public void BuildChallenge_BestDriver_ExpectsErdi()
+        => Assert.Equal("Erdi", Make().BuildChallenge(Make().FindGag("best-driver")!).ExpectedAnswer);
 
     [Fact]
     public void BuildChallenge_Sequence_IsArithmeticWithCorrectNext()
@@ -169,7 +169,7 @@ public class TrollServiceTests
             var challenge = svc.BuildChallenge(gag);
 
             Assert.NotNull(challenge.Prompt);
-            var question = <OWNER_HANDLE>_ERC.Models.Troll.TrollTrivia.ByQuestion(challenge.Prompt);
+            var question = Erdi_ERC.Models.Troll.TrollTrivia.ByQuestion(challenge.Prompt);
             Assert.NotNull(question); // Prompt muss eine echte Frage aus der Bank sein
             Assert.Equal(question!.Answer, challenge.ExpectedAnswer);
             Assert.Contains(challenge.ExpectedAnswer, question.Options); // korrekte Antwort ist eine der Optionen
@@ -179,8 +179,8 @@ public class TrollServiceTests
     [Fact]
     public void TrollTrivia_EveryQuestion_HasAnswerAmongOptions()
     {
-        Assert.NotEmpty(<OWNER_HANDLE>_ERC.Models.Troll.TrollTrivia.Questions);
-        foreach (var q in <OWNER_HANDLE>_ERC.Models.Troll.TrollTrivia.Questions)
+        Assert.NotEmpty(Erdi_ERC.Models.Troll.TrollTrivia.Questions);
+        foreach (var q in Erdi_ERC.Models.Troll.TrollTrivia.Questions)
         {
             Assert.Contains(q.Answer, q.Options);
         }
@@ -198,7 +198,7 @@ public class TrollServiceTests
     [Theory]
     [InlineData("12", "12", true)]
     [InlineData("12", " 12 ", true)]   // getrimmt
-    [InlineData("<OWNER_HANDLE>", "erdi", true)] // Groß-/Kleinschreibung egal
+    [InlineData("Erdi", "erdi", true)] // Groß-/Kleinschreibung egal
     [InlineData("12", "13", false)]
     [InlineData("12", null, false)]
     [InlineData(null, "12", false)]    // keine erwartete Antwort → nie korrekt

@@ -1,16 +1,16 @@
 using System.Text;
 using System.Text.Json;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models.Troll;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models.Troll;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>
-    /// Admin-Verwaltung des <OWNER_HANDLE>-Troll-Systems: Übersicht aller Gags (eingebaut + eigene),
+    /// Admin-Verwaltung des Erdi-Troll-Systems: Übersicht aller Gags (eingebaut + eigene),
     /// an/aus &amp; Gewicht je Gag, globale Settings sowie CRUD für eigene Inhalts-Gags.
     /// Schreibt nie in den Login-Pfad direkt – Änderungen werden über den (gecachten,
     /// fail-open) <see cref="ITrollService"/> wirksam; nach jeder Änderung wird dessen Cache verworfen.
@@ -90,7 +90,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             await _db.SaveChangesAsync();
             _troll.InvalidateCache();
             await _audit.LogAsync("UpdateTrollSettings", "TrollSettings", "1",
-                $"Enabled={settings.Enabled}, Chance={settings.TriggerChance:0.***REMOVED******REMOVED***}, Cooldown={settings.CooldownMinutes}min");
+                $"Enabled={settings.Enabled}, Chance={settings.TriggerChance:0.##}, Cooldown={settings.CooldownMinutes}min");
 
             TempData["Success"] = isNew ? "Troll-Settings gespeichert." : "Troll-Settings aktualisiert.";
             return RedirectToAction(nameof(Index));

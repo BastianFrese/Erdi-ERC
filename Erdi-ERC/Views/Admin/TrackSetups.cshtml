@@ -1,14 +1,14 @@
-@model List<<OWNER_HANDLE>_ERC.Models.TrackSetup>
+@model List<Erdi_ERC.Models.TrackSetup>
 @using System.Text.Json
 @using System.Globalization
-@using <OWNER_HANDLE>_ERC.Models
-@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.ApplicationOptions> _adminAppOpts
+@using Erdi_ERC.Models
+@inject Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.ApplicationOptions> _adminAppOpts
 @{
     ViewData["Title"] = "Track Setups";
     var _f1Year = _adminAppOpts.Value.F1GameYear;
-    var roleMappings = (ViewBag.RoleMappings as List<<OWNER_HANDLE>_ERC.Models.SetupAccessRoleMapping>) ?? new List<<OWNER_HANDLE>_ERC.Models.SetupAccessRoleMapping>();
-    var manualGrantsList = (ViewBag.ManualSetupGrants as List<<OWNER_HANDLE>_ERC.Models.DriverProfile>) ?? new List<<OWNER_HANDLE>_ERC.Models.DriverProfile>();
-    var blockedUsersList = (ViewBag.SetupBlockedUsers as List<<OWNER_HANDLE>_ERC.Models.SetupBlockedUser>) ?? new List<<OWNER_HANDLE>_ERC.Models.SetupBlockedUser>();
+    var roleMappings = (ViewBag.RoleMappings as List<Erdi_ERC.Models.SetupAccessRoleMapping>) ?? new List<Erdi_ERC.Models.SetupAccessRoleMapping>();
+    var manualGrantsList = (ViewBag.ManualSetupGrants as List<Erdi_ERC.Models.DriverProfile>) ?? new List<Erdi_ERC.Models.DriverProfile>();
+    var blockedUsersList = (ViewBag.SetupBlockedUsers as List<Erdi_ERC.Models.SetupBlockedUser>) ?? new List<Erdi_ERC.Models.SetupBlockedUser>();
     var guildId = ViewBag.SetupAccessGuildId as string;
     var guildConfigured = ViewBag.SetupAccessGuildConfigured is bool gc && gc;
     var mappingsReady = ViewBag.SetupAccessMappingsReady is bool mr && mr;
@@ -929,7 +929,7 @@
                         updateMetrics();
                     }
 
-                    setEditState(`Bearbeite Setup ***REMOVED***${setupId}: ${setupTrack} · ${setupTitle}`);
+                    setEditState(`Bearbeite Setup #${setupId}: ${setupTrack} · ${setupTitle}`);
                     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             });

@@ -1,12 +1,12 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     [Authorize(Policy = "Admin.League")]
     public class AdminLeagueController : Controller
@@ -875,7 +875,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             await RecalculateAsync(leagueId);
 
             await _audit.LogAsync("UndoDeleteRace", "RaceResult", restored.RowId.ToString(),
-                $"League={leagueId}, Track={restored.Track}, RestoredFrom=Undo***REMOVED***{undo.Id}");
+                $"League={leagueId}, Track={restored.Track}, RestoredFrom=Undo#{undo.Id}");
             TempData["AdminMessage"] = $"Rennen '{restored.Track}' wiederhergestellt. Punkte neu berechnet.";
             return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
         }

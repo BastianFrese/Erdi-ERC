@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Helpers;
+using Erdi_ERC.Helpers;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Smoke-Tests, die das Test-Setup (xunit + ProjectReference) verifizieren,
@@ -15,16 +15,16 @@ public class SmokeTests
     public void TestProject_Bootstraps()
     {
         // Wenn dieser Test laeuft, kompiliert das Test-Projekt, die ProjectReference
-        // auf <OWNER_HANDLE>-ERC funktioniert und xUnit ist korrekt eingebunden.
+        // auf Erdi-ERC funktioniert und xUnit ist korrekt eingebunden.
         Assert.True(true);
     }
 
     [Fact]
     public void F1TeamsHelper_TypeIsAccessibleFromTests()
     {
-        // Verifiziert nur, dass Symbole aus <OWNER_HANDLE>-ERC im Test-Projekt sichtbar sind.
+        // Verifiziert nur, dass Symbole aus Erdi-ERC im Test-Projekt sichtbar sind.
         var type = typeof(F1TeamsHelper);
         Assert.NotNull(type);
-        Assert.Equal("<OWNER_HANDLE>_ERC.Helpers", type.Namespace);
+        Assert.Equal("Erdi_ERC.Helpers", type.Namespace);
     }
 }

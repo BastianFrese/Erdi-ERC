@@ -1,4 +1,4 @@
-@model <OWNER_HANDLE>_ERC.Models.CommunityNewsViewModel
+@model Erdi_ERC.Models.CommunityNewsViewModel
 @{
     ViewData["Title"] = "Community News";
     var pinnedCount = Model.Posts.Count(x => x.IsPinned);
@@ -11,7 +11,7 @@
 <div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "<OWNER_HANDLE>'s Racing Community",
+    Eyebrow   = "Erdi's Racing Community",
     Title     = "Community",
     Highlight = "News",
     Lead      = "Liga-News, Fahrerwechsel, Event-Ankündigungen und wichtige Updates aus der Community.",

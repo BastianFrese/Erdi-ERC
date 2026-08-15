@@ -1,9 +1,9 @@
-@model List<(<OWNER_HANDLE>_ERC.Models.League League, List<(<OWNER_HANDLE>_ERC.Models.DriverProfile Profile, <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel Card)> Drivers)>
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Helpers
+@model List<(Erdi_ERC.Models.League League, List<(Erdi_ERC.Models.DriverProfile Profile, Erdi_ERC.Models.DriverDetailViewModel Card)> Drivers)>
+@using Erdi_ERC.Models
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = "Fahrer-Lineup";
-    ViewData["OgTitle"] = "Fahrer-Lineup · <OWNER_HANDLE>'s Racing Community";
+    ViewData["OgTitle"] = "Fahrer-Lineup · Erdi's Racing Community";
     ViewData["OgDescription"] = "Das komplette Fahrer-Lineup der ERC – alle Fahrer, sortiert nach Liga.";
     ViewData["BodyClass"] = "di-fullscreen-page";
 
@@ -11,7 +11,7 @@
 
     // Flat item list for the stage (league banners + cards in order)
     var flatItems = new List<(string Type, string LeagueName, int DriverCount,
-        <OWNER_HANDLE>_ERC.Models.DriverProfile? Profile, <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel? Card, int Position)>();
+        Erdi_ERC.Models.DriverProfile? Profile, Erdi_ERC.Models.DriverDetailViewModel? Card, int Position)>();
     foreach (var (league, drivers) in Model)
     {
         flatItems.Add(("league", league.Name, drivers.Count, null, null, 0));
@@ -23,7 +23,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
     <style>
-        body.di-fullscreen-page { background: ***REMOVED***04050a; overflow-x: hidden; }
+        body.di-fullscreen-page { background: #04050a; overflow-x: hidden; }
 
         /* ── Stage ─────────────────────────────────────────────────── */
         .di-stage {
@@ -34,7 +34,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            background: ***REMOVED***04050a;
+            background: #04050a;
         }
 
         .di-stage::before {
@@ -103,7 +103,7 @@
             font-weight: 600;
             letter-spacing: .4em;
             text-transform: uppercase;
-            color: ***REMOVED***e10600;
+            color: #e10600;
             margin-bottom: 1.25rem;
             opacity: 0;
         }
@@ -112,7 +112,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: clamp(2.2rem, 9vw, 5.5rem);
             font-weight: 900;
-            color: ***REMOVED***fff;
+            color: #fff;
             line-height: 1;
             letter-spacing: .08em;
             text-transform: uppercase;
@@ -122,9 +122,9 @@
         .di-league-banner__line {
             width: 0;
             height: 3px;
-            background: ***REMOVED***e10600;
+            background: #e10600;
             margin: 1.5rem auto;
-            box-shadow: 0 0 24px ***REMOVED***e10600, 0 0 50px rgba(225,6,0,.35);
+            box-shadow: 0 0 24px #e10600, 0 0 50px rgba(225,6,0,.35);
         }
 
         .di-league-banner__count {
@@ -163,7 +163,7 @@
             font-size: .65rem;
             font-weight: 700;
             letter-spacing: .3em;
-            color: ***REMOVED***e10600;
+            color: #e10600;
             text-transform: uppercase;
             margin-bottom: .85rem;
             opacity: 0;
@@ -223,7 +223,7 @@
         .di-hud__league {
             font-family: 'JetBrains Mono', monospace;
             font-size: .68rem;
-            color: ***REMOVED***e10600;
+            color: #e10600;
             letter-spacing: .12em;
             text-transform: uppercase;
             transition: opacity .25s;
@@ -240,7 +240,7 @@
 
         .di-progress__fill {
             height: 100%;
-            background: ***REMOVED***e10600;
+            background: #e10600;
             box-shadow: 0 0 14px rgba(225,6,0,.7);
             transition: width .4s ease;
             width: 0%;
@@ -278,19 +278,19 @@
             transition: color .12s, background .12s;
         }
 
-        .di-btn:hover { color: ***REMOVED***fff; background: rgba(255,255,255,.07); }
+        .di-btn:hover { color: #fff; background: rgba(255,255,255,.07); }
 
         .di-btn--play {
-            background: ***REMOVED***e10600;
-            color: ***REMOVED***fff !important;
+            background: #e10600;
+            color: #fff !important;
             width: 2.5rem;
             height: 2.5rem;
             font-size: 1.05rem;
         }
 
-        .di-btn--play:hover { background: ***REMOVED***c50500; }
+        .di-btn--play:hover { background: #c50500; }
 
-        .di-btn--auto.is-on { color: ***REMOVED***e10600; }
+        .di-btn--auto.is-on { color: #e10600; }
 
         .di-divider { width: 1px; height: 1.1rem; background: rgba(255,255,255,.1); }
 
@@ -324,7 +324,7 @@
             gap: .4rem;
         }
 
-        .di-ui-btn:hover { color: ***REMOVED***fff; border-color: rgba(255,255,255,.2); }
+        .di-ui-btn:hover { color: #fff; border-color: rgba(255,255,255,.2); }
 
         /* ── End screen ────────────────────────────────────────────── */
         .di-end {
@@ -345,13 +345,13 @@
             font-family: 'Orbitron', sans-serif;
             font-size: clamp(1.6rem, 6vw, 3.5rem);
             font-weight: 900;
-            color: ***REMOVED***fff;
+            color: #fff;
             letter-spacing: .14em;
             text-transform: uppercase;
             animation: diFadeUp .5s ease both;
         }
 
-        .di-end__title span { color: ***REMOVED***e10600; }
+        .di-end__title span { color: #e10600; }
 
         .di-end__sub {
             font-family: 'JetBrains Mono', monospace;
@@ -372,7 +372,7 @@
             background: rgba(255,255,255,.06);
             border: 1px solid rgba(255,255,255,.1);
             border-radius: 10px;
-            color: ***REMOVED***fff;
+            color: #fff;
             font-size: .82rem;
             padding: .65rem 1.5rem;
             cursor: pointer;
@@ -384,15 +384,15 @@
         }
 
         .di-end__btn:hover { background: rgba(255,255,255,.11); }
-        .di-end__btn--red { background: ***REMOVED***e10600; border-color: ***REMOVED***e10600; }
-        .di-end__btn--red:hover { background: ***REMOVED***c50500; }
+        .di-end__btn--red { background: #e10600; border-color: #e10600; }
+        .di-end__btn--red:hover { background: #c50500; }
 
         /* ── Grid view ─────────────────────────────────────────────── */
         .di-grid-view {
             display: none;
             min-height: 100svh;
             padding: 5.5rem 2rem 5rem;
-            background: ***REMOVED***04050a;
+            background: #04050a;
         }
 
         .di-grid-view.is-visible { display: block; }
@@ -412,7 +412,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 1rem;
             font-weight: 800;
-            color: ***REMOVED***fff;
+            color: #fff;
             letter-spacing: .18em;
             text-transform: uppercase;
         }

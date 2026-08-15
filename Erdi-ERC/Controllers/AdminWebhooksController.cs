@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     [Authorize(Policy = "Admin.System.Webhooks")]
     public class AdminWebhooksController : Controller
@@ -238,7 +238,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 if (!string.IsNullOrWhiteSpace(embedDescription)) embed["description"] = embedDescription;
                 if (!string.IsNullOrWhiteSpace(embedUrl))         embed["url"]         = embedUrl;
 
-                if (!string.IsNullOrWhiteSpace(embedColor) && embedColor.StartsWith('***REMOVED***') && int.TryParse(embedColor[1..], System.Globalization.NumberStyles.HexNumber, null, out int colorInt))
+                if (!string.IsNullOrWhiteSpace(embedColor) && embedColor.StartsWith('#') && int.TryParse(embedColor[1..], System.Globalization.NumberStyles.HexNumber, null, out int colorInt))
                     embed["color"] = colorInt;
 
                 if (!string.IsNullOrWhiteSpace(embedThumbnail))

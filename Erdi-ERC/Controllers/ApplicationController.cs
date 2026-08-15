@@ -1,12 +1,12 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>
     /// User-seitige Bewerbungs-Routen: Apply (Formular anzeigen + Submit),
@@ -19,7 +19,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IStaticDataCache _staticCache;
         private readonly IDiscordGuildService _discordGuildService;
         private readonly IApplicationTargetingService _targeting;
-        private readonly <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions _driverMatching;
+        private readonly Erdi_ERC.Options.DriverMatchingOptions _driverMatching;
         private readonly ILogger<ApplicationController> _logger;
 
         public ApplicationController(
@@ -27,7 +27,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             IStaticDataCache staticCache,
             IDiscordGuildService discordGuildService,
             IApplicationTargetingService targeting,
-            Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.DriverMatchingOptions> driverMatching,
+            Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.DriverMatchingOptions> driverMatching,
             ILogger<ApplicationController> logger)
         {
             _applications = applications;

@@ -1,6 +1,6 @@
-@model <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Helpers
+@model Erdi_ERC.Models.DriverDetailViewModel
+@using Erdi_ERC.Models
+@using Erdi_ERC.Helpers
 @{
     var profile = ViewBag.Profile as DriverProfile;
 
@@ -16,7 +16,7 @@
     var team     = favTeam ?? F1TeamsHelper.GetTeamByName(Model?.Team);
     var teamLogo = team is not null ? $"/images/teams/{team.LogoKey}.svg" : null;
     var teamName = team?.Name ?? (string.IsNullOrWhiteSpace(Model?.Team) ? null : Model!.Team);
-    var accent   = team?.PrimaryColor ?? "***REMOVED***e10600";
+    var accent   = team?.PrimaryColor ?? "#e10600";
 
     var hardware     = SimHardwareHelper.Resolve(profile?.InputDevice);
     var hardwareLogo = hardware is not null ? $"/images/logos/{hardware.Key}.svg" : null;
@@ -36,7 +36,7 @@
     var numberColor = ViewBag.NumberColor as string
         ?? (profile?.DriverNumberColor is not null ? profile.DriverNumberColor.Trim() : null)
         ?? team?.PrimaryColor
-        ?? "***REMOVED***e10600";
+        ?? "#e10600";
 
     // Stats für die FIFA-Karte (ohne Foto).
     var totalRaces    = Model?.Races?.Count ?? 0;

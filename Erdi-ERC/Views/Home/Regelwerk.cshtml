@@ -1,6 +1,6 @@
 @using Markdig
-@using <OWNER_HANDLE>_ERC.Helpers
-@inject <OWNER_HANDLE>_ERC.Data.AppDbContext _rwDb
+@using Erdi_ERC.Helpers
+@inject Erdi_ERC.Data.AppDbContext _rwDb
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment _rwEnv
 @{
     var _activeDoc = _rwDb.RegelwerkDocuments.Where(d => d.IsActive).OrderByDescending(d => d.UploadedAt).FirstOrDefault();
@@ -93,7 +93,7 @@
         .rw-view-toggle { display:flex;gap:.5rem;margin-bottom:1rem; }
         .rw-view-toggle__btn { background:var(--surface-2);border:1px solid var(--stroke-1);color:var(--ink-3);font-size:.78rem;padding:.35rem .9rem;border-radius:var(--r-pill);cursor:pointer;transition:all var(--t-fast); }
         .rw-view-toggle__btn:hover { border-color:var(--stroke-2);color:var(--ink-2); }
-        .rw-view-toggle__btn.is-active { background:var(--accent);border-color:var(--accent);color:***REMOVED***fff; }
+        .rw-view-toggle__btn.is-active { background:var(--accent);border-color:var(--accent);color:#fff; }
         /* Markdown-Inhalt innerhalb doc-cards */
         .rw-md h1,.rw-md h2 { display:none; } /* Headings sind bereits im doc-card__head */
         .rw-md h3,.rw-md h4,.rw-md h5,.rw-md h6 { font-family:var(--ff-tech,inherit);font-size:.9rem;color:var(--ink);text-transform:uppercase;letter-spacing:.05em;margin:1.25rem 0 .4rem; }
@@ -129,7 +129,7 @@
 <div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "<OWNER_HANDLE>'s Racing Community · Dokumente",
+    Eyebrow   = "Erdi's Racing Community · Dokumente",
     Title     = "Offizielles",
     Highlight = "Regelwerk",
     Lead      = _activeDoc != null

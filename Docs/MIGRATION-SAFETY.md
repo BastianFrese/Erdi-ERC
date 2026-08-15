@@ -4,12 +4,12 @@ tags: [sicherheit, deployment, datenbank, migration]
 status: [erledigt]
 ---
 
-***REMOVED*** MIGRATION-SAFETY — niemals Schema-Änderungen auf `erdierc` aus versehen
+# MIGRATION-SAFETY — niemals Schema-Änderungen auf `erdierc` aus versehen
 
 > **Pflichtlektüre vor jeder EF-Migration, vor jedem `dotnet ef database update`,
 > vor jedem SSH-Zugriff auf den Live-Server, und vor jedem neuen Build-Job.**
 
-***REMOVED******REMOVED*** Geltungsbereich — ohne Ausnahme
+## Geltungsbereich — ohne Ausnahme
 
 Diese Regel betrifft **den gesamten Test- und Bau-Prozess des neuen Systems**
 (Bewerbungs-Rebuild und alles, was danach kommt):
@@ -21,7 +21,7 @@ Diese Regel betrifft **den gesamten Test- und Bau-Prozess des neuen Systems**
 - manuelles `dotnet ef migrations add` / `script` (offline)
 - **alles, was eine EF-Migration in eine echte Datenbank schreibt**
 
-***REMOVED******REMOVED*** Die zwei Datenbanken
+## Die zwei Datenbanken
 
 Beide liegen auf demselben MySQL-Server `<PROD_HOST>:3306`:
 
@@ -34,30 +34,30 @@ Beide liegen auf demselben MySQL-Server `<PROD_HOST>:3306`:
 > weil das Projekt eine **private Repo** ist. Trotzdem gilt: **Prod-DB-Inhalt ist
 > unwiederbringlich, sobald eine Migration läuft.**
 
-***REMOVED******REMOVED*** Erlaubt
+## Erlaubt
 
 ```bash
-***REMOVED*** Lokal, gegen erditest
+# Lokal, gegen erditest
 ASPNETCORE_ENVIRONMENT=Development dotnet ef database update
-dotnet ef database update  ***REMOVED*** wenn env=Development gesetzt ist (launchSettings.json)
+dotnet ef database update  # wenn env=Development gesetzt ist (launchSettings.json)
 ```
 
 ```bash
-***REMOVED*** Offline — Migrationen nur generieren, kein DB-Zugriff
+# Offline — Migrationen nur generieren, kein DB-Zugriff
 dotnet ef migrations add <Name> --no-build
-dotnet ef migrations script <From> <To> --output mig.sql   ***REMOVED*** schreibt nur SQL-Datei
+dotnet ef migrations script <From> <To> --output mig.sql   # schreibt nur SQL-Datei
 ```
 
-***REMOVED******REMOVED*** Verboten — ohne Wenn und Aber
+## Verboten — ohne Wenn und Aber
 
 ```bash
-***REMOVED*** NIEMALS — explizit Production setzen und update fahren
+# NIEMALS — explizit Production setzen und update fahren
 ASPNETCORE_ENVIRONMENT=Production dotnet ef database update
 
-***REMOVED*** NIEMALS — auf dem Live-Server (<PROD_HOST>) per Hand
+# NIEMALS — auf dem Live-Server (<PROD_HOST>) per Hand
 ssh user@erdierc-host "cd /srv/erdi-erc && dotnet ef database update"
 
-***REMOVED*** NIEMALS — in CI / Publish / einem neuen Build-Job, der prod credentials kennt
+# NIEMALS — in CI / Publish / einem neuen Build-Job, der prod credentials kennt
 ```
 
 **Was passiert, wenn man es trotzdem tut?**
@@ -66,7 +66,7 @@ ssh user@erdierc-host "cd /srv/erdi-erc && dotnet ef database update"
 - `erdierc` ist LIVE hinter Nginx. Ausfall = öffentlicher Service-Down.
 - Es gibt **kein** Backup-Automationsskript, das den Schaden rückgängig macht.
 
-***REMOVED******REMOVED*** Sicherheitsnetze
+## Sicherheitsnetze
 
 1. **CI macht keinen `ef database update`** — `/.github/workflows/ci.yml` führt nur
    `dotnet restore` / `build` / `test` aus. Kein DB-Zugriff, keine prod credentials.
@@ -92,7 +92,7 @@ ssh user@erdierc-host "cd /srv/erdi-erc && dotnet ef database update"
    laufen **explizit** per `dotnet ef database update` durch den Server-Owner.
    ➡️ Sicher. (Das ist neu seit 2026-08-05; war vorher ein Leck.)
 
-***REMOVED******REMOVED*** Wo die Regel gebrochen werden kann (Risiko-Trigger)
+## Wo die Regel gebrochen werden kann (Risiko-Trigger)
 
 | Trigger                                                                    | Risiko                                                                             |
 |----------------------------------------------------------------------------|------------------------------------------------------------------------------------|
@@ -105,7 +105,7 @@ ssh user@erdierc-host "cd /srv/erdi-erc && dotnet ef database update"
 > Aktueller Stand: `Program.cs` ist so gepatcht, dass `db.Database.Migrate()` NUR
 > in `IsDevelopment()` läuft. Das ist Absicht und soll so bleiben.
 
-***REMOVED******REMOVED*** Checkliste vor jeder Migration
+## Checkliste vor jeder Migration
 
 ```
 [ ] ASPNETCORE_ENVIRONMENT ist NICHT 'Production'
@@ -116,7 +116,7 @@ ssh user@erdierc-host "cd /srv/erdi-erc && dotnet ef database update"
 [ ] Auf Prod NUR über den Deploy-Workflow (publish.yml), NIEMALS lokal ssh + ef update
 ```
 
-***REMOVED******REMOVED*** Wenn doch mal was schief geht — Eskalation
+## Wenn doch mal was schief geht — Eskalation
 
 1. **Stoppen**: nichts mehr ausführen.
 2. **Audit**: letzte ausgeführten `ef`-Kommandos nachvollziehen
@@ -124,15 +124,15 @@ ssh user@erdierc-host "cd /srv/erdi-erc && dotnet ef database update"
 3. **User informieren** — der hat den prod-Zugriff und das Backup-Privileg.
 4. **Keine eigene Reparatur** — Datenrettung läuft gegen prod, nicht gegen dev.
 
-***REMOVED******REMOVED*** Bezug zu bestehendem Setup
+## Bezug zu bestehendem Setup
 
-- siehe `<OWNER_HANDLE>-ERC/appsettings.Production.json` (Repo, mit prod credentials)
-- siehe `<OWNER_HANDLE>-ERC/Properties/launchSettings.json` (Dev-Profile)
+- siehe `Erdi-ERC/appsettings.Production.json` (Repo, mit prod credentials)
+- siehe `Erdi-ERC/Properties/launchSettings.json` (Dev-Profile)
 - siehe `.github/workflows/ci.yml` (Build+Test, keine DB)
 - siehe `.github/workflows/publish.yml` (Deploy, kein `ef update`)
 - verwandt: `Docs/README.md`
 
-***REMOVED******REMOVED*** Versionierung
+## Versionierung
 
 - 2026-08-05 — Erstversion, entstanden während des Bewerbungssystem-Removes
   (Migration `20260805150724_DropApplicationForms` darf nur erditest treffen).

@@ -24,11 +24,11 @@
 .f1-podium-card:hover { box-shadow: var(--sh-3, var(--sh-2)); }
 
 .f1-podium-card--p1 {
-    --podium-color: var(--gold, ***REMOVED***ffd24a);
+    --podium-color: var(--gold, #ffd24a);
     box-shadow: var(--sh-2), 0 0 28px rgba(255,210,74,.1);
 }
-.f1-podium-card--p2 { --podium-color: var(--silver, ***REMOVED***d4d8e0); }
-.f1-podium-card--p3 { --podium-color: var(--bronze, ***REMOVED***d68a4a); }
+.f1-podium-card--p2 { --podium-color: var(--silver, #d4d8e0); }
+.f1-podium-card--p3 { --podium-color: var(--bronze, #d68a4a); }
 
 .f1-podium-card__header {
     display: flex;
@@ -82,7 +82,7 @@
     align-items: center;
     gap: .3rem;
     font: 800 .88rem/1 var(--ff-tech);
-    color: var(--text-amber, ***REMOVED***f59e0b);
+    color: var(--text-amber, #f59e0b);
 }
 .f1-podium-card__pts .f1-icon { width: 12px; height: 12px; }
 

@@ -1,5 +1,5 @@
-***REMOVED*** /etc/cron.d/erdi-erc-backup
-***REMOVED*** Tägliches MySQL-Backup um 03:30 Uhr.
+# /etc/cron.d/erdi-erc-backup
+# Tägliches MySQL-Backup um 03:30 Uhr.
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 

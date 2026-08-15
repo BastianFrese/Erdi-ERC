@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>Community-Seiten: Events, News, Votes, Highlights, Teams, Reservefahrer-Börse.</summary>
     public class CommunityController : Controller
@@ -77,8 +77,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                         {
                             TeamName = g.Key,
                             CssKey = teamInfo?.CssKey,
-                            PrimaryColor = teamInfo?.PrimaryColor ?? "***REMOVED***e10600",
-                            SecondaryColor = teamInfo?.SecondaryColor ?? "***REMOVED***ffffff",
+                            PrimaryColor = teamInfo?.PrimaryColor ?? "#e10600",
+                            SecondaryColor = teamInfo?.SecondaryColor ?? "#ffffff",
                             Drivers = drivers.Count,
                             Points = g.Sum(x => x.Points),
                             Wins = g.Sum(x => x.Wins),
@@ -123,8 +123,8 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             {
                 TeamName = normalized,
                 CssKey = teamInfo?.CssKey,
-                PrimaryColor = teamInfo?.PrimaryColor ?? "***REMOVED***e10600",
-                SecondaryColor = teamInfo?.SecondaryColor ?? "***REMOVED***ffffff",
+                PrimaryColor = teamInfo?.PrimaryColor ?? "#e10600",
+                SecondaryColor = teamInfo?.SecondaryColor ?? "#ffffff",
                 TotalPoints = standings.Sum(x => x.Points),
                 TotalWins = standings.Sum(x => x.Wins),
                 TotalPodiums = races.Sum(r => r.Finishes.Count(f => f.Position is >= 1 and <= 3 && driverNames.Contains(f.Driver.Trim()))),

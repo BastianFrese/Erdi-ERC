@@ -1,7 +1,7 @@
 using AspNet.Security.OAuth.Discord;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     public class AccountController : Controller
     {
@@ -124,7 +124,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 new ClaimsPrincipal(identity),
                 authProps);
 
-            // --- <OWNER_HANDLE>-Troll-Roll: mit kleiner Wahrscheinlichkeit einen Login-Prank dazwischenschieben. ---
+            // --- Erdi-Troll-Roll: mit kleiner Wahrscheinlichkeit einen Login-Prank dazwischenschieben. ---
             // Strikt fail-open: ein Fehler im Troll-System darf den Login NIE blockieren (siehe TryStartTroll).
             var safeReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) ? returnUrl! : "/";
             if (TryStartTroll(identity, safeReturnUrl, out var trollRedirect))

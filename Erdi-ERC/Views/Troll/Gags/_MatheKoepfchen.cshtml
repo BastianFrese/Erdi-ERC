@@ -1,16 +1,16 @@
-@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@model Erdi_ERC.Models.Troll.TrollGateViewModel
 @*
     Kategorie „Mathe & Köpfchen" – Pflicht-Gags (serverseitig via Solve validiert).
     Neuer Gag dieser Kategorie = hier ein weiterer case + Registry-Eintrag in TrollService.
-    Das „<OWNER_HANDLE> schüttelt den Kopf"-/Gnaden-Feedback rendert zentral Gate.cshtml.
+    Das „Erdi schüttelt den Kopf"-/Gnaden-Feedback rendert zentral Gate.cshtml.
 *@
 @switch (Model.Gag.Key)
 {
     case "math":
         <div class="troll-gag troll-gag--math">
-            <div class="troll-eyebrow"><OWNER_HANDLE> · Mathe-Kontrolle</div>
-            <h2 class="troll-title"><OWNER_HANDLE> hat sich gedacht,<br>du löst erst mal eine Mathe-Aufgabe.</h2>
-            <p class="troll-lead">Kleine Kopfrechen-Schikane. <OWNER_HANDLE> wartet.</p>
+            <div class="troll-eyebrow">Erdi · Mathe-Kontrolle</div>
+            <h2 class="troll-title">Erdi hat sich gedacht,<br>du löst erst mal eine Mathe-Aufgabe.</h2>
+            <p class="troll-lead">Kleine Kopfrechen-Schikane. Erdi wartet.</p>
 
             <div class="troll-math__problem">@Model.Prompt =<span class="troll-math__q">?</span></div>
 
@@ -24,12 +24,12 @@
 
     case "best-driver":
         <div class="troll-gag troll-gag--quiz">
-            <div class="troll-eyebrow"><OWNER_HANDLE> · Allgemeinbildung</div>
-            <h2 class="troll-title"><OWNER_HANDLE> fragt:<br>Wer ist der <em>beste</em> Fahrer?</h2>
+            <div class="troll-eyebrow">Erdi · Allgemeinbildung</div>
+            <h2 class="troll-title">Erdi fragt:<br>Wer ist der <em>beste</em> Fahrer?</h2>
             <p class="troll-lead">Überleg gut. Es gibt nur eine richtige Antwort.</p>
 
             <form asp-controller="Troll" asp-action="Solve" method="post" class="troll-choices">
-                @foreach (var name in new[] { "Max Verstappen", "<OWNER_HANDLE>", "Du", "Lewis Hamilton" })
+                @foreach (var name in new[] { "Max Verstappen", "Erdi", "Du", "Lewis Hamilton" })
                 {
                     <button type="submit" name="answer" value="@name" class="troll-choice">@name</button>
                 }
@@ -40,12 +40,12 @@
     case "f1-trivia":
     {
         // Optionen aus der statischen Bank anhand des gespeicherten Fragetexts (Model.Prompt) rekonstruieren.
-        var question = <OWNER_HANDLE>_ERC.Models.Troll.TrollTrivia.ByQuestion(Model.Prompt);
-        var options = question?.Options ?? new[] { "Italien", "<OWNER_HANDLE>", "25", "4" };
+        var question = Erdi_ERC.Models.Troll.TrollTrivia.ByQuestion(Model.Prompt);
+        var options = question?.Options ?? new[] { "Italien", "Erdi", "25", "4" };
         <div class="troll-gag troll-gag--quiz">
-            <div class="troll-eyebrow"><OWNER_HANDLE> · F1-Wissen</div>
-            <h2 class="troll-title"><OWNER_HANDLE> macht den Wissens-Check.</h2>
-            <p class="troll-lead">@(question?.Question ?? "Beantworte <OWNER_HANDLE>s Frage.")</p>
+            <div class="troll-eyebrow">Erdi · F1-Wissen</div>
+            <h2 class="troll-title">Erdi macht den Wissens-Check.</h2>
+            <p class="troll-lead">@(question?.Question ?? "Beantworte Erdis Frage.")</p>
 
             <form asp-controller="Troll" asp-action="Solve" method="post" class="troll-choices">
                 @foreach (var opt in options)
@@ -59,8 +59,8 @@
 
     case "sequence":
         <div class="troll-gag troll-gag--math">
-            <div class="troll-eyebrow"><OWNER_HANDLE> · Zahlengefühl</div>
-            <h2 class="troll-title"><OWNER_HANDLE> prüft, ob du zählen kannst.</h2>
+            <div class="troll-eyebrow">Erdi · Zahlengefühl</div>
+            <h2 class="troll-title">Erdi prüft, ob du zählen kannst.</h2>
             <p class="troll-lead">Setze die Zahlenfolge fort. Welche Zahl kommt als Nächstes?</p>
 
             <div class="troll-math__problem">@Model.Prompt,<span class="troll-math__q">?</span></div>
@@ -75,9 +75,9 @@
 
     case "oath-type":
         <div class="troll-gag">
-            <div class="troll-eyebrow"><OWNER_HANDLE> · Treueschwur</div>
+            <div class="troll-eyebrow">Erdi · Treueschwur</div>
             <h2 class="troll-title">Tippe den Schwur. <em>Exakt.</em></h2>
-            <p class="troll-lead">Wort für Wort abschreiben. <OWNER_HANDLE> liest mit.</p>
+            <p class="troll-lead">Wort für Wort abschreiben. Erdi liest mit.</p>
 
             <p class="troll-oath">„@Model.Prompt"</p>
 

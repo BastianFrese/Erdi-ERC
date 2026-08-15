@@ -1,4 +1,4 @@
-@model <OWNER_HANDLE>_ERC.Models.EwigeListeViewModel
+@model Erdi_ERC.Models.EwigeListeViewModel
 @{
     ViewData["Title"] = "Ewige Liste";
     Layout = "_Layout";
@@ -13,13 +13,13 @@
 <div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow = "<OWNER_HANDLE>'s Racing Community · Archiv",
+    Eyebrow = "Erdi's Racing Community · Archiv",
     Title = "Ewige",
     Highlight = "Liste",
-    Lead = "Das komplette Archiv der <OWNER_HANDLE>'s Racing Community – alle Saisons, Ligen und Ergebnisse auf einen Blick.",
+    Lead = "Das komplette Archiv der Erdi's Racing Community – alle Saisons, Ligen und Ergebnisse auf einen Blick.",
 
     Actions = new() {
-        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10", "Stats")! },
+        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("Erdi10", "Stats")! },
         new F1ButtonVm { Label = "Ergebnisse", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("Results", "Races")! }
     }
 })" />
@@ -77,7 +77,7 @@ else
             <button class="f1-ewige-tabs__tab @(i == 0 ? "is-active" : "")"
                     id="sheet-tab-@i"
                     data-bs-toggle="tab"
-                    data-bs-target="***REMOVED***sheet-pane-@i"
+                    data-bs-target="#sheet-pane-@i"
                     type="button"
                     role="tab"
                     aria-controls="sheet-pane-@i"

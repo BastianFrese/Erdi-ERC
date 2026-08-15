@@ -24,16 +24,16 @@
 
 /* ── Cockpit-Tokens (alles hier zentral steuerbar) ─────────────────────── */
 :root {
-    --cabin-panel-1:***REMOVED***161719;   /* Konsole oben */
-    --cabin-panel-2:***REMOVED***0a0a0b;   /* Konsole unten (Carbon dunkel, aus Vorlage) */
-    --cabin-bezel:***REMOVED***2c2e33;     /* Metall-Bezel/Rahmen */
-    --cabin-cap-1:***REMOVED***202125;     /* Tastenkappe oben (Lichtseite) */
-    --cabin-cap-2:***REMOVED***121316;     /* Tastenkappe unten */
-    --cabin-cap-edge:***REMOVED***2a2c31;  /* Kappen-Rand */
-    --cabin-legend:***REMOVED***dde4ee;    /* hinterleuchtete Legende (kühles Weiß) */
-    --cabin-legend-dim:***REMOVED***aeb6c1;/* Legende inaktiv (hinterleuchtet) */
-    --led-red:***REMOVED***ff1e10;         /* LED an (aus Vorlage) */
-    --led-red-deep:***REMOVED***e10600;    /* F1-Rot */
+    --cabin-panel-1:#161719;   /* Konsole oben */
+    --cabin-panel-2:#0a0a0b;   /* Konsole unten (Carbon dunkel, aus Vorlage) */
+    --cabin-bezel:#2c2e33;     /* Metall-Bezel/Rahmen */
+    --cabin-cap-1:#202125;     /* Tastenkappe oben (Lichtseite) */
+    --cabin-cap-2:#121316;     /* Tastenkappe unten */
+    --cabin-cap-edge:#2a2c31;  /* Kappen-Rand */
+    --cabin-legend:#dde4ee;    /* hinterleuchtete Legende (kühles Weiß) */
+    --cabin-legend-dim:#aeb6c1;/* Legende inaktiv (hinterleuchtet) */
+    --led-red:#ff1e10;         /* LED an (aus Vorlage) */
+    --led-red-deep:#e10600;    /* F1-Rot */
 }
 
 /* Mittelkonsole: Klavierlack-/Glas-Touchpanel mit Alu-Trim & rotem Ambientelicht */
@@ -42,7 +42,7 @@
     background:
         linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.015) 18%, transparent 46%),  /* Glas-Reflex oben */
         var(--carbon),
-        linear-gradient(180deg, ***REMOVED***1a1c20, ***REMOVED***0a0b0d 72%);
+        linear-gradient(180deg, #1a1c20, #0a0b0d 72%);
     border:1.5px solid var(--cabin-bezel);
     border-radius:16px;                 /* Mobile: gerundete Karte; Desktop unten -> 999px */
     padding:.45rem .7rem;
@@ -53,7 +53,7 @@
         0 -2px 6px rgba(0,0,0,.6) inset,
         0 0 0 1px rgba(0,0,0,.55),
         0 16px 34px -16px rgba(0,0,0,.9),
-        var(--cabin-team-glow, 0 0 ***REMOVED***0000);          /* Team-Farb-Halo (nur bei body.team-*) */
+        var(--cabin-team-glow, 0 0 #0000);          /* Team-Farb-Halo (nur bei body.team-*) */
     transition:box-shadow var(--t-base), border-color var(--t-base);
 }
 /* Gebürstete Alu-Trimlinie oben + rote Ambiente-Leiste unten (Interieur-Beleuchtung) */
@@ -77,8 +77,8 @@
         0 -2px 6px rgba(0,0,0,.65) inset,
         0 0 0 1px rgba(0,0,0,.6),
         0 20px 38px -14px rgba(0,0,0,.94),
-        var(--cabin-team-glow, 0 0 ***REMOVED***0000);
-    border-color:***REMOVED***3a3d43;
+        var(--cabin-team-glow, 0 0 #0000);
+    border-color:#3a3d43;
 }
 .navbar-dark .navbar-toggler { border:1px solid var(--stroke-1)!important; border-radius:10px!important; width:44px; height:44px; padding:0; }
 .navbar-toggler:focus { box-shadow:0 0 0 3px var(--accent-soft)!important; }
@@ -125,7 +125,7 @@
 .navbar-brand {
     display:inline-flex; align-items:center; gap:.5rem!important;
     margin-right:.4rem!important;
-    color:***REMOVED***fff!important;
+    color:#fff!important;
     font-family:var(--ff-tech); font-weight:900;
     letter-spacing:.16em; text-transform:uppercase;
     font-size:.8rem;
@@ -144,7 +144,7 @@
         0 1px 2px rgba(0,0,0,.6);
     font-family:var(--ff-tech); font-style:italic; font-weight:900;
     font-size:1.25rem; line-height:1;
-    color:***REMOVED***e10600;
+    color:#e10600;
     text-shadow:0 0 10px rgba(225,6,0,.6);
 }
 .brand-word { white-space:nowrap; }
@@ -168,11 +168,11 @@
     font-weight:700; font-size:.66rem; letter-spacing:.06em;
     text-transform:uppercase;
     padding:.45rem .6rem!important;
-    border:1px solid ***REMOVED***2c2f35;
+    border:1px solid #2c2f35;
     border-radius:9px;
     background:
         linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 38%),  /* scharfer Klavierlack-Glanz */
-        linear-gradient(180deg, ***REMOVED***191b20, ***REMOVED***0b0c10 72%);                            /* dunkler Klavierlack */
+        linear-gradient(180deg, #191b20, #0b0c10 72%);                            /* dunkler Klavierlack */
     box-shadow:
         0 1px 0 rgba(255,255,255,.08) inset,    /* Glanzkante oben */
         0 -3px 6px rgba(0,0,0,.55) inset,        /* Vertiefung unten */
@@ -181,10 +181,10 @@
     white-space:nowrap;
 }
 .navbar .nav-link:hover {
-    color:***REMOVED***fff!important;
+    color:#fff!important;
     background:
         linear-gradient(180deg, rgba(255,255,255,.11), transparent 44%),
-        linear-gradient(180deg, ***REMOVED***34373e, ***REMOVED***1d1f26 70%);
+        linear-gradient(180deg, #34373e, #1d1f26 70%);
     box-shadow:
         0 1px 0 rgba(255,255,255,.14) inset,
         0 -3px 6px rgba(0,0,0,.55) inset,
@@ -199,11 +199,11 @@
         0 1px 0 rgba(255,255,255,.05) inset;
 }
 .navbar .nav-link.active {
-    color:***REMOVED***fff!important;
+    color:#fff!important;
     text-shadow:0 0 8px rgba(225,6,0,.5);                    /* hinterleuchtete Legende */
     background:
         linear-gradient(180deg, rgba(255,255,255,.06), transparent 44%),
-        linear-gradient(180deg, ***REMOVED***2a151a, ***REMOVED***15090c 72%);       /* glänzende, rot-beleuchtete Taste */
+        linear-gradient(180deg, #2a151a, #15090c 72%);       /* glänzende, rot-beleuchtete Taste */
     box-shadow:
         0 -10px 16px -8px rgba(225,6,0,.7) inset,            /* roter Backlight von unten = engaged */
         0 1px 0 rgba(255,255,255,.08) inset,
@@ -214,7 +214,7 @@
 .navbar .nav-link.active::before {
     content:""; position:absolute; top:5px; left:6px;
     width:6px; height:6px; border-radius:50%;
-    background:radial-gradient(circle at 35% 32%, ***REMOVED***fff 0 16%, ***REMOVED***ff8a7e 30%, var(--led-red) 62%, ***REMOVED***6e0b05 100%);
+    background:radial-gradient(circle at 35% 32%, #fff 0 16%, #ff8a7e 30%, var(--led-red) 62%, #6e0b05 100%);
     box-shadow:
         0 0 0 1.5px rgba(0,0,0,.55),    /* dunkler Fassungsring (eingelassen) */
         0 0 5px var(--led-red),
@@ -228,19 +228,19 @@
     transition:transform var(--t-base), opacity var(--t-base), color var(--t-base), filter var(--t-base);
 }
 .navbar .nav-link:hover .nav-ico { opacity:1; transform:translateY(-1px); }
-.navbar .nav-link.active .nav-ico { opacity:1; color:***REMOVED***fff; filter:drop-shadow(0 0 5px rgba(225,6,0,.55)); }
+.navbar .nav-link.active .nav-ico { opacity:1; color:#fff; filter:drop-shadow(0 0 5px rgba(225,6,0,.55)); }
 
 /* "F1"-Logo + Trennrille am rechten Konsolenrand */
 .nav-f1-badge { align-items:center; gap:.7rem; margin-left:.35rem; flex-shrink:0; }
 .nav-f1-badge__divider {
     width:2px; height:26px; border-radius:2px;
-    background:linear-gradient(180deg, ***REMOVED***000, ***REMOVED***34373d 50%, ***REMOVED***000);
+    background:linear-gradient(180deg, #000, #34373d 50%, #000);
     box-shadow:1px 0 0 rgba(255,255,255,.04);
 }
 .nav-f1-badge__logo {
     font-family:var(--ff-tech); font-style:italic; font-weight:900;
     font-size:1.1rem; letter-spacing:.01em; line-height:1;
-    color:***REMOVED***e10600; text-shadow:0 0 14px rgba(225,6,0,.5);
+    color:#e10600; text-shadow:0 0 14px rgba(225,6,0,.5);
 }
 
 /* Login = roter "Engine-Start"-Knopf (geprägt, mit rotem Schein) */
@@ -286,8 +286,8 @@
     display:inline-flex; align-items:center; justify-content:center;
     min-width:14px; height:14px; padding:0 3px;
     border-radius:999px;
-    background:var(--sig-red, ***REMOVED***e10600);
-    color:***REMOVED***fff;
+    background:var(--sig-red, #e10600);
+    color:#fff;
     font:800 .58rem/1 var(--ff-body);
     box-shadow:0 0 8px rgba(225,6,0,.55), 0 0 0 2px rgba(6,7,10,.85);
     animation:brand-pulse 2.4s ease-in-out infinite;
@@ -332,7 +332,7 @@ main { display:block; flex:1 0 auto; min-height:60vh; padding:clamp(1.2rem,2vw,1
     font-size:.82rem;
 }
 .footer a { color:var(--ink-2); }
-.footer a:hover { color:***REMOVED***fff; }
+.footer a:hover { color:#fff; }
 
 .scroll-progress {
     position:fixed; top:0; left:0; height:2px; width:0;
@@ -372,8 +372,8 @@ main { display:block; flex:1 0 auto; min-height:60vh; padding:clamp(1.2rem,2vw,1
     padding:.45rem .5rem;
     gap:.4rem;
 }
-.music-player.is-collapsed ***REMOVED***musicPrev,
-.music-player.is-collapsed ***REMOVED***musicNext,
+.music-player.is-collapsed #musicPrev,
+.music-player.is-collapsed #musicNext,
 .music-player.is-collapsed .music-meta,
 .music-player.is-collapsed .music-volume {
     display:none;
@@ -387,13 +387,13 @@ main { display:block; flex:1 0 auto; min-height:60vh; padding:clamp(1.2rem,2vw,1
     background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
     border:1px solid color-mix(in srgb, var(--accent) 28%, var(--stroke-1));
     border-radius:6px;
-    color:***REMOVED***fff; cursor:pointer;
+    color:#fff; cursor:pointer;
     transition:background var(--t-fast), color var(--t-fast), transform var(--t-fast), border-color var(--t-fast);
 }
 .music-btn:hover {
     background:color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,.07));
     border-color:color-mix(in srgb, var(--accent) 65%, var(--stroke-2));
-    color:***REMOVED***fff;
+    color:#fff;
 }
 .music-meta { flex:1 1 auto; min-width:0; max-width:220px; }
 .music-title { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; }
@@ -408,7 +408,7 @@ main { display:block; flex:1 0 auto; min-height:60vh; padding:clamp(1.2rem,2vw,1
 .music-volume::-webkit-slider-thumb {
     -webkit-appearance:none; appearance:none;
     width:12px; height:12px; border-radius:50%;
-    background:var(--accent); border:2px solid ***REMOVED***fff;
+    background:var(--accent); border:2px solid #fff;
     box-shadow:0 0 8px var(--accent-glow);
     cursor:pointer;
 }

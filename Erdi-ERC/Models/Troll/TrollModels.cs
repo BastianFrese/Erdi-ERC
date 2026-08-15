@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Models.Troll;
+namespace Erdi_ERC.Models.Troll;
 
 /// <summary>Thematische Gruppierung der Gags (für Übersicht &amp; Tuning).</summary>
 public enum TrollGagCategory
@@ -35,7 +35,7 @@ public sealed class TrollChallenge
     /// <summary>Anzeige-Prompt (z. B. <c>"7 + 5"</c>); null bei Gags ohne dynamischen Prompt.</summary>
     public string? Prompt { get; init; }
 
-    /// <summary>Erwartete Antwort bei Blocking-Gags (z. B. <c>"12"</c> oder <c>"<OWNER_HANDLE>"</c>); null sonst.</summary>
+    /// <summary>Erwartete Antwort bei Blocking-Gags (z. B. <c>"12"</c> oder <c>"Erdi"</c>); null sonst.</summary>
     public string? ExpectedAnswer { get; init; }
 }
 
@@ -61,8 +61,8 @@ public static class TrollTrivia
             new[] { "Boxengasse anfahren", "Platz machen", "Anhalten", "Beschleunigen" }),
         new TrollTriviaQuestion("Wie viele Räder hat ein Formel-1-Auto?", "4",
             new[] { "2", "3", "4", "6" }),
-        new TrollTriviaQuestion("Wer ist laut <OWNER_HANDLE> der beste Fahrer aller Zeiten?", "<OWNER_HANDLE>",
-            new[] { "Max Verstappen", "<OWNER_HANDLE>", "Ayrton Senna", "Michael Schumacher" })
+        new TrollTriviaQuestion("Wer ist laut Erdi der beste Fahrer aller Zeiten?", "Erdi",
+            new[] { "Max Verstappen", "Erdi", "Ayrton Senna", "Michael Schumacher" })
     };
 
     /// <summary>Findet eine Frage anhand ihres exakten Fragetexts (aus TempData rekonstruiert); null wenn unbekannt.</summary>
@@ -87,9 +87,9 @@ public sealed class TrollGateViewModel
     /// <summary>Bisherige Fehlversuche bei Blocking-Gags.</summary>
     public int Attempts { get; init; }
 
-    /// <summary>True, sobald mindestens ein Fehlversuch vorliegt — zeigt „<OWNER_HANDLE> schüttelt den Kopf".</summary>
+    /// <summary>True, sobald mindestens ein Fehlversuch vorliegt — zeigt „Erdi schüttelt den Kopf".</summary>
     public bool ShowWrongAnswer => Gag.IsBlocking && Attempts > 0;
 
-    /// <summary>True, sobald <OWNER_HANDLE> gnädig wird und einen Durchlass-Button anbietet.</summary>
+    /// <summary>True, sobald Erdi gnädig wird und einen Durchlass-Button anbietet.</summary>
     public bool MercyOffered { get; init; }
 }

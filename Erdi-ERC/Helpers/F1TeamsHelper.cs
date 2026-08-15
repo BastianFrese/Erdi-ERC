@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     public static class F1TeamsHelper
     {
@@ -6,17 +6,17 @@ namespace <OWNER_HANDLE>_ERC.Helpers
 
         public static readonly System.Collections.Generic.IReadOnlyList<F1Team> Teams = new System.Collections.Generic.List<F1Team>
         {
-            new("Red Bull Racing",   "redbull",    "***REMOVED***3671C6", "***REMOVED***CC1E4A", "red-bull-racing", new[] { "Max Verstappen",    "Yuki Tsunoda" }),
-            new("Mercedes",          "mercedes",   "***REMOVED***00D2BE", "***REMOVED***C0C0C0", "mercedes",        new[] { "George Russell",    "Kimi Antonelli" }),
-            new("Ferrari",           "ferrari",    "***REMOVED***E8002D", "***REMOVED***FFFFFF", "ferrari",         new[] { "Charles Leclerc",   "Lewis Hamilton" }),
-            new("McLaren",           "mclaren",    "***REMOVED***FF8000", "***REMOVED***000000", "mclaren",         new[] { "Lando Norris",      "Oscar Piastri" }),
-            new("Aston Martin",      "astonmartin","***REMOVED***229971", "***REMOVED***CEDC00", "aston-martin",    new[] { "Fernando Alonso",   "Lance Stroll" }),
-            new("Alpine",            "alpine",     "***REMOVED***FF87BC", "***REMOVED***0093CC", "alpine",          new[] { "Pierre Gasly",      "Jack Doohan" }),
-            new("Williams",          "williams",   "***REMOVED***64C4FF", "***REMOVED***FFFFFF", "williams",        new[] { "Alex Albon",        "Carlos Sainz" }),
-            new("Haas",              "haas",       "***REMOVED***B6BABD", "***REMOVED***E8002D", "haas",            new[] { "Esteban Ocon",      "Oliver Bearman" }),
-            new("Racing Bulls",      "racingbulls","***REMOVED***6692FF", "***REMOVED***CC1E4A", "rb",              new[] { "Isack Hadjar",      "Liam Lawson" }),
-            new("Audi",              "audi",       "***REMOVED***8A9597", "***REMOVED***FFFFFF", "audi",            new[] { "Nico Hülkenberg",   "Gabriel Bortoleto" }),
-            new("Cadillac",            "cadillac",   "***REMOVED***000000", "***REMOVED***FFFFFF", "cadillac",        new[] { "Logan Sargeant",    "Zane Maloney" }),
+            new("Red Bull Racing",   "redbull",    "#3671C6", "#CC1E4A", "red-bull-racing", new[] { "Max Verstappen",    "Yuki Tsunoda" }),
+            new("Mercedes",          "mercedes",   "#00D2BE", "#C0C0C0", "mercedes",        new[] { "George Russell",    "Kimi Antonelli" }),
+            new("Ferrari",           "ferrari",    "#E8002D", "#FFFFFF", "ferrari",         new[] { "Charles Leclerc",   "Lewis Hamilton" }),
+            new("McLaren",           "mclaren",    "#FF8000", "#000000", "mclaren",         new[] { "Lando Norris",      "Oscar Piastri" }),
+            new("Aston Martin",      "astonmartin","#229971", "#CEDC00", "aston-martin",    new[] { "Fernando Alonso",   "Lance Stroll" }),
+            new("Alpine",            "alpine",     "#FF87BC", "#0093CC", "alpine",          new[] { "Pierre Gasly",      "Jack Doohan" }),
+            new("Williams",          "williams",   "#64C4FF", "#FFFFFF", "williams",        new[] { "Alex Albon",        "Carlos Sainz" }),
+            new("Haas",              "haas",       "#B6BABD", "#E8002D", "haas",            new[] { "Esteban Ocon",      "Oliver Bearman" }),
+            new("Racing Bulls",      "racingbulls","#6692FF", "#CC1E4A", "rb",              new[] { "Isack Hadjar",      "Liam Lawson" }),
+            new("Audi",              "audi",       "#8A9597", "#FFFFFF", "audi",            new[] { "Nico Hülkenberg",   "Gabriel Bortoleto" }),
+            new("Cadillac",            "cadillac",   "#000000", "#FFFFFF", "cadillac",        new[] { "Logan Sargeant",    "Zane Maloney" }),
         };
 
         private static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> TeamAliases =

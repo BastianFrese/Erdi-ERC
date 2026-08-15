@@ -32,7 +32,7 @@
 }
 
 .community-kpi-card__value {
-    color: ***REMOVED***fff;
+    color: #fff;
     font-size: 1.8rem;
     line-height: 1;
     font-family: var(--ff-tech);
@@ -71,7 +71,7 @@
 }
 
 .community-card__title {
-    color: ***REMOVED***fff;
+    color: #fff;
     font-weight: 700;
     font-size: 1.08rem;
     margin-bottom: .35rem;
@@ -126,7 +126,7 @@
 
 .community-feed__item strong,
 .community-link-title {
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 
 .community-form-card {
@@ -171,7 +171,7 @@
 }
 
 .community-stat-tile__value {
-    color: ***REMOVED***fff;
+    color: #fff;
     font-weight: 700;
     margin-top: .2rem;
 }

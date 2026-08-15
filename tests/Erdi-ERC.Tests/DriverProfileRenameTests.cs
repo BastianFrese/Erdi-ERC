@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Regression tests for <see cref="DriverProfileService.RenameIngameNameAsync"/>: a profile
@@ -14,11 +14,11 @@ namespace <OWNER_HANDLE>_ERC.Tests;
 /// </summary>
 public class DriverProfileRenameTests
 {
-    private static DriverProfileService CreateService(<OWNER_HANDLE>_ERC.Data.AppDbContext db)
+    private static DriverProfileService CreateService(Erdi_ERC.Data.AppDbContext db)
         => new(db, Microsoft.Extensions.Options.Options.Create(new DriverMatchingOptions()));
 
     private static DriverProfile SeedProfile(
-        <OWNER_HANDLE>_ERC.Data.AppDbContext db,
+        Erdi_ERC.Data.AppDbContext db,
         string discordId,
         string displayName,
         string preferredPlatform,
@@ -27,7 +27,7 @@ public class DriverProfileRenameTests
         var profile = new DriverProfile
         {
             DiscordId = discordId,
-            DiscordName = $"{displayName}***REMOVED***0001",
+            DiscordName = $"{displayName}#0001",
             DisplayName = displayName,
             PreferredPlatform = preferredPlatform,
             GamerTags = tags.Select(t => new DriverGamerTag

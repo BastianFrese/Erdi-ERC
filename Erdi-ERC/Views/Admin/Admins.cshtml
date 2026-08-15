@@ -1,5 +1,5 @@
-@model List<<OWNER_HANDLE>_ERC.Models.AdminUser>
-@using <OWNER_HANDLE>_ERC.Models
+@model List<Erdi_ERC.Models.AdminUser>
+@using Erdi_ERC.Models
 @{
     ViewData["Title"] = "Admins & Berechtigungen";
     ViewData["Kicker"] = "System";
@@ -12,21 +12,21 @@
 
     @* KPI *@
     <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#5b8cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-shield-lock-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count</div>
                 <div class="adm-kpi-card__label">Admins gesamt</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ffb800;">
+        <div class="adm-kpi-card" style="--kpi-color:#ffb800;">
             <div class="adm-kpi-card__icon"><i class="bi bi-star-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count(x => x.IsSuperAdmin)</div>
                 <div class="adm-kpi-card__label">Superadmins</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
             <div class="adm-kpi-card__icon"><i class="bi bi-key-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count(x => !x.IsSuperAdmin)</div>
@@ -38,7 +38,7 @@
     @* Neuen Admin hinzufügen *@
     <div class="adm-panel">
         <div class="adm-panel__head">
-            <span class="adm-panel__head-title"><i class="bi bi-person-plus-fill me-2" style="color:***REMOVED***5b8cff;"></i>Neuen Admin hinzufügen</span>
+            <span class="adm-panel__head-title"><i class="bi bi-person-plus-fill me-2" style="color:#5b8cff;"></i>Neuen Admin hinzufügen</span>
         </div>
         <div class="adm-panel__body">
             <form asp-action="AddAdmin" method="post" class="adm-add-admin-form">
@@ -55,7 +55,7 @@
                     <label class="adm-check-label">
                         <input type="checkbox" name="isSuperAdmin" value="true" class="adm-checkbox" />
                         <span class="adm-check-text">
-                            <i class="bi bi-star-fill me-1" style="color:***REMOVED***ffb800;"></i>
+                            <i class="bi bi-star-fill me-1" style="color:#ffb800;"></i>
                             Superadmin <small class="adm-check-hint">(voller Zugriff auf alle Bereiche)</small>
                         </span>
                     </label>
@@ -78,7 +78,7 @@
         {
             <div class="adm-panel__body">
                 <div class="adm-empty">
-                    <i class="bi bi-exclamation-triangle-fill adm-empty__icon" style="color:***REMOVED***ffb800;opacity:1;"></i>
+                    <i class="bi bi-exclamation-triangle-fill adm-empty__icon" style="color:#ffb800;opacity:1;"></i>
                     <span>Noch keine Admins hinterlegt. Trage mindestens deine eigene Discord-ID ein!</span>
                 </div>
             </div>
@@ -176,7 +176,7 @@
                                             <label class="adm-check-label">
                                                 <input type="checkbox" name="isSuperAdmin" value="true" class="adm-checkbox" @(admin.IsSuperAdmin ? "checked" : "") />
                                                 <span class="adm-check-text">
-                                                    <i class="bi bi-star-fill me-1" style="color:***REMOVED***ffb800;"></i>
+                                                    <i class="bi bi-star-fill me-1" style="color:#ffb800;"></i>
                                                     Superadmin
                                                 </span>
                                             </label>

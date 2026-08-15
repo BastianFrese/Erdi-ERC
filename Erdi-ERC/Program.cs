@@ -1,7 +1,7 @@
 using AspNet.Security.OAuth.Discord;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -353,7 +353,7 @@ builder.Services.AddAuthentication(options =>
             var discordId = identity.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrWhiteSpace(discordId))
             {
-                var db = context.HttpContext.RequestServices.GetRequiredService<<OWNER_HANDLE>_ERC.Data.AppDbContext>();
+                var db = context.HttpContext.RequestServices.GetRequiredService<Erdi_ERC.Data.AppDbContext>();
                 var adminUser = await db.AdminUsers
                     .Include(a => a.Permissions)
                     .FirstOrDefaultAsync(a => a.DiscordId == discordId);
@@ -366,7 +366,7 @@ builder.Services.AddAuthentication(options =>
                     {
                         identity.AddClaim(new Claim("erdi:superadmin", "true"));
                         // Superadmin bekommt alle Berechtigungen implizit
-                        foreach (var perm in <OWNER_HANDLE>_ERC.Models.AdminPermissions.All)
+                        foreach (var perm in Erdi_ERC.Models.AdminPermissions.All)
                         {
                             identity.AddClaim(new Claim("erdi:perm", perm.Key));
                         }
@@ -416,90 +416,90 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin.League", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx =>
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueStandings, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueRaces,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.LeagueStandings, Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.LeagueRaces,     Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.League.Standings", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueStandings, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.LeagueStandings, Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.League.Races", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueRaces, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.LeagueRaces, Erdi_ERC.Models.AdminPermissions.System)));
 
     // ── Community ────────────────────────────────────────────────────────────────
     options.AddPolicy("Admin.Community", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx =>
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityHub,        <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityEvents,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityStreams,    <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityStewarding, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community)));
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityHub,        Erdi_ERC.Models.AdminPermissions.Community) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityEvents,     Erdi_ERC.Models.AdminPermissions.Community) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStreams,    Erdi_ERC.Models.AdminPermissions.Community) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStewarding, Erdi_ERC.Models.AdminPermissions.Community)));
 
     options.AddPolicy("Admin.Community.Hub", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityHub, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityHub, Erdi_ERC.Models.AdminPermissions.Community)));
 
     options.AddPolicy("Admin.Community.Events", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityEvents, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityEvents, Erdi_ERC.Models.AdminPermissions.Community)));
 
     options.AddPolicy("Admin.Community.Streams", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityStreams, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStreams, Erdi_ERC.Models.AdminPermissions.Community)));
 
     options.AddPolicy("Admin.Community.Stewarding", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.CommunityStewarding, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Community)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStewarding, Erdi_ERC.Models.AdminPermissions.Community)));
 
     // ── Fahrer ───────────────────────────────────────────────────────────────────
     options.AddPolicy("Admin.Drivers", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx =>
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversAchievements, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversDefinitions,  <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversCards,        <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.DriversAchievements, Erdi_ERC.Models.AdminPermissions.Drivers) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.DriversDefinitions,  Erdi_ERC.Models.AdminPermissions.Drivers) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.DriversCards,        Erdi_ERC.Models.AdminPermissions.Drivers)));
 
     options.AddPolicy("Admin.Drivers.Achievements", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversAchievements, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.DriversAchievements, Erdi_ERC.Models.AdminPermissions.Drivers)));
 
     options.AddPolicy("Admin.Drivers.Definitions", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversDefinitions, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.DriversDefinitions, Erdi_ERC.Models.AdminPermissions.Drivers)));
 
     options.AddPolicy("Admin.Drivers.Cards", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.DriversCards, <OWNER_HANDLE>_ERC.Models.AdminPermissions.Drivers)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.DriversCards, Erdi_ERC.Models.AdminPermissions.Drivers)));
 
     // ── System ───────────────────────────────────────────────────────────────────
     options.AddPolicy("Admin.System", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx =>
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemMusic,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemSetups,    <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemAuditLogs, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemWebhooks,  <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemAboutMe,   <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueStandings, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.LeagueRaces,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System) ||
-                  HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemTroll,     <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemMusic,     Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemSetups,    Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemAuditLogs, Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemWebhooks,  Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemAboutMe,   Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.LeagueStandings, Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.LeagueRaces,     Erdi_ERC.Models.AdminPermissions.System) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemTroll,     Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.Music", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemMusic, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemMusic, Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.Setups", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemSetups, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemSetups, Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.AuditLogs", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemAuditLogs, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemAuditLogs, Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.Webhooks", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemWebhooks, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemWebhooks, Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.AboutMe", policy =>
         policy.RequireAuthenticatedUser()
@@ -508,20 +508,20 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("Admin.System.Regelwerk", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemRegelwerk, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemRegelwerk, Erdi_ERC.Models.AdminPermissions.System)));
 
     options.AddPolicy("Admin.System.Troll", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.SystemTroll, <OWNER_HANDLE>_ERC.Models.AdminPermissions.System)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.SystemTroll, Erdi_ERC.Models.AdminPermissions.System)));
 
     // ── Bewerbungen (V1) ─────────────────────────────────────────────────────────
     options.AddPolicy("Admin.Applications.View", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsView, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.ApplicationsView, Erdi_ERC.Models.AdminPermissions.ApplicationsManage)));
 
     options.AddPolicy("Admin.Applications.Manage", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
-              .RequireAssertion(ctx => HasPerm(ctx.User, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage, <OWNER_HANDLE>_ERC.Models.AdminPermissions.ApplicationsManage)));
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.ApplicationsManage, Erdi_ERC.Models.AdminPermissions.ApplicationsManage)));
 });
 var app = builder.Build();
 
@@ -782,7 +782,7 @@ var movedRoutes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCas
     ["Home/AllRaces"] = "/Races/AllRaces",
     ["Home/RaceCalendar"] = "/Races/RaceCalendar",
     ["Home/DriverDetail"] = "/Races/DriverDetail",
-    ["Home/<OWNER_HANDLE>10"] = "/Stats/<OWNER_HANDLE>10",
+    ["Home/Erdi10"] = "/Stats/Erdi10",
     ["Home/EwigeListe"] = "/Stats/EwigeListe",
     ["Home/HallOfFame"] = "/Stats/HallOfFame",
     ["Home/DriverLevels"] = "/Stats/DriverLevels",

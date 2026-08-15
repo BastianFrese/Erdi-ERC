@@ -1,8 +1,8 @@
-@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@model Erdi_ERC.Models.Troll.TrollGateViewModel
 @*
     Generisches Partial für admin-erstellte Inhalts-Gags (TrollCustomGag).
     Kind == Message → wegklickbar (Continue). Kind == Quiz → blockierend, via Solve geprüft.
-    Das „<OWNER_HANDLE> schüttelt den Kopf"-/Gnaden-Feedback rendert zentral Gate.cshtml.
+    Das „Erdi schüttelt den Kopf"-/Gnaden-Feedback rendert zentral Gate.cshtml.
 *@
 @{
     var c = Model.Custom;
@@ -11,15 +11,15 @@
 {
     @* Fallback: Daten nicht (mehr) auffindbar → einfach durchlassen, niemals hängen bleiben. *@
     <div class="troll-gag">
-        <div class="troll-eyebrow"><OWNER_HANDLE>/div>
-        <h2 class="troll-title"><OWNER_HANDLE> hat es sich anders überlegt.</h2>
+        <div class="troll-eyebrow">Erdi</div>
+        <h2 class="troll-title">Erdi hat es sich anders überlegt.</h2>
         <a asp-controller="Troll" asp-action="Continue" class="f1-btn f1-btn--primary">Reinlassen →</a>
     </div>
 }
-else if (c.Kind == <OWNER_HANDLE>_ERC.Models.Troll.TrollCustomGagKind.Quiz)
+else if (c.Kind == Erdi_ERC.Models.Troll.TrollCustomGagKind.Quiz)
 {
     <div class="troll-gag troll-gag--quiz">
-        <div class="troll-eyebrow">@(string.IsNullOrWhiteSpace(c.Eyebrow) ? "<OWNER_HANDLE> · Quiz" : c.Eyebrow)</div>
+        <div class="troll-eyebrow">@(string.IsNullOrWhiteSpace(c.Eyebrow) ? "Erdi · Quiz" : c.Eyebrow)</div>
         <h2 class="troll-title">@c.Title</h2>
         @if (!string.IsNullOrWhiteSpace(c.Lead))
         {
@@ -53,7 +53,7 @@ else if (c.Kind == <OWNER_HANDLE>_ERC.Models.Troll.TrollCustomGagKind.Quiz)
 else
 {
     <div class="troll-gag">
-        <div class="troll-eyebrow">@(string.IsNullOrWhiteSpace(c.Eyebrow) ? "<OWNER_HANDLE> · Durchsage" : c.Eyebrow)</div>
+        <div class="troll-eyebrow">@(string.IsNullOrWhiteSpace(c.Eyebrow) ? "Erdi · Durchsage" : c.Eyebrow)</div>
         <h2 class="troll-title">@c.Title</h2>
         @if (!string.IsNullOrWhiteSpace(c.Lead))
         {

@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Models.UiComponents
+namespace Erdi_ERC.Models.UiComponents
 {
     public class F1PageHeroVm
     {
@@ -15,7 +15,7 @@ namespace <OWNER_HANDLE>_ERC.Models.UiComponents
     public class F1ButtonVm
     {
         public string Label { get; set; } = string.Empty;
-        public string Href { get; set; } = "***REMOVED***";
+        public string Href { get; set; } = "#";
         public string Variant { get; set; } = "primary";
         public string? IconLucide { get; set; }
         public string Target { get; set; } = "";
@@ -37,7 +37,7 @@ namespace <OWNER_HANDLE>_ERC.Models.UiComponents
         public string? IconLucide { get; set; }
         public string IconVariant { get; set; } = "";
         public string? Cta { get; set; }
-        public string Href { get; set; } = "***REMOVED***";
+        public string Href { get; set; } = "#";
     }
 
     public class F1StatTileVm
@@ -60,6 +60,6 @@ namespace <OWNER_HANDLE>_ERC.Models.UiComponents
         public string? NextEventTrack { get; set; }
         public string? NextEventDate { get; set; }
         public string? NextEventFormat { get; set; }
-        public string Href { get; set; } = "***REMOVED***";
+        public string Href { get; set; } = "#";
     }
 }

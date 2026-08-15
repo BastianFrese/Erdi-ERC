@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Options
+namespace Erdi_ERC.Options
 {
     /// <summary>
     /// Punkteverteilung pro Endposition (Index = Position - 1).

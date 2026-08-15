@@ -1,5 +1,5 @@
-@model <OWNER_HANDLE>_ERC.Models.RaceResultDetailViewModel
-@using <OWNER_HANDLE>_ERC.Helpers
+@model Erdi_ERC.Models.RaceResultDetailViewModel
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = $"{Model.League.Name} · {Model.Race.Track}";
 
@@ -57,7 +57,7 @@
 
     Actions   = new() {
         new F1ButtonVm { Label="Zur Liga", Variant="primary", IconLucide="arrow-left", Href=Url.Action("LeagueResults", "Races", new { leagueId=Model.League.Id })! },
-        new F1ButtonVm { Label="Hub",      Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10", "Stats")! }
+        new F1ButtonVm { Label="Hub",      Variant="ghost",   IconLucide="flag",       Href=Url.Action("Erdi10", "Stats")! }
     }
 })" />
 

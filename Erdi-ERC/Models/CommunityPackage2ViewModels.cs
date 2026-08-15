@@ -1,11 +1,11 @@
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     public class TeamSummaryViewModel
     {
         public string TeamName { get; set; } = string.Empty;
         public string? CssKey { get; set; }
-        public string PrimaryColor { get; set; } = "***REMOVED***e10600";
-        public string SecondaryColor { get; set; } = "***REMOVED***ffffff";
+        public string PrimaryColor { get; set; } = "#e10600";
+        public string SecondaryColor { get; set; } = "#ffffff";
         public int Drivers { get; set; }
         public int Points { get; set; }
         public int Wins { get; set; }
@@ -40,8 +40,8 @@ namespace <OWNER_HANDLE>_ERC.Models
     {
         public string TeamName { get; set; } = string.Empty;
         public string? CssKey { get; set; }
-        public string PrimaryColor { get; set; } = "***REMOVED***e10600";
-        public string SecondaryColor { get; set; } = "***REMOVED***ffffff";
+        public string PrimaryColor { get; set; } = "#e10600";
+        public string SecondaryColor { get; set; } = "#ffffff";
         public int TotalPoints { get; set; }
         public int TotalWins { get; set; }
         public int TotalPodiums { get; set; }

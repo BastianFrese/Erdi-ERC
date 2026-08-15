@@ -29,7 +29,7 @@
 }
 
 .setup-card__title {
-    color: ***REMOVED***fff;
+    color: #fff;
     font-weight: 700;
     font-size: 1.05rem;
 }
@@ -66,7 +66,7 @@
 }
 
 .setup-user-metric strong {
-    color: ***REMOVED***fff;
+    color: #fff;
     font-family: var(--ff-mono);
     font-size: .88rem;
     text-align: right;
@@ -85,7 +85,7 @@
     inset: 0 auto 0 0;
     width: 0;
     border-radius: inherit;
-    background: linear-gradient(90deg, ***REMOVED***25d7ff 0%, ***REMOVED***39ff14 55%, ***REMOVED***ff5a3d 100%);
+    background: linear-gradient(90deg, #25d7ff 0%, #39ff14 55%, #ff5a3d 100%);
     box-shadow: 0 0 10px rgba(37,215,255,.25);
     transition: width var(--t-base);
 }
@@ -97,7 +97,7 @@
 /* ── Interaktive Slider (immer aktiv) ────────────────────────────── */
 .setup-ingame-editor input[type="range"]:not(:disabled) {
     cursor: ew-resize;
-    accent-color: ***REMOVED***e8002d;
+    accent-color: #e8002d;
 }
 
 .setup-ingame-editor input[type="range"]:not(:disabled):focus {
@@ -129,7 +129,7 @@
 }
 
 .setup-reset-btn:hover {
-    color: ***REMOVED***e8002d;
+    color: #e8002d;
     border-color: rgba(232,0,45,.45);
     background: rgba(232,0,45,.08);
     box-shadow: 0 0 10px rgba(232,0,45,.15);
@@ -155,11 +155,11 @@
     text-transform: uppercase;
 }
 
-.tire--soft { background: rgba(255, 82, 82, .16); color: ***REMOVED***ff8f8f; }
-.tire--medium { background: rgba(255, 193, 7, .14); color: ***REMOVED***ffd86b; }
-.tire--hard { background: rgba(245, 245, 245, .14); color: ***REMOVED***f2f2f2; }
-.tire--inter { background: rgba(76, 175, 80, .16); color: ***REMOVED***8eff93; }
-.tire--wet { background: rgba(33, 150, 243, .16); color: ***REMOVED***79c8ff; }
+.tire--soft { background: rgba(255, 82, 82, .16); color: #ff8f8f; }
+.tire--medium { background: rgba(255, 193, 7, .14); color: #ffd86b; }
+.tire--hard { background: rgba(245, 245, 245, .14); color: #f2f2f2; }
+.tire--inter { background: rgba(76, 175, 80, .16); color: #8eff93; }
+.tire--wet { background: rgba(33, 150, 243, .16); color: #79c8ff; }
 
 @media (max-width: 575.98px) {
     .setup-card__head {
@@ -171,7 +171,7 @@
     }
 }
 
-/* Anker-Sprung (***REMOVED***setup-{id}) nach Like/Kommentar: Karte nicht unter den Sticky-Header schieben. */
+/* Anker-Sprung (#setup-{id}) nach Like/Kommentar: Karte nicht unter den Sticky-Header schieben. */
 .setup-card {
     scroll-margin-top: 84px;
 }
@@ -228,13 +228,13 @@
     white-space:nowrap;
 }
 .tier-badge i { font-size:.85rem; }
-.tier-badge--public    { background:rgba(120,140,160,.12); color:***REMOVED***a8b6c4; border-color:rgba(120,140,160,.35); }
-.tier-badge--community { background:rgba(88,101,242,.14);  color:***REMOVED***a4adff; border-color:rgba(88,101,242,.45); }
-.tier-badge--t1        { background:rgba(34,211,238,.12);  color:***REMOVED***67e8f9; border-color:rgba(34,211,238,.45); }
-.tier-badge--t2      { background:rgba(245,158,11,.14);  color:***REMOVED***fbbf24; border-color:rgba(245,158,11,.50); }
+.tier-badge--public    { background:rgba(120,140,160,.12); color:#a8b6c4; border-color:rgba(120,140,160,.35); }
+.tier-badge--community { background:rgba(88,101,242,.14);  color:#a4adff; border-color:rgba(88,101,242,.45); }
+.tier-badge--t1        { background:rgba(34,211,238,.12);  color:#67e8f9; border-color:rgba(34,211,238,.45); }
+.tier-badge--t2      { background:rgba(245,158,11,.14);  color:#fbbf24; border-color:rgba(245,158,11,.50); }
 .tier-badge--t3      {
     background:linear-gradient(135deg,rgba(244,63,94,.18),rgba(217,70,239,.14));
-    color:***REMOVED***fda4af;border-color:rgba(244,63,94,.55);
+    color:#fda4af;border-color:rgba(244,63,94,.55);
     box-shadow:0 0 0 1px rgba(244,63,94,.10) inset;
 }
 
@@ -257,10 +257,10 @@
     font:800 .6rem/1 var(--ff-body);letter-spacing:.06em;
 }
 .setup-freshness--new {
-    background:rgba(225,6,0,.16);color:***REMOVED***ff6b63;border:1px solid rgba(225,6,0,.5);
+    background:rgba(225,6,0,.16);color:#ff6b63;border:1px solid rgba(225,6,0,.5);
 }
 .setup-freshness--updated {
-    background:rgba(245,158,11,.14);color:***REMOVED***fbbf24;border:1px solid rgba(245,158,11,.5);
+    background:rgba(245,158,11,.14);color:#fbbf24;border:1px solid rgba(245,158,11,.5);
 }
 
 /* ───── F1-Broadcast-Intro: stellt neue Setups einmalig vor (localStorage = gelesen) ───── */

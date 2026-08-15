@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Options
+namespace Erdi_ERC.Options
 {
     /// <summary>
     /// Lebensdauer- und Refresh-Settings für den Login-Cookie.

@@ -1,8 +1,8 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Models.Troll;
+using Erdi_ERC.Models;
+using Erdi_ERC.Models.Troll;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Data
+namespace Erdi_ERC.Data
 {
     public class AppDbContext : DbContext
     {
@@ -441,7 +441,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                 b.HasIndex(x => new { x.LeagueId, x.Driver });
             });
 
-            // ── <OWNER_HANDLE>-Troll-System (admin-verwaltet) ───────────────────────────────────
+            // ── Erdi-Troll-System (admin-verwaltet) ───────────────────────────────────
             modelBuilder.Entity<TrollGagOverride>(b =>
             {
                 b.HasKey(x => x.Key);

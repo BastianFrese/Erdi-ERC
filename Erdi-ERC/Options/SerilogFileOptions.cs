@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Options
+namespace Erdi_ERC.Options
 {
     /// <summary>
     /// Datei-Logging-Parameter (Rolling File).

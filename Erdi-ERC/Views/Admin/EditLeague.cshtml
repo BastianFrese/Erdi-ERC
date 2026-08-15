@@ -1,11 +1,11 @@
-@model <OWNER_HANDLE>_ERC.Models.League
-@using <OWNER_HANDLE>_ERC.Helpers
+@model Erdi_ERC.Models.League
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = $"Liga: {Model.Name}";
     ViewData["Kicker"] = "Liga";
     ViewData["HeroTitle"] = Model.Name;
     ViewData["HeroSubtitle"] = "Verwalte Details, Fahrerliste, Rennen und kommende Events dieser Liga in einem zentralen Bereich.";
-    var recentRaceUndos = (ViewBag.RecentRaceUndos as List<<OWNER_HANDLE>_ERC.Models.RaceUndoEntry>) ?? new List<<OWNER_HANDLE>_ERC.Models.RaceUndoEntry>();
+    var recentRaceUndos = (ViewBag.RecentRaceUndos as List<Erdi_ERC.Models.RaceUndoEntry>) ?? new List<Erdi_ERC.Models.RaceUndoEntry>();
     var mainDriverOptions = Model.Standings
         .Where(x => !x.IsReserveDriver && !string.IsNullOrWhiteSpace(x.Driver))
         .Select(x => x.Driver.Trim())
@@ -57,7 +57,7 @@
                 <strong>Letzte Löschungen rückgängig</strong>
                 <button class="btn btn-sm btn-outline-secondary" type="button"
                         data-bs-toggle="collapse"
-                        data-bs-target="***REMOVED***recentRaceUndosCollapse"
+                        data-bs-target="#recentRaceUndosCollapse"
                         aria-expanded="false"
                         aria-controls="recentRaceUndosCollapse">
                     Ein-/Ausklappen
@@ -80,7 +80,7 @@
                                 {
                                     <tr>
                                         <td>@undo.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                        <td>***REMOVED***@undo.OriginalRaceId</td>
+                                        <td>#@undo.OriginalRaceId</td>
                                         <td>@undo.Actor</td>
                                         <td class="text-end">
                                             <form asp-controller="AdminLeague" asp-action="UndoDeleteRace" method="post" class="d-inline" onsubmit="return confirm('Gelöschtes Rennen wiederherstellen?');">
@@ -269,7 +269,7 @@
             <strong>Bestenliste</strong>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-sm btn-outline-secondary" type="button"
-                        data-bs-toggle="collapse" data-bs-target="***REMOVED***bulkImportCollapse"
+                        data-bs-toggle="collapse" data-bs-target="#bulkImportCollapse"
                         aria-expanded="false" aria-controls="bulkImportCollapse">
                     <i class="bi bi-list-ul me-1"></i>Fahrer per Liste importieren
                 </button>
@@ -294,7 +294,7 @@
                         <code>Name; Nr; Team</code> — z. B. <code>Max Müller; 33; Red Bull Racing</code>.
                         Bereits vorhandene Namen und vergebene Nummern werden übersprungen. Punkte starten bei 0.
                     </p>
-                    <textarea class="form-control mb-2" name="bulk" rows="6" placeholder="Max Müller; 33; Red Bull Racing&***REMOVED***10;Lena Schmidt; 16; Ferrari&***REMOVED***10;Tom Becker"></textarea>
+                    <textarea class="form-control mb-2" name="bulk" rows="6" placeholder="Max Müller; 33; Red Bull Racing&#10;Lena Schmidt; 16; Ferrari&#10;Tom Becker"></textarea>
                     <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-plus-lg me-1"></i>Fahrer importieren</button>
                 </form>
             </div>
@@ -306,7 +306,7 @@
                 <table class="table table-sm align-middle mb-0 league-page-standings-table">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:56px" title="Automatisch aus Punkten">***REMOVED***</th>
+                            <th style="width:56px" title="Automatisch aus Punkten">#</th>
                             <th>Fahrer</th>
                             <th style="width:90px">Nr.</th>
                             <th>Team</th>
@@ -532,12 +532,12 @@
                                 }
                                 @if (r.GuestAssignments?.Any(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
                                     && !string.IsNullOrWhiteSpace(g.MainDriver)
-                                    && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain) ?? false)
+                                    && g.MainDriver != Erdi_ERC.Services.StatsService.GuestSentinelNoMain) ?? false)
                                 {
                                     <div class="small d-flex flex-column gap-1 mt-1">
                                         @foreach (var ga in r.GuestAssignments.Where(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
                                             && !string.IsNullOrWhiteSpace(g.MainDriver)
-                                            && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain))
+                                            && g.MainDriver != Erdi_ERC.Services.StatsService.GuestSentinelNoMain))
                                         {
                                             <span class="badge text-bg-warning text-start text-dark" title="Cross-League-Gast">@ga.GuestDriver → @ga.MainDriver</span>
                                         }

@@ -1,13 +1,13 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using <OWNER_HANDLE>_ERC.Data;
+using Erdi_ERC.Data;
 using System.Security.Claims;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>
     /// Admin-seitige Bewerbungs-Routen: Liste mit Filter, Detail, Accept/Reject,
@@ -19,13 +19,13 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         private readonly IApplicationService _applications;
         private readonly IStaticDataCache _staticCache;
         private readonly AppDbContext _db;
-        private readonly <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions _driverMatching;
+        private readonly Erdi_ERC.Options.DriverMatchingOptions _driverMatching;
 
         public AdminApplicationsController(
             IApplicationService applications,
             IStaticDataCache staticCache,
             AppDbContext db,
-            Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.DriverMatchingOptions> driverMatching)
+            Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.DriverMatchingOptions> driverMatching)
         {
             _applications = applications;
             _staticCache = staticCache;

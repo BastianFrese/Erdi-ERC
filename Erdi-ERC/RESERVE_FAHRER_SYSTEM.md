@@ -1,10 +1,10 @@
-***REMOVED*** Ersatzfahrer-System – Einfaches Admin-Handbuch
+# Ersatzfahrer-System – Einfaches Admin-Handbuch
 
 Dieses Dokument erklärt das Ersatzfahrer-System so, dass es auch ohne Technik-Wissen leicht zu verwalten ist.
 
 ---
 
-***REMOVED******REMOVED*** 1) Kurzfassung
+## 1) Kurzfassung
 
 Wenn ein Ersatzfahrer fährt:
 
@@ -18,9 +18,9 @@ Alte Rennen bleiben dabei korrekt gespeichert (historisch richtig).
 
 ---
 
-***REMOVED******REMOVED*** 2) Das System in 2 Ebenen
+## 2) Das System in 2 Ebenen
 
-***REMOVED******REMOVED******REMOVED*** A) Standard-Zuordnung (Stammdaten)
+### A) Standard-Zuordnung (Stammdaten)
 Wird in der Fahrer-Verwaltung gepflegt:
 
 - `Ersatz?` = Ja/Nein
@@ -28,16 +28,16 @@ Wird in der Fahrer-Verwaltung gepflegt:
 
 Das ist die normale Zuordnung für alle Rennen.
 
-***REMOVED******REMOVED******REMOVED*** B) Renn-Zuordnung (Override, optional)
+### B) Renn-Zuordnung (Override, optional)
 Beim Renn-Eintrag kann die Zuordnung für **dieses eine Rennen** geändert werden.
 
 Wenn du nichts änderst, nutzt das System automatisch die Standard-Zuordnung.
 
 ---
 
-***REMOVED******REMOVED*** 3) Wo mache ich was?
+## 3) Wo mache ich was?
 
-***REMOVED******REMOVED*** 3.1 Standard pflegen
+## 3.1 Standard pflegen
 Pfad:
 1. **Admin**
 2. Liga auswählen
@@ -50,7 +50,7 @@ Dort pflegst du:
 - Ersatz-Status
 - Standard-„Ersatz für"
 
-***REMOVED******REMOVED*** 3.2 Pro Rennen anpassen
+## 3.2 Pro Rennen anpassen
 Pfad:
 1. Liga öffnen
 2. **Renn-Ergebnis eintragen**
@@ -58,7 +58,7 @@ Pfad:
 
 Dort kannst du für einzelne Ersatzfahrer die Zuordnung für genau dieses Rennen setzen.
 
-***REMOVED******REMOVED*** 3.3 Nachträglich prüfen
+## 3.3 Nachträglich prüfen
 In **EditLeague** in der Rennen-Tabelle gibt es die Spalte **Ersatz-Einsätze**.
 
 Dort steht pro Rennen z. B.:
@@ -69,7 +69,7 @@ So ist immer sichtbar, wer in welchem Rennen für wen gefahren ist.
 
 ---
 
-***REMOVED******REMOVED*** 4) Empfohlener Ablauf (einfach)
+## 4) Empfohlener Ablauf (einfach)
 
 1. Vorher: Stammfahrer + Teams sauber pflegen.
 2. Ersatzfahrer als Ersatz markieren, Standard-„Ersatz für“ setzen.
@@ -80,7 +80,7 @@ So ist immer sichtbar, wer in welchem Rennen für wen gefahren ist.
 
 ---
 
-***REMOVED******REMOVED*** 5) Punkte-Logik
+## 5) Punkte-Logik
 
 Punkteschema:
 
@@ -96,7 +96,7 @@ Reihenfolge der Zuordnung:
 
 ---
 
-***REMOVED******REMOVED*** 6) Historie: Warum bleiben alte Rennen korrekt?
+## 6) Historie: Warum bleiben alte Rennen korrekt?
 
 Weil pro Rennen gespeichert wird, welche Zuordnung tatsächlich genutzt wurde.
 
@@ -106,7 +106,7 @@ Das bedeutet:
 
 ---
 
-***REMOVED******REMOVED*** 7) Eingebaute Fehlersicherheit
+## 7) Eingebaute Fehlersicherheit
 
 Das System blockiert automatisch:
 
@@ -118,7 +118,7 @@ Diese Prüfungen laufen im UI und zusätzlich auf dem Server.
 
 ---
 
-***REMOVED******REMOVED*** 8) Datenprüfung (Admin)
+## 8) Datenprüfung (Admin)
 
 Button: **Ersatz-Daten prüfen**
 
@@ -133,31 +133,31 @@ Danach ggf. korrigieren und **Stats neu berechnen**.
 
 ---
 
-***REMOVED******REMOVED*** 9) Sichtbarkeit im Frontend
+## 9) Sichtbarkeit im Frontend
 
 Ersatz-Bezug wird angezeigt in:
 - Results
 - RaceDetail
-- <OWNER_HANDLE>10 (vergangene Rennen, letzter Sieger, Theme)
+- Erdi10 (vergangene Rennen, letzter Sieger, Theme)
 
 Wenn ein Ersatzfahrer gewinnt, steht jetzt pro Rennen auch dabei, **für wen** er gefahren ist.
 
 ---
 
-***REMOVED******REMOVED*** 10) FAQ
+## 10) FAQ
 
-***REMOVED******REMOVED******REMOVED*** Kann ich Ersatzfahrer mitten in der Saison umhängen?
+### Kann ich Ersatzfahrer mitten in der Saison umhängen?
 Ja. Nutze dafür den Renn-Override beim Renn-Eintrag.
 
-***REMOVED******REMOVED******REMOVED*** Muss ich alte Rennen danach anpassen?
+### Muss ich alte Rennen danach anpassen?
 Nein. Die Historie bleibt korrekt.
 
-***REMOVED******REMOVED******REMOVED*** Wann soll ich „Stats neu berechnen“ nutzen?
+### Wann soll ich „Stats neu berechnen“ nutzen?
 Nach größeren Änderungen an Fahrern/Zuordnungen oder wenn etwas unplausibel wirkt.
 
 ---
 
-***REMOVED******REMOVED*** 11) Kurzfazit
+## 11) Kurzfazit
 
 Dieses Hybrid-System bietet:
 

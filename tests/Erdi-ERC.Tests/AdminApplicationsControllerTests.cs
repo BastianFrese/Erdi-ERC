@@ -1,8 +1,8 @@
-using <OWNER_HANDLE>_ERC.Controllers;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Controllers;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Caching.Memory;
 using Xunit;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Controller-Integrationstests für die Admin-Bewerbungsansichten: List, Detail,
@@ -31,7 +31,7 @@ public class AdminApplicationsControllerTests
             new ApplicationTargetingService(ctx.Db, cache),
             NullLogger<ApplicationService>.Instance);
         var ctrl = new AdminApplicationsController(svc, cache, ctx.Db,
-            Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions()));
+            Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.DriverMatchingOptions()));
         ctrl.TempData = new TempDataDictionary(new Microsoft.AspNetCore.Http.DefaultHttpContext(),
             new NullTempDataProvider());
         return ctrl;

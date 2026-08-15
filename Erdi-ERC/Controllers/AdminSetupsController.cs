@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>Track-Setups-Verwaltung: Editor, Access-Tiers/Role-Mappings, manuelle Zugänge, Sperren.</summary>
     [Authorize(Policy = "Admin")]
@@ -38,9 +38,9 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             ViewBag.SetupAccessGuildConfigured = !string.IsNullOrWhiteSpace(setupOptions["GuildId"]);
             ViewBag.SetupAccessMappingsReady = true;
             ViewBag.SetupAccessMappingsCount = await _db.SetupAccessRoleMappings.CountAsync();
-            ViewBag.SetupMetricConfig = <OWNER_HANDLE>_ERC.Models.SetupGameSpec.GetMetricConfig();
-            ViewBag.F1Tracks = <OWNER_HANDLE>_ERC.Models.F1RaceCatalog.Tracks;
-            ViewBag.F1RaceLengths = <OWNER_HANDLE>_ERC.Models.F1RaceCatalog.Lengths;
+            ViewBag.SetupMetricConfig = Erdi_ERC.Models.SetupGameSpec.GetMetricConfig();
+            ViewBag.F1Tracks = Erdi_ERC.Models.F1RaceCatalog.Tracks;
+            ViewBag.F1RaceLengths = Erdi_ERC.Models.F1RaceCatalog.Lengths;
 
             // Current game year setting for admin editor (short form, e.g. "26")
             var appOpts = _config.GetSection("Application");

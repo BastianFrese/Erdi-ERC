@@ -1,13 +1,13 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>Öffentliche Track-Setups: Ansicht mit Tier-Zugriff, Sandbox, Kommentare, Likes, Exclusive-Consent.</summary>
     public class SetupsController : Controller
@@ -194,7 +194,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             var profile = await _db.DriverProfiles.FindAsync(discordId);
             if (profile is null)
             {
-                profile = new <OWNER_HANDLE>_ERC.Models.DriverProfile
+                profile = new Erdi_ERC.Models.DriverProfile
                 {
                     DiscordId = discordId,
                     DiscordName = discordName,
@@ -241,7 +241,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 await _db.SaveChangesAsync();
             }
 
-            // Fragment ***REMOVED***setup-{id}: nach dem Post zur betroffenen Karte springen statt an den Seitenanfang.
+            // Fragment #setup-{id}: nach dem Post zur betroffenen Karte springen statt an den Seitenanfang.
             return RedirectToAction(nameof(TrackSetups), "Setups", new { track, gameYear }, $"setup-{setupId}");
         }
 
@@ -270,7 +270,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             }
 
             await _db.SaveChangesAsync();
-            // Fragment ***REMOVED***setup-{id}: nach dem Post zur betroffenen Karte springen statt an den Seitenanfang.
+            // Fragment #setup-{id}: nach dem Post zur betroffenen Karte springen statt an den Seitenanfang.
             return RedirectToAction(nameof(TrackSetups), "Setups", new { track, gameYear }, $"setup-{setupId}");
         }
     }

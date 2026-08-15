@@ -1,7 +1,7 @@
-@model <OWNER_HANDLE>_ERC.Controllers.ApplyInput
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Services
-@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.DiscordGuildOptions> DiscordGuildOptions
+@model Erdi_ERC.Controllers.ApplyInput
+@using Erdi_ERC.Models
+@using Erdi_ERC.Services
+@inject Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.DiscordGuildOptions> DiscordGuildOptions
 @{
     ViewData["Title"] = "Bewerbung";
     var leagues = ViewBag.Leagues as IReadOnlyList<League> ?? new List<League>();
@@ -43,7 +43,7 @@
 
     @if (needsWarning)
     {
-        @await Html.PartialAsync("_DiscordJoinWarning", new <OWNER_HANDLE>_ERC.ViewModels.DiscordJoinWarningViewModel
+        @await Html.PartialAsync("_DiscordJoinWarning", new Erdi_ERC.ViewModels.DiscordJoinWarningViewModel
         {
             JoinedCommunity = communityClaim,
             JoinedLeague = leagueClaim,

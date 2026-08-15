@@ -3,7 +3,7 @@
   <defs>
     <style>
       .st0 {
-        fill: ***REMOVED***ff2d00;
+        fill: #ff2d00;
       }
 
       .st1 {
@@ -11,7 +11,7 @@
       }
 
       .st2 {
-        clip-path: url(***REMOVED***clippath);
+        clip-path: url(#clippath);
       }
     </style>
     <clipPath id="clippath">

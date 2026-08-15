@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.ViewModels
+namespace Erdi_ERC.ViewModels
 {
     /// <summary>
     /// ViewModel für die Discord-Join-Warnung im Bewerbungsformular.

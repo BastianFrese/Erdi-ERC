@@ -1,10 +1,10 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     /// <summary>
     /// Liefert die für _Layout.cshtml benötigten Daten (Winner-Team-Theme + aktiver Stream)
@@ -17,10 +17,10 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         private static readonly LayoutData EmptyData = new(
             WinnerTeamKey: null,
-            WinnerCarPrimary: "***REMOVED***e10600",
-            WinnerCarPrimaryLight: "***REMOVED***ff2a1f",
-            WinnerCarPrimaryDark: "***REMOVED***7a0300",
-            WinnerCarSecondary: "***REMOVED***ffffff",
+            WinnerCarPrimary: "#e10600",
+            WinnerCarPrimaryLight: "#ff2a1f",
+            WinnerCarPrimaryDark: "#7a0300",
+            WinnerCarSecondary: "#ffffff",
             ActiveStream: null,
             LatestSetupActivityUtc: null);
 
@@ -205,12 +205,12 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         private static string Shade(string hex, double factor)
         {
-            if (string.IsNullOrWhiteSpace(hex) || hex[0] != '***REMOVED***' || hex.Length != 7) return hex;
+            if (string.IsNullOrWhiteSpace(hex) || hex[0] != '#' || hex.Length != 7) return hex;
             int r = Convert.ToInt32(hex.Substring(1, 2), 16);
             int g = Convert.ToInt32(hex.Substring(3, 2), 16);
             int b = Convert.ToInt32(hex.Substring(5, 2), 16);
             int Adjust(int c) => Math.Max(0, Math.Min(255, (int)Math.Round(c + (factor >= 0 ? (255 - c) * factor : c * factor))));
-            return $"***REMOVED***{Adjust(r):X2}{Adjust(g):X2}{Adjust(b):X2}";
+            return $"#{Adjust(r):X2}{Adjust(g):X2}{Adjust(b):X2}";
         }
     }
 }

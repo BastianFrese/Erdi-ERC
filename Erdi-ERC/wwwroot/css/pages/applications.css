@@ -68,7 +68,7 @@
     font-weight: 800;
     font-size: 1.35rem;
     letter-spacing: -.01em;
-    color: ***REMOVED***fff;
+    color: #fff;
     margin: 0 0 .2rem;
 }
 .app-hero__title p {
@@ -103,7 +103,7 @@
     background: rgba(88,101,242,.15);
     border-radius: var(--r-2);
     font-size: 1.25rem;
-    color: ***REMOVED***5865f2;
+    color: #5865f2;
 }
 .app-discord-warn__body strong {
     display: block;
@@ -111,7 +111,7 @@
     font-size: .72rem;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: ***REMOVED***fff;
+    color: #fff;
     margin-bottom: .35rem;
 }
 .app-discord-warn__body p {
@@ -168,7 +168,7 @@
     background: rgba(255,255,255,.04);
     border: 1px solid var(--stroke-1);
     border-radius: 8px;
-    color: ***REMOVED***fff;
+    color: #fff;
     padding: .6rem .85rem;
     font-size: .9rem;
     font-family: var(--ff-body);
@@ -194,12 +194,12 @@
 }
 .app-form__select {
     color-scheme: dark;
-    background-color: ***REMOVED***1a2130;
+    background-color: #1a2130;
     cursor: pointer;
 }
 .app-form__select option {
-    background-color: ***REMOVED***111722;
-    color: ***REMOVED***eaf1ff;
+    background-color: #111722;
+    color: #eaf1ff;
 }
 .app-form__textarea {
     resize: vertical;
@@ -283,7 +283,7 @@
     font-family: var(--ff-tech);
     font-weight: 800;
     font-size: .95rem;
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .app-league-card__seats {
     font-family: var(--ff-tech);
@@ -312,15 +312,15 @@
 }
 .app-league-card__badge--free {
     background: rgba(57,255,20,.10);
-    color: ***REMOVED***39ff14;
+    color: #39ff14;
 }
 .app-league-card__badge--wait {
     background: rgba(255,184,0,.10);
-    color: var(--sig-amber, ***REMOVED***ffb800);
+    color: var(--sig-amber, #ffb800);
 }
 .app-league-card__badge--open {
     background: rgba(61,169,252,.10);
-    color: ***REMOVED***3da9fc;
+    color: #3da9fc;
 }
 .app-league-card--full .app-league-card__body {
     background: rgba(255,255,255,.015);
@@ -395,7 +395,7 @@
     font-weight: 800;
     font-size: 1.25rem;
     letter-spacing: -.01em;
-    color: ***REMOVED***fff;
+    color: #fff;
     margin: 0;
 }
 .app-submit-card__body {
@@ -405,7 +405,7 @@
     max-width: 38ch;
 }
 .app-submit-card__body strong {
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .app-submit-card__warn {
     display: inline-flex;
@@ -435,7 +435,7 @@
     border: 1px solid rgba(61,169,252,.25);
     border-radius: var(--r-2, 8px);
     font-size: .85rem;
-    color: ***REMOVED***cfe9ff;
+    color: #cfe9ff;
 }
 .app-card-stack {
     display: flex;
@@ -459,7 +459,7 @@
     font-family: var(--ff-tech);
     font-weight: 800;
     font-size: 1.05rem;
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .app-card__meta {
     display: flex;
@@ -485,10 +485,10 @@
     border-top: 1px solid rgba(255,255,255,.05);
 }
 .app-btn-danger {
-    color: var(--sig-red, ***REMOVED***ff6b6b);
+    color: var(--sig-red, #ff6b6b);
 }
 .app-btn-danger:hover {
-    color: ***REMOVED***fff;
+    color: #fff;
     background: rgba(255,71,87,.15);
 }
 .app-review-note__label {
@@ -522,7 +522,7 @@
     margin: 1.75rem 0 .85rem;
 }
 .app-section-title i {
-    color: var(--sig-amber, ***REMOVED***ffb800);
+    color: var(--sig-amber, #ffb800);
     margin-right: .4rem;
 }
 .app-card--waitlist {
@@ -546,7 +546,7 @@
     font-family: var(--ff-tech);
     font-size: 1.9rem;
     font-weight: 900;
-    color: var(--sig-amber, ***REMOVED***ffb800);
+    color: var(--sig-amber, #ffb800);
     background: rgba(255,184,0,.07);
     border-radius: var(--r-2, 8px);
 }

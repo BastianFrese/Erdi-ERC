@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     /// <summary>
     /// Extrahiert Text aus einer PDF-Datei und zerlegt ihn in Sektionen

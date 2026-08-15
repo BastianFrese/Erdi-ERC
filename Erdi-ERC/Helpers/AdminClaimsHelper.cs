@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Models;
 
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     /// <summary>
     /// Setzt die Admin-Claims (erdi:admin, ggf. erdi:superadmin + erdi:perm) auf einer Identity.

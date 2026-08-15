@@ -117,7 +117,7 @@ var document = window.document;
 				// the `nonce` attribute is reset to an empty string whenever it
 				// becomes browsing-context connected.
 				// See https://github.com/whatwg/html/issues/2369
-				// See https://html.spec.whatwg.org/***REMOVED***nonce-attributes
+				// See https://html.spec.whatwg.org/#nonce-attributes
 				// The `node.getAttribute` check was added for the sake of
 				// `jQuery.globalEval` so that it can fake a nonce-containing node
 				// via an object.
@@ -604,7 +604,7 @@ jQuery.contains = function( a, b ) {
 
 
 // CSS string/identifier serialization
-// https://drafts.csswg.org/cssom/***REMOVED***common-serializing-idioms
+// https://drafts.csswg.org/cssom/#common-serializing-idioms
 var rcssescape = /([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g;
 
 function fcssescape( ch, asCodePoint ) {
@@ -669,11 +669,11 @@ var i,
 
 	// Regular expressions
 
-	// https://www.w3.org/TR/css-syntax-3/***REMOVED***ident-token-diagram
+	// https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
 	identifier = "(?:\\\\[\\da-fA-F]{1,6}" + whitespace +
 		"?|\\\\[^\\r\\n\\f]|[\\w-]|[^\0-\\x7f])+",
 
-	// Attribute selectors: https://www.w3.org/TR/selectors/***REMOVED***attribute-selectors
+	// Attribute selectors: https://www.w3.org/TR/selectors/#attribute-selectors
 	attributes = "\\[" + whitespace + "*(" + identifier + ")(?:" + whitespace +
 
 		// Operator (capture 2)
@@ -708,7 +708,7 @@ var i,
 	ridentifier = new RegExp( "^" + identifier + "$" ),
 
 	matchExpr = {
-		ID: new RegExp( "^***REMOVED***(" + identifier + ")" ),
+		ID: new RegExp( "^#(" + identifier + ")" ),
 		CLASS: new RegExp( "^\\.(" + identifier + ")" ),
 		TAG: new RegExp( "^(" + identifier + "|[*])" ),
 		ATTR: new RegExp( "^" + attributes ),
@@ -730,12 +730,12 @@ var i,
 	rheader = /^h\d$/i,
 
 	// Easily-parseable/retrievable ID or TAG or CLASS selectors
-	rquickExpr = /^(?:***REMOVED***([\w-]+)|(\w+)|\.([\w-]+))$/,
+	rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
 	rsibling = /[+~]/,
 
 	// CSS escapes
-	// https://www.w3.org/TR/CSS21/syndata.html***REMOVED***escaped-characters
+	// https://www.w3.org/TR/CSS21/syndata.html#escaped-characters
 	runescape = new RegExp( "\\\\[\\da-fA-F]{1,6}" + whitespace +
 		"?|\\\\([^\\r\\n\\f])", "g" ),
 	funescape = function( escape, nonHex ) {
@@ -913,7 +913,7 @@ function find( selector, context, results, seed ) {
 					groups = tokenize( selector );
 					i = groups.length;
 					while ( i-- ) {
-						groups[ i ] = ( nid ? "***REMOVED***" + nid : ":scope" ) + " " +
+						groups[ i ] = ( nid ? "#" + nid : ":scope" ) + " " +
 							toSelector( groups[ i ] );
 					}
 					newSelector = groups.join( "," );
@@ -1025,16 +1025,16 @@ function createDisabledPseudo( disabled ) {
 	return function( elem ) {
 
 		// Only certain elements can match :enabled or :disabled
-		// https://html.spec.whatwg.org/multipage/scripting.html***REMOVED***selector-enabled
-		// https://html.spec.whatwg.org/multipage/scripting.html***REMOVED***selector-disabled
+		// https://html.spec.whatwg.org/multipage/scripting.html#selector-enabled
+		// https://html.spec.whatwg.org/multipage/scripting.html#selector-disabled
 		if ( "form" in elem ) {
 
 			// Check for inherited disabledness on relevant non-disabled elements:
 			// * listed form-associated elements in a disabled fieldset
-			//   https://html.spec.whatwg.org/multipage/forms.html***REMOVED***category-listed
-			//   https://html.spec.whatwg.org/multipage/forms.html***REMOVED***concept-fe-disabled
+			//   https://html.spec.whatwg.org/multipage/forms.html#category-listed
+			//   https://html.spec.whatwg.org/multipage/forms.html#concept-fe-disabled
 			// * option elements in a disabled optgroup
-			//   https://html.spec.whatwg.org/multipage/forms.html***REMOVED***concept-option-disabled
+			//   https://html.spec.whatwg.org/multipage/forms.html#concept-option-disabled
 			// All such elements have a "form" property.
 			if ( elem.parentNode && elem.disabled === false ) {
 
@@ -1293,9 +1293,9 @@ function setDocument( node ) {
 
 		// Support: iOS 8 only
 		// https://bugs.webkit.org/show_bug.cgi?id=136851
-		// In-page `selector***REMOVED***id sibling-combinator selector` fails
-		if ( !el.querySelectorAll( "a***REMOVED***" + expando + "+*" ).length ) {
-			rbuggyQSA.push( ".***REMOVED***.+[+~]" );
+		// In-page `selector#id sibling-combinator selector` fails
+		if ( !el.querySelectorAll( "a#" + expando + "+*" ).length ) {
+			rbuggyQSA.push( ".#.+[+~]" );
 		}
 
 		// Support: Chrome <=105+, Firefox <=104+, Safari <=15.4+
@@ -1343,7 +1343,7 @@ function setDocument( node ) {
 		// Our regular `try-catch` mechanism fails to detect natively-unsupported
 		// pseudo-classes inside `:has()` (such as `:has(:contains("Foo"))`)
 		// in browsers that parse the `:has()` argument as a forgiving selector list.
-		// https://drafts.csswg.org/selectors/***REMOVED***relational now requires the argument
+		// https://drafts.csswg.org/selectors/#relational now requires the argument
 		// to be parsed unforgivingly, but browsers have not yet fully adjusted.
 		rbuggyQSA.push( ":has" );
 	}
@@ -1813,7 +1813,7 @@ Expr = jQuery.expr = {
 		PSEUDO: function( pseudo, argument ) {
 
 			// pseudo-class names are case-insensitive
-			// https://www.w3.org/TR/selectors/***REMOVED***pseudo-classes
+			// https://www.w3.org/TR/selectors/#pseudo-classes
 			// Prioritize by case sensitivity in case custom pseudos are added with uppercase letters
 			// Remember that setFilters inherits from pseudos
 			var args,
@@ -1904,7 +1904,7 @@ Expr = jQuery.expr = {
 		// or beginning with the identifier C immediately followed by "-".
 		// The matching of C against the element's language value is performed case-insensitively.
 		// The identifier C does not have to be a valid language name."
-		// https://www.w3.org/TR/selectors/***REMOVED***lang-pseudo
+		// https://www.w3.org/TR/selectors/#lang-pseudo
 		lang: markFunction( function( lang ) {
 
 			// lang value must be a valid identifier
@@ -1950,7 +1950,7 @@ Expr = jQuery.expr = {
 		checked: function( elem ) {
 
 			// In CSS3, :checked should return both checked and selected elements
-			// https://www.w3.org/TR/2011/REC-css3-selectors-20110929/***REMOVED***checked
+			// https://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
 			return ( nodeName( elem, "input" ) && !!elem.checked ) ||
 				( nodeName( elem, "option" ) && !!elem.selected );
 		},
@@ -1972,7 +1972,7 @@ Expr = jQuery.expr = {
 		// Contents
 		empty: function( elem ) {
 
-			// https://www.w3.org/TR/selectors/***REMOVED***empty-pseudo
+			// https://www.w3.org/TR/selectors/#empty-pseudo
 			// :empty is negated by element (1) or content nodes (text: 3; cdata: 4; entity ref: 5),
 			//   but not by others (comment: 8; processing instruction: 7; etc.)
 			// nodeType < 6 works because attributes (2) do not appear as children
@@ -2852,10 +2852,10 @@ jQuery.fn.extend( {
 var rootjQuery,
 
 	// A simple way to check for HTML strings
-	// Prioritize ***REMOVED***id over <tag> to avoid XSS via location.hash (trac-9521)
+	// Prioritize #id over <tag> to avoid XSS via location.hash (trac-9521)
 	// Strict HTML recognition (trac-11290: must start with <)
-	// Shortcut simple ***REMOVED***id case for speed
-	rquickExpr = /^(?:\s*(<[\w\W]+>)[^>]*|***REMOVED***([\w-]+))$/,
+	// Shortcut simple #id case for speed
+	rquickExpr = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]+))$/,
 
 	init = jQuery.fn.init = function( selector, context, root ) {
 		var match, elem;
@@ -2882,7 +2882,7 @@ var rootjQuery,
 				match = rquickExpr.exec( selector );
 			}
 
-			// Match html or make sure no context is specified for ***REMOVED***id
+			// Match html or make sure no context is specified for #id
 			if ( match && ( match[ 1 ] || !context ) ) {
 
 				// HANDLE: $(html) -> $(array)
@@ -2914,7 +2914,7 @@ var rootjQuery,
 
 					return this;
 
-				// HANDLE: $(***REMOVED***id)
+				// HANDLE: $(#id)
 				} else {
 					elem = document.getElementById( match[ 2 ] );
 
@@ -3004,7 +3004,7 @@ jQuery.fn.extend( {
 					if ( cur.nodeType < 11 && ( targets ?
 						targets.index( cur ) > -1 :
 
-						// Don't pass non-elements to jQuery***REMOVED***find
+						// Don't pass non-elements to jQuery#find
 						cur.nodeType === 1 &&
 							jQuery.find.matchesSelector( cur, selectors ) ) ) {
 
@@ -3395,7 +3395,7 @@ function adoptValue( value, resolve, reject, noValue ) {
 		// Other non-thenables
 		} else {
 
-			// Control `resolve` arguments by letting Array***REMOVED***slice cast boolean `noValue` to integer:
+			// Control `resolve` arguments by letting Array#slice cast boolean `noValue` to integer:
 			// * false: [ value ].slice( 0 ) => resolve( value )
 			// * true: [ value ].slice( 1 ) => resolve()
 			resolve.apply( undefined, [ value ].slice( noValue ) );
@@ -3403,7 +3403,7 @@ function adoptValue( value, resolve, reject, noValue ) {
 
 	// For Promises/A+, convert exceptions into rejections
 	// Since jQuery.when doesn't unwrap thenables, we can skip the extra checks appearing in
-	// Deferred***REMOVED***then to conditionally suppress rejection.
+	// Deferred#then to conditionally suppress rejection.
 	} catch ( value ) {
 
 		// Support: Android 4.0 only
@@ -3480,7 +3480,7 @@ jQuery.extend( {
 									var returned, then;
 
 									// Support: Promises/A+ section 2.3.3.3.3
-									// https://promisesaplus.com/***REMOVED***point-59
+									// https://promisesaplus.com/#point-59
 									// Ignore double-resolution attempts
 									if ( depth < maxDepth ) {
 										return;
@@ -3489,19 +3489,19 @@ jQuery.extend( {
 									returned = handler.apply( that, args );
 
 									// Support: Promises/A+ section 2.3.1
-									// https://promisesaplus.com/***REMOVED***point-48
+									// https://promisesaplus.com/#point-48
 									if ( returned === deferred.promise() ) {
 										throw new TypeError( "Thenable self-resolution" );
 									}
 
 									// Support: Promises/A+ sections 2.3.3.1, 3.5
-									// https://promisesaplus.com/***REMOVED***point-54
-									// https://promisesaplus.com/***REMOVED***point-75
+									// https://promisesaplus.com/#point-54
+									// https://promisesaplus.com/#point-75
 									// Retrieve `then` only once
 									then = returned &&
 
 										// Support: Promises/A+ section 2.3.4
-										// https://promisesaplus.com/***REMOVED***point-64
+										// https://promisesaplus.com/#point-64
 										// Only check objects and functions for thenability
 										( typeof returned === "object" ||
 											typeof returned === "function" ) &&
@@ -3563,7 +3563,7 @@ jQuery.extend( {
 											}
 
 											// Support: Promises/A+ section 2.3.3.3.4.1
-											// https://promisesaplus.com/***REMOVED***point-61
+											// https://promisesaplus.com/#point-61
 											// Ignore post-resolution exceptions
 											if ( depth + 1 >= maxDepth ) {
 
@@ -3580,7 +3580,7 @@ jQuery.extend( {
 									};
 
 							// Support: Promises/A+ section 2.3.3.3.1
-							// https://promisesaplus.com/***REMOVED***point-57
+							// https://promisesaplus.com/#point-57
 							// Re-resolve promises immediately to dodge false rejection from
 							// subsequent errors
 							if ( depth ) {
@@ -4454,7 +4454,7 @@ var documentElement = document.documentElement;
 	}
 var isHiddenWithinTree = function( elem, el ) {
 
-		// isHiddenWithinTree might be called from jQuery***REMOVED***filter function;
+		// isHiddenWithinTree might be called from jQuery#filter function;
 		// in that case, element will be second argument
 		elem = el || elem;
 
@@ -4735,7 +4735,7 @@ function setGlobalEval( elems, refElements ) {
 }
 
 
-var rhtml = /<|&***REMOVED***?\w+;/;
+var rhtml = /<|&#?\w+;/;
 
 function buildFragment( elems, context, scripts, selection, ignored ) {
 	var elem, tmp, tag, wrap, attached, j,
@@ -5177,7 +5177,7 @@ jQuery.event = {
 
 			// Support: Firefox <=42
 			// Suppress spec-violating clicks indicating a non-primary pointer button (trac-3861)
-			// https://www.w3.org/TR/DOM-Level-3-Events/***REMOVED***event-type-click
+			// https://www.w3.org/TR/DOM-Level-3-Events/#event-type-click
 			// Support: IE 11 only
 			// ...but not arrow key "clicks" of radio inputs, which can have `button` -1 (gh-2343)
 			!( event.type === "click" && event.button >= 1 ) ) {
@@ -5647,7 +5647,7 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 	//
 	// Support: Chrome <=48 - 49, Safari <=9.0 - 9.1
 	// focus(in | out) events fire after focus & blur events,
-	// which is spec violation - http://www.w3.org/TR/DOM-Level-3-Events/***REMOVED***events-focusevent-event-order
+	// which is spec violation - http://www.w3.org/TR/DOM-Level-3-Events/#events-focusevent-event-order
 	// Related ticket - https://bugs.chromium.org/p/chromium/issues/detail?id=449857
 	//
 	// Support: IE 9 - 11+
@@ -5994,7 +5994,7 @@ jQuery.extend( {
 		if ( !support.noCloneChecked && ( elem.nodeType === 1 || elem.nodeType === 11 ) &&
 				!jQuery.isXMLDoc( elem ) ) {
 
-			// We eschew jQuery***REMOVED***find here for performance reasons:
+			// We eschew jQuery#find here for performance reasons:
 			// https://jsperf.com/getall-vs-sizzle/2
 			destElements = getAll( clone );
 			srcElements = getAll( elem );
@@ -6049,13 +6049,13 @@ jQuery.extend( {
 					}
 
 					// Support: Chrome <=35 - 45+
-					// Assign undefined instead of using delete, see Data***REMOVED***remove
+					// Assign undefined instead of using delete, see Data#remove
 					elem[ dataPriv.expando ] = undefined;
 				}
 				if ( elem[ dataUser.expando ] ) {
 
 					// Support: Chrome <=35 - 45+
-					// Assign undefined instead of using delete, see Data***REMOVED***remove
+					// Assign undefined instead of using delete, see Data#remove
 					elem[ dataUser.expando ] = undefined;
 				}
 			}
@@ -6459,7 +6459,7 @@ function curCSS( elem, name, computed ) {
 			// as whitespace while CSS does not, but this is not a problem
 			// because CSS preprocessing replaces them with U+000A LINE FEED
 			// (which *is* CSS whitespace)
-			// https://www.w3.org/TR/css-syntax-3/***REMOVED***input-preprocessing
+			// https://www.w3.org/TR/css-syntax-3/#input-preprocessing
 			ret = ret.replace( rtrimCSS, "$1" ) || undefined;
 		}
 
@@ -6471,7 +6471,7 @@ function curCSS( elem, name, computed ) {
 		// Android Browser returns percentage for some values,
 		// but width seems to be reliably pixels.
 		// This is against the CSSOM draft spec:
-		// https://drafts.csswg.org/cssom/***REMOVED***resolved-values
+		// https://drafts.csswg.org/cssom/#resolved-values
 		if ( !support.pixelBoxStyles() && rnumnonpx.test( ret ) && rboxStyle.test( name ) ) {
 
 			// Remember the original values
@@ -7153,7 +7153,7 @@ jQuery.extend( {
 			i = 0,
 
 			// Attribute names can contain non-HTML whitespace characters
-			// https://html.spec.whatwg.org/multipage/syntax.html***REMOVED***attributes-2
+			// https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 			attrNames = value && value.match( rnothtmlwhite );
 
 		if ( attrNames && elem.nodeType === 1 ) {
@@ -7338,7 +7338,7 @@ jQuery.each( [
 
 
 	// Strip and collapse whitespace according to HTML spec
-	// https://infra.spec.whatwg.org/***REMOVED***strip-and-collapse-ascii-whitespace
+	// https://infra.spec.whatwg.org/#strip-and-collapse-ascii-whitespace
 	function stripAndCollapse( value ) {
 		var tokens = value.match( rnothtmlwhite ) || [];
 		return tokens.join( " " );
@@ -7603,7 +7603,7 @@ jQuery.extend( {
 					// Support: IE <=10 - 11 only
 					// option.text throws exceptions (trac-14686, trac-14858)
 					// Strip and collapse whitespace
-					// https://html.spec.whatwg.org/***REMOVED***strip-and-collapse-whitespace
+					// https://html.spec.whatwg.org/#strip-and-collapse-whitespace
 					stripAndCollapse( jQuery.text( elem ) );
 			}
 		},
@@ -8493,7 +8493,7 @@ var rtrim = /^[\s\uFEFF\xA0]+|([^\s\uFEFF\xA0])[\s\uFEFF\xA0]+$/g;
 
 // Bind a function to a context, optionally partially applying any
 // arguments.
-// jQuery.proxy is deprecated to promote standards (specifically Function***REMOVED***bind)
+// jQuery.proxy is deprecated to promote standards (specifically Function#bind)
 // However, it is not slated for removal any time soon
 jQuery.proxy = function( fn, context ) {
 	var tmp, args, proxy;
@@ -8572,7 +8572,7 @@ jQuery.trim = function( text ) {
 // Note that for maximum portability, libraries that are not jQuery should
 // declare themselves as anonymous modules, and avoid setting a global if an
 // AMD loader is present. jQuery is a special case. For more information, see
-// https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries***REMOVED***wiki-anon
+// https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
 
 if ( typeof define === "function" && define.amd ) {
 	define( "jquery", [], function() {
@@ -8604,7 +8604,7 @@ jQuery.noConflict = function( deep ) {
 };
 
 // Expose jQuery and $ identifiers, even in AMD
-// (trac-7102***REMOVED***comment:10, https://github.com/jquery/jquery/pull/557)
+// (trac-7102#comment:10, https://github.com/jquery/jquery/pull/557)
 // and CommonJS for browser emulators (trac-13566)
 if ( typeof noGlobal === "undefined" ) {
 	window.jQuery = window.$ = jQuery;

@@ -1,7 +1,7 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public class MediaService : IMediaService
     {

@@ -1,5 +1,5 @@
-@model List<<OWNER_HANDLE>_ERC.Models.AchievementDefinition>
-@using <OWNER_HANDLE>_ERC.Models
+@model List<Erdi_ERC.Models.AchievementDefinition>
+@using Erdi_ERC.Models
 @{
     ViewData["Title"] = "Achievement-Definitionen";
     ViewData["Kicker"] = "Fahrer";
@@ -32,10 +32,10 @@
 
     string TierColor(string tier) => tier switch
     {
-        "bronze"   => "***REMOVED***cd7f32",
-        "silver"   => "***REMOVED***aaa",
-        "gold"     => "***REMOVED***ffb800",
-        "platinum" => "***REMOVED***00e5ff",
+        "bronze"   => "#cd7f32",
+        "silver"   => "#aaa",
+        "gold"     => "#ffb800",
+        "platinum" => "#00e5ff",
         _          => "var(--ink-3)"
     };
 }
@@ -44,21 +44,21 @@
 
     @* KPI *@
     <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#5b8cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-list-check"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count</div>
                 <div class="adm-kpi-card__label">Definitionen</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
             <div class="adm-kpi-card__icon"><i class="bi bi-check2-circle"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count(x => x.IsActive)</div>
                 <div class="adm-kpi-card__label">Aktiv</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#c78cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-cpu"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count(x => x.IsBuiltIn)</div>
@@ -80,12 +80,12 @@
             <span class="adm-panel__head-title">
                 @if (edit != null)
                 {
-                    <i class="bi bi-pencil-square me-2" style="color:***REMOVED***5b8cff;"></i>
+                    <i class="bi bi-pencil-square me-2" style="color:#5b8cff;"></i>
                     <span>Achievement '@edit.Title' bearbeiten</span>
                 }
                 else
                 {
-                    <i class="bi bi-plus-circle-fill me-2" style="color:***REMOVED***5b8cff;"></i>
+                    <i class="bi bi-plus-circle-fill me-2" style="color:#5b8cff;"></i>
                     <span>Neues Achievement anlegen</span>
                 }
             </span>

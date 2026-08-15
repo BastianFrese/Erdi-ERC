@@ -1,13 +1,13 @@
 using System;
 using System.Text;
 
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     /// <summary>
     /// Leitet aus einem Fahrernamen das 1–2 Zeichen lange Initialen-Monogramm der
     /// Fahrer-Karte ab. Da Fahrer ihre <b>Gamertags</b> eintragen, dürfen Trennzeichen
     /// wie Unterstriche, Bindestriche, Punkte oder Klammern NICHT ins Kürzel fließen –
-    /// sie wirken stattdessen als Wortgrenzen (z.&***REMOVED***160;B. "lt_wiener" → "LW",
+    /// sie wirken stattdessen als Wortgrenzen (z.&#160;B. "lt_wiener" → "LW",
     /// "_wiener" → "W", "John Doe" → "JD").
     /// </summary>
     public static class DriverInitialsHelper

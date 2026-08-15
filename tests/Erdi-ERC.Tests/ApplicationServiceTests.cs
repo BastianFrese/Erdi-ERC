@@ -1,12 +1,12 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Tests für <see cref="ApplicationService"/>: Submit (Stamm/Ersatz/Probe/Warteliste),

@@ -5,8 +5,8 @@
     var nextStream = ViewBag.NextStream;
     var nextUpcomingEvent = ViewBag.NextUpcomingEvent;
     var introVideoUrl = Url.Content("~/videos/vorstellung%20erdi10.mp4");
-    var communityNews = (ViewBag.CommunityNews as IEnumerable<<OWNER_HANDLE>_ERC.Models.CommunityNewsPost>)?.ToList() ?? new List<<OWNER_HANDLE>_ERC.Models.CommunityNewsPost>();
-    var overallTop3 = (ViewBag.OverallConstructorsTop3 as IEnumerable<<OWNER_HANDLE>_ERC.Models.OverallConstructorRow> ?? new List<<OWNER_HANDLE>_ERC.Models.OverallConstructorRow>()).ToList();
+    var communityNews = (ViewBag.CommunityNews as IEnumerable<Erdi_ERC.Models.CommunityNewsPost>)?.ToList() ?? new List<Erdi_ERC.Models.CommunityNewsPost>();
+    var overallTop3 = (ViewBag.OverallConstructorsTop3 as IEnumerable<Erdi_ERC.Models.OverallConstructorRow> ?? new List<Erdi_ERC.Models.OverallConstructorRow>()).ToList();
 
     var lastWinnerItems = new List<dynamic>();
     if (lastWinners != null)
@@ -80,14 +80,14 @@
                 <span class="f1-chip f1-chip--drs"><i class="f1-icon" data-lucide="zap"></i> DRS Active</span>
                 <span class="f1-chip f1-chip--fastest"><i class="f1-icon" data-lucide="timer"></i> Fastest Lap</span>
             </div>
-            <h1 class="f1-hero__title" style="color:***REMOVED***fff;text-shadow:none;"><OWNER_HANDLE>'s<br /><em>Racing</em> Community</h1>
+            <h1 class="f1-hero__title" style="color:#fff;text-shadow:none;">Erdi's<br /><em>Racing</em> Community</h1>
             <p class="f1-hero__lead">
                 Drei Ligen. Ein Ziel. <strong>Lights out and away we go.</strong><br />
                 Bestenlisten, Ergebnisse und kommende Events der ERC rund um Twitch-Streamer
-                <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" style="color:var(--accent-2); font-weight:700;"><OWNER_HANDLE>10</a>.
+                <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" style="color:var(--accent-2); font-weight:700;">Erdi10</a>.
             </p>
             <div class="f1-hero__actions">
-                <a class="btn f1-btn f1-btn--primary" asp-controller="Stats" asp-action="<OWNER_HANDLE>10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
+                <a class="btn f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
                 <a class="btn f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
                 <button type="button" class="btn f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
             </div>
@@ -145,11 +145,11 @@
                         @for (int i = 0; i < lastWinnerItems.Count; i++)
                         {
                             dynamic w = lastWinnerItems[i];
-                            string? cssKey = <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.GetCssKeyForDriver((string)w.Winner)
-                                ?? <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.GetTeamByName((string?)w.WinnerTeam)?.CssKey;
+                            string? cssKey = Erdi_ERC.Helpers.F1TeamsHelper.GetCssKeyForDriver((string)w.Winner)
+                                ?? Erdi_ERC.Helpers.F1TeamsHelper.GetTeamByName((string?)w.WinnerTeam)?.CssKey;
                             string teamColor = cssKey != null
-                                ? <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == cssKey)?.PrimaryColor ?? "***REMOVED***e10600"
-                                : "***REMOVED***e10600";
+                                ? Erdi_ERC.Helpers.F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == cssKey)?.PrimaryColor ?? "#e10600"
+                                : "#e10600";
                             <div class="js-winner-slide f1-timing-card__slide @(i == 0 ? "is-active" : "")" data-slide-index="@i">
                                 <div class="f1-timing-row" style="border-left-color:@teamColor; box-shadow:-2px 0 20px @(teamColor)66;">
                                     <div style="flex:1; min-width:0;">
@@ -219,7 +219,7 @@
     @* Broadcast-Ticker am unteren Rand *@
     <div class="f1-ticker" aria-hidden="true">
         <div class="f1-ticker__track">
-            <span class="f1-ticker__item"><b>ERC</b> &middot; <OWNER_HANDLE>'s Racing Community</span>
+            <span class="f1-ticker__item"><b>ERC</b> &middot; Erdi's Racing Community</span>
             <span class="f1-ticker__item"><b>F1 26</b> &middot; Sim Racing Liga</span>
             <span class="f1-ticker__item"><b>MAIN</b> &middot; Meisterschafts-Liga</span>
             <span class="f1-ticker__item"><b>SECOND</b> &middot; zweite Liga</span>
@@ -227,7 +227,7 @@
             <span class="f1-ticker__item"><b>TWITCH</b> &middot; erdi10</span>
             <span class="f1-ticker__item"><b>SETUPS</b> &middot; Strecken-Setups verfuegbar</span>
             @* Duplicate for seamless loop *@
-            <span class="f1-ticker__item"><b>ERC</b> &middot; <OWNER_HANDLE>'s Racing Community</span>
+            <span class="f1-ticker__item"><b>ERC</b> &middot; Erdi's Racing Community</span>
             <span class="f1-ticker__item"><b>F1 26</b> &middot; Sim Racing Liga</span>
             <span class="f1-ticker__item"><b>MAIN</b> &middot; Meisterschafts-Liga</span>
             <span class="f1-ticker__item"><b>SECOND</b> &middot; zweite Liga</span>
@@ -248,7 +248,7 @@
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-stat-grid f1-stagger">
-        <a asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
+        <a asp-controller="Stats" asp-action="Erdi10">
             <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="3">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="flag"></i></span>
@@ -287,7 +287,7 @@
                 <div class="f1-stat__sector-bar" aria-hidden="true"><span></span><span></span><span></span></div>
             </div>
         </a>
-        <a asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
+        <a asp-controller="Stats" asp-action="Erdi10">
             <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.UpcomingCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="calendar-days"></i></span>
@@ -354,7 +354,7 @@
         <div class="f1-section__head">
             <span class="f1-section__bar" aria-hidden="true"></span>
             <h2 class="f1-section__title">Paddock</h2>
-            <a class="f1-section__sub" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">Alle Ligen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+            <a class="f1-section__sub" asp-controller="Stats" asp-action="Erdi10">Alle Ligen <i class="f1-icon" data-lucide="arrow-right"></i></a>
         </div>
         <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
         <div class="f1-paddock f1-stagger">
@@ -503,11 +503,11 @@
                 <i class="f1-icon" data-lucide="x"></i>
             </button>
             <div class="f1-intro-guide-body">
-                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> Welcome &middot; <OWNER_HANDLE>'s Racing Community</span>
+                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> Welcome &middot; Erdi's Racing Community</span>
                 <h2 class="f1-hero__title" style="font-size:clamp(1.6rem,3.2vw,2.6rem); margin:1rem 0 .4rem;">Was du auf der Seite alles machen kannst</h2>
                 <p class="f1-hero__lead" style="font-size:.95rem; margin-bottom:1.4rem;">Schneller Einstieg in alle Bereiche der ERC.</p>
                 <div class="f1-intro-guide-grid f1-stagger">
-                    <a class="text-decoration-none" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
+                    <a class="text-decoration-none" asp-controller="Stats" asp-action="Erdi10">
                         <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Hub</span></div>
                             <h5 class="f1-pitcard__title">Racing Hub</h5>

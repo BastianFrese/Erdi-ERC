@@ -4,17 +4,17 @@ tags: [doku, navigation]
 status: [erledigt]
 ---
 
-***REMOVED*** Docs/
+# Docs/
 
 Projekt-Dokumentation (Obsidian-kompatibel, YAML-Frontmatter + Markdown).
 
-***REMOVED******REMOVED*** Ordnerstruktur
+## Ordnerstruktur
 
 - `Daily/` — tägliche Planungsnotizen (`YYYY-MM-DD.md`)
 - `Features/` — Dokumentation implementierter Funktionen und API-Anbindungen
 - `Tasks/` — offene To-Do-Listen und Feature-Ideen
 
-***REMOVED******REMOVED*** Sicherheits-kritische Doku
+## Sicherheits-kritische Doku
 
 - `MIGRATION-SAFETY.md` — **IMMER lesen vor jeder EF-Migration / Deploy.**
 

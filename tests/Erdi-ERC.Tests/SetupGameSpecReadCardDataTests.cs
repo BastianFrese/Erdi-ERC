@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Models;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Sichert <see cref="SetupGameSpec.ReadCardData"/> ab. Diese Methode wurde eingeführt,

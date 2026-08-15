@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     /// <summary>Über-mich-Profil des Admins / der Person die sich vorstellt.</summary>
     public class AboutMeProfile
@@ -59,7 +59,7 @@ namespace <OWNER_HANDLE>_ERC.Models
 
         /// <summary>Akzentfarbe (HEX) für die Profilseite</summary>
         [MaxLength(7)]
-        public string? AccentColor { get; set; } = "***REMOVED***e10600";
+        public string? AccentColor { get; set; } = "#e10600";
 
         /// <summary>Profil öffentlich sichtbar?</summary>
         public bool IsPublic { get; set; } = true;

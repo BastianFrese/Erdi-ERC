@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 
-namespace <OWNER_HANDLE>_ERC.Models;
+namespace Erdi_ERC.Models;
 
 public sealed class SetupEditorConfig
 {

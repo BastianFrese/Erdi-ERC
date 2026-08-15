@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
-***REMOVED***nullable disable
+#nullable disable
 
-namespace <OWNER_HANDLE>_ERC.Migrations
+namespace Erdi_ERC.Migrations
 {
     /// <summary>
     /// Bewerbungssystem komplett aus dem Datenbankschema entfernen.

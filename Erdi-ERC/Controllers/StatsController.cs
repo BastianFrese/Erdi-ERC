@@ -1,16 +1,16 @@
 using ClosedXML.Excel;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
-    /// <summary>Statistik-Seiten: Ewige Liste, Racing Hub (<OWNER_HANDLE>10), Hall of Fame, Fahrer-Level und -Karten.</summary>
+    /// <summary>Statistik-Seiten: Ewige Liste, Racing Hub (Erdi10), Hall of Fame, Fahrer-Level und -Karten.</summary>
     public class StatsController : Controller
     {
         private readonly AppDbContext _db;
@@ -36,7 +36,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 : new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
         }
 
-        public async Task<IActionResult> <OWNER_HANDLE>10()
+        public async Task<IActionResult> Erdi10()
         {
             var leagues = await _db.Leagues
                 .AsNoTracking()
@@ -64,7 +64,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 .GroupBy(l => l.LeagueId)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            return View(new <OWNER_HANDLE>10ViewModel
+            return View(new Erdi10ViewModel
             {
                 TwitchChannel = _appOptions.TwitchChannel,
                 Leagues = leagues

@@ -1,13 +1,13 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     /// <summary>Öffentliche Renn-Seiten: Standings, Liga-Ergebnisse, Renn-Details, Rennkalender.</summary>
     public class RacesController : Controller
@@ -38,7 +38,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 l.Races = l.Races.OrderBy(r => r.Date).ToList();
             }
 
-            return View(new <OWNER_HANDLE>10ViewModel
+            return View(new Erdi10ViewModel
             {
                 TwitchChannel = _appOptions.TwitchChannel,
                 Leagues = leagues

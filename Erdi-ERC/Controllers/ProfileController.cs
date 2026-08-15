@@ -1,13 +1,13 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     public class ProfileController : Controller
     {
@@ -207,7 +207,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
         }
 
         private static readonly System.Text.RegularExpressions.Regex HexColorRegex = new(
-            @"^***REMOVED***[0-9A-Fa-f]{6}$",
+            @"^#[0-9A-Fa-f]{6}$",
             System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
         [Authorize]
@@ -229,11 +229,11 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             }
 
             var trackKey = string.IsNullOrWhiteSpace(favoriteTrack) ? null : favoriteTrack.Trim().ToLowerInvariant();
-            profile.FavoriteTrack = trackKey is not null && <OWNER_HANDLE>_ERC.Models.F1RaceCatalog.FindTrack(trackKey) is not null
+            profile.FavoriteTrack = trackKey is not null && Erdi_ERC.Models.F1RaceCatalog.FindTrack(trackKey) is not null
                 ? trackKey
                 : null;
             var teamKey = string.IsNullOrWhiteSpace(favoriteTeam) ? null : favoriteTeam.Trim().ToLowerInvariant();
-            profile.FavoriteTeam = teamKey is not null && <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.Teams.Any(t => t.CssKey == teamKey)
+            profile.FavoriteTeam = teamKey is not null && Erdi_ERC.Helpers.F1TeamsHelper.Teams.Any(t => t.CssKey == teamKey)
                 ? teamKey
                 : null;
             profile.InputDevice = string.IsNullOrWhiteSpace(inputDevice) ? null : inputDevice.Trim()[..Math.Min(inputDevice.Trim().Length, 64)];
@@ -243,7 +243,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             // Alter nur im plausiblen Bereich übernehmen, sonst löschen.
             profile.Age = age is >= 14 and <= 99 ? age : null;
 
-            // Fahrernummer-Farbe: gültige ***REMOVED***RRGGBB übernehmen, sonst leer lassen (Default greift).
+            // Fahrernummer-Farbe: gültige #RRGGBB übernehmen, sonst leer lassen (Default greift).
             var color = driverNumberColor?.Trim() ?? string.Empty;
             profile.DriverNumberColor = HexColorRegex.IsMatch(color) ? color : null;
 

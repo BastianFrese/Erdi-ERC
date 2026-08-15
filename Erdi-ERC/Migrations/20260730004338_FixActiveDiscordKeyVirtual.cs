@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
-***REMOVED***nullable disable
+#nullable disable
 
-namespace <OWNER_HANDLE>_ERC.Migrations
+namespace Erdi_ERC.Migrations
 {
     /// <summary>
     /// Synchronisiert den ModelSnapshot mit der virtuellen ActiveDiscordKey-Spalte.

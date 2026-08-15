@@ -3,21 +3,21 @@
     ViewData["Kicker"] = "Bewerbungen";
     ViewData["HeroTitle"] = "Bewerbung – Detail";
 
-    var app = ViewBag.App as <OWNER_HANDLE>_ERC.Models.Application;
+    var app = ViewBag.App as Erdi_ERC.Models.Application;
     var deciderName = ViewBag.DeciderName as string;
 
-    string StatusBadge(int s) => ((<OWNER_HANDLE>_ERC.Models.ApplicationStatus)s) switch
+    string StatusBadge(int s) => ((Erdi_ERC.Models.ApplicationStatus)s) switch
     {
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Rejected  => "f1-chip f1-chip--red",
+        Erdi_ERC.Models.ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
+        Erdi_ERC.Models.ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
+        Erdi_ERC.Models.ApplicationStatus.Rejected  => "f1-chip f1-chip--red",
         _                                          => "f1-chip"
     };
-    string StatusLabel(int s) => ((<OWNER_HANDLE>_ERC.Models.ApplicationStatus)s) switch
+    string StatusLabel(int s) => ((Erdi_ERC.Models.ApplicationStatus)s) switch
     {
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending   => "In Prüfung",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted  => "Angenommen",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Rejected  => "Abgelehnt",
+        Erdi_ERC.Models.ApplicationStatus.Pending   => "In Prüfung",
+        Erdi_ERC.Models.ApplicationStatus.Accepted  => "Angenommen",
+        Erdi_ERC.Models.ApplicationStatus.Rejected  => "Abgelehnt",
         _                                          => s.ToString()
     };
 }
@@ -44,7 +44,7 @@
         <div class="adm-panel">
             <div class="adm-panel__head">
                 <span class="adm-panel__head-title">
-                    <i class="bi bi-person-vcard-fill me-2" style="color:***REMOVED***22d3ee;"></i>
+                    <i class="bi bi-person-vcard-fill me-2" style="color:#22d3ee;"></i>
                     <span>@app.DiscordName</span>
                     <span class="@StatusBadge(app.Status) ms-2">@StatusLabel(app.Status)</span>
                 </span>
@@ -87,12 +87,12 @@
         </div>
 
         @* Aktionen *@
-        @if (app.Status == (int)<OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending)
+        @if (app.Status == (int)Erdi_ERC.Models.ApplicationStatus.Pending)
         {
             <div class="adm-panel">
                 <div class="adm-panel__head">
                     <span class="adm-panel__head-title">
-                        <i class="bi bi-check2-square me-2" style="color:***REMOVED***22d3ee;"></i>
+                        <i class="bi bi-check2-square me-2" style="color:#22d3ee;"></i>
                         <span>Entscheiden</span>
                     </span>
                 </div>
@@ -127,7 +127,7 @@
         {
             <div class="adm-alert">
                 <i class="bi bi-info-circle-fill"></i>
-                Diese Bewerbung wurde bereits @(app.Status == (int)<OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted ? "angenommen" : "abgelehnt") –
+                Diese Bewerbung wurde bereits @(app.Status == (int)Erdi_ERC.Models.ApplicationStatus.Accepted ? "angenommen" : "abgelehnt") –
                 eine erneute Entscheidung ist nicht möglich.
             </div>
         }

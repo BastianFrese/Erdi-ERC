@@ -1,5 +1,5 @@
-@model <OWNER_HANDLE>_ERC.Models.Troll.TrollAdminViewModel
-@using <OWNER_HANDLE>_ERC.Models.Troll
+@model Erdi_ERC.Models.Troll.TrollAdminViewModel
+@using Erdi_ERC.Models.Troll
 @{
     ViewData["Title"] = "Troll-System";
     ViewData["Kicker"] = "System";
@@ -18,7 +18,7 @@
 <div class="f1-page-hero mb-4">
     <div class="f1-page-hero__inner">
         <span class="f1-page-hero__eyebrow"><i class="bi bi-emoji-laughing text-warning me-1"></i> System</span>
-        <h1 class="f1-page-hero__title"><OWNER_HANDLE>-Troll-System</h1>
+        <h1 class="f1-page-hero__title">Erdi-Troll-System</h1>
         <p class="f1-page-hero__subtitle">Login-Pranks verwalten: an/aus &amp; Gewicht je Gag, globale Auslöse-Settings und eigene Inhalts-Gags.</p>
     </div>
 </div>
@@ -95,7 +95,7 @@
         <i class="bi bi-stars text-warning"></i>
         <span class="fw-bold text-white">Eigene Gags</span>
         <span class="adm-badge ms-1">@Model.Custom.Count</span>
-        <button class="btn btn-sm btn-outline-success ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="***REMOVED***new-custom">
+        <button class="btn btn-sm btn-outline-success ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#new-custom">
             <i class="bi bi-plus-lg me-1"></i>Neuer Gag
         </button>
     </div>
@@ -149,7 +149,7 @@
                                         <input type="hidden" name="key" value="@c.Key" />
                                         <button type="submit" class="btn btn-sm btn-outline-info me-1" title="Vorschau"><i class="bi bi-eye"></i></button>
                                     </form>
-                                    <button class="btn btn-sm btn-outline-primary me-1" type="button" data-bs-toggle="collapse" data-bs-target="***REMOVED***edit-custom-@c.Id" title="Bearbeiten">
+                                    <button class="btn btn-sm btn-outline-primary me-1" type="button" data-bs-toggle="collapse" data-bs-target="#edit-custom-@c.Id" title="Bearbeiten">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <form asp-action="DeleteCustom" method="post" class="d-inline" onsubmit="return confirm('Gag &quot;@c.Title&quot; löschen?');">

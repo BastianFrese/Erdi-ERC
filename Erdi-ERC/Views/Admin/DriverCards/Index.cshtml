@@ -1,5 +1,5 @@
-@model List<(<OWNER_HANDLE>_ERC.Models.DriverProfile Profile, <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel CardData)>
-@using <OWNER_HANDLE>_ERC.Models
+@model List<(Erdi_ERC.Models.DriverProfile Profile, Erdi_ERC.Models.DriverDetailViewModel CardData)>
+@using Erdi_ERC.Models
 @{
     ViewData["Title"] = "Fahrerkarten";
     ViewData["Kicker"] = "Fahrer";
@@ -38,13 +38,13 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: .06em;
-            color: var(--ink-3, ***REMOVED***888);
+            color: var(--ink-3, #888);
             margin-bottom: .4rem;
         }
 
         .dc-edit-panel__meta {
             font-size: .72rem;
-            color: var(--ink-3, ***REMOVED***888);
+            color: var(--ink-3, #888);
             margin-bottom: .55rem;
             font-family: 'JetBrains Mono', monospace;
         }
@@ -60,18 +60,18 @@
             background: rgba(255,255,255,.06);
             border: 1px solid rgba(255,255,255,.12);
             border-radius: 8px;
-            color: ***REMOVED***fff;
+            color: #fff;
             font-size: .82rem;
             padding: .35rem .65rem;
             outline: none;
             transition: border-color .15s;
         }
 
-        .dc-edit-panel__input:focus { border-color: ***REMOVED***5b8cff; }
+        .dc-edit-panel__input:focus { border-color: #5b8cff; }
 
         .dc-edit-panel__btn {
-            background: ***REMOVED***5b8cff;
-            color: ***REMOVED***fff;
+            background: #5b8cff;
+            color: #fff;
             border: none;
             border-radius: 8px;
             font-size: .8rem;
@@ -82,21 +82,21 @@
             white-space: nowrap;
         }
 
-        .dc-edit-panel__btn:hover { background: ***REMOVED***4070e8; }
+        .dc-edit-panel__btn:hover { background: #4070e8; }
 
         .dc-empty {
             padding: 4rem 2rem;
             text-align: center;
-            color: var(--ink-3, ***REMOVED***888);
+            color: var(--ink-3, #888);
         }
 
         .dc-kpi {
-            color: var(--ink-2, ***REMOVED***aaa);
+            color: var(--ink-2, #aaa);
             margin-bottom: 1.5rem;
         }
 
         .dc-kpi strong {
-            color: ***REMOVED***5b8cff;
+            color: #5b8cff;
             font-size: 1.3rem;
         }
     </style>

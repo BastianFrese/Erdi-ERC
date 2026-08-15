@@ -1,17 +1,17 @@
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Models.UiComponents
+@using Erdi_ERC.Models
+@using Erdi_ERC.Models.UiComponents
 @using System.Text.Json
 @model List<LeaguePenalty>
 @{
     ViewData["Title"] = "Stewarding";
     string TypeColor(string t) => t switch
     {
-        "DSQ"                    => "***REMOVED***ff6b6b",
-        "Zeitstrafe + Strafpunkte"=> "***REMOVED***ff8a4c",
-        "Zeitstrafe"             => "***REMOVED***ffb800",
-        "Gridstrafe"             => "***REMOVED***5b8cff",
-        "Verwarnung"             => "***REMOVED***c084fc",
-        _                        => "***REMOVED***888"
+        "DSQ"                    => "#ff6b6b",
+        "Zeitstrafe + Strafpunkte"=> "#ff8a4c",
+        "Zeitstrafe"             => "#ffb800",
+        "Gridstrafe"             => "#5b8cff",
+        "Verwarnung"             => "#c084fc",
+        _                        => "#888"
     };
     var totalDocs = Model.Count;
     var dsqCount  = Model.Count(p => p.PenaltyType == "DSQ");
@@ -49,15 +49,15 @@
 .stw-item__reason { font-size: .74rem; color: var(--ink-2); margin-top: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 640px; }
 .stw-item__docbadge { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .2rem; }
 .stw-item__docicon {
-    width: 34px; height: 44px; background: ***REMOVED***fff; border: 1px solid ***REMOVED***ccc; border-radius: 2px;
+    width: 34px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 2px;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 1px 2px 6px rgba(0,0,0,.25); position: relative;
 }
 .stw-item__docicon::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    background: ***REMOVED***e10600; border-radius: 1px 1px 0 0;
+    background: #e10600; border-radius: 1px 1px 0 0;
 }
-.stw-item__docicon i { font-size: .8rem; color: ***REMOVED***111; margin-top: 3px; }
+.stw-item__docicon i { font-size: .8rem; color: #111; margin-top: 3px; }
 .stw-item__doclabel { font-family: var(--ff-tech); font-size: .5rem; letter-spacing: .06em; color: var(--ink-3); }
 
 /* Filter chips */
@@ -68,7 +68,7 @@
     transition: all var(--t-fast); font-family: var(--ff-tech); letter-spacing: .08em; text-transform: uppercase;
 }
 .stw-filter-btn:hover { border-color: var(--stroke-2); color: var(--ink-2); }
-.stw-filter-btn.active { background: var(--accent); border-color: var(--accent); color: ***REMOVED***fff; }
+.stw-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* FIA Overlay */
 .fia-overlay {
@@ -81,7 +81,7 @@
 .fia-overlay__scroll { position: relative; z-index: 1; max-height: 92vh; overflow-y: auto; width: 100%; max-width: 680px; border-radius: var(--r-3); overflow: hidden; box-shadow: var(--sh-3); }
 .fia-overlay__close {
     position: absolute; top: .6rem; right: .6rem; z-index: 2;
-    background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: ***REMOVED***fff;
+    background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: #fff;
     width: 30px; height: 30px; border-radius: 50%; font-size: .85rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background var(--t-fast);
@@ -89,35 +89,35 @@
 .fia-overlay__close:hover { background: rgba(225,6,0,.7); }
 
 /* FIA Document */
-.fia-doc { background: ***REMOVED***f7f6f1; color: ***REMOVED***111; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
-.fia-doc__lh { padding: .7rem 1.2rem .5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid ***REMOVED***c00; }
+.fia-doc { background: #f7f6f1; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+.fia-doc__lh { padding: .7rem 1.2rem .5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #c00; }
 .fia-doc__brand { display: flex; align-items: center; gap: .5rem; }
-.fia-doc__brand-mark { background: ***REMOVED***e10600; color: ***REMOVED***fff; font-size: 11px; font-weight: 900; letter-spacing: .1em; padding: .15rem .5rem; border-radius: 2px; text-transform: uppercase; }
-.fia-doc__brand-text { font-size: 11px; font-weight: 700; color: ***REMOVED***111; text-transform: uppercase; letter-spacing: .08em; }
-.fia-doc__num { font-size: 11px; font-weight: 700; color: ***REMOVED***e10600; }
-.fia-doc__title { text-align: center; padding: .65rem 1.2rem .5rem; border-bottom: 1px solid ***REMOVED***ccc; }
+.fia-doc__brand-mark { background: #e10600; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .1em; padding: .15rem .5rem; border-radius: 2px; text-transform: uppercase; }
+.fia-doc__brand-text { font-size: 11px; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: .08em; }
+.fia-doc__num { font-size: 11px; font-weight: 700; color: #e10600; }
+.fia-doc__title { text-align: center; padding: .65rem 1.2rem .5rem; border-bottom: 1px solid #ccc; }
 .fia-doc__event { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; font-variant: small-caps; }
-.fia-doc__event-date { font-size: 11px; color: ***REMOVED***555; }
-.fia-meta { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid ***REMOVED***ccc; }
+.fia-doc__event-date { font-size: 11px; color: #555; }
+.fia-meta { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #ccc; }
 .fia-meta__col { padding: .5rem 1rem; display: flex; flex-direction: column; gap: .2rem; }
-.fia-meta__col + .fia-meta__col { border-left: 1px solid ***REMOVED***ddd; }
+.fia-meta__col + .fia-meta__col { border-left: 1px solid #ddd; }
 .fia-meta__row { display: grid; grid-template-columns: 70px 1fr; font-size: 12px; }
 .fia-meta__label { font-weight: 700; }
-.fia-meta__value { color: ***REMOVED***111; }
-.fia-meta__value--red { color: ***REMOVED***c00; font-weight: 600; }
+.fia-meta__value { color: #111; }
+.fia-meta__value--red { color: #c00; font-weight: 600; }
 .fia-doc__body { padding: .7rem 1.1rem .8rem; }
-.fia-doc__intro { font-size: 12px; line-height: 1.6; color: ***REMOVED***333; margin-bottom: .6rem; padding-bottom: .5rem; border-bottom: 1px solid ***REMOVED***ddd; }
+.fia-doc__intro { font-size: 12px; line-height: 1.6; color: #333; margin-bottom: .6rem; padding-bottom: .5rem; border-bottom: 1px solid #ddd; }
 .fia-def { display: flex; flex-direction: column; }
-.fia-def__row { display: grid; grid-template-columns: 100px 1fr; gap: .25rem .6rem; padding: .3rem 0; border-bottom: 1px solid ***REMOVED***e8e8e3; font-size: 12px; line-height: 1.5; }
+.fia-def__row { display: grid; grid-template-columns: 100px 1fr; gap: .25rem .6rem; padding: .3rem 0; border-bottom: 1px solid #e8e8e3; font-size: 12px; line-height: 1.5; }
 .fia-def__row:last-child { border-bottom: none; }
-.fia-def__key { font-weight: 700; color: ***REMOVED***111; }
-.fia-def__val { color: ***REMOVED***222; }
+.fia-def__key { font-weight: 700; color: #111; }
+.fia-def__val { color: #222; }
 .fia-def__decision { font-weight: 700; }
-.fia-def__decision-pts { color: ***REMOVED***c00; font-weight: 700; }
-.fia-def__reason { color: ***REMOVED***222; }
-.fia-def__reason p { margin: 0 0 .4rem; color: ***REMOVED***222; }
+.fia-def__decision-pts { color: #c00; font-weight: 700; }
+.fia-def__reason { color: #222; }
+.fia-def__reason p { margin: 0 0 .4rem; color: #222; }
 .fia-def__reason p:last-child { margin: 0; }
-.fia-doc-footer { background: ***REMOVED***eeeee8; border-top: 1px solid ***REMOVED***ccc; padding: .45rem 1.1rem; font-size: 11px; color: ***REMOVED***666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .3rem; }
+.fia-doc-footer { background: #eeeee8; border-top: 1px solid #ccc; padding: .45rem 1.1rem; font-size: 11px; color: #666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .3rem; }
 .fia-doc-footer__stewards { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 </style>
 }
@@ -138,7 +138,7 @@
         IconLucide = "file-text",
         Label     = "Entscheidungen",
         Value     = totalDocs.ToString(),
-        Sub       = "&***REMOVED***214;ffentliche Dokumente"
+        Sub       = "&#214;ffentliche Dokumente"
     })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm {
         IconLucide = "x-octagon",
@@ -158,7 +158,7 @@
     <partial name="_F1Section" model="@(new F1SectionVm {
         Chip    = "Dokumente",
         Title   = "Steward-Entscheidungen",
-        SubText = totalDocs > 0 ? $"{totalDocs} Eintr&***REMOVED***228;ge" : null
+        SubText = totalDocs > 0 ? $"{totalDocs} Eintr&#228;ge" : null
     })" />
 
     <div class="stw-filters" id="stwFilters">
@@ -174,7 +174,7 @@
         <div class="empty-state">
             <span class="icon-chip is-cyan"><i class="bi bi-shield-check"></i></span>
             <div class="empty-state__title">Keine Entscheidungen</div>
-            <p class="empty-state__lead">Derzeit sind keine Steward-Entscheidungen ver&***REMOVED***246;ffentlicht.</p>
+            <p class="empty-state__lead">Derzeit sind keine Steward-Entscheidungen ver&#246;ffentlicht.</p>
         </div>
     }
     else
@@ -240,7 +240,7 @@
             <div class="fia-doc__lh">
                 <div class="fia-doc__brand">
                     <span class="fia-doc__brand-mark">ERC</span>
-                    <span class="fia-doc__brand-text"><OWNER_HANDLE>'s Racing Community</span>
+                    <span class="fia-doc__brand-text">Erdi's Racing Community</span>
                 </div>
                 <span class="fia-doc__num" id="fiaDocNum">Document --</span>
             </div>

@@ -3,10 +3,10 @@
     ViewData["Kicker"] = "Bewerbungen";
     ViewData["HeroTitle"] = "Bewerbungs-Warteliste";
 
-    var entries = ViewBag.Entries as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.WaitlistEntry>
-                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.WaitlistEntry>();
-    var leagues = ViewBag.Leagues as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>
-                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
+    var entries = ViewBag.Entries as System.Collections.Generic.List<Erdi_ERC.Models.WaitlistEntry>
+                  ?? new System.Collections.Generic.List<Erdi_ERC.Models.WaitlistEntry>();
+    var leagues = ViewBag.Leagues as System.Collections.Generic.List<Erdi_ERC.Models.League>
+                  ?? new System.Collections.Generic.List<Erdi_ERC.Models.League>();
     string? selectedLeagueId = ViewBag.SelectedLeagueId as string;
 }
 
@@ -52,7 +52,7 @@
         <div class="adm-panel">
             <div class="adm-panel__head">
                 <span class="adm-panel__head-title">
-                    <i class="bi bi-hourglass-split me-2" style="color:***REMOVED***ffb800;"></i>
+                    <i class="bi bi-hourglass-split me-2" style="color:#ffb800;"></i>
                     <span>Warteliste (@entries.Count)</span>
                 </span>
             </div>
@@ -60,7 +60,7 @@
                 <table class="adm-table">
                     <thead>
                         <tr>
-                            <th>***REMOVED***</th>
+                            <th>#</th>
                             <th>Discord</th>
                             <th>Gamer-Tag</th>
                             <th>Plattform</th>

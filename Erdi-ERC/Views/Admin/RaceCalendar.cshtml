@@ -1,4 +1,4 @@
-@using <OWNER_HANDLE>_ERC.Models
+@using Erdi_ERC.Models
 @{
     ViewData["Title"] = "Race Calendar";
     ViewData["Kicker"] = "Community";
@@ -70,28 +70,28 @@
 
     @* KPI *@
     <section class="adm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#5b8cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-calendar3"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@weekends.Count</div>
                 <div class="adm-kpi-card__label">Wochenenden</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
             <div class="adm-kpi-card__icon"><i class="bi bi-calendar-check-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@upcomingLegs</div>
                 <div class="adm-kpi-card__label">Anstehende Termine</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***888;">
+        <div class="adm-kpi-card" style="--kpi-color:#888;">
             <div class="adm-kpi-card__icon"><i class="bi bi-calendar-x"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@pastLegs</div>
                 <div class="adm-kpi-card__label">Vergangen</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#c78cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-trophy-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@leagues.Count</div>
@@ -104,7 +104,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-image-fill me-2" style="color:***REMOVED***5b8cff;"></i>Render-Settings (Hintergrund &amp; Saison-Titel)
+                <i class="bi bi-image-fill me-2" style="color:#5b8cff;"></i>Render-Settings (Hintergrund &amp; Saison-Titel)
             </span>
             <a class="btn btn-sm btn-outline-secondary" asp-controller="Races" asp-action="RaceCalendar" target="_blank">
                 <i class="bi bi-eye me-1"></i>Vorschau öffnen
@@ -126,7 +126,7 @@
                         {
                             <div class="adm-check-label mt-2">
                                 <input class="adm-checkbox" type="checkbox" name="removeBackground" value="true" id="rmBgChk" />
-                                <label class="adm-check-text" for="rmBgChk" style="color:***REMOVED***ff6b6b;">Hintergrundbild entfernen</label>
+                                <label class="adm-check-text" for="rmBgChk" style="color:#ff6b6b;">Hintergrundbild entfernen</label>
                             </div>
                         }
                         <div class="small text-muted mt-1">jpg, png, gif, webp, avif · max. 10 MB</div>
@@ -178,7 +178,7 @@
                 {
                     <div class="rc-weekend-card">
                         <div class="rc-weekend-card__head">
-                            <span class="rc-weekend-card__title">***REMOVED***@w.Order · @w.Track</span>
+                            <span class="rc-weekend-card__title">#@w.Order · @w.Track</span>
                             <span class="rc-weekend-card__pill">@w.DistancePercent% Race</span>
                             <span class="rc-weekend-card__pill">@w.Legs.Count Liga-Termin(e)</span>
                         </div>

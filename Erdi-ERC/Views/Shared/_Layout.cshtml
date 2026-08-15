@@ -1,6 +1,6 @@
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
-@inject <OWNER_HANDLE>_ERC.Services.ILayoutDataService _layoutDataService
-@using <OWNER_HANDLE>_ERC.Helpers
+@inject Erdi_ERC.Services.ILayoutDataService _layoutDataService
+@using Erdi_ERC.Helpers
 @{
     // -------- Layout-Daten aus Memory-Cache (30s TTL) statt DB-Query pro Page-Load --------
     var _layoutData = await _layoutDataService.GetLayoutDataAsync(Context.RequestAborted);
@@ -35,12 +35,12 @@
                     _winnerCarSecondary = _teamInfo.SecondaryColor;
                     string Shade(string hex, double factor)
                     {
-                        if (string.IsNullOrWhiteSpace(hex) || hex[0] != '***REMOVED***' || hex.Length != 7) return hex;
+                        if (string.IsNullOrWhiteSpace(hex) || hex[0] != '#' || hex.Length != 7) return hex;
                         int r = Convert.ToInt32(hex.Substring(1, 2), 16);
                         int g = Convert.ToInt32(hex.Substring(3, 2), 16);
                         int b = Convert.ToInt32(hex.Substring(5, 2), 16);
                         int Adjust(int c) => Math.Max(0, Math.Min(255, (int)Math.Round(c + (factor >= 0 ? (255 - c) * factor : c * factor))));
-                        return $"***REMOVED***{Adjust(r):X2}{Adjust(g):X2}{Adjust(b):X2}";
+                        return $"#{Adjust(r):X2}{Adjust(g):X2}{Adjust(b):X2}";
                     }
                     _winnerCarPrimaryLight = Shade(_teamInfo.PrimaryColor, 0.25);
                     _winnerCarPrimaryDark = Shade(_teamInfo.PrimaryColor, -0.55);
@@ -64,7 +64,7 @@
     // im News-Fenster liegt. Sichtbarkeit entscheidet der Client per localStorage
     // (Besuch der Setup-Seite = "gelesen", wie WhatsApp).
     var _latestSetupActivityIso = _layoutData.LatestSetupActivityUtc is DateTime _lsa
-        && _lsa >= DateTime.UtcNow.AddDays(-<OWNER_HANDLE>_ERC.Models.SetupNewsGroup.WindowDays)
+        && _lsa >= DateTime.UtcNow.AddDays(-Erdi_ERC.Models.SetupNewsGroup.WindowDays)
         ? _lsa.ToString("O")
         : null;
     var _isOnSetupsPage = IsActive("Setups", "TrackSetups") == "active";
@@ -73,22 +73,22 @@
 <html lang="de" data-bs-theme="dark">
 <head>
     @{
-        var _ogTitle = (ViewData["OgTitle"] as string) ?? ($"{ViewData["Title"]} · <OWNER_HANDLE>'s Racing Community");
+        var _ogTitle = (ViewData["OgTitle"] as string) ?? ($"{ViewData["Title"]} · Erdi's Racing Community");
         var _ogDescription = (ViewData["OgDescription"] as string)
-            ?? "<OWNER_HANDLE>'s Racing Community – Drei Ligen, ein Ziel. Lights out and away we go.";
+            ?? "Erdi's Racing Community – Drei Ligen, ein Ziel. Lights out and away we go.";
         var _ogImagePath = (ViewData["OgImage"] as string) ?? "/images/ERCLogoHighRes1.png";
         var _ogUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
         var _ogImageAbs = _ogImagePath.StartsWith("http") ? _ogImagePath : $"{Context.Request.Scheme}://{Context.Request.Host}{_ogImagePath}";
     }
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="***REMOVED***06070a" />
-    <title>@ViewData["Title"] · <OWNER_HANDLE>'s Racing Community</title>
+    <meta name="theme-color" content="#06070a" />
+    <title>@ViewData["Title"] · Erdi's Racing Community</title>
     <meta name="description" content="@_ogDescription" />
 
     @* ---------- Open Graph / Twitter ---------- *@
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="<OWNER_HANDLE>'s Racing Community" />
+    <meta property="og:site_name" content="Erdi's Racing Community" />
     <meta property="og:title" content="@_ogTitle" />
     <meta property="og:description" content="@_ogDescription" />
     <meta property="og:url" content="@_ogUrl" />
@@ -102,7 +102,7 @@
     <link rel="manifest" href="~/site.webmanifest" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="<OWNER_HANDLE>'s Racing Community" />
+    <meta name="apple-mobile-web-app-title" content="Erdi's Racing Community" />
 
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
     <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" asp-append-version="true" />
@@ -117,7 +117,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt. *@
     <link rel="stylesheet" href="~/css/site.bundled.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/<OWNER_HANDLE>_ERC.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Erdi_ERC.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="@(ViewData["BodyClass"] as string ?? "") @(string.IsNullOrEmpty(_winnerTeamKey) ? "" : $"team-{_winnerTeamKey}")">
@@ -163,13 +163,13 @@
                         <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
                     </linearGradient>
                     <radialGradient id="rlWheel" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%"  stop-color="***REMOVED***3a3a3a"/>
-                        <stop offset="60%" stop-color="***REMOVED***111"/>
-                        <stop offset="100%" stop-color="***REMOVED***000"/>
+                        <stop offset="0%"  stop-color="#3a3a3a"/>
+                        <stop offset="60%" stop-color="#111"/>
+                        <stop offset="100%" stop-color="#000"/>
                     </radialGradient>
                     <linearGradient id="rlHalo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="***REMOVED***222"/>
-                        <stop offset="100%" stop-color="***REMOVED***0a0a0a"/>
+                        <stop offset="0%"  stop-color="#222"/>
+                        <stop offset="100%" stop-color="#0a0a0a"/>
                     </linearGradient>
                 </defs>
 
@@ -177,51 +177,51 @@
                 <ellipse cx="180" cy="98" rx="150" ry="6" fill="rgba(0,0,0,.55)"/>
 
                 <!-- rear wing -->
-                <rect x="20" y="38" width="14" height="34" rx="2" fill="***REMOVED***1a1a1a"/>
-                <rect x="14" y="34" width="28" height="6"  rx="2" fill="***REMOVED***111"/>
-                <rect x="14" y="68" width="28" height="4"  rx="1" fill="***REMOVED***111"/>
+                <rect x="20" y="38" width="14" height="34" rx="2" fill="#1a1a1a"/>
+                <rect x="14" y="34" width="28" height="6"  rx="2" fill="#111"/>
+                <rect x="14" y="68" width="28" height="4"  rx="1" fill="#111"/>
 
                 <!-- floor / sidepod -->
-                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(***REMOVED***rlCarBody)"/>
-                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(***REMOVED***rlCarShine)" opacity=".35"/>
+                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarBody)"/>
+                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarShine)" opacity=".35"/>
 
                 <!-- engine cover / airbox -->
-                <path d="M120,60 L210,60 L205,40 L150,38 L130,48 Z" fill="url(***REMOVED***rlCarBody)"/>
+                <path d="M120,60 L210,60 L205,40 L150,38 L130,48 Z" fill="url(#rlCarBody)"/>
                 <path d="M150,38 L205,40 L200,46 L155,44 Z" fill="rgba(255,255,255,.18)"/>
                 <!-- airbox intake -->
-                <path d="M170,38 L195,40 L190,30 L175,30 Z" fill="***REMOVED***0a0a0a"/>
+                <path d="M170,38 L195,40 L190,30 L175,30 Z" fill="#0a0a0a"/>
 
                 <!-- halo + cockpit -->
-                <path d="M150,52 Q180,18 215,52" stroke="url(***REMOVED***rlHalo)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M158,52 Q182,30 210,52" fill="***REMOVED***0d0d0d"/>
-                <circle cx="184" cy="44" r="3.2" fill="***REMOVED***1a1a1a"/>
+                <path d="M150,52 Q180,18 215,52" stroke="url(#rlHalo)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M158,52 Q182,30 210,52" fill="#0d0d0d"/>
+                <circle cx="184" cy="44" r="3.2" fill="#1a1a1a"/>
 
                 <!-- nose -->
-                <path d="M210,60 L320,72 L330,72 L320,60 Z" fill="url(***REMOVED***rlCarBody)"/>
+                <path d="M210,60 L320,72 L330,72 L320,60 Z" fill="url(#rlCarBody)"/>
                 <path d="M210,60 L320,72 L320,66 L210,58 Z" fill="rgba(255,255,255,.22)"/>
 
                 <!-- front wing -->
-                <rect x="318" y="74" width="32" height="6"  rx="2" fill="***REMOVED***111"/>
-                <rect x="322" y="68" width="24" height="4"  rx="1" fill="***REMOVED***1a1a1a"/>
-                <rect x="328" y="62" width="14" height="4"  rx="1" fill="***REMOVED***1a1a1a"/>
+                <rect x="318" y="74" width="32" height="6"  rx="2" fill="#111"/>
+                <rect x="322" y="68" width="24" height="4"  rx="1" fill="#1a1a1a"/>
+                <rect x="328" y="62" width="14" height="4"  rx="1" fill="#1a1a1a"/>
 
                 <!-- wheels -->
                 <g class="race-lights__car-wheel race-lights__car-wheel--rear">
-                    <circle cx="78" cy="80" r="18" fill="url(***REMOVED***rlWheel)"/>
-                    <circle cx="78" cy="80" r="6"  fill="***REMOVED***333"/>
-                    <line x1="78" y1="64" x2="78" y2="96" stroke="***REMOVED***444" stroke-width="1.5"/>
-                    <line x1="62" y1="80" x2="94" y2="80" stroke="***REMOVED***444" stroke-width="1.5"/>
+                    <circle cx="78" cy="80" r="18" fill="url(#rlWheel)"/>
+                    <circle cx="78" cy="80" r="6"  fill="#333"/>
+                    <line x1="78" y1="64" x2="78" y2="96" stroke="#444" stroke-width="1.5"/>
+                    <line x1="62" y1="80" x2="94" y2="80" stroke="#444" stroke-width="1.5"/>
                 </g>
                 <g class="race-lights__car-wheel race-lights__car-wheel--front">
-                    <circle cx="290" cy="80" r="18" fill="url(***REMOVED***rlWheel)"/>
-                    <circle cx="290" cy="80" r="6"  fill="***REMOVED***333"/>
-                    <line x1="290" y1="64" x2="290" y2="96" stroke="***REMOVED***444" stroke-width="1.5"/>
-                    <line x1="274" y1="80" x2="306" y2="80" stroke="***REMOVED***444" stroke-width="1.5"/>
+                    <circle cx="290" cy="80" r="18" fill="url(#rlWheel)"/>
+                    <circle cx="290" cy="80" r="6"  fill="#333"/>
+                    <line x1="290" y1="64" x2="290" y2="96" stroke="#444" stroke-width="1.5"/>
+                    <line x1="274" y1="80" x2="306" y2="80" stroke="#444" stroke-width="1.5"/>
                 </g>
 
                 <!-- livery accent -->
                 <path d="M70,72 L300,72 L300,76 L70,76 Z" fill="@_winnerCarSecondary" opacity=".55"/>
-                <text x="80" y="74" font-family="Orbitron, sans-serif" font-size="7" font-weight="800" fill="***REMOVED***fff" opacity=".85">ERDI&***REMOVED***x27;S RACING COMMUNITY</text>
+                <text x="80" y="74" font-family="Orbitron, sans-serif" font-size="7" font-weight="800" fill="#fff" opacity=".85">ERDI&#x27;S RACING COMMUNITY</text>
             </svg>
             <div class="race-lights__car-flame" aria-hidden="true"></div>
         </div>
@@ -236,7 +236,7 @@
             <div class="app-shell-container d-flex align-items-center w-100">
                 <a class="navbar-brand" asp-controller="Home" asp-action="Index">
                     <span class="brand-mark" aria-hidden="true">R</span>
-                    <span class="brand-word"><OWNER_HANDLE>&***REMOVED***x27;s&nbsp;Racing&nbsp;Community</span>
+                    <span class="brand-word">Erdi&#x27;s&nbsp;Racing&nbsp;Community</span>
                 </a>
                 @if (_activeStream != null)
                 {
@@ -247,7 +247,7 @@
                     </a>
                 }
                 <button class="navbar-toggler ms-auto" type="button"
-                        data-bs-toggle="collapse" data-bs-target="***REMOVED***mainNavbarCollapse"
+                        data-bs-toggle="collapse" data-bs-target="#mainNavbarCollapse"
                         aria-controls="mainNavbarCollapse" aria-expanded="false" aria-label="Navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -255,12 +255,12 @@
                 <div class="navbar-collapse collapse" id="mainNavbarCollapse">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Stats", "<OWNER_HANDLE>10")" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
+                            <a class="nav-link @IsActive("Stats", "Erdi10")" asp-controller="Stats" asp-action="Erdi10">
                                 <i class="bi bi-speedometer2 nav-ico" aria-hidden="true"></i>Racing&nbsp;Hub
                             </a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @((IsActive("Races", "Results", "LeagueResults") == "active" || IsActive("Races", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="***REMOVED***" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle @((IsActive("Races", "Results", "LeagueResults") == "active" || IsActive("Races", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="#" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-flag-fill nav-ico" aria-hidden="true"></i>ERC Liga
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="racesDropdown">
@@ -301,16 +301,16 @@
                             </a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="***REMOVED***" id="partnerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="partnerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-stars nav-ico" aria-hidden="true"></i>Partner
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="partnerDropdown">
                                 <li><a class="dropdown-item" href="https://mozaracing.com/?ref=erdi10" target="_blank" rel="noopener">MOZA Racing</a></li>
-                                <li><a class="dropdown-item" href="https://www.instant-gaming.com/?igr=<OWNER_HANDLE>10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
+                                <li><a class="dropdown-item" href="https://www.instant-gaming.com/?igr=Erdi10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="***REMOVED***" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-grid-3x3-gap-fill nav-ico" aria-hidden="true"></i>Mehr
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="moreDropdown">
@@ -325,7 +325,7 @@
                                 }
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
-                                <li><a class="dropdown-item" href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener"><OWNER_HANDLE>10 Shop</a></li>
+                                <li><a class="dropdown-item" href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener">Erdi10 Shop</a></li>
                                 @if (User.HasClaim("erdi:admin", "true"))
                                 {
                                     <li><hr class="dropdown-divider"></li>
@@ -388,7 +388,7 @@
     @* ---------- FOOTER ---------- *@
     <footer class="footer">
         <div class="app-shell-container d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <span><i class="bi bi-c-circle me-1"></i>@DateTime.UtcNow.Year &middot; <OWNER_HANDLE>'s&nbsp;Racing&nbsp;Community</span>
+            <span><i class="bi bi-c-circle me-1"></i>@DateTime.UtcNow.Year &middot; Erdi's&nbsp;Racing&nbsp;Community</span>
             <span class="d-none d-md-inline text-mute text-tech" style="font-size:.7rem;letter-spacing:.22em;">F1 26 · SIM RACING LEAGUE</span>
             <span class="d-flex align-items-center flex-wrap gap-3">
                 <a asp-controller="Home" asp-action="Privacy">Datenschutz</a>
@@ -614,7 +614,7 @@
                 const isInternalNavLink = (a) => {
                     if (!a || !a.getAttribute('href')) return false;
                     const href = a.getAttribute('href');
-                    if (!href || href.startsWith('***REMOVED***') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
+                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
                     if (a.hasAttribute('download')) return false;
                     if (a.dataset.bsToggle) return false;
                     const target = a.getAttribute('target');
@@ -722,7 +722,7 @@
                 const isInternal = (a) => {
                     if (!a) return false;
                     const href = a.getAttribute('href');
-                    if (!href || href.startsWith('***REMOVED***') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
+                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
                     if (a.hasAttribute('download')) return false;
                     if (a.dataset.bsToggle) return false;
                     const target = a.getAttribute('target');
@@ -939,7 +939,7 @@
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
             const map = {
-                h: '@Url.Action("<OWNER_HANDLE>10", "Stats")',
+                h: '@Url.Action("Erdi10", "Stats")',
                 r: '@Url.Action("Results", "Races")',
                 a: '@Url.Action("AllRaces", "Races")',
                 s: '@Url.Action("TrackSetups", "Setups")',

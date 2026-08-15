@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Models;
 
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     public static class DriverRivalryHelper
     {

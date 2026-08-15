@@ -72,7 +72,7 @@ const TRANSITION_END = 'transitionend';
 const parseSelector = selector => {
   if (selector && window.CSS && window.CSS.escape) {
     // document.querySelector needs escaping to handle IDs (html5+) containing for instance /
-    selector = selector.replace(/***REMOVED***([^\s"***REMOVED***']+)/g, (match, id) => `***REMOVED***${CSS.escape(id)}`);
+    selector = selector.replace(/#([^\s"#']+)/g, (match, id) => `#${CSS.escape(id)}`);
   }
   return selector;
 };
@@ -201,7 +201,7 @@ const noop = () => {};
  * @param {HTMLElement} element
  * @return void
  *
- * @see https://www.charistheo.io/blog/2021/02/restart-a-css-animation-with-javascript/***REMOVED***restarting-a-css-animation
+ * @see https://www.charistheo.io/blog/2021/02/restart-a-css-animation-with-javascript/#restarting-a-css-animation
  */
 const reflow = element => {
   element.offsetHeight; // eslint-disable-line no-unused-expressions
@@ -709,22 +709,22 @@ class BaseComponent extends Config {
 
 const getSelector = element => {
   let selector = element.getAttribute('data-bs-target');
-  if (!selector || selector === '***REMOVED***') {
+  if (!selector || selector === '#') {
     let hrefAttribute = element.getAttribute('href');
 
     // The only valid content that could double as a selector are IDs or classes,
-    // so everything starting with `***REMOVED***` or `.`. If a "real" URL is used as the selector,
+    // so everything starting with `#` or `.`. If a "real" URL is used as the selector,
     // `document.querySelector` will rightfully complain it is invalid.
     // See https://github.com/twbs/bootstrap/issues/32273
-    if (!hrefAttribute || !hrefAttribute.includes('***REMOVED***') && !hrefAttribute.startsWith('.')) {
+    if (!hrefAttribute || !hrefAttribute.includes('#') && !hrefAttribute.startsWith('.')) {
       return null;
     }
 
     // Just in case some CMS puts out a full URL with the anchor appended
-    if (hrefAttribute.includes('***REMOVED***') && !hrefAttribute.startsWith('***REMOVED***')) {
-      hrefAttribute = `***REMOVED***${hrefAttribute.split('***REMOVED***')[1]}`;
+    if (hrefAttribute.includes('#') && !hrefAttribute.startsWith('#')) {
+      hrefAttribute = `#${hrefAttribute.split('#')[1]}`;
     }
-    selector = hrefAttribute && hrefAttribute !== '***REMOVED***' ? hrefAttribute.trim() : null;
+    selector = hrefAttribute && hrefAttribute !== '#' ? hrefAttribute.trim() : null;
   }
   return selector ? selector.split(',').map(sel => parseSelector(sel)).join(',') : null;
 };
@@ -1755,7 +1755,7 @@ class Dropdown extends BaseComponent {
     super(element, config);
     this._popper = null;
     this._parent = this._element.parentNode; // dropdown wrapper
-    // TODO: v6 revert ***REMOVED***37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
+    // TODO: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
     this._menu = SelectorEngine.next(this._element, SELECTOR_MENU)[0] || SelectorEngine.prev(this._element, SELECTOR_MENU)[0] || SelectorEngine.findOne(SELECTOR_MENU, this._parent);
     this._inNavbar = this._detectNavbar();
   }
@@ -2011,7 +2011,7 @@ class Dropdown extends BaseComponent {
     }
     event.preventDefault();
 
-    // TODO: v6 revert ***REMOVED***37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
+    // TODO: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
     const getToggleButton = this.matches(SELECTOR_DATA_TOGGLE$3) ? this : SelectorEngine.prev(this, SELECTOR_DATA_TOGGLE$3)[0] || SelectorEngine.next(this, SELECTOR_DATA_TOGGLE$3)[0] || SelectorEngine.findOne(SELECTOR_DATA_TOGGLE$3, event.delegateTarget.parentNode);
     const instance = Dropdown.getOrCreateInstance(getToggleButton);
     if (isUpOrDownEvent) {
@@ -2298,7 +2298,7 @@ class ScrollBarHelper {
 
   // Public
   getWidth() {
-    // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth***REMOVED***usage_notes
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth#usage_notes
     const documentWidth = document.documentElement.clientWidth;
     return Math.abs(window.innerWidth - documentWidth);
   }
@@ -2957,10 +2957,10 @@ const uriAttributes = new Set(['background', 'cite', 'href', 'itemtype', 'longde
  * A pattern that recognizes URLs that are safe wrt. XSS in URL navigation
  * contexts.
  *
- * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/url_sanitizer.ts***REMOVED***L38
+ * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/url_sanitizer.ts#L38
  */
 // eslint-disable-next-line unicorn/better-regex
-const SAFE_URL_PATTERN = /^(?!javascript:)(?:[a-z0-9+.-]+:|[^&:/?***REMOVED***]*(?:[/?***REMOVED***]|$))/i;
+const SAFE_URL_PATTERN = /^(?!javascript:)(?:[a-z0-9+.-]+:|[^&:/?#]*(?:[/?#]|$))/i;
 const allowedAttribute = (attribute, allowedAttributeList) => {
   const attributeName = attribute.nodeName.toLowerCase();
   if (allowedAttributeList.includes(attributeName)) {
@@ -3875,7 +3875,7 @@ class ScrollSpy extends BaseComponent {
 
   // The logic of selection
   _observerCallback(entries) {
-    const targetElement = entry => this._targetLinks.get(`***REMOVED***${entry.target.id}`);
+    const targetElement = entry => this._targetLinks.get(`#${entry.target.id}`);
     const activate = entry => {
       this._previousScrollData.visibleEntryTop = entry.target.offsetTop;
       this._process(targetElement(entry));
@@ -4444,4 +4444,4 @@ enableDismissTrigger(Toast);
 defineJQueryPlugin(Toast);
 
 export { Alert, Button, Carousel, Collapse, Dropdown, Modal, Offcanvas, Popover, ScrollSpy, Tab, Toast, Tooltip };
-//***REMOVED*** sourceMappingURL=bootstrap.esm.js.map
+//# sourceMappingURL=bootstrap.esm.js.map

@@ -1,5 +1,5 @@
-@model <OWNER_HANDLE>_ERC.Models.WebhookAutomationRule
-@using <OWNER_HANDLE>_ERC.Models
+@model Erdi_ERC.Models.WebhookAutomationRule
+@using Erdi_ERC.Models
 
 @{
     var webhooks  = (List<DiscordWebhook>)ViewData["Webhooks"]!;
@@ -45,7 +45,7 @@
         <div class="col-md-4">
             <label class="form-label text-white-50 small">Bot-Name Override <span class="text-muted">(optional)</span></label>
             <input type="text" name="usernameOverride" class="form-control form-control-sm bg-dark text-white border-secondary"
-                   placeholder="<OWNER_HANDLE>'s Racing Community" value="@Model.UsernameOverride" />
+                   placeholder="Erdi's Racing Community" value="@Model.UsernameOverride" />
         </div>
         <div class="col-md-4">
             <label class="form-label text-white-50 small">Avatar-URL Override <span class="text-muted">(optional)</span></label>
@@ -82,19 +82,19 @@
                     <label class="form-label text-white-50 small">Farbe</label>
                     <div class="d-flex gap-2 align-items-center">
                         <input type="color" name="embedColor" class="form-control form-control-color form-control-sm bg-dark border-secondary"
-                               value="@(Model.EmbedColor ?? "***REMOVED***e10600")" style="width:42px;height:32px" />
+                               value="@(Model.EmbedColor ?? "#e10600")" style="width:42px;height:32px" />
                         <span class="text-muted small">Embed-Randfarbe</span>
                     </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label text-white-50 small">Embed-Beschreibung</label>
                     <textarea name="embedDescriptionTemplate" rows="3" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace"
-                              placeholder="z.B. **Sieger:** {{Winner}}&***REMOVED***10;**Strecke:** {{Track}}">@Model.EmbedDescriptionTemplate</textarea>
+                              placeholder="z.B. **Sieger:** {{Winner}}&#10;**Strecke:** {{Track}}">@Model.EmbedDescriptionTemplate</textarea>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label text-white-50 small">Footer <span class="text-muted">(optional)</span></label>
                     <input type="text" name="embedFooterTemplate" class="form-control form-control-sm bg-dark text-white border-secondary"
-                           placeholder="z.B. <OWNER_HANDLE>'s Racing Community – {{Date}}" value="@Model.EmbedFooterTemplate" />
+                           placeholder="z.B. Erdi's Racing Community – {{Date}}" value="@Model.EmbedFooterTemplate" />
                 </div>
                 <div class="col-md-6">
                     <label class="form-label text-white-50 small">Thumbnail-URL <span class="text-muted">(optional)</span></label>

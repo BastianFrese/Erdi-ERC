@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Options;
+using Erdi_ERC.Data;
+using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public sealed class SetupAccessService : ISetupAccessService
     {
@@ -59,7 +59,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 var client = _httpClientFactory.CreateClient("DiscordApi");
                 using var guildsReq = new HttpRequestMessage(HttpMethod.Get, "https://discord.com/api/v10/users/@me/guilds");
                 guildsReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                guildsReq.Headers.UserAgent.Add(new ProductInfoHeaderValue("<OWNER_HANDLE>-ERC", "1.0"));
+                guildsReq.Headers.UserAgent.Add(new ProductInfoHeaderValue("Erdi-ERC", "1.0"));
 
                 var guildsResponse = await client.SendAsync(guildsReq, cancellationToken);
                 if (!guildsResponse.IsSuccessStatusCode)
@@ -82,7 +82,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 // Auth-Header pro Request (Factory-Client hat keine DefaultHeaders).
                 using var memberReq = new HttpRequestMessage(HttpMethod.Get, $"https://discord.com/api/v10/users/@me/guilds/{guildId}/member");
                 memberReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                memberReq.Headers.UserAgent.Add(new ProductInfoHeaderValue("<OWNER_HANDLE>-ERC", "1.0"));
+                memberReq.Headers.UserAgent.Add(new ProductInfoHeaderValue("Erdi-ERC", "1.0"));
                 var memberResponse = await client.SendAsync(memberReq, cancellationToken);
                 if (!memberResponse.IsSuccessStatusCode)
                 {

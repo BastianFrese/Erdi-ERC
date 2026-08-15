@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     /// <summary>
     /// Ordnet den frei eingegebenen / gewählten Input-Device-String eines Fahrers

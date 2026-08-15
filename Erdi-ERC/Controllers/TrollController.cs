@@ -1,9 +1,9 @@
-using <OWNER_HANDLE>_ERC.Models.Troll;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Models.Troll;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace <OWNER_HANDLE>_ERC.Controllers;
+namespace Erdi_ERC.Controllers;
 
 /// <summary>
 /// Rendert die Login-Pranks („Gate") und nimmt Lösungen entgegen. Wird nur betreten,
@@ -66,7 +66,7 @@ public sealed class TrollController : Controller
         }
 
         // Falsch: Fehlversuch hochzählen und per PRG zurück auf die Gate-Seite,
-        // die ab dem ersten Fehler „<OWNER_HANDLE> schüttelt den Kopf" und ab Mercy den Durchlass zeigt.
+        // die ab dem ersten Fehler „Erdi schüttelt den Kopf" und ab Mercy den Durchlass zeigt.
         TempData[TkAttempts] = (ReadAttempts() + 1).ToString();
         KeepTrollData();
         return RedirectToAction(nameof(Gate));

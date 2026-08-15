@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Options
+namespace Erdi_ERC.Options
 {
     /// <summary>
     /// Allgemeine, redaktionell anpassbare Einstellungen der Web-App.
@@ -12,7 +12,7 @@ namespace <OWNER_HANDLE>_ERC.Options
         public string TwitchChannel { get; set; } = "erdi10";
 
         /// <summary>Name + Version, der als HTTP User-Agent für externe APIs (z. B. Discord) verwendet wird.</summary>
-        public string UserAgentName { get; set; } = "<OWNER_HANDLE>-ERC";
+        public string UserAgentName { get; set; } = "Erdi-ERC";
         public string UserAgentVersion { get; set; } = "1.0";
 
         /// <summary>

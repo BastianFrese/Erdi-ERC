@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/tests/">
-    <Project Path="tests/<OWNER_HANDLE>-ERC.Tests/<OWNER_HANDLE>-ERC.Tests.csproj" />
+    <Project Path="tests/Erdi-ERC.Tests/Erdi-ERC.Tests.csproj" />
   </Folder>
-  <Project Path="<OWNER_HANDLE>-ERC/<OWNER_HANDLE>-ERC.csproj" />
+  <Project Path="Erdi-ERC/Erdi-ERC.csproj" />
 </Solution>

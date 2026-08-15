@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Models;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     /// <summary>
     /// Ermittelt die Ziel-Season einer Bewerbung pro Liga. Trennt Liga-Konfiguration

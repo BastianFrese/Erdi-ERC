@@ -1,11 +1,11 @@
-@model <OWNER_HANDLE>_ERC.Controllers.ManualRegisterInput
+@model Erdi_ERC.Controllers.ManualRegisterInput
 @{
     ViewData["Title"] = "Fahrer registrieren";
     ViewData["Kicker"] = "Bewerbungen";
     ViewData["HeroTitle"] = "Fahrer manuell registrieren";
 
-    var leagues = ViewBag.Leagues as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>
-                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
+    var leagues = ViewBag.Leagues as System.Collections.Generic.List<Erdi_ERC.Models.League>
+                  ?? new System.Collections.Generic.List<Erdi_ERC.Models.League>();
     var platforms = ViewBag.AllowedPlatforms as string[] ?? new[] { "Steam", "EA", "Xbox", "Playstation" };
 }
 
@@ -24,7 +24,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-person-plus-fill me-2" style="color:***REMOVED***22d3ee;"></i>
+                <i class="bi bi-person-plus-fill me-2" style="color:#22d3ee;"></i>
                 <span>Fahrer ohne Bewerbung registrieren</span>
             </span>
         </div>

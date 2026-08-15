@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Models;
 
-namespace <OWNER_HANDLE>_ERC.Helpers;
+namespace Erdi_ERC.Helpers;
 
 /// <summary>
 /// Mappt den Freitext-Trackname (z. B. "Spielberg", "Monza", "Las Vegas Strip Circuit")

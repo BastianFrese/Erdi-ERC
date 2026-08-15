@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-***REMOVED***nullable disable
+#nullable disable
 
-namespace <OWNER_HANDLE>_ERC.Migrations
+namespace Erdi_ERC.Migrations
 {
     /// <inheritdoc />
     public partial class AddCustomAchievements : Migration
