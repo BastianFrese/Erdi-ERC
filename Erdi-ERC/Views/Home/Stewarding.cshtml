@@ -404,28 +404,22 @@
         var hasTime = normalizedType.indexOf('zeitstrafe') !== -1 || normalizedType.indexOf('time penalty') !== -1;
         var hasPoints = normalizedType.indexOf('strafpunkte') !== -1 || normalizedType.indexOf('penalty points') !== -1 || normalizedType.indexOf('punkte') !== -1;
         var decisionText = '--';
-        var penaltyPointsText = '';
         if (hasTime && hasPoints) {
             decisionText = 'Time penalty and ' + p.points + ' penalty points imposed.';
-            penaltyPointsText = p.points > 0 ? ' (-' + p.points + ' Championship penalty points.)' : '';
         } else if (hasPoints) {
             decisionText = p.points + ' penalty points imposed.';
-            penaltyPointsText = p.points > 0 ? ' (-' + p.points + ' Championship penalty points.)' : '';
         } else if (hasTime) {
             decisionText = 'Time penalty imposed.';
         } else {
             decisionText = p.penaltyType + ' imposed.';
-            penaltyPointsText = p.points > 0 ? ' (-' + p.points + ' Championship penalty points.)' : '';
         }
         setText('fdDecision', decisionText);
 
+        // Penalty-Punkte sind ein dokumentarischer Wert im Stewarding-Bericht.
+        // Sie flie\u00dfen NICHT in die Meisterschaftswertung ein \u2014 daher kein
+        // "Championship"-Suffix mehr (siehe StatsService.RebuildLeagueStandingsAsync).
         var pts = document.getElementById('fdDecisionPts');
-        if (p.points > 0) {
-            pts.textContent  = ' (\u2212' + p.points + ' Championship points deducted.)';
-            pts.style.display = 'inline';
-        } else {
-            pts.style.display = 'none';
-        }
+        pts.style.display = 'none';
 
         var reasonEl = document.getElementById('fdReason');
         reasonEl.innerHTML = '';
