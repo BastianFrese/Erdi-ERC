@@ -60,7 +60,18 @@
     <div class="erc-card erc-card--photo" style="--dc-accent:@accent;">
         <div class="erc-card__shell">
             <div class="erc-card__wash"></div>
-            <div class="erc-photo"><img src="@photo" alt="@Model?.Driver" /></div>
+            <div class="erc-photo">
+                @{
+                    var photoPic = new PictureVm {
+                        Src = @photo,
+                        Alt = @Model?.Driver,
+                        Loading = "lazy",
+                        Decoding = "async",
+                        Widths = "640,1280"
+                    };
+                }
+                <partial name="_Picture" model="photoPic" />
+            </div>
             @if (number is not null)
             {
                 <div class="erc-bignum" style="color:@numberColor;">@number</div>

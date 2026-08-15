@@ -60,10 +60,17 @@
 
         <div class="event-detail-gallery-card" style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);">
             <div class="event-detail-gallery-hero-wrap">
-                <img id="galleryHero"
-                     src="/uploads/events/@allImages[0]"
-                     alt="@Model.Title"
-                     class="event-detail-gallery-hero" />
+                @{
+                    var heroPic = new PictureVm {
+                        Src = "/uploads/events/@allImages[0]",
+                        Alt = @Model.Title,
+                        CssClass = "event-detail-gallery-hero",
+                        Loading = "eager",
+                        Decoding = "async",
+                        Priority = "high"
+                    };
+                }
+                <partial name="_Picture" model="heroPic" />
             </div>
             @if (allImages.Count > 1)
             {
@@ -75,10 +82,17 @@
                                     class="btn btn-ghost p-0 gallery-thumb event-detail-gallery-thumb @(i == 0 ? "is-active" : "")"
                                     data-src="/uploads/events/@allImages[i]"
                                     aria-label="Bild @(i + 1)">
-                                <img src="/uploads/events/@allImages[i]"
-                                     alt="Bild @(i + 1)"
-                                     loading="lazy"
-                                     class="event-detail-gallery-thumb-image" />
+                                @{
+                                    var thumbPic = new PictureVm {
+                                        Src = "/uploads/events/@allImages[i]",
+                                        Alt = "Bild " + (i + 1),
+                                        CssClass = "event-detail-gallery-thumb-image",
+                                        Loading = "lazy",
+                                        Decoding = "async",
+                                        Widths = "160,320"
+                                    };
+                                }
+                                <partial name="_Picture" model="thumbPic" />
                             </button>
                         }
                     </div>

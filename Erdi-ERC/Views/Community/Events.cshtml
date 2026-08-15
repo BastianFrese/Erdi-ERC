@@ -110,7 +110,16 @@ else
                             @if (hasPreviewImage)
                             {
                                 <div class="event-timeline__cover">
-                                    <img src="@previewImage" alt="@ev.Title" loading="lazy" />
+                                    @{
+                                        var previewPic = new PictureVm {
+                                            Src = @previewImage,
+                                            Alt = @ev.Title,
+                                            Loading = "lazy",
+                                            Decoding = "async",
+                                            Sizes = "(max-width: 768px) 100vw, 320px"
+                                        };
+                                    }
+                                    <partial name="_Picture" model="previewPic" />
                                 </div>
                             }
 

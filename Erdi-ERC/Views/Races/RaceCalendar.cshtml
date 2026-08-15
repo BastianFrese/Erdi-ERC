@@ -202,7 +202,17 @@ else
         <div class="rc-poster-doc__chequer"></div>
 
         <header class="rc-poster-doc__head">
-            <img class="rc-poster-doc__logo" src="~/images/ERCLogoHighRes1.png" alt="Erdi's Racing Community" />
+            @{
+                var calPic = new PictureVm {
+                    Src = "/images/ERCLogoHighRes1.png",
+                    Alt = "Erdi's Racing Community",
+                    CssClass = "rc-poster-doc__logo",
+                    Loading = "eager",
+                    Decoding = "async",
+                    Priority = "high"
+                };
+            }
+            <partial name="_Picture" model="calPic" />
             <span class="rc-poster-doc__eyebrow">F1 26 · ERC Season Schedule</span>
             <h1 class="rc-poster-doc__title">@seasonTitle</h1>
             <p class="rc-poster-doc__sub">@seasonSubtitle</p>

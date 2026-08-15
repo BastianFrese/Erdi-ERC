@@ -167,10 +167,27 @@
     {
         <div class="abm-card" style="--card-accent: @(p.AccentColor ?? "#e10600");">
             <div class="abm-card__banner" style="@(string.IsNullOrEmpty(p.BannerUrl) ? "" : $"background-image:url('{p.BannerUrl}')")">
+                @if (!string.IsNullOrEmpty(p.BannerUrl))
+                {
+                    var bannerPic = new PictureVm {
+                        Src = @p.BannerUrl,
+                        Alt = "",
+                        Loading = "lazy",
+                        Decoding = "async",
+                        ExtraAttrs = "aria-hidden=\"true\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85;\""
+                    };
+                    <partial name="_Picture" model="bannerPic" />
+                }
                 <div class="abm-card__banner-overlay"></div>
                 @if (!string.IsNullOrEmpty(p.AvatarUrl))
                 {
-                    <img class="abm-card__avatar" src="@p.AvatarUrl" alt="@p.DisplayName" />
+                    var avatarPic = new PictureVm {
+                        Src = @p.AvatarUrl,
+                        Alt = @p.DisplayName,
+                        CssClass = "abm-card__avatar",
+                        Sizes = "(max-width: 768px) 56px, 72px"
+                    };
+                    <partial name="_Picture" model="avatarPic" />
                 }
                 else
                 {
