@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     /// <summary>
     /// Defines which Discord webhook fires automatically when a specific system event occurs.
@@ -43,9 +43,9 @@ namespace <OWNER_HANDLE>_ERC.Models
         [MaxLength(4096)]
         public string? EmbedDescriptionTemplate { get; set; }
 
-        /// <summary>Hex color like ***REMOVED***e10600</summary>
+        /// <summary>Hex color like #e10600</summary>
         [MaxLength(9)]
-        public string? EmbedColor { get; set; } = "***REMOVED***e10600";
+        public string? EmbedColor { get; set; } = "#e10600";
 
         [MaxLength(512)]
         public string? EmbedFooterTemplate { get; set; }

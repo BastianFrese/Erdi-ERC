@@ -1,4 +1,4 @@
-@model <OWNER_HANDLE>_ERC.Models.League
+@model Erdi_ERC.Models.League
 @using System.Text.Json
 
 @{
@@ -28,7 +28,7 @@
         .ToList();
 
     // ── Bearbeiten-Modus: ein bestehendes Rennen vorbefüllen ──────────────────
-    var existing = ViewBag.ExistingRace as <OWNER_HANDLE>_ERC.Models.RaceResult;
+    var existing = ViewBag.ExistingRace as Erdi_ERC.Models.RaceResult;
     var isEdit = existing != null;
     var formAction = isEdit ? "UpdateEnteredRace" : "SaveEnteredRace";
 
@@ -81,7 +81,7 @@
         : existing.GuestAssignments
             .Where(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
                         && !string.IsNullOrWhiteSpace(g.MainDriver)
-                        && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain)
+                        && g.MainDriver != Erdi_ERC.Services.StatsService.GuestSentinelNoMain)
             .GroupBy(g => g.GuestDriver.Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First().MainDriver.Trim(), StringComparer.OrdinalIgnoreCase);
 
@@ -97,21 +97,21 @@
 <div class="adm-dashboard">
 
     <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#5b8cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@drivers.Count</div>
                 <div class="adm-kpi-card__label">Fahrer in dieser Liga</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***ff8a4c;">
+        <div class="adm-kpi-card" style="--kpi-color:#ff8a4c;">
             <div class="adm-kpi-card__icon"><i class="bi bi-arrow-repeat"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@reserveDrivers.Count</div>
                 <div class="adm-kpi-card__label">Reservefahrer</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
             <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">22</div>
@@ -122,7 +122,7 @@
 
     @if (TempData["RaceError"] is string raceError)
     {
-        <div class="adm-alert" style="border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08);color:***REMOVED***ffc0c0;">
+        <div class="adm-alert" style="border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08);color:#ffc0c0;">
             <i class="bi bi-exclamation-triangle-fill"></i> @raceError
         </div>
     }
@@ -130,7 +130,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,***REMOVED***ffb800);"></i>@(isEdit ? "Renn-Ergebnis bearbeiten" : "Neues Renn-Ergebnis") · @Model.Name
+                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,#ffb800);"></i>@(isEdit ? "Renn-Ergebnis bearbeiten" : "Neues Renn-Ergebnis") · @Model.Name
             </span>
         </div>
         <div class="adm-panel__body">

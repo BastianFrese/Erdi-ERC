@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using System.Security.Claims;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+namespace Erdi_ERC.Tests.Infrastructure;
 
 /// <summary>
 /// Hilfsmethoden, um Controller-Actions mit einem authentifizierten Principal

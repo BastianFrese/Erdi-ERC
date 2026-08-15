@@ -1,8 +1,8 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     /// <summary>
     /// Implementierung von <see cref="IApplicationService"/>. Nutzt den scoped
@@ -262,7 +262,7 @@ namespace <OWNER_HANDLE>_ERC.Services
 
                 // 5. Audit (zwei Einträge, in derselben Transaktion)
                 await _audit.LogAsync("LinkDriverProfile", "DriverProfile", profile.DiscordId,
-                    $"Application***REMOVED***{app.Id}, Tag={app.Platform}:{app.GamerTag}");
+                    $"Application#{app.Id}, Tag={app.Platform}:{app.GamerTag}");
                 await _audit.LogAsync("AcceptApplication", "Application", app.Id,
                     $"League={app.TargetLeagueId}, Actor={adminDiscordId}");
 
@@ -419,7 +419,7 @@ namespace <OWNER_HANDLE>_ERC.Services
             _db.Applications.Add(app);
 
             entry.PromotedToApplicationId = app.Id;
-            entry.Note = $"Auto-promotet zu Application***REMOVED***{app.Id} durch {adminDiscordId}";
+            entry.Note = $"Auto-promotet zu Application#{app.Id} durch {adminDiscordId}";
 
             await _audit.LogAsync("PromoteFromWaitlist", "WaitlistEntry", entry.Id,
                 $"ApplicationId={app.Id}, League={entry.LeagueId}");

@@ -1,4 +1,4 @@
-/* <OWNER_HANDLE>-Troll-System – clientseitige Gag-Logik. Nur auf der Gate-Seite geladen.
+/* Erdi-Troll-System – clientseitige Gag-Logik. Nur auf der Gate-Seite geladen.
    Jeder Gag wird über ein data-Attribut auf seinem Wrapper initialisiert; fehlt der
    Wrapper, passiert nichts (robust gegen weggelassene Gags). */
 (function () {
@@ -20,7 +20,7 @@
         var pct = root.querySelector('[data-troll-loading-pct]');
         var status = root.querySelector('[data-troll-loading-status]');
         var done = root.querySelector('[data-troll-loading-done]');
-        var lines = ['Lade neuronales Talent-Modell …', 'Vergleiche mit <OWNER_HANDLE>s Rundenzeiten …',
+        var lines = ['Lade neuronales Talent-Modell …', 'Vergleiche mit Erdis Rundenzeiten …',
             'Suche nach Talent …', 'Talent nicht gefunden. Suche erneut …'];
         var p = 0, li = 0;
         function step() {
@@ -69,15 +69,15 @@
             if (state === 'idle') { arm(); return; }
             if (state === 'wait') {
                 clearTimeout(timer); state = 'idle';
-                light.classList.add('is-early'); light.textContent = 'Frühstart! <OWNER_HANDLE> lacht. Nochmal.';
+                light.classList.add('is-early'); light.textContent = 'Frühstart! Erdi lacht. Nochmal.';
                 setTimeout(arm, 800); return;
             }
             if (state === 'go') {
                 var ms = Math.round((window.performance || Date).now() - goAt);
                 state = 'done'; light.textContent = ms + ' ms';
                 if (result) result.textContent = ms < 250 ? 'Nicht schlecht. Für einen Menschen.'
-                    : ms < 450 ? '<OWNER_HANDLE> hat das schon im Schlaf geschafft.'
-                    : 'Schnecke. <OWNER_HANDLE> wartet immer noch.';
+                    : ms < 450 ? 'Erdi hat das schon im Schlaf geschafft.'
+                    : 'Schnecke. Erdi wartet immer noch.';
                 show(done);
             }
         });
@@ -93,8 +93,8 @@
         var spin = root.querySelector('[data-troll-wheel-spin]');
         var done = root.querySelector('[data-troll-wheel-done]');
         if (!spin) return;
-        var prizes = ['+5 Strafpunkte (gelten nur in <OWNER_HANDLE>s Kopf)', 'Pole Position … im nächsten Leben',
-            'Eine gratis Durchfahrtsstrafe', '<OWNER_HANDLE>s Respekt (leider nicht einlösbar)',
+        var prizes = ['+5 Strafpunkte (gelten nur in Erdis Kopf)', 'Pole Position … im nächsten Leben',
+            'Eine gratis Durchfahrtsstrafe', 'Erdis Respekt (leider nicht einlösbar)',
             'Ein DNF-Gutschein', '−10 Sekunden auf deine beste Ausrede'];
         spin.addEventListener('click', function () {
             if (face) face.classList.add('is-spinning');
@@ -118,7 +118,7 @@
         if (!roll) return;
         var faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
         var lines = ['P1! … aber nur in dieser Animation.', 'P2. Erster der Verlierer.',
-            'P3. <OWNER_HANDLE> nickt anerkennend.', 'Mittelfeld. Wie immer.', 'Hinterbänkler. Üben!', 'DNF. <OWNER_HANDLE> seufzt.'];
+            'P3. Erdi nickt anerkennend.', 'Mittelfeld. Wie immer.', 'Hinterbänkler. Üben!', 'DNF. Erdi seufzt.'];
         roll.addEventListener('click', function () {
             var ticks = reduce ? 1 : 10, n = 0;
             (function tick() {
@@ -184,7 +184,7 @@
             n -= 1;
             if (n > 0) { if (count) count.textContent = n; setTimeout(tick, reduce ? 0 : 1000); return; }
             if (title) { title.classList.remove('troll-shake'); title.innerHTML = 'War nur Spaß. <em>Oder?</em>'; }
-            if (text) text.innerHTML = '<OWNER_HANDLE> konnte sich gerade noch zurückhalten. Diesmal.';
+            if (text) text.innerHTML = 'Erdi konnte sich gerade noch zurückhalten. Diesmal.';
             show(done);
         }
         setTimeout(tick, reduce ? 0 : 1000);
@@ -218,13 +218,13 @@
             if (finished) return;
             if (raf) cancelAnimationFrame(raf);
             if (fill) fill.style.width = '0%';
-            if (label) label.textContent = 'Losgelassen! <OWNER_HANDLE> ist enttäuscht. Nochmal.';
+            if (label) label.textContent = 'Losgelassen! Erdi ist enttäuscht. Nochmal.';
         }
         function finish() {
             finished = true;
             if (raf) cancelAnimationFrame(raf);
             if (fill) fill.style.width = '100%';
-            if (label) label.textContent = '<OWNER_HANDLE> ist zufrieden.';
+            if (label) label.textContent = 'Erdi ist zufrieden.';
             show(done);
         }
         btn.addEventListener('mousedown', begin);
@@ -234,7 +234,7 @@
         });
     })();
 
-    // ---- Whack-a-<OWNER_HANDLE>: flüchtiges Ziel mehrfach treffen ----
+    // ---- Whack-a-Erdi: flüchtiges Ziel mehrfach treffen ----
     (function () {
         var root = card.querySelector('[data-troll-whack]');
         if (!root) return;
@@ -256,7 +256,7 @@
             if (result) result.textContent = 'Treffer: ' + hits;
             if (hits >= goal) {
                 target.style.display = 'none';
-                if (result) result.textContent = 'Erwischt! ' + hits + ' Treffer. <OWNER_HANDLE> ist beeindruckt.';
+                if (result) result.textContent = 'Erwischt! ' + hits + ' Treffer. Erdi ist beeindruckt.';
                 show(done);
                 return;
             }
@@ -275,7 +275,7 @@
         var done = root.querySelector('[data-troll-red-done]');
         if (!btn) return;
         var lines = ['Ich hab doch gesagt: NICHT drücken.', 'Jetzt ist es zu spät.',
-            '<OWNER_HANDLE> hat sich das gemerkt.', 'Na gut — du darfst trotzdem rein.'];
+            'Erdi hat sich das gemerkt.', 'Na gut — du darfst trotzdem rein.'];
         var i = 0;
         btn.addEventListener('click', function () {
             if (text) text.textContent = lines[Math.min(i, lines.length - 1)];
@@ -296,8 +296,8 @@
         var shake = root.querySelector('[data-troll-8ball-shake]');
         var done = root.querySelector('[data-troll-8ball-done]');
         if (!shake) return;
-        var answers = ['Definitiv nicht.', 'Frag <OWNER_HANDLE> später nochmal.', 'Zeichen deuten auf P-letzter.',
-            'Ja — aber nur im Training.', '<OWNER_HANDLE> sagt nein.', 'So sicher wie ein Reifenschaden in Runde 1.',
+        var answers = ['Definitiv nicht.', 'Frag Erdi später nochmal.', 'Zeichen deuten auf P-letzter.',
+            'Ja — aber nur im Training.', 'Erdi sagt nein.', 'So sicher wie ein Reifenschaden in Runde 1.',
             'Die Kugel lacht nur.', 'Vielleicht. Wenn du übst.'];
         shake.addEventListener('click', function () {
             if (face) face.classList.add('is-spinning');
@@ -324,7 +324,7 @@
             if (result) result.textContent = 'Die Münze dreht sich …';
             setTimeout(function () {
                 if (face) { face.classList.remove('is-spinning'); face.textContent = '👑'; }
-                if (result) result.textContent = 'Kopf! Du darfst rein. (<OWNER_HANDLE> hatte nie eine Zahl-Seite.)';
+                if (result) result.textContent = 'Kopf! Du darfst rein. (Erdi hatte nie eine Zahl-Seite.)';
                 show(done); hide(flip);
             }, reduce ? 0 : 1200);
         });

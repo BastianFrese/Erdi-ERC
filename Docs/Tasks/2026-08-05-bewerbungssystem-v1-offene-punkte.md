@@ -4,20 +4,20 @@ tags: [task, bewerbung, rebuild, v1, offen]
 status: [offen]
 ---
 
-***REMOVED*** Offene Punkte für den Bewerbungs-Rebuild V1
+# Offene Punkte für den Bewerbungs-Rebuild V1
 
 > **Kontext:** Begleitend zum Plan `<OWNER_HOME>\.claude\plans\twinkly-foraging-turing.md` (Status: in-arbeit). Diese Punkte müssen vor Commit 1 geklärt werden, damit das System konsistent umgesetzt werden kann. Morgen wieder aufgreifen.
 
 ---
 
-***REMOVED******REMOVED*** 1. ReviewNote-Sichtbarkeit für User
+## 1. ReviewNote-Sichtbarkeit für User
 
 **Frage:** Soll der User in `/Application/MyApplication` den Admin-Reject-Grund (`Application.ReviewNote`) sehen?
 
 **Status:** Noch nicht entschieden.
 
 **Optionen:**
-- **A) User sieht die Note** — maximale Transparenz. Passt zur bisherigen <OWNER_HANDLE>-Kultur (im alten `ApplicationForm`-System war ReviewNote schon für User sichtbar). Empfehlung des Plans.
+- **A) User sieht die Note** — maximale Transparenz. Passt zur bisherigen Erdi-Kultur (im alten `ApplicationForm`-System war ReviewNote schon für User sichtbar). Empfehlung des Plans.
 - **B) Note ist Admin-intern** — User sieht keinen Reject-Grund. Macht härtere Reject-Notes möglich, ohne User zu verletzen. Falls intern notiert werden soll: separate `InternalNote`-Spalte.
 
 **Was es für die Implementierung bedeutet:**
@@ -26,7 +26,7 @@ status: [offen]
 
 ---
 
-***REMOVED******REMOVED*** 2. ReviewNote im Webhook-Post-Bundle
+## 2. ReviewNote im Webhook-Post-Bundle
 
 **Frage:** Soll `ReviewNote` in den Webhook-Vars (`IWebhookAutomationService.FireAsync`) mit rein, die im Discord-Kanal landen?
 
@@ -42,7 +42,7 @@ status: [offen]
 
 ---
 
-***REMOVED******REMOVED*** 3. Spaltenname: CreatedAt vs. SubmittedAt
+## 3. Spaltenname: CreatedAt vs. SubmittedAt
 
 **Frage:** Wie heißt die Zeitpunkt-Spalte in der neuen `Applications`-Tabelle?
 
@@ -58,19 +58,19 @@ status: [offen]
 
 ---
 
-***REMOVED******REMOVED*** 4. Discord-Invite-URLs: woher kommen sie?
+## 4. Discord-Invite-URLs: woher kommen sie?
 
 **Frage:** Die neuen Felder `DiscordGuildOptions.CommunityInviteUrl` und `LeagueInviteUrl` — wo werden sie gepflegt?
 
 **Status:** Noch nicht entschieden, aber sehr wahrscheinlich trivial.
 
-**Wahrscheinliche Antwort:** Manuell in `appsettings.Development.json` (z. B. lokale Test-Invite-Links) + `appsettings.Production.json` (echte <OWNER_HANDLE>-Einladungen). Beide Dateien pflegen, sonst rendert das Warn-Partial ohne Links.
+**Wahrscheinliche Antwort:** Manuell in `appsettings.Development.json` (z. B. lokale Test-Invite-Links) + `appsettings.Production.json` (echte Erdi-Einladungen). Beide Dateien pflegen, sonst rendert das Warn-Partial ohne Links.
 
 **Konkrete URLs werden zum Implementierungszeitpunkt gebraucht.** Vor Commit 5 (Views) nachfragen.
 
 ---
 
-***REMOVED******REMOVED*** 5. Wartelisten-Promotion-UI
+## 5. Wartelisten-Promotion-UI
 
 **Frage:** Soll der Admin in `/AdminApplications/Waitlist` pro Eintrag einzeln promoten, oder per Bulk-Action über mehrere Einträge gleichzeitig?
 
@@ -80,7 +80,7 @@ status: [offen]
 
 ---
 
-***REMOVED******REMOVED*** 6. Capacity-Race-Condition: akzeptieren wir das Risiko?
+## 6. Capacity-Race-Condition: akzeptieren wir das Risiko?
 
 **Frage:** Wenn zwei Bewerber parallel auf den letzten Stammfahrer-Platz submitten → werden beide angenommen (Liga hat 1 Stammfahrer zu viel). V2-Mitigation: Accept-Transaktion nochmal Capacity-Check. In V1: ignorieren?
 
@@ -90,7 +90,7 @@ status: [offen]
 
 ---
 
-***REMOVED******REMOVED*** 7. Reservefahrer-Lügen-Problem
+## 7. Reservefahrer-Lügen-Problem
 
 **Frage:** User wählt im Formular "Reservefahrer", um den Capacity-Cap zu umgehen. Admin muss kontrollieren.
 
@@ -100,10 +100,10 @@ status: [offen]
 
 ---
 
-***REMOVED******REMOVED*** Erinnerungs-Anleitung für morgen
+## Erinnerungs-Anleitung für morgen
 
 1. Lies zuerst `<OWNER_HOME>\.claude\plans\twinkly-foraging-turing.md` — der Plan-Stand.
 2. Lies diese Datei — die offenen Punkte.
-3. Kläre mit dem User die 3 Hauptpunkte (***REMOVED***1, ***REMOVED***2, ***REMOVED***3). Wenn der User es eilig hat: nimm die Plan-Empfehlungen (A/A/A).
+3. Kläre mit dem User die 3 Hauptpunkte (#1, #2, #3). Wenn der User es eilig hat: nimm die Plan-Empfehlungen (A/A/A).
 4. Falls keine Klärung möglich: gleiche Defaults wie Plan-Empfehlungen, dokumentiere in der Memory-Datei `project_application_rebuild_v1_aug2026.md` als "Annahmen".
 5. Erst dann Commit 1 (Models + Options + Webhook + Permissions) starten.

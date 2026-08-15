@@ -82,7 +82,7 @@
 }
 .f1-filter-bar__reset:hover {
     background: rgba(255,255,255,.08);
-    color: ***REMOVED***fff;
+    color: #fff;
     border-color: var(--stroke-3);
     transform: translateY(-1px);
 }

@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
-***REMOVED***nullable disable
+#nullable disable
 
-namespace <OWNER_HANDLE>_ERC.Migrations
+namespace Erdi_ERC.Migrations
 {
     /// <summary>
     /// Bewerbungs-Datenmodell für den System-Neubau konsolidieren:
     /// 1. Persistiertes Status-Enum (0=Open, 1=Accepted, 2=Rejected) ersetzt die
     ///    widersprüchlichen Bool-Flags IsAccepted/IsRejected (Ablehnung gewinnt bei
-    ///    Konflikt — betraf Bewerbung ***REMOVED***14, die beides gleichzeitig war).
+    ///    Konflikt — betraf Bewerbung #14, die beides gleichzeitig war).
     /// 2. Dedup-Guard (ActiveDiscordKey) wird auf Status umgestellt. Die STORED-
     ///    Generated-Column muss dafür gedroppt und neu angelegt werden — MySQL
     ///    erlaubt kein ALTER des Ausdrucks und kein Droppen referenzierter Spalten.

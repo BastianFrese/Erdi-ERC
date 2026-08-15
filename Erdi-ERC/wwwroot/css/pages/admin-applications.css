@@ -45,7 +45,7 @@
     background: rgba(255,255,255,.04);
     border: 1px solid var(--stroke-1);
     border-radius: 8px;
-    color: ***REMOVED***fff;
+    color: #fff;
     padding: .5rem .75rem;
     font-size: .88rem;
     font-family: var(--ff-body);
@@ -61,12 +61,12 @@
 }
 .adm-form-select {
     color-scheme: dark;
-    background-color: ***REMOVED***1a2130;
+    background-color: #1a2130;
     cursor: pointer;
 }
 .adm-form-select option {
-    background-color: ***REMOVED***111722;
-    color: ***REMOVED***eaf1ff;
+    background-color: #111722;
+    color: #eaf1ff;
 }
 .adm-form-textarea {
     resize: vertical;
@@ -79,7 +79,7 @@
     border: 1px solid rgba(255,71,87,.2);
     border-radius: var(--r-2, 8px);
     font-size: .82rem;
-    color: var(--sig-red, ***REMOVED***ff6b6b);
+    color: var(--sig-red, #ff6b6b);
 }
 .adm-form-validation ul { margin: 0; padding-left: 1.2rem; }
 
@@ -110,7 +110,7 @@
 }
 .adm-table tbody tr:last-child td { border-bottom: none; }
 .adm-table tbody tr:hover td { background: rgba(255,255,255,.02); }
-.adm-table__primary { font-weight: 600; color: ***REMOVED***fff; }
+.adm-table__primary { font-weight: 600; color: #fff; }
 .adm-table__secondary {
     font-family: var(--ff-mono, monospace);
     font-size: .72rem;

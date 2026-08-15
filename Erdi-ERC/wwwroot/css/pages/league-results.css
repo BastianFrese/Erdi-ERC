@@ -74,7 +74,7 @@
     font: 600 .8rem/1 var(--ff-body);
 }
 .f1-race-card__winner-icon {
-    color: var(--text-amber, ***REMOVED***f59e0b);
+    color: var(--text-amber, #f59e0b);
     flex-shrink: 0;
     width: 14px; height: 14px;
 }

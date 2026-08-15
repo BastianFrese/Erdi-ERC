@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace <OWNER_HANDLE>_ERC.Data
+namespace Erdi_ERC.Data
 {
     /// <summary>
     /// Wird vom EF-Tooling (<c>dotnet ef migrations …</c> und <c>dotnet ef database update</c>) verwendet.

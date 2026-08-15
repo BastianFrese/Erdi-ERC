@@ -12,13 +12,13 @@
          "Sobald wir deine Anmeldung bearbeitet haben, wirst du von uns über Discord benachrichtigt. Sollten wir uns auch nach längerer Zeit nicht bei dir melden, schreib einen unserer Admins auf Discord an."),
         ("bi-controller",
          "Ist die ERC rein Formel-1-basiert?",
-         "Auch wenn unser Name \"<OWNER_HANDLE>s Racing Community\" etwas anderes aussagt, sind wir trotzdem auch offen für anderes. Gaming ist unsere Leidenschaft - Spiele wie CS:GO, EA Sports FC oder auch Klassiker wie Monopoly haben bei uns einen Platz."),
+         "Auch wenn unser Name \"Erdis Racing Community\" etwas anderes aussagt, sind wir trotzdem auch offen für anderes. Gaming ist unsere Leidenschaft - Spiele wie CS:GO, EA Sports FC oder auch Klassiker wie Monopoly haben bei uns einen Platz."),
         ("bi-heart-fill",
          "Wieso sollte ich bei der ERC mitmachen?",
-         "Die ERC ist ein langjährig bestehendes Projekt, das mit Herz und Liebe von unseren Mitarbeitern und vor allem von <OWNER_HANDLE> selbst geführt wird. Nicht nur das High-Quality-Entertainment auf Twitch, sondern auch die Freundschaften, die bei uns geknüpft werden, sind ein wichtiger Bestandteil der ERC-DNA."),
+         "Die ERC ist ein langjährig bestehendes Projekt, das mit Herz und Liebe von unseren Mitarbeitern und vor allem von Erdi selbst geführt wird. Nicht nur das High-Quality-Entertainment auf Twitch, sondern auch die Freundschaften, die bei uns geknüpft werden, sind ein wichtiger Bestandteil der ERC-DNA."),
         ("bi-flag-fill",
          "Was sind \"Real Life Events\"?",
-         "Die ERC veranstaltet mehrmals im Jahr Events im echten Leben, an denen DU teilnehmen kannst. Diese werden meist groß im Discord sowie in <OWNER_HANDLE>s Streams auf Twitch angekündigt. Typische Events sind z. B. unsere Kart-Events oder LAN-Events."),
+         "Die ERC veranstaltet mehrmals im Jahr Events im echten Leben, an denen DU teilnehmen kannst. Diese werden meist groß im Discord sowie in Erdis Streams auf Twitch angekündigt. Typische Events sind z. B. unsere Kart-Events oder LAN-Events."),
         ("bi-graph-up-arrow",
          "Kann ich meine Fähigkeiten beim Racing in der ERC ausbauen?",
          "In unseren Liga-Rennen kannst du Erfahrung und Rennkilometer sammeln. Auch das Zuschauen bei den anderen Ligen wird dir bestimmt helfen. Sollte dir das nicht genug sein, kannst du bei unseren Pros Fragen stellen oder eine Trainingssession im direkten Gespräch vereinbaren.")
@@ -37,7 +37,7 @@
 <div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "<OWNER_HANDLE>'s Racing Community · FAQ",
+    Eyebrow   = "Erdi's Racing Community · FAQ",
     Title     = "Häufig gestellte",
     Highlight = "Fragen",
     Lead      = "Alles, was du über die ERC wissen musst &ndash; auf einen Blick.",
@@ -59,7 +59,7 @@
                             <button class="accordion-button @(isFirst ? "" : "collapsed")"
                                     type="button"
                                     data-bs-toggle="collapse"
-                                    data-bs-target="***REMOVED***@collapseId"
+                                    data-bs-target="#@collapseId"
                                     aria-expanded="@(isFirst ? "true" : "false")"
                                     aria-controls="@collapseId">
                                 <span class="icon-chip is-cyan me-3">
@@ -71,7 +71,7 @@
                         <div id="@collapseId"
                              class="accordion-collapse collapse @(isFirst ? "show" : "")"
                              aria-labelledby="@headingId"
-                             data-bs-parent="***REMOVED***faqAccordion">
+                             data-bs-parent="#faqAccordion">
                             <div class="accordion-body" style="line-height:1.7;">
                                 @item.Answer
                             </div>
@@ -87,8 +87,8 @@
                     <i class="bi bi-chat-dots-fill" style="color:var(--sig-cyan);"></i> Noch Fragen?
                 </div>
                 <div class="doc-card__body d-flex flex-column gap-2">
-                    <p class="text-mute small mb-2">Melde dich direkt bei uns auf Discord oder schau bei <OWNER_HANDLE>10 auf Twitch vorbei.</p>
-                    <a class="f1-btn f1-btn--primary" asp-controller="Stats" asp-action="<OWNER_HANDLE>10">
+                    <p class="text-mute small mb-2">Melde dich direkt bei uns auf Discord oder schau bei Erdi10 auf Twitch vorbei.</p>
+                    <a class="f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10">
                         <i class="bi bi-broadcast"></i> Zum Racing Hub
                     </a>
                     <a class="f1-btn f1-btn--ghost" href="https://twitch.tv/erdi10" target="_blank" rel="noopener">

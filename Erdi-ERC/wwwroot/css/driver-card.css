@@ -4,13 +4,13 @@
    ═══════════════════════════════════════════════════════════════ */
 
 .erc-card {
-  --dc-accent: ***REMOVED***e10600;          /* team color, set inline per card */
-  --dc-edge:   ***REMOVED***e10600;          /* ERC signature red edge          */
+  --dc-accent: #e10600;          /* team color, set inline per card */
+  --dc-edge:   #e10600;          /* ERC signature red edge          */
   width: 360px;
   height: 640px;
   position: relative;
   font-family: var(--ff-body, 'Inter', system-ui, sans-serif);
-  color: ***REMOVED***fff;
+  color: #fff;
   flex: 0 0 auto;
 }
 
@@ -19,7 +19,7 @@
   position: absolute;
   inset: 0;
   border-radius: 22px;
-  background: radial-gradient(120% 80% at 50% 0%, ***REMOVED***15171c 0%, ***REMOVED***0a0b0e 46%, ***REMOVED***050507 100%);
+  background: radial-gradient(120% 80% at 50% 0%, #15171c 0%, #0a0b0e 46%, #050507 100%);
   overflow: hidden;
   box-shadow:
     inset 0 4px 0 0 var(--dc-edge),
@@ -88,7 +88,7 @@
   font-weight: 900;
   font-style: italic;
   letter-spacing: .06em;
-  background: linear-gradient(160deg, ***REMOVED***b07020 0%, ***REMOVED***f0cc5a 38%, ***REMOVED***ffe898 56%, ***REMOVED***c88a2a 100%);
+  background: linear-gradient(160deg, #b07020 0%, #f0cc5a 38%, #ffe898 56%, #c88a2a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -124,7 +124,7 @@
   font-size: 13px;
   font-weight: 800;
   letter-spacing: .04em;
-  color: ***REMOVED***fff;
+  color: #fff;
 }
 .erc-chip__lbl {
   font-size: 7px;
@@ -152,7 +152,7 @@
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
-  color: ***REMOVED***fff;
+  color: #fff;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -177,7 +177,7 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-    rgba(5,5,7,.5) 0%, transparent 18%, transparent 52%, rgba(5,5,7,.75) 84%, ***REMOVED***050507 100%);
+    rgba(5,5,7,.5) 0%, transparent 18%, transparent 52%, rgba(5,5,7,.75) 84%, #050507 100%);
 }
 
 /* Big poster number — vertical, team color, readable */
@@ -303,7 +303,7 @@
   font-weight: 900;
   font-style: italic;
   line-height: .82;
-  color: ***REMOVED***fff;
+  color: #fff;
   letter-spacing: -.04em;
   text-shadow: 0 2px 14px rgba(0,0,0,.6);
 }
@@ -371,7 +371,7 @@
   font-style: italic;
   letter-spacing: -.04em;
   line-height: 1;
-  background: linear-gradient(160deg, ***REMOVED***b07020 0%, ***REMOVED***f0cc5a 36%, ***REMOVED***ffe898 55%, ***REMOVED***c88a2a 100%);
+  background: linear-gradient(160deg, #b07020 0%, #f0cc5a 36%, #ffe898 55%, #c88a2a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -467,7 +467,7 @@
   font-weight: 900;
   font-style: italic;
   line-height: 1;
-  color: ***REMOVED***fff;
+  color: #fff;
   min-width: 46px;
   text-align: right;
 }

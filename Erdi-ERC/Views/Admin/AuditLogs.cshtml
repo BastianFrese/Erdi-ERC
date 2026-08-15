@@ -1,4 +1,4 @@
-@model List<<OWNER_HANDLE>_ERC.Models.AdminAuditLog>
+@model List<Erdi_ERC.Models.AdminAuditLog>
 @{
     ViewData["Title"] = "Audit Logs";
     ViewData["Kicker"] = "System";
@@ -10,21 +10,21 @@
 <div class="adm-dashboard">
 
     <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***5b8cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#5b8cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-journal-text"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count</div>
                 <div class="adm-kpi-card__label">Einträge geladen</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***66d18f;">
+        <div class="adm-kpi-card" style="--kpi-color:#66d18f;">
             <div class="adm-kpi-card__icon"><i class="bi bi-person-badge"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@actorCount</div>
                 <div class="adm-kpi-card__label">Akteure</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:***REMOVED***c78cff;">
+        <div class="adm-kpi-card" style="--kpi-color:#c78cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-activity"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@actionCount</div>

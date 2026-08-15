@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     /// <summary>
     /// Ein versioniertes Regelwerk-Dokument.

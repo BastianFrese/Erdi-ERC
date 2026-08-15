@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     public class League
     {

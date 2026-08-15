@@ -1,9 +1,9 @@
-using <OWNER_HANDLE>_ERC.Controllers;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Controllers;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Controllers;
+namespace Erdi_ERC.Tests.Controllers;
 
 /// <summary>
 /// Regression für den Server-Crash auf /Stats/EwigeListe (ArgumentOutOfRangeException
@@ -178,7 +178,7 @@ public class StatsControllerEwigeListeTests
             ContentRootFileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(contentRoot);
             WebRootPath = contentRoot;
             WebRootFileProvider = ContentRootFileProvider;
-            ApplicationName = "<OWNER_HANDLE>-ERC.Tests";
+            ApplicationName = "Erdi-ERC.Tests";
             EnvironmentName = "Testing";
         }
         public string ApplicationName { get; set; }

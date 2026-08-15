@@ -1,22 +1,22 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Services;
+namespace Erdi_ERC.Tests.Services;
 
 /// <summary>
 /// Tests für den StatsService-Gate: Cross-League-Gäste sollen NICHT als Liga-Standings
 /// angelegt werden; Sentinel-Bestandsdaten und fehlende Zuordnungen führen zu
 /// Skip im Rebuild-Lauf; Finishes von Gästen zählen nicht für Liga-Standings, aber
-/// über die Gast→MainDriver-Zuordnung für Team-Punkte (über <see cref="<OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper"/>).
+/// über die Gast→MainDriver-Zuordnung für Team-Punkte (über <see cref="Erdi_ERC.Helpers.RaceTeamHelper"/>).
 /// </summary>
 public class StatsServiceGuestTests
 {
-    private static IOptions<<OWNER_HANDLE>_ERC.Options.F1ScoringOptions> F1Scoring() =>
-        Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions());
+    private static IOptions<Erdi_ERC.Options.F1ScoringOptions> F1Scoring() =>
+        Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions());
 
     [Fact]
     public async Task RebuildLeagueStandings_guestFinishWithoutAssignment_doesNotCreateStanding()
@@ -117,7 +117,7 @@ public class StatsServiceGuestTests
             .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
             .SingleAsync();
 
-        var teamPoints = <OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.ComputeTeamPointsForLeague(league, "Ferrari");
+        var teamPoints = Erdi_ERC.Helpers.RaceTeamHelper.ComputeTeamPointsForLeague(league, "Ferrari");
         Assert.Equal(25, teamPoints);
     }
 }

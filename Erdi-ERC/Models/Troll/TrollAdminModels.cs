@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace <OWNER_HANDLE>_ERC.Models.Troll;
+namespace Erdi_ERC.Models.Troll;
 
 /// <summary>Art eines admin-erstellten Inhalts-Gags.</summary>
 public enum TrollCustomGagKind
@@ -42,7 +42,7 @@ public sealed class TrollCustomGag
 
     public TrollGagCategory Category { get; set; } = TrollGagCategory.GlueckSprueche;
 
-    /// <summary>Kleine Überschrift oben (z. B. „<OWNER_HANDLE> · Durchsage"). Optional.</summary>
+    /// <summary>Kleine Überschrift oben (z. B. „Erdi · Durchsage"). Optional.</summary>
     public string? Eyebrow { get; set; }
 
     public string Title { get; set; } = string.Empty;

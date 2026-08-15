@@ -5,13 +5,13 @@ status: erledigt
 aktualisiert: 2026-08-15
 ---
 
-***REMOVED*** Bewerbungssystem V1 (Rebuild)
+# Bewerbungssystem V1 (Rebuild)
 
 Das Bewerbungssystem wurde am 2026-08-05 komplett entfernt (Greenfield-Re-Build). Diese Notiz dokumentiert die neue Architektur.
 
-***REMOVED******REMOVED*** Datenmodell
+## Datenmodell
 
-***REMOVED******REMOVED******REMOVED*** `Application`
+### `Application`
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
 | `Id` | `varchar(64)` | Primärschlüssel |
@@ -32,7 +32,7 @@ Das Bewerbungssystem wurde am 2026-08-05 komplett entfernt (Greenfield-Re-Build)
 | `Season` | `varchar(16)` | Ziel-Season (z.B. "2026", "2027"), NOT NULL |
 | `Season` | `varchar(16)` | Ziel-Season (z.B. "2026", "2027"), NOT NULL |
 
-***REMOVED******REMOVED******REMOVED*** `WaitlistEntry`
+### `WaitlistEntry`
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
 | `Id` | `varchar(64)` | PK |
@@ -43,7 +43,7 @@ Das Bewerbungssystem wurde am 2026-08-05 komplett entfernt (Greenfield-Re-Build)
 | `CreatedAt` | `datetime(6)` | |
 | `PromotedToApplicationId` | `varchar(64)?` | Rückverweis nach Promotion |
 
-***REMOVED******REMOVED******REMOVED*** Indizes
+### Indizes
 - `IX_Applications_DiscordId_Status`
 - `IX_Applications_Status_CreatedAt`
 - `IX_Applications_TargetLeagueId_Status`
@@ -53,7 +53,7 @@ Das Bewerbungssystem wurde am 2026-08-05 komplett entfernt (Greenfield-Re-Build)
 - `IX_WaitlistEntries_LeagueId_Season_Position`
 - `IX_WaitlistEntries_DiscordId_LeagueId_Season`
 
-***REMOVED******REMOVED*** Service-Schicht
+## Service-Schicht
 
 `IApplicationService` (in `Services/IApplicationService.cs`):
 
@@ -68,13 +68,13 @@ Task<List<WaitlistEntry>> ListWaitlistAsync(string leagueId, CancellationToken c
 Task<PromoteResult> PromoteFromWaitlistAsync(string waitlistEntryId, string adminDiscordId, CancellationToken ct);
 ```
 
-***REMOVED******REMOVED******REMOVED*** Submit-Logik
+### Submit-Logik
 1. **Validierung**: `TargetLeagueId` muss existieren und darf nicht archiviert sein.
 2. **Dedup**: Wenn eine offene `Application` mit `Status=Pending` für `(DiscordId, TargetLeagueId)` existiert → `SubmitOutcome.AlreadyPending`. Analog für Waitlist.
 3. **Capacity-Check** (nur Stammfahrer): Wenn `league.Capacity != null && DriverStandings.Count(Stamm) >= Capacity` → Routet auf `AddToWaitlistAsync` (Position = MAX+1).
 4. **Ersatzfahrer/Probefahrer**: Bypass Capacity → direkter Insert als `Application`.
 
-***REMOVED******REMOVED******REMOVED*** Accept-Logik (transaktional)
+### Accept-Logik (transaktional)
 1. Finde Liga und Application.
 2. **DriverProfile** upsert (DiscordId-basiert).
 3. **DriverGamerTag** hinzufügen (Trim+ToLower-Dedup).
@@ -82,12 +82,12 @@ Task<PromoteResult> PromoteFromWaitlistAsync(string waitlistEntryId, string admi
 6. **Application.Status = Accepted**, `DecidedAt`, `DecidedByDiscordId`, `ReviewNote`.
 7. Webhook `application.accepted` (fire-and-forget).
 
-***REMOVED******REMOVED******REMOVED*** Reject-Logik
+### Reject-Logik
 - `Status = Rejected`, `DecidedAt`, `DecidedByDiscordId`, `ReviewNote`.
 - KEIN Profil/Standing-Anlegen.
 - Webhook `application.rejected`.
 
-***REMOVED******REMOVED*** Discord-Join-Warnung
+## Discord-Join-Warnung
 
 `IDiscordGuildService.CheckMembershipAsync` liefert `DiscordGuildCheckResult`:
 - `Ok` → `JoinedCommunity` + `JoinedLeague` (Boolean).
@@ -95,15 +95,15 @@ Task<PromoteResult> PromoteFromWaitlistAsync(string waitlistEntryId, string admi
 
 Bei `JoinedLeague == false` oder `JoinedCommunity == false` wird die Bewerbung trotzdem gespeichert (Stufe-2-Snapshot), die View zeigt einen Warn-Hinweis.
 
-***REMOVED******REMOVED*** Controller
+## Controller
 
-***REMOVED******REMOVED******REMOVED*** `ApplicationController` (User, `[Authorize]`)
+### `ApplicationController` (User, `[Authorize]`)
 - `GET /Application/Apply` — Formular mit Ligen-Dropdown + DiscordName (readonly).
 - `POST /Application/Apply` — Submit + Waitlist-Routing + Redirect auf `Submitted`.
 - `GET /Application/Submitted` — Bestätigungsseite (TempData: Outcome, Waitlist-Position, Discord-Warnung).
 - `GET /Application/MyApplication` — Eigene Bewerbungen.
 
-***REMOVED******REMOVED******REMOVED*** `AdminApplicationsController` (`[Authorize Policy="Admin.Applications.View"]`)
+### `AdminApplicationsController` (`[Authorize Policy="Admin.Applications.View"]`)
 - `GET /AdminApplications/List` — Filter `?status=Pending&leagueId=pro&page=1`, 25/Seite.
 - `GET /AdminApplications/Detail/{id}` — Detail + Decider-Name.
 - `POST /AdminApplications/Accept` — `[Authorize(Admin.Applications.Manage)]`.
@@ -113,20 +113,20 @@ Bei `JoinedLeague == false` oder `JoinedCommunity == false` wird die Bewerbung t
 
 Alle POSTs: `[ValidateAntiForgeryToken]` + `[EnableRateLimiting("forms")]`.
 
-***REMOVED******REMOVED*** Permissions
+## Permissions
 
 - `AdminPermissions.ApplicationsView` → Lesen (List, Detail, Waitlist).
 - `AdminPermissions.ApplicationsManage` → Accept/Reject/Promote.
 - Standardrollen `superadmin` und `applications` decken beides ab.
 
-***REMOVED******REMOVED*** Migrationen
+## Migrationen
 
 - `20260810094420_AddApplicationsAndWaitlist` — erstellt die beiden Tabellen + Indizes. Manuell korrigiert: ApplicationForms-Drop ist bereits in `20260805150724_DropApplicationForms` passiert → Doppeldrop entfernt.
 - `20260815143225_AddApplicationSeason` — `Season`-Spalte auf `Applications` + `WaitlistEntries` (NOT NULL), `CurrentSeason`/`NextSeason`/`ApplicationsOpenForNextSeason` auf `Leagues`, neue Indizes. **Backfill-SQL**: Bestehende Apps kriegen `Season = League.CurrentSeason` (Fallback `"current"`), damit die NOT-NULL-Spalte ohne Fehler gefüllt werden kann.
 
 **NUR auf `erditest` anwenden**, niemals automatisch auf Prod (siehe `Docs/MIGRATION-SAFETY.md`).
 
-***REMOVED******REMOVED*** Tests
+## Tests
 
 138 Tests grün, davon 41 neue:
 - `ApplicationServiceTests` (21) — Submit-Pfade, Capacity, Dedup, Accept/Reject, Promote.
@@ -135,11 +135,11 @@ Alle POSTs: `[ValidateAntiForgeryToken]` + `[EnableRateLimiting("forms")]`.
 
 Stand 2026-08-15: 197 Tests grün (9 neue Season-Tests dazugekommen).
 
-***REMOVED******REMOVED*** Season-Awareness (Erweiterung 2026-08-15)
+## Season-Awareness (Erweiterung 2026-08-15)
 
 Bewerber können sich für die **nächste** Saison bewerben, bevor die aktuelle zu Ende ist. Pro Liga lässt sich eine `NextSeason` definieren und ein Flag setzen, ob die Bewerbungen dafür schon offen sind.
 
-***REMOVED******REMOVED******REMOVED*** Liga-Konfiguration
+### Liga-Konfiguration
 
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
@@ -147,7 +147,7 @@ Bewerber können sich für die **nächste** Saison bewerben, bevor die aktuelle 
 | `NextSeason` | `varchar(16)?` | Folgesaison (z.B. `"2027"`) |
 | `ApplicationsOpenForNextSeason` | `bool` | Bewerben für `NextSeason` aktiviert? |
 
-***REMOVED******REMOVED******REMOVED*** Targeting-Logik (`IApplicationTargetingService`)
+### Targeting-Logik (`IApplicationTargetingService`)
 
 Pro Liga wird die Ziel-Season aufgelöst:
 - Wenn `ApplicationsOpenForNextSeason` **und** `NextSeason` gesetzt → `TargetSeason = NextSeason`, `IsNextSeason = true`.
@@ -155,7 +155,7 @@ Pro Liga wird die Ziel-Season aufgelöst:
 
 `GetTargetingInfoAsync` liefert pro Liga einen `LeagueTargetingInfo`-Datensatz (fürs `Apply`-Hero) sowie `ResolveTargetSeasonAsync(leagueId)` für den `SubmitAsync`-Pfad.
 
-***REMOVED******REMOVED******REMOVED*** Capacity-Scoping
+### Capacity-Scoping
 
 `SubmitAsync` zählt Capacity nur **innerhalb der Ziel-Season**:
 - `acceptedInSeason` = `Application.Status == Accepted && Season == targetSeason`.
@@ -165,12 +165,12 @@ Pro Liga wird die Ziel-Season aufgelöst:
 
 Damit blockieren alte Standings aus 2025 nicht einen neuen 2026-Stamm-Slot, sobald 2026 wieder offen ist.
 
-***REMOVED******REMOVED******REMOVED*** Dedup-Scope
+### Dedup-Scope
 
 Bisher: `(DiscordId, TargetLeagueId)` → ein User kann maximal eine offene Bewerbung pro Liga haben.
 Neu: `(DiscordId, TargetLeagueId, Season)` → ein User kann sich für 2026 und 2027 parallel bewerben, solange die Seasons unterschiedlich sind.
 
-***REMOVED******REMOVED******REMOVED*** Saison-Wechsel (Admin)
+### Saison-Wechsel (Admin)
 
 `ApplicationService.CloseSeasonAsync(leagueId, fromSeason, toSeason, mode, adminDiscordId, ct)`:
 
@@ -179,28 +179,28 @@ Neu: `(DiscordId, TargetLeagueId, Season)` → ein User kann sich für 2026 und 
 
 Beide Pfade: Audit (`CloseSeason` auf `League`) + Webhook `application.season.closed` mit `MovedApplications`, `MovedWaitlist`, `RejectedApplications`, `Actor`.
 
-***REMOVED******REMOVED******REMOVED*** Admin-UI
+### Admin-UI
 
 - `GET /AdminApplications/Seasons` — Übersicht pro Liga+Season (Pending/Accepted/Rejected/Waitlist-Counts).
 - `GET /AdminApplications/LeagueSeasons/{leagueId}` — Tabs pro Season, mit Close-Season-Aktion (Rollover/RejectAll).
 - `GET /AdminApplications/List?season=2027` — Filter nach Season.
 
-***REMOVED******REMOVED******REMOVED*** User-UX
+### User-UX
 
 - `Apply`-Hero zeigt „Du bewirbst dich für Season 2027 [Vorschau]"-Banner, wenn alle Ligen auf dieselbe NextSeason mappen.
 - `MyApplication` gruppiert Apps + Waitlist nach Season (neueste zuerst).
 - Liga-Karten kennzeichnen NextSeason mit `f1-chip--info`, CurrentSeason mit `f1-chip--ghost`.
 
-***REMOVED******REMOVED*** Deployment-Checkliste
+## Deployment-Checkliste
 
 1. ✅ Code deployen (CI).
-2. ⚠️ **Migration `20260810094420_AddApplicationsAndWaitlist` manuell auf `erditest`** via `ASPNETCORE_ENVIRONMENT=Development dotnet ef database update --project <OWNER_HANDLE>-ERC.csproj --startup-project <OWNER_HANDLE>-ERC.csproj`.
+2. ⚠️ **Migration `20260810094420_AddApplicationsAndWaitlist` manuell auf `erditest`** via `ASPNETCORE_ENVIRONMENT=Development dotnet ef database update --project Erdi-ERC.csproj --startup-project Erdi-ERC.csproj`.
 3. ⚠️ **Migration `20260815143225_AddApplicationSeason` manuell auf `erditest`** (selbe Methode). Backfill-SQL füllt `Season` aus `League.CurrentSeason` (Fallback `"current"`).
 4. ❌ **Niemals auf `erdierc` automatisch ausführen** — Prod bleibt unverändert bis manuelle Freigabe.
 5. Sidebar-Eintrag "Bewerbungen" ist nur sichtbar für Admins mit `Admin.Applications.View`.
 6. Ligen mit `ApplicationsOpenForNextSeason = true` müssen nach Season-Aktivierung das Liga-`CurrentSeason`/`NextSeason` separat setzen (Close-Season-Rollover ändert nur Apps, nicht das League-Entity).
 
-***REMOVED******REMOVED*** Siehe auch
+## Siehe auch
 
 - `Docs/Tasks/2026-08-05-bewerbungssystem-v1-offene-punkte.md` — Klärungen vor Commit 1.
 - `Docs/MIGRATION-SAFETY.md` — Wie Migrationen auf Prod laufen.

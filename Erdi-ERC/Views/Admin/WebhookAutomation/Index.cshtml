@@ -1,6 +1,6 @@
-@model List<<OWNER_HANDLE>_ERC.Models.WebhookAutomationRule>
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Services
+@model List<Erdi_ERC.Models.WebhookAutomationRule>
+@using Erdi_ERC.Models
+@using Erdi_ERC.Services
 
 @{
     ViewData["Title"] = "Webhook-Automatisierung";
@@ -70,7 +70,7 @@ else
                             <div class="text-muted small">@description</div>
                         </div>
                         <button class="btn btn-sm btn-outline-success" type="button"
-                                data-bs-toggle="collapse" data-bs-target="***REMOVED***new-@key.Replace('.', '-')"
+                                data-bs-toggle="collapse" data-bs-target="#new-@key.Replace('.', '-')"
                                 aria-expanded="false">
                             <i class="bi bi-plus-lg me-1"></i>Neue Regel
                         </button>
@@ -99,7 +99,7 @@ else
                                             <tr>
                                                 <td>
                                                     <span class="badge bg-secondary">
-                                                        <i class="bi bi-discord me-1"></i>@(rule.Webhook?.Name ?? $"***REMOVED***{rule.WebhookId}")
+                                                        <i class="bi bi-discord me-1"></i>@(rule.Webhook?.Name ?? $"#{rule.WebhookId}")
                                                     </span>
                                                 </td>
                                                 <td class="text-muted small font-monospace text-truncate" style="max-width:220px">
@@ -167,7 +167,7 @@ else
                                                     </form>
                                                     <button class="btn btn-sm btn-outline-primary me-1" type="button"
                                                             data-bs-toggle="collapse"
-                                                            data-bs-target="***REMOVED***edit-rule-@rule.Id"
+                                                            data-bs-target="#edit-rule-@rule.Id"
                                                             title="Bearbeiten">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
@@ -207,7 +207,7 @@ else
                     @* ── New rule form (collapsed) ── *@
                     <div class="collapse" id="new-@key.Replace('.', '-')">
                         <div class="card-body border-top border-secondary">
-                            @await Html.PartialAsync("~/Views/Admin/WebhookAutomation/_AutomationRuleForm.cshtml", new WebhookAutomationRule { EventType = key, IsEnabled = true, UseEmbed = true, EmbedColor = "***REMOVED***e10600" },
+                            @await Html.PartialAsync("~/Views/Admin/WebhookAutomation/_AutomationRuleForm.cshtml", new WebhookAutomationRule { EventType = key, IsEnabled = true, UseEmbed = true, EmbedColor = "#e10600" },
                                 new ViewDataDictionary(ViewData)
                                 {
                                     ["Webhooks"]  = webhooks,

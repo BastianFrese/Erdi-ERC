@@ -5,9 +5,9 @@
    ===================================================================== */
 :root {
     /* Broadcast / Asphalt-Backdrops */
-    --asphalt-0:***REMOVED***04050a;
-    --asphalt-1:***REMOVED***080a12;
-    --asphalt-2:***REMOVED***0d111c;
+    --asphalt-0:#04050a;
+    --asphalt-1:#080a12;
+    --asphalt-2:#0d111c;
     --carbon-fine:repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 1px, transparent 1px 4px);
     --carbon-coarse:repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 8px);
     --grid-fine:repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px),
@@ -15,10 +15,10 @@
     --scanline:repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 3px);
 
     /* Sektor-Farben (iRacing/F1-TV-Stil) */
-    --sector-purple:***REMOVED***b95cff;
-    --sector-green:***REMOVED***39ff14;
-    --sector-yellow:***REMOVED***ffcc00;
-    --sector-red:***REMOVED***ff3357;
+    --sector-purple:#b95cff;
+    --sector-green:#39ff14;
+    --sector-yellow:#ffcc00;
+    --sector-red:#ff3357;
 
     /* Brake-Glow / Speed-Lines */
     --brake-glow:0 0 24px var(--accent-glow), 0 0 6px rgba(255,255,255,.18);

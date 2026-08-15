@@ -1,13 +1,13 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.Extensions.Options;
 using Xunit;
 using OptionsFactory = Microsoft.Extensions.Options.Options;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Services;
+namespace Erdi_ERC.Tests.Services;
 
 /// <summary>
 /// Tests für <see cref="DriverProfileService.ResolveAsync"/>: liefert ExactMatch,
@@ -34,7 +34,7 @@ public class DriverProfileServiceResolveTests
         var profile = new DriverProfile
         {
             DiscordId = discordId,
-            DiscordName = $"{displayName}***REMOVED***0001",
+            DiscordName = $"{displayName}#0001",
             DisplayName = displayName,
             PreferredPlatform = "EA",
             GamerTags = tags.Select(t => new DriverGamerTag

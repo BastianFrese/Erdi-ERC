@@ -134,12 +134,12 @@
     font: 900 var(--fs-display)/.95 var(--ff-tech);
     letter-spacing: -.01em;
     text-transform: uppercase;
-    color: ***REMOVED***fff;
+    color: #fff;
     text-shadow: none;
 }
 .f1-hero__title em {
     font-style: normal;
-    color: ***REMOVED***fff;
+    color: #fff;
     filter: none;
 }
 
@@ -150,7 +150,7 @@
     line-height: 1.55;
     margin-bottom: 1.4rem;
 }
-.f1-hero__lead strong { color: ***REMOVED***fff; letter-spacing: .02em; }
+.f1-hero__lead strong { color: #fff; letter-spacing: .02em; }
 
 .f1-hero__actions {
     display: flex;
@@ -214,12 +214,12 @@
     letter-spacing: .22em;
     text-transform: uppercase;
     background: var(--accent);
-    color: ***REMOVED***fff;
+    color: #fff;
     border-radius: 2px;
 }
 .f1-broadcast-card__title {
     font: 700 1.15rem/1.2 var(--ff-display);
-    color: ***REMOVED***fff;
+    color: #fff;
     margin: 0;
 }
 .f1-broadcast-card__meta {
@@ -333,7 +333,7 @@
     align-items: center;
     gap: .45rem;
     font: 700 1rem/1.1 var(--ff-display);
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .f1-timing-row__driver a { color: inherit; text-decoration: none; }
 .f1-timing-row__driver a:hover { color: var(--accent-2); }
@@ -422,7 +422,7 @@
     font: 800 clamp(1.5rem, 3vw, 2.2rem)/1 var(--ff-tech);
     letter-spacing: .02em;
     text-transform: uppercase;
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .f1-section__sub {
     margin-left: auto;
@@ -516,7 +516,7 @@
 .f1-stat__value {
     font: 800 clamp(2rem, 3.6vw, 2.8rem)/1 var(--ff-tech);
     letter-spacing: -.01em;
-    background: linear-gradient(180deg, ***REMOVED***fff, ***REMOVED***b6bbcc);
+    background: linear-gradient(180deg, #fff, #b6bbcc);
     -webkit-background-clip: text;
             background-clip: text;
     color: transparent;
@@ -605,7 +605,7 @@
 }
 .f1-pitcard:hover .f1-pitcard__icon {
     transform: rotate(-8deg) scale(1.08);
-    color: ***REMOVED***fff;
+    color: #fff;
     background: var(--g-accent);
     border-color: transparent;
 }
@@ -628,7 +628,7 @@
 }
 .f1-pitcard__title {
     font: 800 1.1rem/1.2 var(--ff-display);
-    color: ***REMOVED***fff;
+    color: #fff;
     margin: 0 0 .4rem;
     letter-spacing: .01em;
 }
@@ -692,7 +692,7 @@
     margin: 0;
     font: 800 1.15rem/1.15 var(--ff-tech);
     letter-spacing: .01em;
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .f1-leaguecard__sub {
     font: 700 .65rem/1 var(--ff-tech);
@@ -739,13 +739,13 @@
     gap: .5rem;
 }
 .f1-leaguecard__event-track {
-    color: ***REMOVED***fff;
+    color: #fff;
     font: 700 .95rem/1.15 var(--ff-display);
 }
 .f1-leaguecard__event-date {
     padding: .2rem .55rem;
     background: var(--accent);
-    color: ***REMOVED***fff;
+    color: #fff;
     font: 700 .7rem/1 var(--ff-mono);
     letter-spacing: .04em;
     border-radius: 2px;
@@ -798,7 +798,7 @@
 }
 .f1-newscard__cat--pinned {
     background: var(--sig-amber);
-    color: ***REMOVED***000;
+    color: #000;
     border-color: transparent;
     box-shadow: 0 0 12px rgba(255,184,0,.4);
 }
@@ -810,7 +810,7 @@
 .f1-newscard__title {
     margin: 0 0 .4rem;
     font: 700 1rem/1.2 var(--ff-display);
-    color: ***REMOVED***fff;
+    color: #fff;
 }
 .f1-newscard__body {
     font-size: .82rem;
@@ -837,7 +837,7 @@
     top: -2px; right: -2px;
     width: 60px;
     height: 14px;
-    background: repeating-linear-gradient(45deg, var(--sig-amber) 0 6px, ***REMOVED***000 6px 12px);
+    background: repeating-linear-gradient(45deg, var(--sig-amber) 0 6px, #000 6px 12px);
     transform: skewX(-22deg);
     opacity: .85;
 }
@@ -889,7 +889,7 @@
     display: block;
     width: 100%;
     height: auto;
-    background: ***REMOVED***000;
+    background: #000;
 }
 .f1-intro-overlay__close {
     position: absolute;
@@ -901,7 +901,7 @@
     justify-content: center;
     border: 1px solid var(--stroke-2);
     background: rgba(0,0,0,.6);
-    color: ***REMOVED***fff;
+    color: #fff;
     border-radius: 50%;
     cursor: pointer;
     transition: transform var(--t-fast), background var(--t-fast);
@@ -946,13 +946,13 @@
    ===================================================================== */
 .f1-overall-chip {
     margin-top: .8rem;
-    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    border: 1px solid var(--stroke-1, #2a2e3a);
     background: linear-gradient(135deg, rgba(245,158,11,.06) 0%, rgba(56,189,248,.05) 100%);
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 .f1-overall-chip:hover {
     transform: translateY(-2px);
-    border-color: var(--accent-2, ***REMOVED***38bdf8);
+    border-color: var(--accent-2, #38bdf8);
     box-shadow: 0 8px 24px -12px rgba(56,189,248,.5);
 }
 .f1-overall-chip .f1-timing-card__head {
@@ -974,7 +974,7 @@
     padding: .35rem .35rem;
     border-radius: var(--r-1, 4px);
     background: rgba(255,255,255,.025);
-    border: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    border: 1px solid var(--stroke-1, #2a2e3a);
 }
 .f1-overall-chip__row:hover { background: rgba(255,255,255,.05); }
 .f1-overall-chip__pos {
@@ -987,31 +987,31 @@
 }
 .f1-overall-chip__name {
     font: 700 .85rem/1.1 var(--ff-tech, "Inter", sans-serif);
-    color: var(--ink, ***REMOVED***f8fafc);
+    color: var(--ink, #f8fafc);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .f1-overall-chip__pts {
     font: 700 .9rem/1 var(--ff-tech, "Inter", sans-serif);
-    color: var(--ink, ***REMOVED***f8fafc);
+    color: var(--ink, #f8fafc);
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
 .f1-overall-chip__pts span {
     font-size: .65rem;
-    color: var(--ink-4, ***REMOVED***94a3b8);
+    color: var(--ink-4, #94a3b8);
     font-weight: 500;
     margin-left: .15rem;
 }
 .f1-overall-chip__cta {
     margin-top: .6rem;
     padding-top: .55rem;
-    border-top: 1px solid var(--stroke-1, ***REMOVED***2a2e3a);
+    border-top: 1px solid var(--stroke-1, #2a2e3a);
     font: 600 .72rem/1 var(--ff-tech, "Inter", sans-serif);
     letter-spacing: .15em;
     text-transform: uppercase;
-    color: var(--accent-2, ***REMOVED***38bdf8);
+    color: var(--accent-2, #38bdf8);
     display: inline-flex;
     align-items: center;
     gap: .35rem;

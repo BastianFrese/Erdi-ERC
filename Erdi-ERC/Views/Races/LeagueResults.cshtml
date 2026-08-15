@@ -1,11 +1,11 @@
-@model <OWNER_HANDLE>_ERC.Models.LeagueResultsViewModel
-@using <OWNER_HANDLE>_ERC.Helpers
-@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.F1ScoringOptions> ScoringOptions
+@model Erdi_ERC.Models.LeagueResultsViewModel
+@using Erdi_ERC.Helpers
+@inject Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.F1ScoringOptions> ScoringOptions
 
 @{
     ViewData["Title"] = $"{Model.League.Name} · Rennen";
 
-    string ResolveTeamForRaceDriver(<OWNER_HANDLE>_ERC.Models.RaceResult race, string? driver)
+    string ResolveTeamForRaceDriver(Erdi_ERC.Models.RaceResult race, string? driver)
     {
         if (string.IsNullOrWhiteSpace(driver)) return "Ohne Team";
         var normalizedDriver = driver.Trim();
@@ -28,7 +28,7 @@
             .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
                                  && g.GuestDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)
                                  && !string.IsNullOrWhiteSpace(g.MainDriver)
-                                 && g.MainDriver != <OWNER_HANDLE>_ERC.Services.StatsService.GuestSentinelNoMain)?.MainDriver;
+                                 && g.MainDriver != Erdi_ERC.Services.StatsService.GuestSentinelNoMain)?.MainDriver;
 
         if (!string.IsNullOrWhiteSpace(guestMain))
         {
@@ -61,12 +61,12 @@
         .ToList();
 
     var raceIdsByTeam = new Dictionary<string, HashSet<int>>(StringComparer.OrdinalIgnoreCase);
-    var finishStatsByTeam = new Dictionary<string, List<<OWNER_HANDLE>_ERC.Models.RaceFinish>>(StringComparer.OrdinalIgnoreCase);
+    var finishStatsByTeam = new Dictionary<string, List<Erdi_ERC.Models.RaceFinish>>(StringComparer.OrdinalIgnoreCase);
 
     foreach (var team in allTeamNames)
     {
         raceIdsByTeam[team] = new HashSet<int>();
-        finishStatsByTeam[team] = new List<<OWNER_HANDLE>_ERC.Models.RaceFinish>();
+        finishStatsByTeam[team] = new List<Erdi_ERC.Models.RaceFinish>();
     }
 
     foreach (var race in Model.Races)
@@ -76,7 +76,7 @@
             if (string.IsNullOrWhiteSpace(fin.Driver)) continue;
             var teamName = ResolveTeamForRaceDriver(race, fin.Driver);
             if (!raceIdsByTeam.ContainsKey(teamName)) raceIdsByTeam[teamName] = new HashSet<int>();
-            if (!finishStatsByTeam.ContainsKey(teamName)) finishStatsByTeam[teamName] = new List<<OWNER_HANDLE>_ERC.Models.RaceFinish>();
+            if (!finishStatsByTeam.ContainsKey(teamName)) finishStatsByTeam[teamName] = new List<Erdi_ERC.Models.RaceFinish>();
             raceIdsByTeam[teamName].Add(race.RowId);
             finishStatsByTeam[teamName].Add(fin);
         }
@@ -89,7 +89,7 @@
     var constructors = allTeamNames
         .Select(team =>
         {
-            var finishes = finishStatsByTeam.TryGetValue(team, out var fs) ? fs : new List<<OWNER_HANDLE>_ERC.Models.RaceFinish>();
+            var finishes = finishStatsByTeam.TryGetValue(team, out var fs) ? fs : new List<Erdi_ERC.Models.RaceFinish>();
             var validFinishes = finishes.Where(f => f.Position > 0).ToList();
             var points = Model.Races.Sum(r => r.Finishes
                 .Where(f => f.Position > 0 && ResolveTeamForRaceDriver(r, f.Driver).Equals(team, StringComparison.OrdinalIgnoreCase))
@@ -143,7 +143,7 @@
 
     Actions   = new() {
         new F1ButtonVm { Label="Zu Results", Variant="primary", IconLucide="arrow-left", Href=Url.Action("Results", "Races")! },
-        new F1ButtonVm { Label="Racing Hub", Variant="ghost",   IconLucide="flag",       Href=Url.Action("<OWNER_HANDLE>10", "Stats")! }
+        new F1ButtonVm { Label="Racing Hub", Variant="ghost",   IconLucide="flag",       Href=Url.Action("Erdi10", "Stats")! }
     }
 })" />
 

@@ -1,10 +1,10 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public class DriverProfileService : IDriverProfileService
     {
@@ -100,22 +100,22 @@ namespace <OWNER_HANDLE>_ERC.Services
             => RenameIngameNameAsync(discordId, newName, actorDiscordId, ct);
 
         private static readonly System.Text.RegularExpressions.Regex HexColorRegex = new(
-            "^***REMOVED***[0-9A-Fa-f]{6}$",
+            "^#[0-9A-Fa-f]{6}$",
             System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
         public string ResolveDriverNumberColor(DriverProfile profile)
         {
-            if (profile is null) return "***REMOVED***e10600";
+            if (profile is null) return "#e10600";
 
             var explicitColor = profile.DriverNumberColor?.Trim();
             if (!string.IsNullOrWhiteSpace(explicitColor) && HexColorRegex.IsMatch(explicitColor))
                 return explicitColor;
 
-            var team = <OWNER_HANDLE>_ERC.Helpers.F1TeamsHelper.GetTeamByName(profile.FavoriteTeam);
+            var team = Erdi_ERC.Helpers.F1TeamsHelper.GetTeamByName(profile.FavoriteTeam);
             if (!string.IsNullOrWhiteSpace(team?.PrimaryColor))
                 return team.PrimaryColor.Trim();
 
-            return "***REMOVED***e10600";
+            return "#e10600";
         }
 
         public async Task<int> RenameIngameNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default)

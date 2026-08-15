@@ -1,8 +1,8 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public class CommunityContentService : ICommunityContentService
     {

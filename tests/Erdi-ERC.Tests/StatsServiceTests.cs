@@ -1,10 +1,10 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Verifiziert die abgeleitete Tabellen-Berechnung: Punkte kommen aus den Renn-Ergebnissen,
@@ -43,7 +43,7 @@ public class StatsServiceTests
         await ctx.Db.SaveChangesAsync();
         await AddRaceAsync(ctx, "l1", ("Alpha", 1)); // P1 = 25 Punkte
 
-        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
 
         // Act
         await service.RebuildLeagueStandingsAsync("l1");
@@ -65,7 +65,7 @@ public class StatsServiceTests
         ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Bonus", PointsAdjustment = 42 });
         await ctx.Db.SaveChangesAsync();
 
-        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
 
         // Act
         await service.RebuildLeagueStandingsAsync("l1");
@@ -88,7 +88,7 @@ public class StatsServiceTests
         await ctx.Db.SaveChangesAsync();
         await AddRaceAsync(ctx, "l1", ("Stamm", 2), ("Guest", 1)); // Guest P1 = 25, Stamm P2 = 21
 
-        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
 
         // Act
         await service.RebuildLeagueStandingsAsync("l1");
@@ -121,7 +121,7 @@ public class StatsServiceTests
         ctx.Db.RaceGuestAssignments.Add(new RaceGuestAssignment { RaceResultId = race.RowId, GuestDriver = "Guest", MainDriver = "Stamm" });
         await ctx.Db.SaveChangesAsync();
 
-        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
 
         // Act
         await service.RebuildLeagueStandingsAsync("l1");
@@ -166,7 +166,7 @@ public class StatsServiceTests
         });
         await ctx.Db.SaveChangesAsync();
 
-        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.F1ScoringOptions()));
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
 
         // Act
         await service.RebuildLeagueStandingsAsync("l1");

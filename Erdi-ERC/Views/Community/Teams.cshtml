@@ -1,4 +1,4 @@
-@model <OWNER_HANDLE>_ERC.Models.TeamListPageViewModel
+@model Erdi_ERC.Models.TeamListPageViewModel
 @{
     ViewData["Title"] = "Teams";
     var topTeam = Model.Teams.OrderByDescending(x => x.Points).FirstOrDefault();

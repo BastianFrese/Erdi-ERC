@@ -1,9 +1,9 @@
-using <OWNER_HANDLE>_ERC.Options;
+using Erdi_ERC.Options;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     /// <summary>
     /// Guild-Verifikation gegen die Discord-API. Nutzt den gepoolten Named-Client

@@ -20,7 +20,7 @@ body {
         radial-gradient(1400px 700px at 100% -10%, rgba(0,229,255,.07), transparent 60%),
         radial-gradient(1100px 600px at -10% 110%, var(--accent-soft), transparent 65%),
         radial-gradient(900px 500px at 50% 50%, rgba(185,92,255,.05), transparent 70%),
-        linear-gradient(180deg,var(--bg-0) 0%, ***REMOVED***050609 100%);
+        linear-gradient(180deg,var(--bg-0) 0%, #050609 100%);
     background-attachment:fixed;
     -webkit-font-smoothing:antialiased;
     text-rendering:optimizeLegibility;
@@ -34,7 +34,7 @@ body::before {
         linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
     background-size:44px 44px;
-    mask-image:radial-gradient(circle at 50% 30%, ***REMOVED***000 30%, transparent 80%);
+    mask-image:radial-gradient(circle at 50% 30%, #000 30%, transparent 80%);
     opacity:.55;
 }
 body::after {
@@ -49,14 +49,14 @@ body::after {
     100% { background-position:0 80px; }
 }
 
-::selection { background:var(--accent); color:***REMOVED***fff; }
+::selection { background:var(--accent); color:#fff; }
 
 ::-webkit-scrollbar { width:10px; height:10px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.10); border-radius:10px; border:2px solid transparent; background-clip:padding-box; }
 ::-webkit-scrollbar-thumb:hover { background:var(--accent); background-clip:padding-box; }
 
-a { color:***REMOVED***fff; text-decoration:none; transition:color var(--t-fast); }
+a { color:#fff; text-decoration:none; transition:color var(--t-fast); }
 a:hover { color:var(--accent-2); }
 
 img,svg,video { max-width:100%; }

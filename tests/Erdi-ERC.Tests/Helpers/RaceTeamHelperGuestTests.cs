@@ -1,13 +1,13 @@
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Helpers;
+namespace Erdi_ERC.Tests.Helpers;
 
 /// <summary>
-/// Tests für den Cross-League-Gast-Pfad in <see cref="<OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper"/>:
+/// Tests für den Cross-League-Gast-Pfad in <see cref="Erdi_ERC.Helpers.RaceTeamHelper"/>:
 /// Gastfahrer mit Liga-Hauptfahrer-Zuordnung erbt das Team des MainDrivers; ohne
 /// Zuordnung oder mit Sentinel wird kein Team aufgelöst.
 /// </summary>
@@ -40,7 +40,7 @@ public class RaceTeamHelperGuestTests
         });
         var standings = new List<DriverStanding> { Standing("StammA", "Ferrari") };
 
-        var team = <OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
+        var team = Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
 
         Assert.Equal("Ferrari", team);
     }
@@ -52,7 +52,7 @@ public class RaceTeamHelperGuestTests
         // Kein GuestAssignment für "Gast1"
         var standings = new List<DriverStanding> { Standing("StammA", "Ferrari") };
 
-        var team = <OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
+        var team = Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
 
         Assert.Null(team);
     }
@@ -68,7 +68,7 @@ public class RaceTeamHelperGuestTests
         });
         var standings = new List<DriverStanding> { Standing("StammA", "Ferrari") };
 
-        var team = <OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
+        var team = Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
 
         Assert.Null(team);
     }
@@ -95,7 +95,7 @@ public class RaceTeamHelperGuestTests
             Standing("GuestMain", "GuestTeam")
         };
 
-        var team = <OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Multi");
+        var team = Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Multi");
 
         Assert.Equal("ReserveTeam", team);
     }
@@ -110,16 +110,16 @@ public class RaceTeamHelperGuestTests
             MainDriver = "StammA"
         });
 
-        Assert.True(<OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "Gast1"));
-        Assert.True(<OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "gast1")); // case-insensitive
-        Assert.False(<OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "StammA"));
+        Assert.True(Erdi_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "Gast1"));
+        Assert.True(Erdi_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "gast1")); // case-insensitive
+        Assert.False(Erdi_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "StammA"));
 
         race.GuestAssignments.Add(new RaceGuestAssignment
         {
             GuestDriver = "Gast2",
             MainDriver = StatsService.GuestSentinelNoMain
         });
-        Assert.False(<OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "Gast2"));
+        Assert.False(Erdi_ERC.Helpers.RaceTeamHelper.IsRaceGuest(race, "Gast2"));
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public class RaceTeamHelperGuestTests
             .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
             .Single();
 
-        var points = <OWNER_HANDLE>_ERC.Helpers.RaceTeamHelper.ComputeTeamPointsForLeague(league, "Ferrari");
+        var points = Erdi_ERC.Helpers.RaceTeamHelper.ComputeTeamPointsForLeague(league, "Ferrari");
 
         Assert.Equal(25, points);
     }

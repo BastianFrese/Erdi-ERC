@@ -1,6 +1,6 @@
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
-    public class <OWNER_HANDLE>10ViewModel
+    public class Erdi10ViewModel
     {
         public string TwitchChannel { get; set; } = "erdi10";
         public List<League> Leagues { get; set; } = new();
@@ -246,8 +246,8 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int? BestFinish { get; set; }
         public double? AverageFinish { get; set; }
         public List<DriverRaceEntry> Races { get; set; } = new();
-        public List<<OWNER_HANDLE>_ERC.Helpers.DriverAchievementsHelper.Achievement> Achievements { get; set; } = new();
-        public List<<OWNER_HANDLE>_ERC.Helpers.DriverRivalryHelper.RivalrySummary> Rivalries { get; set; } = new();
+        public List<Erdi_ERC.Helpers.DriverAchievementsHelper.Achievement> Achievements { get; set; } = new();
+        public List<Erdi_ERC.Helpers.DriverRivalryHelper.RivalrySummary> Rivalries { get; set; } = new();
     }
 
     public class DriverRaceEntry
@@ -316,8 +316,8 @@ namespace <OWNER_HANDLE>_ERC.Models
         public int Position { get; set; }
         public string CssKey { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
-        public string PrimaryColor { get; set; } = "***REMOVED***888888";
-        public string SecondaryColor { get; set; } = "***REMOVED***222222";
+        public string PrimaryColor { get; set; } = "#888888";
+        public string SecondaryColor { get; set; } = "#222222";
         public int Points { get; set; }
         public int Wins { get; set; }
         public int SecondPlaces { get; set; }

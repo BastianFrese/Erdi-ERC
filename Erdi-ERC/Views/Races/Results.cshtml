@@ -1,5 +1,5 @@
-@model <OWNER_HANDLE>_ERC.Models.<OWNER_HANDLE>10ViewModel
-@using <OWNER_HANDLE>_ERC.Helpers
+@model Erdi_ERC.Models.Erdi10ViewModel
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = "Race Results · Season Progress";
 
@@ -21,14 +21,14 @@
 @await Html.PartialAsync("_LiveRaceBanner")
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow = "<OWNER_HANDLE>10 · Championship",
+    Eyebrow = "Erdi10 · Championship",
     LiveDot = true,
     Title = "Race",
     Highlight = "Results",
     Lead = "Aktueller Stand der Meisterschaften – <strong>Punkte, Sieger und Saisonverlauf</strong> aller Ligen.",
 
     Actions = new() {
-        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("<OWNER_HANDLE>10", "Stats")! },
+        new F1ButtonVm { Label = "Racing Hub", Variant = "primary", IconLucide = "flag", Href = Url.Action("Erdi10", "Stats")! },
         new F1ButtonVm { Label = "Alle Rennen", Variant = "ghost", IconLucide = "trophy", Href = Url.Action("AllRaces", "Races")! }
     }
 })" />
@@ -153,7 +153,7 @@ else
                     </colgroup>
                     <thead>
                         <tr>
-                            <th>***REMOVED***</th>
+                            <th>#</th>
                             <th>Fahrer</th>
                             <th>Team</th>
                             <th class="is-center" title="Siege">W</th>
@@ -227,10 +227,10 @@ else
                                         cellStyle = "background:transparent;";
                                         cellColor = "var(--ink-4)";
                                     }
-                                    else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "***REMOVED***ffd24a"; }
-                                    else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "***REMOVED***d4d8e0"; }
-                                    else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "***REMOVED***d68a4a"; }
-                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);"; cellColor = "***REMOVED***aef3ff"; }
+                                    else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "#ffd24a"; }
+                                    else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "#d4d8e0"; }
+                                    else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "#d68a4a"; }
+                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);"; cellColor = "#aef3ff"; }
                                     else { cellStyle = "background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; }
 
                                     var cellText = fin == null ? "–" : fin.Position.ToString();
@@ -251,7 +251,7 @@ else
                                                 @cellText
                                                 @if (fin?.FastestLap == true)
                                                 {
-                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:***REMOVED***fff;filter:drop-shadow(0 0 4px rgba(185,92,255,.9));" title="Schnellste Runde"></i>
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:#fff;filter:drop-shadow(0 0 4px rgba(185,92,255,.9));" title="Schnellste Runde"></i>
                                                 }
                                             </span>
                                         }

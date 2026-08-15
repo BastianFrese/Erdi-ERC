@@ -1,10 +1,10 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public interface IWebhookAutomationService
     {
@@ -211,7 +211,7 @@ namespace <OWNER_HANDLE>_ERC.Services
                 if (!string.IsNullOrWhiteSpace(thumb)) embed["thumbnail"] = new { url = thumb };
 
                 if (!string.IsNullOrWhiteSpace(rule.EmbedColor) &&
-                    rule.EmbedColor.StartsWith('***REMOVED***') &&
+                    rule.EmbedColor.StartsWith('#') &&
                     int.TryParse(rule.EmbedColor[1..], System.Globalization.NumberStyles.HexNumber, null, out int colorInt))
                     embed["color"] = colorInt;
 

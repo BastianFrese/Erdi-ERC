@@ -3,10 +3,10 @@
     ViewData["Kicker"] = "Bewerbungen";
     ViewData["HeroTitle"] = "Bewerbungs-Übersicht";
 
-    var items   = ViewBag.Items as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.Application>
-                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.Application>();
-    var leagues = ViewBag.Leagues as System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>
-                  ?? new System.Collections.Generic.List<<OWNER_HANDLE>_ERC.Models.League>();
+    var items   = ViewBag.Items as System.Collections.Generic.List<Erdi_ERC.Models.Application>
+                  ?? new System.Collections.Generic.List<Erdi_ERC.Models.Application>();
+    var leagues = ViewBag.Leagues as System.Collections.Generic.List<Erdi_ERC.Models.League>
+                  ?? new System.Collections.Generic.List<Erdi_ERC.Models.League>();
     string? statusFilter = ViewBag.StatusFilter as string;
     string? leagueFilter = ViewBag.LeagueFilter as string;
     string? seasonFilter = ViewBag.SeasonFilter as string;
@@ -20,19 +20,19 @@
         ? "—"
         : leagues.FirstOrDefault(l => string.Equals(l.Id, id, StringComparison.OrdinalIgnoreCase))?.Name ?? id;
 
-    string StatusBadge(int s) => ((<OWNER_HANDLE>_ERC.Models.ApplicationStatus)s) switch
+    string StatusBadge(int s) => ((Erdi_ERC.Models.ApplicationStatus)s) switch
     {
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Rejected  => "f1-chip f1-chip--red",
+        Erdi_ERC.Models.ApplicationStatus.Pending   => "f1-chip f1-chip--amber",
+        Erdi_ERC.Models.ApplicationStatus.Accepted  => "f1-chip f1-chip--green",
+        Erdi_ERC.Models.ApplicationStatus.Rejected  => "f1-chip f1-chip--red",
         _                                          => "f1-chip"
     };
 
-    string StatusLabel(int s) => ((<OWNER_HANDLE>_ERC.Models.ApplicationStatus)s) switch
+    string StatusLabel(int s) => ((Erdi_ERC.Models.ApplicationStatus)s) switch
     {
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Pending   => "In Prüfung",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Accepted  => "Angenommen",
-        <OWNER_HANDLE>_ERC.Models.ApplicationStatus.Rejected  => "Abgelehnt",
+        Erdi_ERC.Models.ApplicationStatus.Pending   => "In Prüfung",
+        Erdi_ERC.Models.ApplicationStatus.Accepted  => "Angenommen",
+        Erdi_ERC.Models.ApplicationStatus.Rejected  => "Abgelehnt",
         _                                          => s.ToString()
     };
 }
@@ -84,7 +84,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-envelope-paper-fill me-2" style="color:***REMOVED***22d3ee;"></i>
+                <i class="bi bi-envelope-paper-fill me-2" style="color:#22d3ee;"></i>
                 <span>Bewerbungen (@items.Count)</span>
             </span>
         </div>

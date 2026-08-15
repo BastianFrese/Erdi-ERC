@@ -1,9 +1,9 @@
-using <OWNER_HANDLE>_ERC.Models.Troll;
+using Erdi_ERC.Models.Troll;
 
-namespace <OWNER_HANDLE>_ERC.Services;
+namespace Erdi_ERC.Services;
 
 /// <summary>
-/// Logik des <OWNER_HANDLE>-Troll-Systems: Auslöse-Würfel, gewichtete Gag-Auswahl und
+/// Logik des Erdi-Troll-Systems: Auslöse-Würfel, gewichtete Gag-Auswahl und
 /// Challenge-Erzeugung. Bewusst HTTP-frei (kein TempData/Cookie hier) – damit sind
 /// die reinen Roll-/Pick-Helfer deterministisch unit-testbar.
 /// </summary>

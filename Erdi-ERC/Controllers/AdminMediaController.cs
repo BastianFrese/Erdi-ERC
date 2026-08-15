@@ -1,8 +1,8 @@
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     [Authorize(Policy = "Admin.System.Music")]
     public class AdminMediaController : Controller

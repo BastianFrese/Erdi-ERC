@@ -76,7 +76,7 @@
   const parseSelector = selector => {
     if (selector && window.CSS && window.CSS.escape) {
       // document.querySelector needs escaping to handle IDs (html5+) containing for instance /
-      selector = selector.replace(/***REMOVED***([^\s"***REMOVED***']+)/g, (match, id) => `***REMOVED***${CSS.escape(id)}`);
+      selector = selector.replace(/#([^\s"#']+)/g, (match, id) => `#${CSS.escape(id)}`);
     }
     return selector;
   };
@@ -205,7 +205,7 @@
    * @param {HTMLElement} element
    * @return void
    *
-   * @see https://www.charistheo.io/blog/2021/02/restart-a-css-animation-with-javascript/***REMOVED***restarting-a-css-animation
+   * @see https://www.charistheo.io/blog/2021/02/restart-a-css-animation-with-javascript/#restarting-a-css-animation
    */
   const reflow = element => {
     element.offsetHeight; // eslint-disable-line no-unused-expressions
@@ -713,22 +713,22 @@
 
   const getSelector = element => {
     let selector = element.getAttribute('data-bs-target');
-    if (!selector || selector === '***REMOVED***') {
+    if (!selector || selector === '#') {
       let hrefAttribute = element.getAttribute('href');
 
       // The only valid content that could double as a selector are IDs or classes,
-      // so everything starting with `***REMOVED***` or `.`. If a "real" URL is used as the selector,
+      // so everything starting with `#` or `.`. If a "real" URL is used as the selector,
       // `document.querySelector` will rightfully complain it is invalid.
       // See https://github.com/twbs/bootstrap/issues/32273
-      if (!hrefAttribute || !hrefAttribute.includes('***REMOVED***') && !hrefAttribute.startsWith('.')) {
+      if (!hrefAttribute || !hrefAttribute.includes('#') && !hrefAttribute.startsWith('.')) {
         return null;
       }
 
       // Just in case some CMS puts out a full URL with the anchor appended
-      if (hrefAttribute.includes('***REMOVED***') && !hrefAttribute.startsWith('***REMOVED***')) {
-        hrefAttribute = `***REMOVED***${hrefAttribute.split('***REMOVED***')[1]}`;
+      if (hrefAttribute.includes('#') && !hrefAttribute.startsWith('#')) {
+        hrefAttribute = `#${hrefAttribute.split('#')[1]}`;
       }
-      selector = hrefAttribute && hrefAttribute !== '***REMOVED***' ? hrefAttribute.trim() : null;
+      selector = hrefAttribute && hrefAttribute !== '#' ? hrefAttribute.trim() : null;
     }
     return selector ? selector.split(',').map(sel => parseSelector(sel)).join(',') : null;
   };
@@ -1696,10 +1696,10 @@
   var viewport = 'viewport';
   var popper = 'popper';
   var reference = 'reference';
-  var variationPlacements = /****REMOVED***__PURE__*/basePlacements.reduce(function (acc, placement) {
+  var variationPlacements = /*#__PURE__*/basePlacements.reduce(function (acc, placement) {
     return acc.concat([placement + "-" + start, placement + "-" + end]);
   }, []);
-  var placements = /****REMOVED***__PURE__*/[].concat(basePlacements, [auto]).reduce(function (acc, placement) {
+  var placements = /*#__PURE__*/[].concat(basePlacements, [auto]).reduce(function (acc, placement) {
     return acc.concat([placement, placement + "-" + start, placement + "-" + end]);
   }, []); // modifiers that need to read the DOM
 
@@ -2010,7 +2010,7 @@
     while (isHTMLElement(currentNode) && ['html', 'body'].indexOf(getNodeName(currentNode)) < 0) {
       var css = getComputedStyle$1(currentNode); // This is non-exhaustive but covers the most common CSS properties that
       // create a containing block.
-      // https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block***REMOVED***identifying_the_containing_block
+      // https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block#identifying_the_containing_block
 
       if (css.transform !== 'none' || css.perspective !== 'none' || css.contain === 'paint' || ['transform', 'perspective'].indexOf(css.willChange) !== -1 || isFirefox && css.willChange === 'filter' || isFirefox && css.filter && css.filter !== 'none') {
         return currentNode;
@@ -2472,7 +2472,7 @@
   }
 
   function getScrollParent(node) {
-    if (['html', 'body', '***REMOVED***document'].indexOf(getNodeName(node)) >= 0) {
+    if (['html', 'body', '#document'].indexOf(getNodeName(node)) >= 0) {
       // $FlowFixMe[incompatible-return]: assume body is always available
       return node.ownerDocument.body;
     }
@@ -3081,7 +3081,7 @@
         width: 0,
         height: 0
       };
-      var arrowPaddingObject = state.modifiersData['arrow***REMOVED***persistent'] ? state.modifiersData['arrow***REMOVED***persistent'].padding : getFreshSideObject();
+      var arrowPaddingObject = state.modifiersData['arrow#persistent'] ? state.modifiersData['arrow#persistent'].padding : getFreshSideObject();
       var arrowPaddingMin = arrowPaddingObject[mainSide];
       var arrowPaddingMax = arrowPaddingObject[altSide]; // If the reference length is smaller than the arrow length, we don't want
       // to include its full size in the calculation. If the reference is small
@@ -3351,7 +3351,7 @@
         // is useful for low frequency updates where sync behavior simplifies the
         // logic.
         // For high frequency updates (e.g. `resize` and `scroll` events), always
-        // prefer the async Popper***REMOVED***update method
+        // prefer the async Popper#update method
         forceUpdate: function forceUpdate() {
           if (isDestroyed) {
             return;
@@ -3380,7 +3380,7 @@
           state.placement = state.options.placement; // On each update cycle, the `modifiersData` property for each modifier
           // is filled with the initial data specified by the modifier. This means
           // it doesn't persist and is fresh on each update.
-          // To ensure persistent data, use `${name}***REMOVED***persistent`
+          // To ensure persistent data, use `${name}#persistent`
 
           state.orderedModifiers.forEach(function (modifier) {
             return state.modifiersData[modifier.name] = Object.assign({}, modifier.data);
@@ -3469,19 +3469,19 @@
       return instance;
     };
   }
-  var createPopper$2 = /****REMOVED***__PURE__*/popperGenerator(); // eslint-disable-next-line import/no-unused-modules
+  var createPopper$2 = /*#__PURE__*/popperGenerator(); // eslint-disable-next-line import/no-unused-modules
 
   var defaultModifiers$1 = [eventListeners, popperOffsets$1, computeStyles$1, applyStyles$1];
-  var createPopper$1 = /****REMOVED***__PURE__*/popperGenerator({
+  var createPopper$1 = /*#__PURE__*/popperGenerator({
     defaultModifiers: defaultModifiers$1
   }); // eslint-disable-next-line import/no-unused-modules
 
   var defaultModifiers = [eventListeners, popperOffsets$1, computeStyles$1, applyStyles$1, offset$1, flip$1, preventOverflow$1, arrow$1, hide$1];
-  var createPopper = /****REMOVED***__PURE__*/popperGenerator({
+  var createPopper = /*#__PURE__*/popperGenerator({
     defaultModifiers: defaultModifiers
   }); // eslint-disable-next-line import/no-unused-modules
 
-  const Popper = /****REMOVED***__PURE__*/Object.freeze(/****REMOVED***__PURE__*/Object.defineProperty({
+  const Popper = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
     __proto__: null,
     afterMain,
     afterRead,
@@ -3598,7 +3598,7 @@
       super(element, config);
       this._popper = null;
       this._parent = this._element.parentNode; // dropdown wrapper
-      // TODO: v6 revert ***REMOVED***37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
+      // TODO: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
       this._menu = SelectorEngine.next(this._element, SELECTOR_MENU)[0] || SelectorEngine.prev(this._element, SELECTOR_MENU)[0] || SelectorEngine.findOne(SELECTOR_MENU, this._parent);
       this._inNavbar = this._detectNavbar();
     }
@@ -3854,7 +3854,7 @@
       }
       event.preventDefault();
 
-      // TODO: v6 revert ***REMOVED***37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
+      // TODO: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
       const getToggleButton = this.matches(SELECTOR_DATA_TOGGLE$3) ? this : SelectorEngine.prev(this, SELECTOR_DATA_TOGGLE$3)[0] || SelectorEngine.next(this, SELECTOR_DATA_TOGGLE$3)[0] || SelectorEngine.findOne(SELECTOR_DATA_TOGGLE$3, event.delegateTarget.parentNode);
       const instance = Dropdown.getOrCreateInstance(getToggleButton);
       if (isUpOrDownEvent) {
@@ -4141,7 +4141,7 @@
 
     // Public
     getWidth() {
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth***REMOVED***usage_notes
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth#usage_notes
       const documentWidth = document.documentElement.clientWidth;
       return Math.abs(window.innerWidth - documentWidth);
     }
@@ -4800,10 +4800,10 @@
    * A pattern that recognizes URLs that are safe wrt. XSS in URL navigation
    * contexts.
    *
-   * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/url_sanitizer.ts***REMOVED***L38
+   * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/url_sanitizer.ts#L38
    */
   // eslint-disable-next-line unicorn/better-regex
-  const SAFE_URL_PATTERN = /^(?!javascript:)(?:[a-z0-9+.-]+:|[^&:/?***REMOVED***]*(?:[/?***REMOVED***]|$))/i;
+  const SAFE_URL_PATTERN = /^(?!javascript:)(?:[a-z0-9+.-]+:|[^&:/?#]*(?:[/?#]|$))/i;
   const allowedAttribute = (attribute, allowedAttributeList) => {
     const attributeName = attribute.nodeName.toLowerCase();
     if (allowedAttributeList.includes(attributeName)) {
@@ -5718,7 +5718,7 @@
 
     // The logic of selection
     _observerCallback(entries) {
-      const targetElement = entry => this._targetLinks.get(`***REMOVED***${entry.target.id}`);
+      const targetElement = entry => this._targetLinks.get(`#${entry.target.id}`);
       const activate = entry => {
         this._previousScrollData.visibleEntryTop = entry.target.offsetTop;
         this._process(targetElement(entry));
@@ -6311,4 +6311,4 @@
   return index_umd;
 
 }));
-//***REMOVED*** sourceMappingURL=bootstrap.bundle.js.map
+//# sourceMappingURL=bootstrap.bundle.js.map

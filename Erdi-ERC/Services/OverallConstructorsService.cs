@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Helpers;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
+using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     /// <summary>
     /// Aggregiert Punkte aller Ligen, deren Opt-in <see cref="League.CountsTowardOverall"/>
@@ -79,8 +79,8 @@ namespace <OWNER_HANDLE>_ERC.Services
                         var f1Team = F1TeamsHelper.GetTeamByName(resolvedTeamName);
                         var cssKey = f1Team?.CssKey ?? "unknown";
                         var displayName = f1Team?.Name ?? resolvedTeamName.Trim();
-                        var primaryColor = f1Team?.PrimaryColor ?? "***REMOVED***888888";
-                        var secondaryColor = f1Team?.SecondaryColor ?? "***REMOVED***222222";
+                        var primaryColor = f1Team?.PrimaryColor ?? "#888888";
+                        var secondaryColor = f1Team?.SecondaryColor ?? "#222222";
 
                         var points = SafePoints(finish.Position);
                         if (points <= 0)

@@ -1,7 +1,7 @@
 @using System.Text.Json
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Helpers
-@inject Microsoft.Extensions.Options.IOptions<<OWNER_HANDLE>_ERC.Options.ApplicationOptions> _adminAppOpts
+@using Erdi_ERC.Models
+@using Erdi_ERC.Helpers
+@inject Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.ApplicationOptions> _adminAppOpts
 @{
     ViewData["Title"] = "F1 Setups";
 
@@ -9,8 +9,8 @@
     var selectedTrack = ViewBag.SelectedTrack as string;
     var newSetupGroups = (ViewBag.NewSetupGroups as List<SetupNewsGroup>) ?? new List<SetupNewsGroup>();
     var newSetupSinceUtc = ViewBag.NewSetupSinceUtc is DateTime nsu ? nsu : DateTime.UtcNow.AddDays(-SetupNewsGroup.WindowDays);
-    var visibleSetups = (ViewBag.VisibleSetups as List<<OWNER_HANDLE>_ERC.Models.TrackSetup>) ?? new List<<OWNER_HANDLE>_ERC.Models.TrackSetup>();
-    var hiddenSetups = (ViewBag.HiddenSetups as List<<OWNER_HANDLE>_ERC.Models.TrackSetup>) ?? new List<<OWNER_HANDLE>_ERC.Models.TrackSetup>();
+    var visibleSetups = (ViewBag.VisibleSetups as List<Erdi_ERC.Models.TrackSetup>) ?? new List<Erdi_ERC.Models.TrackSetup>();
+    var hiddenSetups = (ViewBag.HiddenSetups as List<Erdi_ERC.Models.TrackSetup>) ?? new List<Erdi_ERC.Models.TrackSetup>();
     var setupTier = ViewBag.SetupTier is int t ? t : 0;
     var setupRole = ViewBag.SetupRole as string;
     var isOnCommunityGuild = ViewBag.IsOnCommunityGuild is bool icg && icg;
@@ -55,7 +55,7 @@
         _ => "tier-badge"
     };
 
-    static (string Cls, string Label, string Title) TireCompound(<OWNER_HANDLE>_ERC.Models.TrackSetup s)
+    static (string Cls, string Label, string Title) TireCompound(Erdi_ERC.Models.TrackSetup s)
     {
         var hay = ((s.Title ?? string.Empty) + " " + (s.SetupInfo ?? string.Empty)).ToLowerInvariant();
         if (hay.Contains("regen") || hay.Contains("wet") || hay.Contains("nass") || hay.Contains("rain"))
@@ -118,11 +118,11 @@
             <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);max-width:480px;">
                 <div style="padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.65rem;">
                     <span class="icon-chip is-cyan"><i class="bi bi-play-fill"></i></span>
-                    <span style="font:700 .9rem/1 var(--ff-body);color:var(--ink);"><OWNER_HANDLE>s Setup Tutorial</span>
+                    <span style="font:700 .9rem/1 var(--ff-body);color:var(--ink);">Erdis Setup Tutorial</span>
                 </div>
                 <div class="ratio ratio-16x9">
                     <iframe src="https://www.youtube.com/embed/H9g4J0G_rKQ"
-                            title="<OWNER_HANDLE> Setup Tutorial"
+                            title="Erdi Setup Tutorial"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen
                             loading="lazy"></iframe>
@@ -135,7 +135,7 @@
                     <span class="icon-chip is-cyan"><i class="bi bi-link-45deg"></i></span>
                     <span style="font:700 .9rem/1 var(--ff-body);color:var(--ink);">Twitch ↔ Discord verknüpfen</span>
                 </div>
-                <p class="small text-mute mb-3">Seid ihr Subscriber auf <OWNER_HANDLE>s Twitch-Kanal, könnt ihr euch die Subscriber-Rollen abholen:</p>
+                <p class="small text-mute mb-3">Seid ihr Subscriber auf Erdis Twitch-Kanal, könnt ihr euch die Subscriber-Rollen abholen:</p>
                 <ol class="small text-mute mb-0 ps-3" style="line-height:1.8;">
                     <li>Discord öffnen → Benutzereinstellungen über das Zahnrad.</li>
                     <li>Links auf <strong style="color:var(--ink);">Verknüpfungen</strong> klicken.</li>
@@ -229,7 +229,7 @@
     else if (!isOnCommunityGuild)
     {
         <div class="alert alert-warning mt-3">
-            <strong>Setups gesperrt:</strong> Du musst Mitglied auf dem <OWNER_HANDLE> Community Discord sein, damit dir die Setups angezeigt werden.
+            <strong>Setups gesperrt:</strong> Du musst Mitglied auf dem Erdi Community Discord sein, damit dir die Setups angezeigt werden.
             <div class="mt-2">
                 <a class="f1-btn f1-btn--ghost" href="@_adminAppOpts.Value.DiscordInviteCommunity" target="_blank" rel="noopener">
                     <i class="bi bi-discord"></i> Community Discord beitreten

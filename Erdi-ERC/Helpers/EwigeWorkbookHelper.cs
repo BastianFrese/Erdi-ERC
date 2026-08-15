@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     /// <summary>
     /// Zentraler Pfad zur aktiven Ewige-Liste-Arbeitsmappe — genutzt von Stats (Anzeige),

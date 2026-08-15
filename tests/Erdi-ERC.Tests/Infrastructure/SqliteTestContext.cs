@@ -1,10 +1,10 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+namespace Erdi_ERC.Tests.Infrastructure;
 
 /// <summary>
 /// Stellt einen <see cref="AppDbContext"/> auf einer frischen SQLite-In-Memory-DB bereit.

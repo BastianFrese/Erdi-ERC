@@ -1,8 +1,8 @@
-@model <OWNER_HANDLE>_ERC.Models.DriverDetailViewModel
-@using <OWNER_HANDLE>_ERC.Helpers
+@model Erdi_ERC.Models.DriverDetailViewModel
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = $"Profil – {Model.Driver}";
-    var profile = ViewBag.Profile as <OWNER_HANDLE>_ERC.Models.DriverProfile;
+    var profile = ViewBag.Profile as Erdi_ERC.Models.DriverProfile;
     var canEditEaName = ViewBag.CanEditEaName is bool ce && ce;
     var preferredPlatform = profile?.PreferredPlatform?.Trim() ?? "EA";
     var currentIngameTag = profile?.GamerTags?
@@ -10,7 +10,7 @@
         ?? profile?.GamerTags?.FirstOrDefault(t => t.IsPrimary)?.GamerTag?.Trim()
         ?? profile?.DisplayName?.Trim()
         ?? string.Empty;
-    var wallMessages = (ViewBag.ProfileWall as List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>) ?? new List<<OWNER_HANDLE>_ERC.Models.ProfileWallMessage>();
+    var wallMessages = (ViewBag.ProfileWall as List<Erdi_ERC.Models.ProfileWallMessage>) ?? new List<Erdi_ERC.Models.ProfileWallMessage>();
 
     var selectedTrackKey = RaceFlagHelper.ResolveTrack(profile?.FavoriteTrack)?.Key ?? string.Empty;
     var selectedTeamCssKey = profile?.FavoriteTeam ?? string.Empty;
@@ -18,7 +18,7 @@
     var profileHardware = SimHardwareHelper.Resolve(profile?.InputDevice);
     var currentInputDevice = profile?.InputDevice?.Trim() ?? string.Empty;
     var hwOptions = new[] { "Fanatec", "MOZA Racing", "Logitech G", "Thrustmaster", "Gamepad" };
-    var currentNumberColor = ViewBag.NumberColor as string ?? "***REMOVED***e10600";
+    var currentNumberColor = ViewBag.NumberColor as string ?? "#e10600";
 
     var featured = DriverAchievementsHelper.GetFeatured(Model.Achievements);
     var totalRaces = Model.Races.Count;
@@ -133,7 +133,7 @@
         </div>
 
         <div class="profile-card mt-4">
-            <div class="profile-card__head"><i class="bi bi-stars" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Profil-Infos</div>
+            <div class="profile-card__head"><i class="bi bi-stars" style="color:var(--text-amber,#f59e0b);"></i> Profil-Infos</div>
             <div class="profile-card__body d-flex flex-column gap-2">
                 <div class="surface-glass p-2">
                     <div class="text-mute small">Lieblingsstrecke</div>
@@ -195,17 +195,17 @@
                     {
                         <form asp-action="RemoveProfilePhoto" method="post" onsubmit="return confirm('Profilbild wirklich entfernen?');">
                             @Html.AntiForgeryToken()
-                            <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:***REMOVED***ef4444;color:***REMOVED***ef4444;">Foto entfernen</button>
+                            <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:#ef4444;color:#ef4444;">Foto entfernen</button>
                         </form>
                     }
                 </div>
             </div>
 
-            <div class="profile-card mt-4" style="border-color:var(--text-amber,***REMOVED***f59e0b);">
-                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Ingame-Namen ändern</div>
+            <div class="profile-card mt-4" style="border-color:var(--text-amber,#f59e0b);">
+                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,#f59e0b);"></i> Ingame-Namen ändern</div>
                 <div class="profile-card__body d-flex flex-column gap-3">
                     <div class="text-mute small">Hier kannst du deinen Ingame-Namen (@preferredPlatform) selbst anpassen.</div>
-                    <div class="surface-glass p-3" style="border-left:3px solid var(--text-amber,***REMOVED***f59e0b);font-size:.88rem;">
+                    <div class="surface-glass p-3" style="border-left:3px solid var(--text-amber,#f59e0b);font-size:.88rem;">
                         <strong>Wichtiger Hinweis:</strong> Bitte trage hier immer zu <strong>100% deinen echten und korrekten Ingame-Namen</strong> ein. Falsche Angaben führen zu falschen Zuordnungen im System.
                     </div>
                     <form asp-action="UpdateEaName" method="post" class="d-flex flex-column gap-2">
@@ -218,7 +218,7 @@
                                 Ich bestätige, dass dieser Ingame-Name mein echter, vollständiger und aktueller Name ist.
                             </label>
                         </div>
-                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,***REMOVED***f59e0b);color:var(--text-amber,***REMOVED***f59e0b);">Ingame-Namen speichern</button>
+                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,#f59e0b);color:var(--text-amber,#f59e0b);">Ingame-Namen speichern</button>
                     </form>
                 </div>
             </div>
@@ -349,7 +349,7 @@
         }
 
         <div class="profile-card mb-4">
-            <div class="profile-card__head"><i class="bi bi-trophy" style="color:var(--text-amber,***REMOVED***f59e0b);"></i> Achievements</div>
+            <div class="profile-card__head"><i class="bi bi-trophy" style="color:var(--text-amber,#f59e0b);"></i> Achievements</div>
             <div class="profile-card__body">
                 @if (unlocked.Any())
                 {
@@ -453,10 +453,10 @@
 }
 else
 {
-    <span class="status-pill" style="background:rgba(239,68,68,.15);color:***REMOVED***ef4444;">@(r.Position == 0 ? "DNF" : "DNS")</span>
+    <span class="status-pill" style="background:rgba(239,68,68,.15);color:#ef4444;">@(r.Position == 0 ? "DNF" : "DNS")</span>
 }
 </td>
-                                            <td class="text-tech is-center" style="color:var(--sig-purple,***REMOVED***a855f7);">@(r.FastestLap ? "★" : "")</td>
+                                            <td class="text-tech is-center" style="color:var(--sig-purple,#a855f7);">@(r.FastestLap ? "★" : "")</td>
                                             <td style="font-size:.82rem;color:var(--ink-2);">@(r.WasReserve ? r.ReserveForDriver : "")</td>
                                         </tr>
                                     }

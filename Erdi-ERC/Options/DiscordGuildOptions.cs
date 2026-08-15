@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Options
+namespace Erdi_ERC.Options
 {
     /// <summary>
     /// Discord-Guild-IDs, die für die Bewerbungsprüfung (Community + Liga) abgefragt werden.

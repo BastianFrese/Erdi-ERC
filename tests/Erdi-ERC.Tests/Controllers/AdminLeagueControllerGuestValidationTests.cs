@@ -1,9 +1,9 @@
-using <OWNER_HANDLE>_ERC.Controllers;
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Options;
-using <OWNER_HANDLE>_ERC.Services;
-using <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+using Erdi_ERC.Controllers;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Options;
+using Erdi_ERC.Services;
+using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Xunit;
 using OptionsFactory = Microsoft.Extensions.Options.Options;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Controllers;
+namespace Erdi_ERC.Tests.Controllers;
 
 /// <summary>
 /// Tests für die strikte Gastfahrer-Name-Validierung in
@@ -70,7 +70,7 @@ public class AdminLeagueControllerGuestValidationTests
         var profile = new DriverProfile
         {
             DiscordId = discordId,
-            DiscordName = $"{tag}***REMOVED***0001",
+            DiscordName = $"{tag}#0001",
             DisplayName = tag,
             PreferredPlatform = "EA",
             GamerTags = new List<DriverGamerTag>

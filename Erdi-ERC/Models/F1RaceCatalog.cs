@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace <OWNER_HANDLE>_ERC.Models;
+namespace Erdi_ERC.Models;
 
 /// <summary>
 /// Beschreibt eine F1 25 Strecke mit voller Renndistanz, Standard-Tyre-Wear-Profil

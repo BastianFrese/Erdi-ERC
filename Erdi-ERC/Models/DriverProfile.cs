@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     /// <summary>
     /// Pro Discord-User ein Profil. Hält die verifizierten Gamer-Tags je Plattform und
@@ -64,7 +64,7 @@ namespace <OWNER_HANDLE>_ERC.Models
 
         /// <summary>
         /// Vom Fahrer gewählte Farbe der Fahrernummer auf der Fahrer-Karte.
-        /// Format ***REMOVED***RRGGBB; null/empty → Team-Primary oder Default ***REMOVED***e10600.
+        /// Format #RRGGBB; null/empty → Team-Primary oder Default #e10600.
         /// </summary>
         [MaxLength(7)]
         public string? DriverNumberColor { get; set; }

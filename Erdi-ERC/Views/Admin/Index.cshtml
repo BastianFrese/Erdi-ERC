@@ -1,10 +1,10 @@
-@model List<<OWNER_HANDLE>_ERC.Models.League>
+@model List<Erdi_ERC.Models.League>
 @{
     ViewData["Title"] = "Admin Dashboard";
     ViewData["Kicker"] = "Control Center";
     ViewData["HeroTitle"] = "Admin Dashboard";
-    var recentEaNameChanges = (ViewBag.RecentEaNameChanges as List<<OWNER_HANDLE>_ERC.Models.AdminAuditLog>) ?? new();
-    var nextStream = ViewBag.NextStream as <OWNER_HANDLE>_ERC.Models.StreamSchedule;
+    var recentEaNameChanges = (ViewBag.RecentEaNameChanges as List<Erdi_ERC.Models.AdminAuditLog>) ?? new();
+    var nextStream = ViewBag.NextStream as Erdi_ERC.Models.StreamSchedule;
 }
 
 <div class="adm-dashboard">
@@ -13,7 +13,7 @@
        KPI ROW
     ══════════════════════════════════════════════════════════════════ *@
     <section class="adm-kpi-grid">
-        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminRaceCalendar" asp-action="Index" style="--kpi-color:***REMOVED***ffb800;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminRaceCalendar" asp-action="Index" style="--kpi-color:#ffb800;">
             <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.TotalRaces</div>
@@ -21,7 +21,7 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
-        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminAchievements" asp-action="Index" style="--kpi-color:***REMOVED***b95cff;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminAchievements" asp-action="Index" style="--kpi-color:#b95cff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.TotalDrivers</div>
@@ -29,7 +29,7 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
-        <a class="adm-kpi-card text-decoration-none" asp-action="AuditLogs" style="--kpi-color:***REMOVED***00e5ff;">
+        <a class="adm-kpi-card text-decoration-none" asp-action="AuditLogs" style="--kpi-color:#00e5ff;">
             <div class="adm-kpi-card__icon"><i class="bi bi-clock-history"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.AuditCount24h</div>
@@ -175,7 +175,7 @@
             <div class="adm-panel">
                 <div class="adm-panel__head">
                     <span class="adm-panel__head-title">
-                        <i class="bi bi-person-badge me-2" style="color:***REMOVED***b95cff;"></i>EA-Namen Änderungen
+                        <i class="bi bi-person-badge me-2" style="color:#b95cff;"></i>EA-Namen Änderungen
                     </span>
                     <a class="adm-panel__head-action" asp-action="AuditLogs">
                         Alle <i class="bi bi-arrow-right ms-1"></i>

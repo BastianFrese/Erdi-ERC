@@ -1,10 +1,10 @@
-@model <OWNER_HANDLE>_ERC.Models.AboutMeProfile?
+@model Erdi_ERC.Models.AboutMeProfile?
 @{
     var p = Model;
     ViewData["Title"] = p != null ? $"Über {p.DisplayName}" : "Über mich";
     Layout = "_Layout";
 
-    string accent = p?.AccentColor ?? "***REMOVED***e10600";
+    string accent = p?.AccentColor ?? "#e10600";
 }
 
 @section Styles {
@@ -293,7 +293,7 @@ else
                     @p.DisplayName
                     @if (!string.IsNullOrEmpty(p.RacingNumber))
                     {
-                        <span class="abp-number-badge">***REMOVED***@p.RacingNumber</span>
+                        <span class="abp-number-badge">#@p.RacingNumber</span>
                     }
                 </div>
                 @if (!string.IsNullOrEmpty(p.Tagline))
@@ -305,25 +305,25 @@ else
                 <div class="abp-socials">
                     @if (!string.IsNullOrEmpty(p.DiscordUsername))
                     {
-                        <span class="abp-social-btn" style="color:***REMOVED***5865f2;border-color:rgba(88,101,242,.3);">
+                        <span class="abp-social-btn" style="color:#5865f2;border-color:rgba(88,101,242,.3);">
                             <i class="bi bi-discord"></i> @p.DiscordUsername
                         </span>
                     }
                     @if (!string.IsNullOrEmpty(p.TwitchUrl))
                     {
-                        <a class="abp-social-btn" href="@p.TwitchUrl" target="_blank" rel="noopener" style="color:***REMOVED***9146ff;">
+                        <a class="abp-social-btn" href="@p.TwitchUrl" target="_blank" rel="noopener" style="color:#9146ff;">
                             <i class="bi bi-twitch"></i> Twitch
                         </a>
                     }
                     @if (!string.IsNullOrEmpty(p.YouTubeUrl))
                     {
-                        <a class="abp-social-btn" href="@p.YouTubeUrl" target="_blank" rel="noopener" style="color:***REMOVED***ff0000;">
+                        <a class="abp-social-btn" href="@p.YouTubeUrl" target="_blank" rel="noopener" style="color:#ff0000;">
                             <i class="bi bi-youtube"></i> YouTube
                         </a>
                     }
                     @if (!string.IsNullOrEmpty(p.InstagramUrl))
                     {
-                        <a class="abp-social-btn" href="@p.InstagramUrl" target="_blank" rel="noopener" style="color:***REMOVED***e1306c;">
+                        <a class="abp-social-btn" href="@p.InstagramUrl" target="_blank" rel="noopener" style="color:#e1306c;">
                             <i class="bi bi-instagram"></i> Instagram
                         </a>
                     }
@@ -335,7 +335,7 @@ else
                     }
                     @if (!string.IsNullOrEmpty(p.SteamUrl))
                     {
-                        <a class="abp-social-btn" href="@p.SteamUrl" target="_blank" rel="noopener" style="color:***REMOVED***1b9bc2;">
+                        <a class="abp-social-btn" href="@p.SteamUrl" target="_blank" rel="noopener" style="color:#1b9bc2;">
                             <i class="bi bi-steam"></i> Steam
                         </a>
                     }
@@ -388,7 +388,7 @@ else
                 {
                     <div class="abp-fact">
                         <div class="abp-fact__label"><i class="bi bi-hash"></i> Rennnummer</div>
-                        <div class="abp-fact__value">***REMOVED***@p.RacingNumber</div>
+                        <div class="abp-fact__value">#@p.RacingNumber</div>
                     </div>
                 }
                 <div class="abp-fact">
@@ -407,9 +407,9 @@ else
         if (string.IsNullOrEmpty(text)) return string.Empty;
         var s = System.Net.WebUtility.HtmlEncode(text);
         // Headings
-        s = System.Text.RegularExpressions.Regex.Replace(s, @"^***REMOVED******REMOVED******REMOVED*** (.+)$", "<h3>$1</h3>", System.Text.RegularExpressions.RegexOptions.Multiline);
-        s = System.Text.RegularExpressions.Regex.Replace(s, @"^***REMOVED******REMOVED*** (.+)$",  "<h2>$1</h2>", System.Text.RegularExpressions.RegexOptions.Multiline);
-        s = System.Text.RegularExpressions.Regex.Replace(s, @"^***REMOVED*** (.+)$",   "<h1>$1</h1>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^### (.+)$", "<h3>$1</h3>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^## (.+)$",  "<h2>$1</h2>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^# (.+)$",   "<h1>$1</h1>", System.Text.RegularExpressions.RegexOptions.Multiline);
         // Code blocks before inline
         s = System.Text.RegularExpressions.Regex.Replace(s, @"```[\r\n]?([\s\S]*?)```", "<pre><code>$1</code></pre>");
         s = System.Text.RegularExpressions.Regex.Replace(s, @"`([^`\n]+)`", "<code>$1</code>");

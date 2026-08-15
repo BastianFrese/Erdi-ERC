@@ -1,8 +1,8 @@
-﻿using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Helpers;
+﻿using Erdi_ERC.Models;
+using Erdi_ERC.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Data
+namespace Erdi_ERC.Data
 {
     public static class DataSeeder
     {
@@ -41,10 +41,10 @@ namespace <OWNER_HANDLE>_ERC.Data
             {
                 Id = "pro",
                 Name = "ERC Pro League",
-                Description = "Die Königsklasse der <OWNER_HANDLE>'s Racing Community – F1 25, 100% Renndistanz, volle Sim-Einstellungen.",
+                Description = "Die Königsklasse der Erdi's Racing Community – F1 25, 100% Renndistanz, volle Sim-Einstellungen.",
                 Standings = new()
                 {
-                    new() { LeagueId = "pro", Position = 1, Driver = "<OWNER_HANDLE>10",     Team = "Ferrari",       Points = 287, Wins = 8 },
+                    new() { LeagueId = "pro", Position = 1, Driver = "Erdi10",     Team = "Ferrari",       Points = 287, Wins = 8 },
                     new() { LeagueId = "pro", Position = 2, Driver = "SpeedyMax",  Team = "Red Bull",      Points = 254, Wins = 5 },
                     new() { LeagueId = "pro", Position = 3, Driver = "LewisFan44", Team = "Mercedes",      Points = 231, Wins = 3 },
                     new() { LeagueId = "pro", Position = 4, Driver = "ApexHunter", Team = "McLaren",       Points = 198, Wins = 2 },
@@ -52,9 +52,9 @@ namespace <OWNER_HANDLE>_ERC.Data
                 },
                 Races = new()
                 {
-                    new() { LeagueId = "pro", Date = DateTime.Today.AddDays(-7),  Track = "Spa-Francorchamps", Winner = "<OWNER_HANDLE>10",    FastestLap = "SpeedyMax" },
-                    new() { LeagueId = "pro", Date = DateTime.Today.AddDays(-14), Track = "Monza",             Winner = "SpeedyMax", FastestLap = "<OWNER_HANDLE>10" },
-                    new() { LeagueId = "pro", Date = DateTime.Today.AddDays(-21), Track = "Silverstone",       Winner = "<OWNER_HANDLE>10",    FastestLap = "LewisFan44" },
+                    new() { LeagueId = "pro", Date = DateTime.Today.AddDays(-7),  Track = "Spa-Francorchamps", Winner = "Erdi10",    FastestLap = "SpeedyMax" },
+                    new() { LeagueId = "pro", Date = DateTime.Today.AddDays(-14), Track = "Monza",             Winner = "SpeedyMax", FastestLap = "Erdi10" },
+                    new() { LeagueId = "pro", Date = DateTime.Today.AddDays(-21), Track = "Silverstone",       Winner = "Erdi10",    FastestLap = "LewisFan44" },
                 }
             };
 
@@ -156,14 +156,14 @@ namespace <OWNER_HANDLE>_ERC.Data
                     Date = new DateTime(2021, 9, 1),
                     Location = "Michael-Schumacher-Kartbahn, Kerpen",
                     IsUpcoming = false,
-                    Description = "Community Treffen und DA IST DER SIEG – 1 Stunde pures Racing – was ein Kopf-an-Kopf-Rennen mit @sauerbratentwitch, wir waren beide ZEITGLEICH. Liebe & Kuss geht raus an alle. ***REMOVED***ERC ***REMOVED***kart ***REMOVED***michaelschumacherkartbahn ***REMOVED***kartbahn ***REMOVED***twitch ***REMOVED***f12021 ***REMOVED***racing ***REMOVED***airborne"
+                    Description = "Community Treffen und DA IST DER SIEG – 1 Stunde pures Racing – was ein Kopf-an-Kopf-Rennen mit @sauerbratentwitch, wir waren beide ZEITGLEICH. Liebe & Kuss geht raus an alle. #ERC #kart #michaelschumacherkartbahn #kartbahn #twitch #f12021 #racing #airborne"
                 },
                 new() {
                     Title = "KART-EVENT 4 · Ralf-Schumacher-Kartbahn Bispingen",
                     Date = new DateTime(2022, 4, 1),
                     Location = "Ralf-Schumacher-Kartbahn, Bispingen",
                     IsUpcoming = false,
-                    Description = "SOOOOO <OWNER_HANDLE>'s Racing Community | ERC hat das mittlerweile 4. Deutschland-Kart-Event hinter sich. Nach Werther, Dortmund & Kerpen war diesmal die Ralf-Schumacher-Kartbahn in Bispingen dran. 14 Fahrer, 20 Zuschauer und es hat auf der langen Outdoor-Bahn wieder richtig Spaß gemacht zu racen!\n\nFür mich sprang P3 im Qualy, P2 im Rennen, P4 im Reverse Grid und INDOOR Platz 1 raus."
+                    Description = "SOOOOO Erdi's Racing Community | ERC hat das mittlerweile 4. Deutschland-Kart-Event hinter sich. Nach Werther, Dortmund & Kerpen war diesmal die Ralf-Schumacher-Kartbahn in Bispingen dran. 14 Fahrer, 20 Zuschauer und es hat auf der langen Outdoor-Bahn wieder richtig Spaß gemacht zu racen!\n\nFür mich sprang P3 im Qualy, P2 im Rennen, P4 im Reverse Grid und INDOOR Platz 1 raus."
                 },
                 new() {
                     Title = "KART-EVENT 5 · Motorsportarena Oppenrod",
@@ -191,7 +191,7 @@ namespace <OWNER_HANDLE>_ERC.Data
                     Date = new DateTime(2023, 4, 1),
                     Location = "Ralf-Schumacher-Kartcenter, Bispingen",
                     IsUpcoming = false,
-                    Description = "<OWNER_HANDLE>'s Racing Community ***REMOVED***ERC – Was ein wunderschöner Tag, das war das 7. Kart-Event mit einem rasanten Rennen wie man es von dieser geilen Strecke @ralf_schumacher_kartcenter gewohnt ist. Glückwunsch an @trim.pluss, der das DING in Max-Verstappen-Niveau sowas von easy geholt hat 🙂 Meinen zweiten Platz nehm ich aber auf jeden Fall hautnah vor Mercy ✌️"
+                    Description = "Erdi's Racing Community #ERC – Was ein wunderschöner Tag, das war das 7. Kart-Event mit einem rasanten Rennen wie man es von dieser geilen Strecke @ralf_schumacher_kartcenter gewohnt ist. Glückwunsch an @trim.pluss, der das DING in Max-Verstappen-Niveau sowas von easy geholt hat 🙂 Meinen zweiten Platz nehm ich aber auf jeden Fall hautnah vor Mercy ✌️"
                 },
                 new() {
                     Title = "KART-EVENT 8 · Motorsportarena Oppenrod",

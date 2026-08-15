@@ -1,9 +1,9 @@
-@model <OWNER_HANDLE>_ERC.Models.<OWNER_HANDLE>10ViewModel
-@using <OWNER_HANDLE>_ERC.Helpers
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Services
+@model Erdi_ERC.Models.Erdi10ViewModel
+@using Erdi_ERC.Helpers
+@using Erdi_ERC.Models
+@using Erdi_ERC.Services
 @{
-    ViewData["Title"] = "<OWNER_HANDLE>10 · F1 26 Racing Hub";
+    ViewData["Title"] = "Erdi10 · F1 26 Racing Hub";
     var host = Context.Request.Host.Host;
     var upcomingLegsByLeague = (ViewBag.UpcomingLegsByLeague as Dictionary<string, List<RaceWeekendLeg>>)
                                 ?? new Dictionary<string, List<RaceWeekendLeg>>();
@@ -51,7 +51,7 @@
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
     Eyebrow   = "F1 26 · Racing Hub",
     LiveDot   = true,
-    Title     = "<OWNER_HANDLE>10",
+    Title     = "Erdi10",
     Highlight = "Racing Hub",
     Lead      = $"Offizielle Fan-Page des Twitch-Streamers <a href=\"https://twitch.tv/{Model.TwitchChannel}\" style=\"color:var(--accent);\" target=\"_blank\" rel=\"noopener\">@{Model.TwitchChannel}</a>. Bestenlisten, vergangene Rennen und kommende Events der ERC-Ligen.",
     Actions   = new() {
@@ -104,7 +104,7 @@
 <section class="f1-section reveal">
     <partial name="_F1Section" model="@(new F1SectionVm { Chip="Connect", Title="Socials" })" />
     <div class="f1-social-bar">
-        <span class="f1-social-bar__label"><OWNER_HANDLE>10</span>
+        <span class="f1-social-bar__label">Erdi10</span>
         <a class="f1-social-link" href="https://open.spotify.com/intl-de/artist/4VaOsXeYI0DNmfkPhP40L9?si=4b7e0baf47c444b6" target="_blank" rel="noopener"><i class="bi bi-spotify"></i> Spotify</a>
         <a class="f1-social-link" href="https://www.youtube.com/@@PzudemK" target="_blank" rel="noopener"><i class="bi bi-youtube"></i> YouTube</a>
         <a class="f1-social-link" href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> Instagram</a>
@@ -161,7 +161,7 @@
                             <button class="f1-hub-tabs__tab @(i == 0 ? "is-active" : "")"
                                     id="tab-@league.Id"
                                     data-bs-toggle="tab"
-                                    data-bs-target="***REMOVED***pane-@league.Id"
+                                    data-bs-target="#pane-@league.Id"
                                     type="button" role="tab"
                                     aria-controls="pane-@league.Id"
                                     aria-selected="@(i == 0 ? "true" : "false")">
@@ -187,13 +187,13 @@
                                 <div class="f1-sub-tabs" role="tablist">
                                     <button class="f1-sub-tabs__tab is-active"
                                             data-bs-toggle="pill"
-                                            data-bs-target="***REMOVED***races-@league.Id"
+                                            data-bs-target="#races-@league.Id"
                                             type="button">
                                         <i class="bi bi-flag-checkered"></i> Rennen
                                     </button>
                                     <button class="f1-sub-tabs__tab"
                                             data-bs-toggle="pill"
-                                            data-bs-target="***REMOVED***events-@league.Id"
+                                            data-bs-target="#events-@league.Id"
                                             type="button">
                                         <i class="bi bi-calendar-event"></i> Anstehende Events
                                     </button>

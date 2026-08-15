@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models.Troll;
-using <OWNER_HANDLE>_ERC.Options;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models.Troll;
+using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
-namespace <OWNER_HANDLE>_ERC.Services;
+namespace Erdi_ERC.Services;
 
 /// <summary>
 /// Standard-Implementierung von <see cref="ITrollService"/>. Hält den fest eingebauten
@@ -266,7 +266,7 @@ public sealed class TrollService : ITrollService
                 };
             }
             case "best-driver":
-                return new TrollChallenge { GagKey = gag.Key, ExpectedAnswer = "<OWNER_HANDLE>" };
+                return new TrollChallenge { GagKey = gag.Key, ExpectedAnswer = "Erdi" };
             case "not-a-bot":
                 return new TrollChallenge { GagKey = gag.Key, ExpectedAnswer = "car" };
             case "f1-trivia":
@@ -297,7 +297,7 @@ public sealed class TrollService : ITrollService
             case "oath-type":
             {
                 // Treueschwur muss exakt abgetippt werden (IsAnswerCorrect trimmt + ignoriert Groß-/Kleinschreibung).
-                const string oath = "<OWNER_HANDLE> ist der schnellste Fahrer der Welt";
+                const string oath = "Erdi ist der schnellste Fahrer der Welt";
                 return new TrollChallenge { GagKey = gag.Key, Prompt = oath, ExpectedAnswer = oath };
             }
             default:

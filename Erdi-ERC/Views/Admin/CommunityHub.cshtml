@@ -2,10 +2,10 @@
     ViewData["Title"] = "Community Hub";
     ViewData["Kicker"] = "Community";
     ViewData["HeroTitle"] = "Community Hub";
-    var recentVotes      = (ViewBag.RecentVotes      as List<<OWNER_HANDLE>_ERC.Models.CommunityVotePoll>)   ?? new();
-    var recentHighlights = (ViewBag.RecentHighlights as List<<OWNER_HANDLE>_ERC.Models.RaceHighlightClip>)  ?? new();
-    var recentNews       = (ViewBag.RecentNews       as List<<OWNER_HANDLE>_ERC.Models.CommunityNewsPost>)   ?? new();
-    var penalties        = (ViewBag.PublicPenalties  as List<<OWNER_HANDLE>_ERC.Models.LeaguePenalty>)       ?? new();
+    var recentVotes      = (ViewBag.RecentVotes      as List<Erdi_ERC.Models.CommunityVotePoll>)   ?? new();
+    var recentHighlights = (ViewBag.RecentHighlights as List<Erdi_ERC.Models.RaceHighlightClip>)  ?? new();
+    var recentNews       = (ViewBag.RecentNews       as List<Erdi_ERC.Models.CommunityNewsPost>)   ?? new();
+    var penalties        = (ViewBag.PublicPenalties  as List<Erdi_ERC.Models.LeaguePenalty>)       ?? new();
 }
 
 <div class="adm-dashboard">
@@ -14,7 +14,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-megaphone-fill me-2" style="color:***REMOVED***5b8cff;"></i>Community-News anlegen
+                <i class="bi bi-megaphone-fill me-2" style="color:#5b8cff;"></i>Community-News anlegen
             </span>
         </div>
         <div class="adm-panel__body">
@@ -61,7 +61,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-bar-chart-fill me-2" style="color:***REMOVED***39ff14;"></i>Voting anlegen
+                <i class="bi bi-bar-chart-fill me-2" style="color:#39ff14;"></i>Voting anlegen
             </span>
         </div>
         <div class="adm-panel__body">
@@ -108,7 +108,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-camera-reels-fill me-2" style="color:***REMOVED***ff8a4c;"></i>Highlight anlegen
+                <i class="bi bi-camera-reels-fill me-2" style="color:#ff8a4c;"></i>Highlight anlegen
             </span>
         </div>
         <div class="adm-panel__body">
@@ -128,7 +128,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="adm-form-label">Race / Event</label>
-                    <input class="form-control form-control-sm" name="raceLabel" maxlength="160" placeholder="Race ***REMOVED***12" />
+                    <input class="form-control form-control-sm" name="raceLabel" maxlength="160" placeholder="Race #12" />
                 </div>
                 <div class="col-12">
                     <button class="btn btn-sm btn-primary" type="submit">
@@ -143,7 +143,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-shield-fill-exclamation me-2" style="color:***REMOVED***ff6b6b;"></i>Öffentlicher Strafenbereich
+                <i class="bi bi-shield-fill-exclamation me-2" style="color:#ff6b6b;"></i>Öffentlicher Strafenbereich
             </span>
             <span class="adm-badge">@penalties.Count</span>
         </div>
@@ -177,7 +177,7 @@
                                 <td class="px-3" style="color:var(--ink-3);">@penalty.Date.ToString("dd.MM.yyyy")</td>
                                 <td><code style="font-size:.78rem;color:var(--sig-cyan);">@penalty.LeagueId</code></td>
                                 <td style="font-weight:600;">@penalty.Driver</td>
-                                <td><span style="color:***REMOVED***ff6b6b;font-weight:700;">@penalty.Points</span></td>
+                                <td><span style="color:#ff6b6b;font-weight:700;">@penalty.Points</span></td>
                                 <td class="pe-3" style="color:var(--ink-3);">@penalty.Reason</td>
                             </tr>
                         }
@@ -193,7 +193,7 @@
         <div class="adm-panel">
             <div class="adm-panel__head">
                 <span class="adm-panel__head-title">
-                    <i class="bi bi-newspaper me-2" style="color:***REMOVED***5b8cff;"></i>Letzte News
+                    <i class="bi bi-newspaper me-2" style="color:#5b8cff;"></i>Letzte News
                 </span>
                 <span class="adm-badge">@recentNews.Count</span>
             </div>
@@ -223,7 +223,7 @@
         <div class="adm-panel">
             <div class="adm-panel__head">
                 <span class="adm-panel__head-title">
-                    <i class="bi bi-bar-chart me-2" style="color:***REMOVED***39ff14;"></i>Aktive Votings
+                    <i class="bi bi-bar-chart me-2" style="color:#39ff14;"></i>Aktive Votings
                 </span>
                 <span class="adm-badge">@recentVotes.Count</span>
             </div>
@@ -253,7 +253,7 @@
         <div class="adm-panel">
             <div class="adm-panel__head">
                 <span class="adm-panel__head-title">
-                    <i class="bi bi-camera-reels me-2" style="color:***REMOVED***ff8a4c;"></i>Letzte Highlights
+                    <i class="bi bi-camera-reels me-2" style="color:#ff8a4c;"></i>Letzte Highlights
                 </span>
                 <span class="adm-badge">@recentHighlights.Count</span>
             </div>

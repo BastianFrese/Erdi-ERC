@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Models;
+using Erdi_ERC.Models;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     public record DriverNameSuggestion(
         string DiscordId,
@@ -44,7 +44,7 @@ namespace <OWNER_HANDLE>_ERC.Services
 
         /// <summary>
         /// Liefert die effektive Farbe der Fahrernummer: explizit gespeicherte Farbe,
-        /// sonst Team-Primary-Farbe, sonst Default ***REMOVED***e10600.
+        /// sonst Team-Primary-Farbe, sonst Default #e10600.
         /// </summary>
         string ResolveDriverNumberColor(DriverProfile profile);
 

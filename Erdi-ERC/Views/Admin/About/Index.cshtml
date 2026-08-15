@@ -1,4 +1,4 @@
-@model List<<OWNER_HANDLE>_ERC.Models.AboutMeProfile>
+@model List<Erdi_ERC.Models.AboutMeProfile>
 @{
     ViewData["Title"]     = "Über-mich-Seiten";
     ViewData["HeroTitle"] = "Über-mich";
@@ -102,8 +102,8 @@
     border-radius: var(--r-pill);
     border: 1px solid;
 }
-.abm-badge--public  { background: rgba(87,242,135,.12); color: ***REMOVED***57f287; border-color: rgba(87,242,135,.3); }
-.abm-badge--hidden  { background: rgba(255,107,53,.12);  color: ***REMOVED***ff6b35; border-color: rgba(255,107,53,.3); }
+.abm-badge--public  { background: rgba(87,242,135,.12); color: #57f287; border-color: rgba(87,242,135,.3); }
+.abm-badge--hidden  { background: rgba(255,107,53,.12);  color: #ff6b35; border-color: rgba(255,107,53,.3); }
 .abm-card__actions {
     display: flex;
     gap: .5rem;
@@ -117,12 +117,12 @@
     padding: .3rem .75rem; border-radius: var(--r-pill); border: 1px solid;
     cursor: pointer; transition: all var(--t-fast); text-decoration: none;
 }
-.abm-btn--edit    { background: rgba(88,101,242,.15); color: ***REMOVED***7289da; border-color: rgba(88,101,242,.35); }
-.abm-btn--edit:hover { background: rgba(88,101,242,.28); border-color: ***REMOVED***7289da; color: ***REMOVED***fff; }
+.abm-btn--edit    { background: rgba(88,101,242,.15); color: #7289da; border-color: rgba(88,101,242,.35); }
+.abm-btn--edit:hover { background: rgba(88,101,242,.28); border-color: #7289da; color: #fff; }
 .abm-btn--vis     { background: var(--surface-3); color: var(--ink-3); border-color: var(--stroke-1); }
 .abm-btn--vis:hover { border-color: var(--ink-3); color: var(--ink); }
-.abm-btn--del     { background: rgba(237,66,69,.12); color: ***REMOVED***ed4245; border-color: rgba(237,66,69,.3); margin-left: auto; }
-.abm-btn--del:hover { background: rgba(237,66,69,.25); border-color: ***REMOVED***ed4245; }
+.abm-btn--del     { background: rgba(237,66,69,.12); color: #ed4245; border-color: rgba(237,66,69,.3); margin-left: auto; }
+.abm-btn--del:hover { background: rgba(237,66,69,.25); border-color: #ed4245; }
 .abm-create-card {
     background: var(--surface-1);
     border: 2px dashed var(--stroke-2);
@@ -165,7 +165,7 @@
 
     @foreach (var p in Model)
     {
-        <div class="abm-card" style="--card-accent: @(p.AccentColor ?? "***REMOVED***e10600");">
+        <div class="abm-card" style="--card-accent: @(p.AccentColor ?? "#e10600");">
             <div class="abm-card__banner" style="@(string.IsNullOrEmpty(p.BannerUrl) ? "" : $"background-image:url('{p.BannerUrl}')")">
                 <div class="abm-card__banner-overlay"></div>
                 @if (!string.IsNullOrEmpty(p.AvatarUrl))
@@ -179,11 +179,11 @@
             </div>
             <div class="abm-card__body">
                 <div class="abm-card__name">
-                    <span class="abm-accent-dot" style="background:@(p.AccentColor ?? "***REMOVED***e10600");"></span>
+                    <span class="abm-accent-dot" style="background:@(p.AccentColor ?? "#e10600");"></span>
                     @p.DisplayName
                     @if (!string.IsNullOrEmpty(p.RacingNumber))
                     {
-                        <span class="abm-card__number">***REMOVED***@p.RacingNumber</span>
+                        <span class="abm-card__number">#@p.RacingNumber</span>
                     }
                 </div>
                 @if (!string.IsNullOrEmpty(p.Tagline))

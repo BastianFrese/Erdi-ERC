@@ -1,12 +1,12 @@
 {
-  "name": "<OWNER_HANDLE> Racing Community",
-  "short_name": "<OWNER_HANDLE> ERC",
-  "description": "<OWNER_HANDLE> Racing Community – F1 Sim Racing League.",
+  "name": "Erdi Racing Community",
+  "short_name": "Erdi ERC",
+  "description": "Erdi Racing Community – F1 Sim Racing League.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "***REMOVED***06070a",
-  "theme_color": "***REMOVED***06070a",
+  "background_color": "#06070a",
+  "theme_color": "#06070a",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },

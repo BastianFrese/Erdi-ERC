@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Services;
 
-namespace <OWNER_HANDLE>_ERC.Tests.Infrastructure;
+namespace Erdi_ERC.Tests.Infrastructure;
 
 /// <summary>
 /// No-op-Ersatz für den Discord-Guild-Check in Controller-Tests. Liefert ein

@@ -1,11 +1,11 @@
-using <OWNER_HANDLE>_ERC.Data;
-using <OWNER_HANDLE>_ERC.Models;
-using <OWNER_HANDLE>_ERC.Services;
+using Erdi_ERC.Data;
+using Erdi_ERC.Models;
+using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Controllers
+namespace Erdi_ERC.Controllers
 {
     [Authorize(Policy = "Admin.System.Webhooks")]
     public class AdminWebhookAutomationController : Controller
@@ -49,7 +49,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 ["Title"] = "Saison 2026 startet im Mai",
                 ["Category"] = "Ankündigung",
                 ["Summary"] = "Alle Infos zum Saisonstart der ERC-Liga.",
-                ["Author"] = "<OWNER_HANDLE>"
+                ["Author"] = "Erdi"
             },
             [WebhookEvents.RaceWeekendSaved] = new()
             {
@@ -60,7 +60,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             },
             [WebhookEvents.StreamScheduled] = new()
             {
-                ["Title"] = "<OWNER_HANDLE>10 Live · Main Division 1",
+                ["Title"] = "Erdi10 Live · Main Division 1",
                 ["Url"] = "https://twitch.tv/erdi10",
                 ["StartAt"] = DateTime.UtcNow.AddDays(1).ToString("dd.MM.yyyy HH:mm")
             },
@@ -70,7 +70,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
                 ["Url"] = "https://youtube.com/watch?v=dQw4w9WgXcQ",
                 ["Category"] = "Overtake",
                 ["RaceLabel"] = "Spa GP – Runde 3",
-                ["Author"] = "<OWNER_HANDLE>"
+                ["Author"] = "Erdi"
             },
             [WebhookEvents.VotePollPublished] = new()
             {
@@ -144,7 +144,7 @@ namespace <OWNER_HANDLE>_ERC.Controllers
             rule.UseEmbed                  = useEmbed;
             rule.EmbedTitleTemplate        = string.IsNullOrWhiteSpace(embedTitleTemplate)        ? null : embedTitleTemplate.Trim();
             rule.EmbedDescriptionTemplate  = string.IsNullOrWhiteSpace(embedDescriptionTemplate)  ? null : embedDescriptionTemplate.Trim();
-            rule.EmbedColor                = string.IsNullOrWhiteSpace(embedColor)                ? "***REMOVED***e10600" : embedColor.Trim();
+            rule.EmbedColor                = string.IsNullOrWhiteSpace(embedColor)                ? "#e10600" : embedColor.Trim();
             rule.EmbedFooterTemplate       = string.IsNullOrWhiteSpace(embedFooterTemplate)       ? null : embedFooterTemplate.Trim();
             rule.EmbedThumbnailTemplate    = string.IsNullOrWhiteSpace(embedThumbnailTemplate)    ? null : embedThumbnailTemplate.Trim();
 

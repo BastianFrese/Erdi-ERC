@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace><OWNER_HANDLE>_ERC.Tests</RootNamespace>
+    <RootNamespace>Erdi_ERC.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\<OWNER_HANDLE>-ERC\<OWNER_HANDLE>-ERC.csproj" />
+    <ProjectReference Include="..\..\Erdi-ERC\Erdi-ERC.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-***REMOVED***nullable disable
+#nullable disable
 
-namespace <OWNER_HANDLE>_ERC.Migrations
+namespace Erdi_ERC.Migrations
 {
     /// <inheritdoc />
     public partial class AddRealLifeEvents : Migration
@@ -43,7 +43,7 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         "KART-EVENT 3 · Michael-Schumacher-Kartbahn Kerpen",
                         new DateTime(2021, 9, 1),
                         "Michael-Schumacher-Kartbahn, Kerpen",
-                        "Community Treffen und DA IST DER SIEG – 1 Stunde pures Racing – was ein Kopf-an-Kopf-Rennen mit @sauerbratentwitch, wir waren beide ZEITGLEICH. Liebe & Kuss geht raus an alle. ***REMOVED***ERC ***REMOVED***kart ***REMOVED***michaelschumacherkartbahn ***REMOVED***kartbahn ***REMOVED***twitch ***REMOVED***f12021 ***REMOVED***racing ***REMOVED***airborne",
+                        "Community Treffen und DA IST DER SIEG – 1 Stunde pures Racing – was ein Kopf-an-Kopf-Rennen mit @sauerbratentwitch, wir waren beide ZEITGLEICH. Liebe & Kuss geht raus an alle. #ERC #kart #michaelschumacherkartbahn #kartbahn #twitch #f12021 #racing #airborne",
                         null,
                         false
                     },
@@ -51,7 +51,7 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         "KART-EVENT 4 · Ralf-Schumacher-Kartbahn Bispingen",
                         new DateTime(2022, 4, 1),
                         "Ralf-Schumacher-Kartbahn, Bispingen",
-                        "SOOOOO <OWNER_HANDLE>\u2019s Racing Community | ERC hat das mittlerweile 4. Deutschland-Kart-Event hinter sich. Nach Werther, Dortmund & Kerpen war diesmal die Ralf-Schumacher-Kartbahn in Bispingen dran. 14 Fahrer, 20 Zuschauer und es hat auf der langen Outdoor-Bahn wieder richtig Spaß gemacht zu racen!\n\nFür mich sprang P3 im Qualy, P2 im Rennen, P4 im Reverse Grid und INDOOR Platz 1 raus.",
+                        "SOOOOO Erdi\u2019s Racing Community | ERC hat das mittlerweile 4. Deutschland-Kart-Event hinter sich. Nach Werther, Dortmund & Kerpen war diesmal die Ralf-Schumacher-Kartbahn in Bispingen dran. 14 Fahrer, 20 Zuschauer und es hat auf der langen Outdoor-Bahn wieder richtig Spaß gemacht zu racen!\n\nFür mich sprang P3 im Qualy, P2 im Rennen, P4 im Reverse Grid und INDOOR Platz 1 raus.",
                         null,
                         false
                     },
@@ -83,7 +83,7 @@ namespace <OWNER_HANDLE>_ERC.Migrations
                         "KART-EVENT 7 · Ralf-Schumacher-Kartcenter Bispingen",
                         new DateTime(2023, 4, 1),
                         "Ralf-Schumacher-Kartcenter, Bispingen",
-                        "<OWNER_HANDLE>\u2019s Racing Community ***REMOVED***ERC – Was ein wunderschöner Tag, das war das 7. Kart-Event mit einem rasanten Rennen wie man es von dieser geilen Strecke gewohnt ist. Glückwunsch an @trim.pluss, der das DING in Max-Verstappen-Niveau sowas von easy geholt hat 🙂 Meinen zweiten Platz nehm ich aber auf jeden Fall hautnah vor Mercy ✌️",
+                        "Erdi\u2019s Racing Community #ERC – Was ein wunderschöner Tag, das war das 7. Kart-Event mit einem rasanten Rennen wie man es von dieser geilen Strecke gewohnt ist. Glückwunsch an @trim.pluss, der das DING in Max-Verstappen-Niveau sowas von easy geholt hat 🙂 Meinen zweiten Platz nehm ich aber auf jeden Fall hautnah vor Mercy ✌️",
                         null,
                         false
                     },

@@ -180,13 +180,13 @@
     transition: transform var(--t-fast), box-shadow var(--t-fast);
 }
 .f1-form-chip:hover { transform: translateY(-1px); }
-.f1-form-chip--p1   { background: rgba(255,210,74,.18);   color: ***REMOVED***ffd24a; border-color: rgba(255,210,74,.45); }
+.f1-form-chip--p1   { background: rgba(255,210,74,.18);   color: #ffd24a; border-color: rgba(255,210,74,.45); }
 .f1-form-chip--p1:hover { box-shadow: 0 0 10px rgba(255,210,74,.35); }
-.f1-form-chip--p2   { background: rgba(212,216,224,.12);  color: ***REMOVED***d4d8e0; border-color: rgba(212,216,224,.35); }
-.f1-form-chip--p3   { background: rgba(214,138,74,.15);   color: ***REMOVED***d68a4a; border-color: rgba(214,138,74,.4); }
+.f1-form-chip--p2   { background: rgba(212,216,224,.12);  color: #d4d8e0; border-color: rgba(212,216,224,.35); }
+.f1-form-chip--p3   { background: rgba(214,138,74,.15);   color: #d68a4a; border-color: rgba(214,138,74,.4); }
 .f1-form-chip--top10 { background: rgba(0,229,255,.08);   color: var(--sig-cyan); border-color: rgba(0,229,255,.25); }
 .f1-form-chip--mid  { background: rgba(255,255,255,.04);  color: var(--ink-2); border-color: var(--stroke-1); }
-.f1-form-chip--dnf  { background: rgba(225,6,0,.12);      color: ***REMOVED***ff5555; border-color: rgba(225,6,0,.3); }
+.f1-form-chip--dnf  { background: rgba(225,6,0,.12);      color: #ff5555; border-color: rgba(225,6,0,.3); }
 
 /* =====================================================================
    RELIABILITY BAR
@@ -256,7 +256,7 @@
     letter-spacing: .1em;
     text-transform: uppercase;
     background: var(--rival-color, var(--stroke-2));
-    color: ***REMOVED***000;
+    color: #000;
     white-space: nowrap;
 }
 .f1-rival-card__record {
@@ -267,9 +267,9 @@
     font: 700 .72rem/1 var(--ff-tech);
     letter-spacing: .08em;
 }
-.f1-rival-card__w     { color: ***REMOVED***4ade80; }
+.f1-rival-card__w     { color: #4ade80; }
 .f1-rival-card__d     { color: var(--ink-3); }
-.f1-rival-card__l     { color: ***REMOVED***f87171; }
+.f1-rival-card__l     { color: #f87171; }
 .f1-rival-card__races { color: var(--ink-4); font-weight: 400; font-family: var(--ff-body); font-size: .7rem; }
 
 /* =====================================================================

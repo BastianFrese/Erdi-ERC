@@ -1,4 +1,4 @@
-@model <OWNER_HANDLE>_ERC.Models.OverallConstructorsViewModel
+@model Erdi_ERC.Models.OverallConstructorsViewModel
 @{
     ViewData["Title"] = "Constructors · Gesamt-Meisterschaft";
     var hasOverallLeagues = Model.OverallLeagueIds.Count > 0;
@@ -71,7 +71,7 @@
             <table class="f1-table f1-table--constructors">
                 <thead>
                     <tr>
-                        <th class="col-pos">***REMOVED***</th>
+                        <th class="col-pos">#</th>
                         <th>Team</th>
                         <th class="col-num">PTS</th>
                         <th class="col-num" title="Gold / Silber / Bronze">P1 / P2 / P3</th>
@@ -96,7 +96,7 @@
                                     <span class="f1-constructors-team__name">@row.DisplayName</span>
                                     <button class="btn btn-link btn-sm f1-constructors-toggle" type="button"
                                             data-bs-toggle="collapse"
-                                            data-bs-target="***REMOVED***constructors-breakdown-@(row.CssKey)-@row.Position"
+                                            data-bs-target="#constructors-breakdown-@(row.CssKey)-@row.Position"
                                             aria-controls="constructors-breakdown-@(row.CssKey)-@row.Position"
                                             aria-expanded="false"
                                             aria-label="Punkte pro Liga f&uuml;r @row.DisplayName aufklappen">

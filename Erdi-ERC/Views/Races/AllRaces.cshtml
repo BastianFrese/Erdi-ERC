@@ -1,5 +1,5 @@
-@model <OWNER_HANDLE>_ERC.Models.AllRacesViewModel
-@using <OWNER_HANDLE>_ERC.Helpers
+@model Erdi_ERC.Models.AllRacesViewModel
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = "Alle Rennen";
     Layout = "_Layout";
@@ -24,7 +24,7 @@
 <div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "<OWNER_HANDLE>'s Racing Community · Datenbank",
+    Eyebrow   = "Erdi's Racing Community · Datenbank",
     Title     = "Alle",
     Highlight = "Rennen",
     Lead      = "Alle gefahrenen Rennen der ERC – mit Sieger, Podium und Bestzeit.",

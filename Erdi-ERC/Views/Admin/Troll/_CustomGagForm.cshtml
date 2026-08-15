@@ -1,11 +1,11 @@
-@model <OWNER_HANDLE>_ERC.Models.Troll.TrollCustomGag
-@using <OWNER_HANDLE>_ERC.Models.Troll
+@model Erdi_ERC.Models.Troll.TrollCustomGag
+@using Erdi_ERC.Models.Troll
 @using Microsoft.AspNetCore.Mvc.Rendering
 @{
     var isNew = Model.Id == 0;
     var optionsText = string.Join("\n", Model.Options());
 
-    // Über asp-items rendern – literale <option>-Tags mit C***REMOVED*** sind in Razor nicht erlaubt (RZ1031).
+    // Über asp-items rendern – literale <option>-Tags mit C# sind in Razor nicht erlaubt (RZ1031).
     var kindItems = new SelectList(new[]
     {
         new { Value = "Message", Text = "Nachricht" },
@@ -49,7 +49,7 @@
     <div class="row g-2 mb-2">
         <div class="col-sm-8">
             <label class="form-label text-muted small mb-1">Titel <span class="text-danger">*</span></label>
-            <input type="text" name="title" value="@Model.Title" required maxlength="200" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="z. B. <OWNER_HANDLE>-Wissenstest" />
+            <input type="text" name="title" value="@Model.Title" required maxlength="200" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="z. B. Erdi-Wissenstest" />
         </div>
         <div class="col-sm-4">
             <label class="form-label text-muted small mb-1">Key (optional)</label>
@@ -60,7 +60,7 @@
     <div class="row g-2 mb-2">
         <div class="col-sm-5">
             <label class="form-label text-muted small mb-1">Eyebrow (kleine Überschrift)</label>
-            <input type="text" name="eyebrow" value="@Model.Eyebrow" maxlength="80" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="z. B. <OWNER_HANDLE> · Durchsage" />
+            <input type="text" name="eyebrow" value="@Model.Eyebrow" maxlength="80" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="z. B. Erdi · Durchsage" />
         </div>
         <div class="col-sm-7">
             <label class="form-label text-muted small mb-1">Lead (Einleitung, optional)</label>
@@ -83,12 +83,12 @@
             </div>
             <div class="col-sm-4">
                 <label class="form-label text-muted small mb-1">Richtige Antwort</label>
-                <input type="text" name="answer" value="@Model.Answer" maxlength="200" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="<OWNER_HANDLE>" />
+                <input type="text" name="answer" value="@Model.Answer" maxlength="200" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Erdi" />
             </div>
         </div>
         <div class="mb-2">
             <label class="form-label text-muted small mb-1">Optionen (eine pro Zeile; die richtige wird automatisch ergänzt)</label>
-            <textarea name="optionsRaw" rows="3" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="<OWNER_HANDLE>&***REMOVED***10;Max Verstappen&***REMOVED***10;Du">@optionsText</textarea>
+            <textarea name="optionsRaw" rows="3" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Erdi&#10;Max Verstappen&#10;Du">@optionsText</textarea>
         </div>
     </div>
 

@@ -59,7 +59,7 @@
     height: var(--sp-size, 3px);
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 6px var(--accent-glow), 0 0 2px ***REMOVED***fff;
+    box-shadow: 0 0 6px var(--accent-glow), 0 0 2px #fff;
     animation: f1SparkFloat var(--sp-dur, 3s) var(--sp-delay, 0s) ease-in infinite;
     opacity: 0;
     left: var(--sp-x, 50%);
@@ -208,8 +208,8 @@
         var(--accent)         90%  100%
     );
     -webkit-mask:
-        linear-gradient(***REMOVED***fff 0 0) content-box,
-        linear-gradient(***REMOVED***fff 0 0);
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
             mask-composite: exclude;
     opacity: 0;
@@ -325,7 +325,7 @@
    ===================================================================== */
 .f1-chip--drs {
     background: var(--sector-green);
-    color: ***REMOVED***000;
+    color: #000;
     box-shadow: 0 0 12px rgba(57,255,20,.5);
     animation: f1DrsFlash 1.8s ease-in-out infinite;
 }
@@ -335,7 +335,7 @@
 }
 .f1-chip--live {
     background: var(--accent);
-    color: ***REMOVED***fff;
+    color: #fff;
     box-shadow: 0 0 14px var(--accent-glow);
     animation: f1DrsFlash 1.4s ease-in-out infinite;
 }
@@ -377,7 +377,7 @@
     background: var(--accent);
     font: 800 .6rem/1 var(--ff-tech);
     letter-spacing: .2em;
-    color: ***REMOVED***fff;
+    color: #fff;
     box-shadow: 2px 0 12px var(--accent-glow);
 }
 .f1-ticker__track {

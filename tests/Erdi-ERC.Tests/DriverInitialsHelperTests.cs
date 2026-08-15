@@ -1,6 +1,6 @@
-using <OWNER_HANDLE>_ERC.Helpers;
+using Erdi_ERC.Helpers;
 
-namespace <OWNER_HANDLE>_ERC.Tests;
+namespace Erdi_ERC.Tests;
 
 /// <summary>
 /// Sichert <see cref="DriverInitialsHelper.FromGamertag"/> ab. Kernanforderung:

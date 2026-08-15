@@ -1,4 +1,4 @@
-***REMOVED*** --- .NET / Build output ---
+# --- .NET / Build output ---
 bin/
 obj/
 out/
@@ -11,13 +11,13 @@ publish/
 *.svclog
 *.scc
 
-***REMOVED*** --- Visual Studio / Rider / VS Code ---
+# --- Visual Studio / Rider / VS Code ---
 .vs/
 .vscode/
 .idea/
 *.swp
 
-***REMOVED*** --- Test / coverage ---
+# --- Test / coverage ---
 [Tt]est[Rr]esult*/
 *.coverage
 *.coveragexml
@@ -25,19 +25,19 @@ coverage*.json
 coverage*.xml
 coverage*.info
 
-***REMOVED*** --- Logs ---
+# --- Logs ---
 *.log
 logs/
 
-***REMOVED*** --- OS ---
+# --- OS ---
 .DS_Store
 Thumbs.db
 
-***REMOVED*** --- Sensitive config (NIE einchecken!) ---
-***REMOVED*** appsettings.Production.json wird BEWUSST eingecheckt + gepublished,
-***REMOVED*** Secrets dort daher NUR in einem privaten Repo eintragen!
-***REMOVED*** appsettings.Development.json enthält Discord-Secrets, Webhook-URL und Dev-DB-Passwort
-***REMOVED*** und wird lokal gehalten.
+# --- Sensitive config (NIE einchecken!) ---
+# appsettings.Production.json wird BEWUSST eingecheckt + gepublished,
+# Secrets dort daher NUR in einem privaten Repo eintragen!
+# appsettings.Development.json enthält Discord-Secrets, Webhook-URL und Dev-DB-Passwort
+# und wird lokal gehalten.
 appsettings.Development.json
 appsettings.Local.json
 appsettings.*.Local.json
@@ -45,37 +45,37 @@ secrets.json
 *.pfx
 *.key
 
-***REMOVED*** --- Uploads / User content ---
-<OWNER_HANDLE>-ERC/wwwroot/uploads/**/*
-!<OWNER_HANDLE>-ERC/wwwroot/uploads/**/.gitkeep
+# --- Uploads / User content ---
+Erdi-ERC/wwwroot/uploads/**/*
+!Erdi-ERC/wwwroot/uploads/**/.gitkeep
 
-***REMOVED*** --- Background music (große Binärdateien) ---
-<OWNER_HANDLE>-ERC/backgroundmusic/*
-!<OWNER_HANDLE>-ERC/backgroundmusic/.gitkeep
+# --- Background music (große Binärdateien) ---
+Erdi-ERC/backgroundmusic/*
+!Erdi-ERC/backgroundmusic/.gitkeep
 
-***REMOVED*** --- DB-Backups (personenbezogene Daten — NIE einchecken!) ---
+# --- DB-Backups (personenbezogene Daten — NIE einchecken!) ---
 applicationforms-backup-*.json
 
-***REMOVED*** --- Migration Bootstrap (enthält ggf. sensible Daten) ---
-***REMOVED*** migration_bootstrap.sql  ***REMOVED*** optional auskommentieren falls du es behalten willst
+# --- Migration Bootstrap (enthält ggf. sensible Daten) ---
+# migration_bootstrap.sql  # optional auskommentieren falls du es behalten willst
 .aider*
 
-***REMOVED*** --- Design-Previews (nur lokal; liegen in wwwroot → nie committen/deployen) ---
-<OWNER_HANDLE>-ERC/wwwroot/_header-preview.html
-<OWNER_HANDLE>-ERC/wwwroot/_preview-f1.html
-<OWNER_HANDLE>-ERC/wwwroot/_preview_*.png
+# --- Design-Previews (nur lokal; liegen in wwwroot → nie committen/deployen) ---
+Erdi-ERC/wwwroot/_header-preview.html
+Erdi-ERC/wwwroot/_preview-f1.html
+Erdi-ERC/wwwroot/_preview_*.png
 
-***REMOVED*** --- Lokale Claude / Agent Sessions (lokal; nicht einchecken) ---
+# --- Lokale Claude / Agent Sessions (lokal; nicht einchecken) ---
 .claude/
 scheduled_tasks.lock
 
-***REMOVED*** --- Session-Scratch-Files (Migrations-Tools, DB-Backups, Logs) ---
+# --- Session-Scratch-Files (Migrations-Tools, DB-Backups, Logs) ---
 apply_season.sql
 orphan-backup-*.csv
 test_output.txt
 prod-migrations-list.txt
 prod-migration-*.log
 bindefinitivamarbeiten.txt
-<OWNER_HANDLE>-ERC/TestPdfExtraction.csproj
-<OWNER_HANDLE>-ERC/log.txt
-<OWNER_HANDLE>-ERC/bindefinitivamarbeiten.txt
+Erdi-ERC/TestPdfExtraction.csproj
+Erdi-ERC/log.txt
+Erdi-ERC/bindefinitivamarbeiten.txt

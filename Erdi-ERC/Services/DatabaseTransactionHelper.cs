@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace <OWNER_HANDLE>_ERC.Services
+namespace Erdi_ERC.Services
 {
     /// <summary>
     /// Helper service to handle database transactions safely with atomic operations

@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     /// <summary>
     /// Aggregierte "Frisch eingetroffen"-Zeile für die Setup-Seite:

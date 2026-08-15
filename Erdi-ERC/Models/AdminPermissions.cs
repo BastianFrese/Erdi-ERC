@@ -1,4 +1,4 @@
-namespace <OWNER_HANDLE>_ERC.Models
+namespace Erdi_ERC.Models
 {
     /// <summary>
     /// Granulare Berechtigungsschlüssel im Admin-System.
@@ -50,7 +50,7 @@ namespace <OWNER_HANDLE>_ERC.Models
         public const string SystemAboutMe     = "system.aboutme";
         /// <summary>Regelwerk-Dokumente hochladen und verwalten</summary>
         public const string SystemRegelwerk   = "system.regelwerk";
-        /// <summary><OWNER_HANDLE>-Troll-System verwalten (Gags, Gewichte, eigene Gags, Settings)</summary>
+        /// <summary>Erdi-Troll-System verwalten (Gags, Gewichte, eigene Gags, Settings)</summary>
         public const string SystemTroll       = "system.troll";
 
         // ── Rückwärtskompatible Gruppen-Aliases ───────────────────────────────────
@@ -63,30 +63,30 @@ namespace <OWNER_HANDLE>_ERC.Models
         /// </summary>
         public static readonly IReadOnlyList<PermissionGroup> Groups =
         [
-            new("Liga", "bi-flag-fill", "***REMOVED***39ff14",
+            new("Liga", "bi-flag-fill", "#39ff14",
             [
                 new(LeagueStandings, "Tabellen & Fahrer", "bi-list-ol"),
                 new(LeagueRaces,     "Rennergebnisse",    "bi-trophy-fill"),
             ]),
-            new("Community", "bi-people-fill", "***REMOVED***ff6b35",
+            new("Community", "bi-people-fill", "#ff6b35",
             [
                 new(CommunityHub,        "Hub (News/Votes)",  "bi-newspaper"),
                 new(CommunityEvents,     "Events",            "bi-calendar-event"),
                 new(CommunityStreams,    "Streams",           "bi-camera-video"),
                 new(CommunityStewarding,"Stewarding",        "bi-shield-fill-exclamation"),
             ]),
-            new("Fahrer", "bi-person-badge-fill", "***REMOVED***c084fc",
+            new("Fahrer", "bi-person-badge-fill", "#c084fc",
             [
                 new(DriversAchievements, "Achievements",  "bi-award"),
                 new(DriversDefinitions,  "Definitionen",  "bi-journal-text"),
                 new(DriversCards,        "Fahrerkarten",  "bi-person-vcard-fill"),
             ]),
-            new("Bewerbungen", "bi-envelope-paper", "***REMOVED***22d3ee",
+            new("Bewerbungen", "bi-envelope-paper", "#22d3ee",
             [
                 new(ApplicationsView,   "Liste einsehen",              "bi-list-ul"),
                 new(ApplicationsManage, "Entscheiden (Accept/Reject)", "bi-check2-square"),
             ]),
-            new("System", "bi-gear-fill", "***REMOVED***ffb800",
+            new("System", "bi-gear-fill", "#ffb800",
             [
                 new(SystemMusic,      "Hintergrundmusik", "bi-music-note-beamed"),
                     new(SystemSetups,    "Track Setups",     "bi-wrench-adjustable"),

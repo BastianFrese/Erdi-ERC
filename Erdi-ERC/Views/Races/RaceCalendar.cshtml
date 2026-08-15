@@ -1,6 +1,6 @@
-@using <OWNER_HANDLE>_ERC.Helpers
-@using <OWNER_HANDLE>_ERC.Models
-@using <OWNER_HANDLE>_ERC.Models.UiComponents
+@using Erdi_ERC.Helpers
+@using Erdi_ERC.Models
+@using Erdi_ERC.Models.UiComponents
 @{
     ViewData["Title"] = "Race Calendar";
 
@@ -36,11 +36,11 @@
     <style>
         /* ───────── Saison-Poster (= Render-View + Discord-Vorschau) ───────── */
         .rc-poster-doc {
-            position: relative; color: ***REMOVED***fff; overflow: hidden;
+            position: relative; color: #fff; overflow: hidden;
             border-radius: var(--r-3); border: 1px solid var(--stroke-1);
             box-shadow: var(--sh-2);
             max-width: 1100px; margin: 0 auto;
-            background-color: ***REMOVED***0b1117;
+            background-color: #0b1117;
             background-image: var(--rc-bg-image, none);
             background-size: cover; background-position: center;
         }
@@ -53,8 +53,8 @@
         .rc-poster-doc > * { position: relative; z-index: 1; }
         .rc-poster-doc__chequer {
             position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 2;
-            background-image: linear-gradient(90deg, ***REMOVED***fff 0, ***REMOVED***fff 12px, transparent 12px, transparent 24px),
-                              linear-gradient(90deg, transparent 0, transparent 12px, ***REMOVED***fff 12px, ***REMOVED***fff 24px);
+            background-image: linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 24px),
+                              linear-gradient(90deg, transparent 0, transparent 12px, #fff 12px, #fff 24px);
             background-size: 24px 6px; background-position: 0 0, 0 0;
         }
 
@@ -73,7 +73,7 @@
         }
         .rc-poster-doc__title {
             font: 900 clamp(1.9rem, 4.4vw, 2.8rem)/.95 var(--ff-heading);
-            text-transform: uppercase; letter-spacing: -.01em; margin: 0; color: ***REMOVED***fff;
+            text-transform: uppercase; letter-spacing: -.01em; margin: 0; color: #fff;
         }
         .rc-poster-doc__sub {
             font: 400 .95rem/1.45 var(--ff-body); color: rgba(255,255,255,.72); max-width: 580px; margin: 0;
@@ -100,23 +100,23 @@
         .rc-poster-doc__row.is-next::before { background: var(--sig-cyan); }
         .rc-poster-doc__order {
             font: 900 1.5rem/1 var(--ff-heading); text-align: center;
-            font-feature-settings: "tnum"; color: ***REMOVED***fff;
+            font-feature-settings: "tnum"; color: #fff;
         }
         .rc-poster-doc__flag { font-size: 2.3rem; line-height: 1; text-align: center; filter: drop-shadow(0 4px 12px rgba(0,0,0,.55)); }
         .rc-poster-doc__main { min-width: 0; display: flex; flex-direction: column; gap: .35rem; }
         .rc-poster-doc__track {
-            font: 900 1.05rem/1.05 var(--ff-heading); text-transform: uppercase; letter-spacing: .02em; color: ***REMOVED***fff;
+            font: 900 1.05rem/1.05 var(--ff-heading); text-transform: uppercase; letter-spacing: .02em; color: #fff;
         }
         .rc-poster-doc__track .next-tag {
             display: inline-block; margin-left: .45rem;
             font: 700 .54rem/1 var(--ff-tech); letter-spacing: .18em; text-transform: uppercase;
-            color: ***REMOVED***0b1117; background: var(--sig-cyan);
+            color: #0b1117; background: var(--sig-cyan);
             padding: .22rem .5rem; border-radius: 3px; vertical-align: middle;
         }
         .rc-poster-doc__distance {
             display: inline-flex; align-items: center;
             font: 700 .58rem/1 var(--ff-tech); letter-spacing: .14em; text-transform: uppercase;
-            color: ***REMOVED***ff4b4b; border: 1px solid rgba(255,75,75,.5);
+            color: #ff4b4b; border: 1px solid rgba(255,75,75,.5);
             padding: .25rem .55rem; border-radius: 999px;
             background: rgba(255,75,75,.08); align-self: flex-start;
         }
@@ -136,7 +136,7 @@
         }
         .rc-poster-doc__leg-league { font: 700 .54rem/1 var(--ff-tech); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.55); }
         .rc-poster-doc__leg.is-next .rc-poster-doc__leg-league { color: var(--sig-cyan); }
-        .rc-poster-doc__leg-date   { font: 700 .85rem/1 var(--ff-tech); color: ***REMOVED***fff; margin-top: .3rem; }
+        .rc-poster-doc__leg-date   { font: 700 .85rem/1 var(--ff-tech); color: #fff; margin-top: .3rem; }
         .rc-poster-doc__leg-time   { font: 700 .64rem/1 var(--ff-tech); color: rgba(255,255,255,.6); margin-top: .2rem; }
 
         .rc-poster-doc__footer {
@@ -176,7 +176,7 @@
         .rc-preview-backdrop { display: none; }
         .rc-preview-close {
             position: fixed; top: 1.2rem; right: 1.2rem; z-index: 10000;
-            background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: ***REMOVED***fff;
+            background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: #fff;
             width: 36px; height: 36px; border-radius: 50%; font-size: .9rem; cursor: pointer;
             display: none; align-items: center; justify-content: center;
             transition: background .15s ease;
@@ -202,7 +202,7 @@ else
         <div class="rc-poster-doc__chequer"></div>
 
         <header class="rc-poster-doc__head">
-            <img class="rc-poster-doc__logo" src="~/images/ERCLogoHighRes1.png" alt="<OWNER_HANDLE>'s Racing Community" />
+            <img class="rc-poster-doc__logo" src="~/images/ERCLogoHighRes1.png" alt="Erdi's Racing Community" />
             <span class="rc-poster-doc__eyebrow">F1 26 · ERC Season Schedule</span>
             <h1 class="rc-poster-doc__title">@seasonTitle</h1>
             <p class="rc-poster-doc__sub">@seasonSubtitle</p>
@@ -246,7 +246,7 @@ else
                                     @if (hasResult)
                                     {
                                         <a class="rc-poster-doc__leg-result" href="@Url.Action("RaceDetail", "Races", new { leagueId = leg.LeagueId, raceId = legRaceRowId })"
-                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--sig-cyan,***REMOVED***00e5ff);text-decoration:none;">
+                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--sig-cyan,#00e5ff);text-decoration:none;">
                                             <i class="bi bi-flag-checkered"></i> Ergebnis
                                         </a>
                                     }
@@ -259,7 +259,7 @@ else
         </div>
 
         <footer class="rc-poster-doc__footer">
-            <span><OWNER_HANDLE>'s Racing Community</span>
+            <span>Erdi's Racing Community</span>
             <span>F1 26 · @DateTime.Now.Year</span>
         </footer>
     </div>

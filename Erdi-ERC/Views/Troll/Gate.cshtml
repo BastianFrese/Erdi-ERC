@@ -1,6 +1,6 @@
-@model <OWNER_HANDLE>_ERC.Models.Troll.TrollGateViewModel
+@model Erdi_ERC.Models.Troll.TrollGateViewModel
 @{
-    ViewData["Title"] = "<OWNER_HANDLE> hat da was vorbereitet";
+    ViewData["Title"] = "Erdi hat da was vorbereitet";
 }
 
 @section Styles {
@@ -11,10 +11,10 @@
 <div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "<OWNER_HANDLE> · ERC · Boxenstopp",
+    Eyebrow   = "Erdi · ERC · Boxenstopp",
     Title     = "Moment mal,",
-    Highlight = "<OWNER_HANDLE> will was von dir",
-    Lead      = "Bevor du reinkommst, hat sich <strong class=\"text-accent\"><OWNER_HANDLE>/strong> noch eine Kleinigkeit überlegt …",
+    Highlight = "Erdi will was von dir",
+    Lead      = "Bevor du reinkommst, hat sich <strong class=\"text-accent\">Erdi/strong> noch eine Kleinigkeit überlegt …",
 
 })" />
 
@@ -28,13 +28,13 @@
                 @if (Model.ShowWrongAnswer)
                 {
                     <p class="troll-wrong" role="alert">
-                        @(Model.MercyOffered ? "<OWNER_HANDLE> verdreht die Augen. So langsam wird's peinlich." : "<OWNER_HANDLE> schüttelt den Kopf. Nochmal.")
+                        @(Model.MercyOffered ? "Erdi verdreht die Augen. So langsam wird's peinlich." : "Erdi schüttelt den Kopf. Nochmal.")
                     </p>
                 }
                 @if (Model.MercyOffered)
                 {
                     <a asp-controller="Troll" asp-action="Continue" class="troll-mercy">
-                        <OWNER_HANDLE> ist heute gnädig — reinlassen →
+                        Erdi ist heute gnädig — reinlassen →
                     </a>
                 }
             </div>

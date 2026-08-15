@@ -1,4 +1,4 @@
-@model <OWNER_HANDLE>_ERC.Models.AboutMeProfile
+@model Erdi_ERC.Models.AboutMeProfile
 @{
     var isNew = Model.Id == 0;
     ViewData["Title"]     = isNew ? "Profil erstellen" : $"Profil bearbeiten · {Model.DisplayName}";
@@ -96,7 +96,7 @@
     cursor: pointer;
     transition: transform .12s, border-color .12s;
 }
-.abe-preset:hover, .abe-preset.is-selected { transform: scale(1.25); border-color: ***REMOVED***fff; }
+.abe-preset:hover, .abe-preset.is-selected { transform: scale(1.25); border-color: #fff; }
 
 /* ── Toggle ────────────────────────────────────────────────────────── */
 .abe-toggle-row {
@@ -126,7 +126,7 @@
     content: '';
     position: absolute;
     width: 14px; height: 14px;
-    background: ***REMOVED***fff;
+    background: #fff;
     border-radius: 50%;
     top: 2px; left: 2px;
     transition: left var(--t-fast);
@@ -242,7 +242,7 @@
 .abe-btn-save {
     display: inline-flex; align-items: center; gap: .4rem;
     background: var(--accent);
-    color: ***REMOVED***fff;
+    color: #fff;
     border: none;
     border-radius: var(--r-pill);
     font-family: var(--ff-tech);
@@ -390,8 +390,8 @@
                     <div class="abe-field">
                         <label class="abe-label" for="Bio">Haupttext <span class="abe-hint" style="text-transform:none;">(Markdown)</span></label>
                         <textarea class="abe-textarea" asp-for="Bio" id="Bio" rows="8"
-                            placeholder="**Über mich**&***REMOVED***10;&***REMOVED***10;Hier kannst du deinen vollständigen Text eingeben. Markdown wird unterstützt.&***REMOVED***10;&***REMOVED***10;- Punkt 1&***REMOVED***10;- Punkt 2"></textarea>
-                        <span class="abe-hint">Unterstützt: **fett**, *kursiv*, `code`, > Zitat, ***REMOVED******REMOVED*** Überschriften</span>
+                            placeholder="**Über mich**&#10;&#10;Hier kannst du deinen vollständigen Text eingeben. Markdown wird unterstützt.&#10;&#10;- Punkt 1&#10;- Punkt 2"></textarea>
+                        <span class="abe-hint">Unterstützt: **fett**, *kursiv*, `code`, > Zitat, ## Überschriften</span>
                     </div>
                 </div>
             </div>
@@ -420,28 +420,28 @@
                     <div class="abe-field">
                         <label class="abe-label" for="DiscordUsername">Discord-Nutzername</label>
                         <div class="abe-social-row">
-                            <div class="abe-social-icon" style="color:***REMOVED***5865f2;"><i class="bi bi-discord"></i></div>
+                            <div class="abe-social-icon" style="color:#5865f2;"><i class="bi bi-discord"></i></div>
                             <input class="abe-input" asp-for="DiscordUsername" id="DiscordUsername" placeholder="maxmustermann" oninput="updatePreview()" />
                         </div>
                     </div>
                     <div class="abe-field">
                         <label class="abe-label" for="TwitchUrl">Twitch</label>
                         <div class="abe-social-row">
-                            <div class="abe-social-icon" style="color:***REMOVED***9146ff;"><i class="bi bi-twitch"></i></div>
+                            <div class="abe-social-icon" style="color:#9146ff;"><i class="bi bi-twitch"></i></div>
                             <input class="abe-input" asp-for="TwitchUrl" id="TwitchUrl" placeholder="https://twitch.tv/..." type="url" oninput="updatePreview()" />
                         </div>
                     </div>
                     <div class="abe-field">
                         <label class="abe-label" for="YouTubeUrl">YouTube</label>
                         <div class="abe-social-row">
-                            <div class="abe-social-icon" style="color:***REMOVED***ff0000;"><i class="bi bi-youtube"></i></div>
-                            <input class="abe-input" asp-for="YouTubeUrl" id="YouTubeUrl" placeholder="https://youtube.com/&***REMOVED***64;..." type="url" oninput="updatePreview()" />
+                            <div class="abe-social-icon" style="color:#ff0000;"><i class="bi bi-youtube"></i></div>
+                            <input class="abe-input" asp-for="YouTubeUrl" id="YouTubeUrl" placeholder="https://youtube.com/&#64;..." type="url" oninput="updatePreview()" />
                         </div>
                     </div>
                     <div class="abe-field">
                         <label class="abe-label" for="InstagramUrl">Instagram</label>
                         <div class="abe-social-row">
-                            <div class="abe-social-icon" style="color:***REMOVED***e1306c;"><i class="bi bi-instagram"></i></div>
+                            <div class="abe-social-icon" style="color:#e1306c;"><i class="bi bi-instagram"></i></div>
                             <input class="abe-input" asp-for="InstagramUrl" id="InstagramUrl" placeholder="https://instagram.com/..." type="url" oninput="updatePreview()" />
                         </div>
                     </div>
@@ -456,7 +456,7 @@
                         <div class="abe-field">
                             <label class="abe-label" for="SteamUrl">Steam</label>
                             <div class="abe-social-row">
-                                <div class="abe-social-icon" style="color:***REMOVED***1b9bc2;"><i class="bi bi-steam"></i></div>
+                                <div class="abe-social-icon" style="color:#1b9bc2;"><i class="bi bi-steam"></i></div>
                                 <input class="abe-input" asp-for="SteamUrl" id="SteamUrl" placeholder="https://steamcommunity.com/..." type="url" oninput="updatePreview()" />
                             </div>
                         </div>
@@ -471,12 +471,12 @@
                     <div class="abe-field">
                         <label class="abe-label">Akzentfarbe</label>
                         <div class="abe-color-row">
-                            <input type="color" class="abe-color-swatch" id="accentSwatch" value="@(Model.AccentColor ?? "***REMOVED***e10600")" oninput="setAccent(this.value)" />
-                            <input type="text" class="abe-color-hex" id="accentHex" value="@(Model.AccentColor ?? "***REMOVED***e10600")" maxlength="7" placeholder="***REMOVED***e10600" oninput="hexChanged(this.value)" />
-                            <input type="hidden" asp-for="AccentColor" id="AccentColor" value="@(Model.AccentColor ?? "***REMOVED***e10600")" />
+                            <input type="color" class="abe-color-swatch" id="accentSwatch" value="@(Model.AccentColor ?? "#e10600")" oninput="setAccent(this.value)" />
+                            <input type="text" class="abe-color-hex" id="accentHex" value="@(Model.AccentColor ?? "#e10600")" maxlength="7" placeholder="#e10600" oninput="hexChanged(this.value)" />
+                            <input type="hidden" asp-for="AccentColor" id="AccentColor" value="@(Model.AccentColor ?? "#e10600")" />
                         </div>
                         <div class="abe-presets" id="colorPresets">
-                            @foreach (var c in new[]{ ("***REMOVED***e10600","ERC Rot"),("***REMOVED***5865f2","Discord"),("***REMOVED***57f287","Grün"),("***REMOVED***fee75c","Gelb"),("***REMOVED***eb459e","Pink"),("***REMOVED***ed4245","Rot"),("***REMOVED***faa61a","Orange"),("***REMOVED***00aff4","Cyan"),("***REMOVED***9b59b6","Lila"),("***REMOVED***1abc9c","Türkis"),("***REMOVED***ffffff","Weiß"),("***REMOVED***b9bbbe","Grau") })
+                            @foreach (var c in new[]{ ("#e10600","ERC Rot"),("#5865f2","Discord"),("#57f287","Grün"),("#fee75c","Gelb"),("#eb459e","Pink"),("#ed4245","Rot"),("#faa61a","Orange"),("#00aff4","Cyan"),("#9b59b6","Lila"),("#1abc9c","Türkis"),("#ffffff","Weiß"),("#b9bbbe","Grau") })
                             {
                                 <div class="abe-preset" style="background:@c.Item1;" data-hex="@c.Item1" onclick="setAccent('@c.Item1')" title="@c.Item2"></div>
                             }
@@ -506,7 +506,7 @@
                 <div class="abe-panel__head"><i class="bi bi-eye-fill"></i> Live-Vorschau</div>
             </div>
             <div class="abe-preview-card" style="margin-top:.75rem;">
-                <div class="abe-accent-bar" id="pvAccentBar" style="background:***REMOVED***e10600;"></div>
+                <div class="abe-accent-bar" id="pvAccentBar" style="background:#e10600;"></div>
                 <div class="abe-pv-banner" id="pvBanner">
                     <div class="abe-pv-banner-overlay"></div>
                     <div id="pvBannerHidden" style="display:none;position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-family:var(--ff-tech);font-size:.6rem;letter-spacing:.08em;color:var(--ink-4);text-transform:uppercase;"><i class="bi bi-eye-slash" style="margin-right:.3rem;"></i> Banner ausgeblendet</div>
@@ -601,7 +601,7 @@ function updatePreview(){
 
     g('pvNameText').textContent = name;
     tv(g('pvNumber'), !!num);
-    if(num) g('pvNumber').textContent = '***REMOVED***'+num;
+    if(num) g('pvNumber').textContent = '#'+num;
 
     tv(g('pvTagline'), !!tagline);
     g('pvTagline').textContent = tagline;
@@ -639,12 +639,12 @@ function updatePreview(){
     // Socials
     var soc = g('pvSocials'); soc.innerHTML = '';
     var links = [
-        {id:'DiscordUsername', icon:'bi-discord', color:'***REMOVED***5865f2', isName:true},
-        {id:'TwitchUrl',       icon:'bi-twitch',  color:'***REMOVED***9146ff'},
-        {id:'YouTubeUrl',      icon:'bi-youtube', color:'***REMOVED***ff0000'},
-        {id:'InstagramUrl',    icon:'bi-instagram',color:'***REMOVED***e1306c'},
+        {id:'DiscordUsername', icon:'bi-discord', color:'#5865f2', isName:true},
+        {id:'TwitchUrl',       icon:'bi-twitch',  color:'#9146ff'},
+        {id:'YouTubeUrl',      icon:'bi-youtube', color:'#ff0000'},
+        {id:'InstagramUrl',    icon:'bi-instagram',color:'#e1306c'},
         {id:'TwitterUrl',      icon:'bi-twitter-x',color:'var(--ink)'},
-        {id:'SteamUrl',        icon:'bi-steam',   color:'***REMOVED***1b9bc2'},
+        {id:'SteamUrl',        icon:'bi-steam',   color:'#1b9bc2'},
     ];
     links.forEach(function(l){
         var val = (g(l.id).value||'').trim();
@@ -677,13 +677,13 @@ window.setAccent = function(hex){
 };
 
 window.hexChanged = function(val){
-    if(/^***REMOVED***[0-9a-fA-F]{6}$/.test(val)){
+    if(/^#[0-9a-fA-F]{6}$/.test(val)){
         setAccent(val);
     }
 };
 
 // Init
-setAccent(g('AccentColor').value||'***REMOVED***e10600');
+setAccent(g('AccentColor').value||'#e10600');
 updatePreview();
 
 g('Slug').addEventListener('input', normalizeSlug);

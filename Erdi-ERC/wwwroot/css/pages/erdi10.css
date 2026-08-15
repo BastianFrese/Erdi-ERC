@@ -27,7 +27,7 @@
     letter-spacing: .14em;
     text-transform: uppercase;
 }
-.f1-hub-tag--red { color: var(--sig-red, ***REMOVED***e10600); border-color: rgba(225,6,0,.4); background: rgba(225,6,0,.1); }
+.f1-hub-tag--red { color: var(--sig-red, #e10600); border-color: rgba(225,6,0,.4); background: rgba(225,6,0,.1); }
 
 /* =====================================================================
    WINNER CARD · Latest race winner spotlight

@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace><OWNER_HANDLE>_ERC</RootNamespace>
+    <RootNamespace>Erdi_ERC</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

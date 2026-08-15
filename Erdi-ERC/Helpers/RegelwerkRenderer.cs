@@ -3,7 +3,7 @@ using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
-namespace <OWNER_HANDLE>_ERC.Helpers
+namespace Erdi_ERC.Helpers
 {
     /// <summary>
     /// Zerlegt ein Markdown-Dokument anhand seiner H1/H2-Überschriften in Sektionen,
