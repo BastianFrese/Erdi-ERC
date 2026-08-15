@@ -60,6 +60,16 @@
     <None Remove="Tests\**" />
   </ItemGroup>
 
+  <!-- JS-Bundle Inputs (Top-Level — Inputs-Attribut in <Target> braucht Items, die zur Target-Auswertungszeit existieren). -->
+  <ItemGroup>
+    <_JsBundleInputs Include="wwwroot/js/site.js" />
+    <_JsBundleInputs Include="wwwroot/js/track-setups.js" />
+    <_JsBundleInputs Include="wwwroot/js/home-index.js" />
+    <_JsBundleInputs Include="wwwroot/js/troll.js" />
+    <_JsBundleInputs Include="wwwroot/js/driver-card-fit.js" />
+    <_JsBundleInputs Include="wwwroot/js/exclusive-consent.js" />
+  </ItemGroup>
+
   <!--
     CSS-Bundling: konkateniert alle Partials aus /wwwroot/css/site/ + site.track-setups.css + site.community.css
     zu /wwwroot/css/site.bundled.css. Ergebnis: 1 HTTP-Request statt 13 @import-Roundtrips (render-blocking).
@@ -87,6 +97,19 @@
     </ReadLinesFromFile>
     <WriteLinesToFile File="wwwroot/css/site.bundled.css" Lines="@(_CssBundleLines)" Overwrite="true" />
     <Message Importance="high" Text="CSS-Bundle erzeugt: wwwroot/css/site.bundled.css" />
+  </Target>
+
+  <!--
+    JS-Minify via esbuild (Block 5). Erzeugt für jede Source-Datei ein *.min.js + .map-Pärchen.
+    esbuild ist 10-100x schneller als UglifyJS/Terser, sodass der Pre-Build-Hook auch auf CI
+    nur Sekunden kostet. Inputs/Outputs ermöglichen inkrementelles Rebuild.
+    Fallback: wenn npx/esbuild nicht verfügbar ist (ContinueOnError), wird das Target
+    übersprungen — die App startet trotzdem, lädt dann nur die unminified Source.
+  -->
+  <Target Name="BundleSiteJs" BeforeTargets="BeforeBuild">
+    <Exec Command="npx --yes esbuild &quot;%(_JsBundleInputs.Identity)&quot; --minify --sourcemap --target=es2020 --outfile=&quot;%(_JsBundleInputs.RootDir)%(_JsBundleInputs.Directory)%(_JsBundleInputs.Filename).min.js&quot;"
+          ContinueOnError="true" />
+    <Message Importance="high" Text="JS-Minify via esbuild: %(_JsBundleInputs.Identity) -> %(_JsBundleInputs.Filename).min.js" />
   </Target>
 
   <!--

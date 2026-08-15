@@ -542,7 +542,7 @@ else
         window.erdiSetupEditorConfig = @Html.Raw(JsonSerializer.Serialize(editorConfig));
         window.erdiSetupMetricConfig = @Html.Raw(JsonSerializer.Serialize(metricConfig));
     </script>
-    <script src="~/js/track-setups.js" asp-append-version="true"></script>
+    <script src="~/js/track-setups.min.js" asp-append-version="true"></script>
     @* F1-Intro für neue Setups: zeigt sich nur bei ungelesener Aktivität.
        Läuft VOR dem Badge-Script im Layout, das den Gelesen-Status setzt. *@
     <script>

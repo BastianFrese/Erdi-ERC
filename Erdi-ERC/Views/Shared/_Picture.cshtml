@@ -3,15 +3,15 @@
   Rendert ein <picture>-Element mit AVIF + WebP <source>-Elementen und <img>-Fallback.
   Pfad-Konvention (deterministisch, identisch zur MediaService-Pipeline in Block 2):
     Original:    /uploads/events/foo.jpg
-    AVIF:        /uploads/events/foo-640.avif, foo-1280.avif, foo-2560.avif
-    WebP:        /uploads/events/foo-640.webp, foo-1280.webp, foo-2560.webp
+    AVIF:        /uploads/events/foo-640.avif, foo-1280.avif, foo-1920.avif, foo-3840.avif
+    WebP:        /uploads/events/foo-640.webp, foo-1280.webp, foo-1920.webp, foo-3840.webp
 *@
 @using System.Text
 @using System.Web
 @{
     var src = Model.Src;
     var widths = string.IsNullOrWhiteSpace(Model.Widths)
-        ? new[] { 640, 1280, 2560 }
+        ? new[] { 640, 1280, 1920, 3840 }
         : Model.Widths.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(int.Parse).ToArray();
     var isSvg = src.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);

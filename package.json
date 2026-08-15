@@ -1,0 +1,12 @@
+{
+  "name": "erdi-erc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Erdi-ERC Racing Community — frontend tooling (Block 5: esbuild JS minify via MSBuild).",
+  "scripts": {
+    "build": "esbuild wwwroot/js/site.js --minify --sourcemap --target=es2020 --outfile=wwwroot/js/site.min.js && esbuild wwwroot/js/track-setups.js --minify --sourcemap --target=es2020 --outfile=wwwroot/js/track-setups.min.js && esbuild wwwroot/js/home-index.js --minify --sourcemap --target=es2020 --outfile=wwwroot/js/home-index.min.js && esbuild wwwroot/js/troll.js --minify --sourcemap --target=es2020 --outfile=wwwroot/js/troll.min.js && esbuild wwwroot/js/driver-card-fit.js --minify --sourcemap --target=es2020 --outfile=wwwroot/js/driver-card-fit.min.js && esbuild wwwroot/js/exclusive-consent.js --minify --sourcemap --target=es2020 --outfile=wwwroot/js/exclusive-consent.min.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
