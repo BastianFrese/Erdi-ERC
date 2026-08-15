@@ -21,23 +21,29 @@ public class ApplicationServiceTests
         SqliteTestContext ctx,
         IAdminAuditService? audit = null,
         IWebhookAutomationService? webhookAuto = null,
-        IStaticDataCache? cache = null)
+        IStaticDataCache? cache = null,
+        IApplicationTargetingService? targeting = null)
     {
         var memCache = new MemoryCache(new MemoryCacheOptions());
         cache ??= new StaticDataCache(ctx.Db, memCache);
         audit ??= new NoopAuditService();
         webhookAuto ??= new NoopWebhookService();
+        targeting ??= new ApplicationTargetingService(ctx.Db, cache);
         return new ApplicationService(
-            ctx.Db, audit, webhookAuto, cache,
+            ctx.Db, audit, webhookAuto, cache, targeting,
             NullLogger<ApplicationService>.Instance);
     }
 
-    private static League NewLeague(string id, string name, int? capacity = null)
+    private static League NewLeague(string id, string name, int? capacity = null,
+        string? currentSeason = null, string? nextSeason = null, bool openForNext = false)
         => new()
         {
             Id = id, Name = name, Capacity = capacity,
             CountsTowardOverall = true,
             SortOrder = 0,
+            CurrentSeason = currentSeason,
+            NextSeason = nextSeason,
+            ApplicationsOpenForNextSeason = openForNext,
         };
 
     private static SubmitApplicationCommand Cmd(string discordId = "111", string tag = "Racer1",
@@ -358,17 +364,17 @@ public class ApplicationServiceTests
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
             Id = "w1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
-            Platform = "PC", LeagueId = "pro", Position = 1
+            Platform = "PC", LeagueId = "pro", Season = "2026", Position = 1
         });
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
             Id = "w2", DiscordId = "222", DiscordName = "222", GamerTag = "R2",
-            Platform = "PC", LeagueId = "otherliga", Position = 1
+            Platform = "PC", LeagueId = "otherliga", Season = "2026", Position = 1
         });
         await ctx.Db.SaveChangesAsync();
 
         var svc = BuildService(ctx);
-        var entries = await svc.ListWaitlistAsync("pro", CancellationToken.None);
+        var entries = await svc.ListWaitlistAsync("pro", null, CancellationToken.None);
 
         Assert.Single(entries);
         Assert.Equal("w1", entries[0].Id);
@@ -381,7 +387,7 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
-            Id = "w1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
+            Id = "w1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1", Season = "2026",
             Platform = "PC", LeagueId = "pro", Position = 1
         });
         await ctx.Db.SaveChangesAsync();
@@ -418,20 +424,20 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.Applications.Add(new Application
         {
-            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "T1",
+            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "T1", Season = "2026",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
             Status = (int)ApplicationStatus.Pending
         });
         ctx.Db.Applications.Add(new Application
         {
-            Id = "a2", DiscordId = "2", DiscordName = "2", GamerTag = "T2",
+            Id = "a2", DiscordId = "2", DiscordName = "2", GamerTag = "T2", Season = "2026",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
             Status = (int)ApplicationStatus.Rejected
         });
         await ctx.Db.SaveChangesAsync();
 
         var svc = BuildService(ctx);
-        var pending = await svc.ListAsync(ApplicationStatus.Pending, null, 0, 50, CancellationToken.None);
+        var pending = await svc.ListAsync(ApplicationStatus.Pending, null, null, 0, 50, CancellationToken.None);
 
         Assert.Single(pending);
         Assert.Equal("a1", pending[0].Id);
@@ -444,7 +450,7 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.Applications.Add(new Application
         {
-            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "T1",
+            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "T1", Season = "2026",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
             Status = (int)ApplicationStatus.Rejected
         });
@@ -568,7 +574,7 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.Applications.Add(new Application
         {
-            Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
+            Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Season = "2026",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
             Status = (int)ApplicationStatus.Pending
         });
@@ -588,7 +594,7 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.Applications.Add(new Application
         {
-            Id = "a1", DiscordId = "999", DiscordName = "999", GamerTag = "R1",
+            Id = "a1", DiscordId = "999", DiscordName = "999", GamerTag = "R1", Season = "2026",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
             Status = (int)ApplicationStatus.Pending
         });
@@ -608,7 +614,7 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.Applications.Add(new Application
         {
-            Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
+            Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Season = "2026",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
             Status = (int)ApplicationStatus.Accepted
         });
@@ -627,8 +633,8 @@ public class ApplicationServiceTests
         using var ctx = new SqliteTestContext();
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.WaitlistEntries.AddRange(
-            new WaitlistEntry { Id = "w1", DiscordId = "1", DiscordName = "1", GamerTag = "A", Platform = "PC", LeagueId = "pro", Position = 1 },
-            new WaitlistEntry { Id = "w2", DiscordId = "2", DiscordName = "2", GamerTag = "B", Platform = "PC", LeagueId = "pro", Position = 2 },
+            new WaitlistEntry { Id = "w1", DiscordId = "1", DiscordName = "1", GamerTag = "A", Platform = "PC", LeagueId = "pro", Season = "2026", Position = 1 },
+            new WaitlistEntry { Id = "w2", DiscordId = "2", DiscordName = "2", GamerTag = "B", Platform = "PC", LeagueId = "pro", Season = "2026", Position = 2 },
             new WaitlistEntry { Id = "w3", DiscordId = "3", DiscordName = "3", GamerTag = "C", Platform = "PC", LeagueId = "pro", Position = 3 });
         await ctx.Db.SaveChangesAsync();
 
@@ -649,7 +655,7 @@ public class ApplicationServiceTests
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
-            Id = "w1", DiscordId = "999", DiscordName = "999", GamerTag = "A",
+            Id = "w1", DiscordId = "999", DiscordName = "999", GamerTag = "A", Season = "2026",
             Platform = "PC", LeagueId = "pro", Position = 1
         });
         await ctx.Db.SaveChangesAsync();
@@ -667,8 +673,8 @@ public class ApplicationServiceTests
         using var ctx = new SqliteTestContext();
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.Applications.AddRange(
-            new Application { Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer", CreatedAt = DateTime.UtcNow.AddDays(-2) },
-            new Application { Id = "a2", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Platform = "PC", TargetLeagueId = "pro", Role = "Ersatzfahrer", CreatedAt = DateTime.UtcNow.AddDays(-1) },
+            new Application { Id = "a1", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer", Season = "2026", CreatedAt = DateTime.UtcNow.AddDays(-2) },
+            new Application { Id = "a2", DiscordId = "111", DiscordName = "111", GamerTag = "R1", Platform = "PC", TargetLeagueId = "pro", Role = "Ersatzfahrer", Season = "2026", CreatedAt = DateTime.UtcNow.AddDays(-1) },
             new Application { Id = "x1", DiscordId = "999", DiscordName = "999", GamerTag = "R9", Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer" });
         await ctx.Db.SaveChangesAsync();
 
@@ -686,8 +692,8 @@ public class ApplicationServiceTests
         using var ctx = new SqliteTestContext();
         ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
         ctx.Db.WaitlistEntries.AddRange(
-            new WaitlistEntry { Id = "w1", DiscordId = "111", DiscordName = "111", GamerTag = "A", Platform = "PC", LeagueId = "pro", Position = 1, PromotedToApplicationId = "appX" },
-            new WaitlistEntry { Id = "w2", DiscordId = "111", DiscordName = "111", GamerTag = "A", Platform = "PC", LeagueId = "pro", Position = 2 });
+            new WaitlistEntry { Id = "w1", DiscordId = "111", DiscordName = "111", GamerTag = "A", Platform = "PC", LeagueId = "pro", Season = "2026", Position = 1, PromotedToApplicationId = "appX" },
+            new WaitlistEntry { Id = "w2", DiscordId = "111", DiscordName = "111", GamerTag = "A", Platform = "PC", LeagueId = "pro", Season = "2026", Position = 2 });
         await ctx.Db.SaveChangesAsync();
 
         var svc = BuildService(ctx);
@@ -709,7 +715,7 @@ public class ApplicationServiceTests
             new DriverStanding { LeagueId = "pro", Driver = "B", IsReserveDriver = true });
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
-            Id = "w1", DiscordId = "1", DiscordName = "1", GamerTag = "C",
+            Id = "w1", DiscordId = "1", DiscordName = "1", GamerTag = "C", Season = "2026",
             Platform = "PC", LeagueId = "pro", Position = 1
         });
         await ctx.Db.SaveChangesAsync();
@@ -736,6 +742,201 @@ public class ApplicationServiceTests
         var svc = BuildService(ctx);
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => svc.SubmitAsync(Cmd(leagueId: "pro"), CancellationToken.None));
+    }
+
+    // ── Season-Awareness ────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Submit_persistsLeagueCurrentSeason_whenNoNextSeason()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026"));
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.SubmitAsync(Cmd(leagueId: "pro"), CancellationToken.None);
+
+        Assert.Equal(SubmitOutcome.Submitted, result.Outcome);
+        var app = ctx.Db.Applications.Single();
+        Assert.Equal("2026", app.Season);
+    }
+
+    [Fact]
+    public async Task Submit_persistsNextSeason_whenApplicationsOpenForNextSeason()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga",
+            currentSeason: "2026", nextSeason: "2027", openForNext: true));
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.SubmitAsync(Cmd(leagueId: "pro"), CancellationToken.None);
+
+        Assert.Equal(SubmitOutcome.Submitted, result.Outcome);
+        var app = ctx.Db.Applications.Single();
+        Assert.Equal("2027", app.Season);
+    }
+
+    [Fact]
+    public async Task Submit_dedupScopedBySeason_allowsSameUserInMultipleSeasons()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "old", DiscordId = "111", DiscordName = "111", GamerTag = "R1",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2025", Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.SubmitAsync(Cmd(leagueId: "pro"), CancellationToken.None);
+
+        Assert.Equal(SubmitOutcome.Submitted, result.Outcome);
+        Assert.Equal(2, ctx.Db.Applications.Count());
+    }
+
+    [Fact]
+    public async Task Submit_capacityCountedPerSeason_notTotalStandings()
+    {
+        using var ctx = new SqliteTestContext();
+        // Liga mit 1 Stammfahrer in DriverStandings (aus alter Season) → Capacity = 1 → voll
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026", capacity: 1));
+        ctx.Db.DriverStandings.Add(new DriverStanding
+        {
+            LeagueId = "pro", Driver = "OldDriver", Position = 0, Points = 0,
+            IsReserveDriver = false
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.SubmitAsync(Cmd(leagueId: "pro"), CancellationToken.None);
+
+        // Stamm-Slot durch historicalStandings belegt → Waitlist
+        Assert.Equal(SubmitOutcome.Waitlisted, result.Outcome);
+        Assert.Single(ctx.Db.WaitlistEntries);
+    }
+
+    [Fact]
+    public async Task GetSeasonSummaryAsync_groupsBySeasonPerLeague()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "A",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026", Status = (int)ApplicationStatus.Pending
+        });
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a2", DiscordId = "2", DiscordName = "2", GamerTag = "B",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026", Status = (int)ApplicationStatus.Accepted
+        });
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a3", DiscordId = "3", DiscordName = "3", GamerTag = "C",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Ersatzfahrer",
+            Season = "2026", Status = (int)ApplicationStatus.Rejected
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var rows = await svc.GetSeasonSummaryAsync(season: "2026", CancellationToken.None);
+
+        var row = Assert.Single(rows);
+        Assert.Equal("2026", row.Season);
+        Assert.Equal("pro", row.LeagueId);
+        Assert.Equal(3, row.PendingCount + row.AcceptedCount + row.RejectedCount);
+        Assert.True(row.PendingCount >= 1);
+        Assert.True(row.AcceptedCount >= 1);
+        Assert.True(row.RejectedCount >= 1);
+    }
+
+    [Fact]
+    public async Task CloseSeasonAsync_rejectsAllPending_whenRejectAllMode()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "A",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026", Status = (int)ApplicationStatus.Pending
+        });
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a2", DiscordId = "2", DiscordName = "2", GamerTag = "B",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026", Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.CloseSeasonAsync("pro", "2026", "2027", SeasonCloseMode.RejectAll, "admin1", CancellationToken.None);
+
+        Assert.Equal(CloseSeasonOutcome.Ok, result.Outcome);
+        Assert.Equal(2, result.RejectedApplications);
+        Assert.All(ctx.Db.Applications, a => Assert.Equal((int)ApplicationStatus.Rejected, a.Status));
+    }
+
+    [Fact]
+    public async Task CloseSeasonAsync_rollsOver_movesOpenAppsToTargetSeason()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026"));
+        ctx.Db.Applications.Add(new Application
+        {
+            Id = "a1", DiscordId = "1", DiscordName = "1", GamerTag = "A",
+            Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026", Status = (int)ApplicationStatus.Pending
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.CloseSeasonAsync("pro", "2026", "2027", SeasonCloseMode.Rollover, "admin1", CancellationToken.None);
+
+        Assert.Equal(CloseSeasonOutcome.Ok, result.Outcome);
+        Assert.Equal(1, result.MovedApplications);
+        var app = ctx.Db.Applications.Single();
+        Assert.Equal("2027", app.Season);
+        Assert.Equal((int)ApplicationStatus.Pending, app.Status);
+    }
+
+    [Fact]
+    public async Task Targeting_info_returnsAllSeasonsForAllAcceptedLeagues()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga", currentSeason: "2026"));
+        ctx.Db.Leagues.Add(NewLeague("pro2", "ProLiga2", currentSeason: "2027"));
+        await ctx.Db.SaveChangesAsync();
+
+        var targeting = new ApplicationTargetingService(ctx.Db,
+            new StaticDataCache(ctx.Db, new MemoryCache(new MemoryCacheOptions())));
+        var info = await targeting.GetTargetingInfoAsync(CancellationToken.None);
+
+        Assert.Equal(2, info.Count);
+        Assert.Contains(info, t => t.LeagueId == "pro" && t.TargetSeason == "2026" && !t.IsNextSeason);
+        Assert.Contains(info, t => t.LeagueId == "pro2" && t.TargetSeason == "2027" && !t.IsNextSeason);
+    }
+
+    [Fact]
+    public async Task Targeting_info_marksNextSeason_whenOpenForNext()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga",
+            currentSeason: "2026", nextSeason: "2027", openForNext: true));
+        await ctx.Db.SaveChangesAsync();
+
+        var targeting = new ApplicationTargetingService(ctx.Db,
+            new StaticDataCache(ctx.Db, new MemoryCache(new MemoryCacheOptions())));
+        var info = await targeting.GetTargetingInfoAsync(CancellationToken.None);
+
+        var entry = Assert.Single(info);
+        Assert.Equal("2027", entry.TargetSeason);
+        Assert.True(entry.IsNextSeason);
     }
 
     // ── Test Doubles ───────────────────────────────────────────────────────────
