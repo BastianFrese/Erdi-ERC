@@ -36,6 +36,7 @@ public class ApplicationControllerTests
             svc,
             cache,
             guildSvc ?? FakeDiscordGuildService.FullyJoined(),
+            new ApplicationTargetingService(ctx.Db, cache),
             Microsoft.Extensions.Options.Options.Create(new DriverMatchingOptions()),
             logger);
 
@@ -47,11 +48,13 @@ public class ApplicationControllerTests
     {
         var memCache = new Microsoft.Extensions.Caching.Memory.MemoryCache(
             new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions());
+        var cache = new StaticDataCache(db, memCache);
         return new ApplicationService(
             db,
             new NoopAudit(),
             new NoopWebhook(),
-            new StaticDataCache(db, memCache),
+            cache,
+            new ApplicationTargetingService(db, cache),
             NullLogger<ApplicationService>.Instance);
     }
 
@@ -210,12 +213,14 @@ public class ApplicationControllerTests
         {
             Id = "a1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026",
             Status = (int)ApplicationStatus.Pending
         });
         ctx.Db.Applications.Add(new Application
         {
             Id = "a2", DiscordId = "222", DiscordName = "User2", GamerTag = "R2",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026",
             Status = (int)ApplicationStatus.Pending
         });
         await ctx.Db.SaveChangesAsync();
@@ -239,12 +244,12 @@ public class ApplicationControllerTests
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
             Id = "w1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
-            Platform = "PC", LeagueId = "pro", Position = 2
+            Platform = "PC", LeagueId = "pro", Season = "2026", Position = 2
         });
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
             Id = "w2", DiscordId = "999", DiscordName = "Other", GamerTag = "R9",
-            Platform = "PC", LeagueId = "pro", Position = 1
+            Platform = "PC", LeagueId = "pro", Season = "2026", Position = 1
         });
         await ctx.Db.SaveChangesAsync();
 
@@ -270,6 +275,7 @@ public class ApplicationControllerTests
         {
             Id = "a1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026",
             Status = (int)ApplicationStatus.Pending
         });
         await ctx.Db.SaveChangesAsync();
@@ -293,6 +299,7 @@ public class ApplicationControllerTests
         {
             Id = "a1", DiscordId = "999", DiscordName = "Other", GamerTag = "R9",
             Platform = "PC", TargetLeagueId = "pro", Role = "Stammfahrer",
+            Season = "2026",
             Status = (int)ApplicationStatus.Pending
         });
         await ctx.Db.SaveChangesAsync();
@@ -313,7 +320,7 @@ public class ApplicationControllerTests
         ctx.Db.WaitlistEntries.Add(new WaitlistEntry
         {
             Id = "w1", DiscordId = "111", DiscordName = "User1", GamerTag = "R1",
-            Platform = "PC", LeagueId = "pro", Position = 1
+            Platform = "PC", LeagueId = "pro", Season = "2026", Position = 1
         });
         await ctx.Db.SaveChangesAsync();
 

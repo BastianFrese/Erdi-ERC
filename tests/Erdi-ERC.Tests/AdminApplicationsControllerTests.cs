@@ -28,6 +28,7 @@ public class AdminApplicationsControllerTests
             new NoopAudit(),
             new NoopWebhook(),
             cache,
+            new ApplicationTargetingService(ctx.Db, cache),
             NullLogger<ApplicationService>.Instance);
         var ctrl = new AdminApplicationsController(svc, cache, ctx.Db,
             Microsoft.Extensions.Options.Options.Create(new <OWNER_HANDLE>_ERC.Options.DriverMatchingOptions()));
@@ -54,7 +55,7 @@ public class AdminApplicationsControllerTests
         var ctrl = BuildController(ctx);
         TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
 
-        var result = await ctrl.List(status: "Pending", leagueId: "pro", page: 1);
+        var result = await ctrl.List(status: "Pending", leagueId: "pro", season: null, page: 1);
 
         var view = Assert.IsType<ViewResult>(result);
         Assert.NotNull(ctrl.ViewBag.Items);
@@ -83,7 +84,7 @@ public class AdminApplicationsControllerTests
         var ctrl = BuildController(ctx);
         TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
 
-        var result = await ctrl.List(status: "all", leagueId: null, page: 1);
+        var result = await ctrl.List(status: "all", leagueId: null, season: null, page: 1);
 
         var view = Assert.IsType<ViewResult>(result);
         var items = (List<Application>)ctrl.ViewBag.Items;
@@ -212,7 +213,7 @@ public class AdminApplicationsControllerTests
         var ctrl = BuildController(ctx);
         TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
 
-        var result = await ctrl.Waitlist("pro");
+        var result = await ctrl.Waitlist("pro", season: null);
 
         var view = Assert.IsType<ViewResult>(result);
         var entries = Assert.IsAssignableFrom<IEnumerable<WaitlistEntry>>(ctrl.ViewBag.Entries);
@@ -226,7 +227,7 @@ public class AdminApplicationsControllerTests
         var ctrl = BuildController(ctx);
         TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
 
-        var result = await ctrl.Waitlist("");
+        var result = await ctrl.Waitlist("", season: null);
 
         var view = Assert.IsType<ViewResult>(result);
         Assert.Empty((List<WaitlistEntry>)ctrl.ViewBag.Entries);
