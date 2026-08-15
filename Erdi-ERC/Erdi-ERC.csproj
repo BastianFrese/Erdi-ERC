@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Erdi_ERC</RootNamespace>
+    <UserSecretsId>d6786501-5297-4cb5-8fbc-dc9b63521d5b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -85,6 +86,64 @@
     </ReadLinesFromFile>
     <WriteLinesToFile File="wwwroot/css/site.bundled.css" Lines="@(_CssBundleLines)" Overwrite="true" />
     <Message Importance="high" Text="CSS-Bundle erzeugt: wwwroot/css/site.bundled.css" />
+  </Target>
+
+  <!--
+    Pre-Build-Hook: Warnt, falls dotnet user-secrets leer sind ODER ASPNETCORE_ENVIRONMENT
+    nicht gesetzt ist. Läuft nur lokal (nicht in CI, wo $env:CI gesetzt ist).
+    Ziel: Developer merkt beim ersten VS-Start, dass SETUP.md-Schritte nötig sind,
+    und wird vor dem Production-Default-Fall gewarnt, der Discord-OAuth "invalid_client"
+    und DB-Migrationen auf die falsche DB auslöst.
+    Siehe Erdi-ERC/SETUP.md für die einmalige Initialisierung.
+  -->
+  <Target Name="WarnIfUserSecretsEmpty" BeforeTargets="Build;Run" Condition="'$(CI)' != 'true' AND '$(DisableUserSecretsCheck)' != 'true'">
+    <!-- WICHTIG: Wir benutzen KEIN 'ConsoleToMSBuild=true' und keine direkte
+            'ConsoleOutput'-Capture, weil beides Secret-Werte in das Build-Log
+            leaken wuerde. Stattdessen schreiben wir das Ergebnis in eine
+            temporaere Datei, lesen sie per 'ReadLinesFromFile' in eine private
+            MSBuild-Property und loeschen die Datei danach sofort. -->
+
+    <!-- 1) User-Secrets-Liste: nur die Anzahl der Keys zaehlen, nicht die Werte lesen.
+            Wir benutzen $([System.IO.Path]::GetTempPath()) statt %TEMP%, weil MSBuild
+            in Exec-Commands KEINE Windows-Env-Vars expandiert (nur $(...)-Properties). -->
+    <PropertyGroup>
+      <_SecretsTmp>$([System.IO.Path]::GetTempPath())erdierc-secrets-$(MSBuildProjectGuid).txt</_SecretsTmp>
+    </PropertyGroup>
+    <Exec Command="dotnet user-secrets list --project &quot;$(MSBuildThisFileDirectory)Erdi-ERC.csproj&quot; &gt; &quot;$(_SecretsTmp)&quot; 2&gt;NUL"
+          Condition="'$(OS)' != 'Unix'"
+          ContinueOnError="true" />
+    <Exec Command="dotnet user-secrets list --project &quot;$(MSBuildThisFileDirectory)Erdi-ERC.csproj&quot; &gt; &quot;$(_SecretsTmp)&quot; 2&gt;/dev/null"
+          Condition="'$(OS)' == 'Unix'"
+          ContinueOnError="true" />
+    <ReadLinesFromFile File="$(_SecretsTmp)" Condition="Exists('$(_SecretsTmp)')">
+      <Output TaskParameter="Lines" ItemName="_UserSecretsKeys" />
+    </ReadLinesFromFile>
+    <Delete Files="$(_SecretsTmp)" Condition="Exists('$(_SecretsTmp)')" />
+
+    <Warning Text="SEC001: dotnet user-secrets sind leer (oder dotnet-CLI nicht gefunden). App-Start wird mit 'MySqlException: Unable to connect' fehlschlagen. Siehe Erdi-ERC/SETUP.md fuer die einmalige Initialisierung von ConnectionStrings:Default + Discord-Credentials."
+             Condition="'@(_UserSecretsKeys)' == ''" />
+
+    <!-- 2) ASPNETCORE_ENVIRONMENT pruefen.
+            Liest nur die env-Var, NICHT den effektiven Wert (dotnet ueberschreibt das
+            bei 'dotnet run' mit launch profile selbst, daher kein Hard Fail).
+            Wir warnen, wenn die Var komplett leer ist. Das faengt den haeufigsten
+            Fall ab: Aufruf ohne env und ohne launch profile. -->
+    <PropertyGroup>
+      <_EnvTmp>$([System.IO.Path]::GetTempPath())erdierc-env-$(MSBuildProjectGuid).txt</_EnvTmp>
+    </PropertyGroup>
+    <Exec Command="cmd /c &quot;echo ASPNETCORE_ENVIRONMENT=%ASPNETCORE_ENVIRONMENT%&quot; &gt; &quot;$(_EnvTmp)&quot; 2&gt;NUL"
+          Condition="'$(OS)' != 'Unix'"
+          ContinueOnError="true" />
+    <Exec Command="sh -c &quot;echo ASPNETCORE_ENVIRONMENT=$ASPNETCORE_ENVIRONMENT&quot; &gt; &quot;$(_EnvTmp)&quot; 2&gt;/dev/null"
+          Condition="'$(OS)' == 'Unix'"
+          ContinueOnError="true" />
+    <ReadLinesFromFile File="$(_EnvTmp)" Condition="Exists('$(_EnvTmp)')">
+      <Output TaskParameter="Lines" PropertyName="_EnvProbe" />
+    </ReadLinesFromFile>
+    <Delete Files="$(_EnvTmp)" Condition="Exists('$(_EnvTmp)')" />
+
+    <Warning Text="SEC002: ASPNETCORE_ENVIRONMENT ist nicht gesetzt. ASP.NET Core defaultet dann auf 'Production' -&gt; appsettings.Development.json wird NICHT geladen -&gt; Discord-OAuth 'invalid_client' und ggf. EF-Migrationen auf die falsche DB. Fix: 'dotnet run --project Erdi-ERC --launch-profile http' (oder env-Var explizit setzen)."
+             Condition="'$(_EnvProbe)' == 'ASPNETCORE_ENVIRONMENT=' OR '$(_EnvProbe)' == ''" />
   </Target>
 
 </Project>
