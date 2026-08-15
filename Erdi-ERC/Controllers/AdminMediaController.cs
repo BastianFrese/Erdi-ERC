@@ -1,17 +1,37 @@
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Erdi_ERC.Controllers
 {
     [Authorize(Policy = "Admin.System.Music")]
     public class AdminMediaController : Controller
     {
-        private readonly IMediaService _mediaService;
+        private const string BgMusicCacheKey = "bg-music-tracks:v1";
 
-        public AdminMediaController(IMediaService mediaService)
+        private readonly IMediaService _mediaService;
+        private readonly IMemoryCache _cache;
+        private readonly IOutputCacheStore _outputCache;
+
+        public AdminMediaController(
+            IMediaService mediaService,
+            IMemoryCache cache,
+            IOutputCacheStore outputCache)
         {
             _mediaService = mediaService;
+            _cache = cache;
+            _outputCache = outputCache;
+        }
+
+        private void InvalidateBackgroundMusicCaches()
+        {
+            _cache.Remove(BgMusicCacheKey);
+            // "public" tag is set on every OutputCache policy in Program.cs (public-2min, public-30s).
+            // Evicting that tag drops every cached read page so the freshly uploaded track shows
+            // up immediately on /, /Races/AllRaces, /Stats/Erdi10, etc.
+            _outputCache.EvictByTagAsync("public", default).GetAwaiter().GetResult();
         }
 
         [HttpGet]
@@ -46,6 +66,7 @@ namespace Erdi_ERC.Controllers
             var success = await _mediaService.UploadBackgroundMusicAsync(musicFile);
             if (success)
             {
+                InvalidateBackgroundMusicCaches();
                 TempData["AdminMessage"] = $"Song \"{Path.GetFileName(musicFile.FileName)}\" erfolgreich hochgeladen.";
             }
             else
@@ -68,6 +89,7 @@ namespace Erdi_ERC.Controllers
             var success = await _mediaService.DeleteBackgroundMusicAsync(fileName);
             if (success)
             {
+                InvalidateBackgroundMusicCaches();
                 TempData["AdminMessage"] = $"Song \"{fileName}\" wurde gelöscht.";
             }
             else

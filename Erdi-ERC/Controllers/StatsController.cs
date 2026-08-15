@@ -36,6 +36,7 @@ namespace Erdi_ERC.Controllers
                 : new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
         }
 
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> Erdi10()
         {
             var leagues = await _db.Leagues
@@ -73,6 +74,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> EwigeListe()
         {
             var vm = new EwigeListeViewModel();
@@ -258,6 +260,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> HallOfFame()
         {
             var standings = await _db.DriverStandings.ToListAsync();

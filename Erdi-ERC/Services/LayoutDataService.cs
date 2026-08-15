@@ -54,93 +54,50 @@ namespace Erdi_ERC.Services
 
         private async Task<LayoutData> BuildAsync(CancellationToken ct)
         {
-            string? winnerTeamKey = null;
+            // 3 unabhängige DB-Reads parallelisieren (Block 3). Die Folge-Resolution
+            // (Winner-Team-Lookup) haengt nur am ersten Read und bleibt sequentiell.
+            var latestRaceTask = LoadLatestRaceAsync(ct);
+            var activeStreamTask = LoadActiveStreamAsync(ct);
+            var latestSetupActivityTask = LoadLatestSetupActivityAsync(ct);
 
+            await Task.WhenAll(latestRaceTask, activeStreamTask, latestSetupActivityTask);
+
+            var winnerTeamKey = await ResolveWinnerTeamKeyAsync(await latestRaceTask, ct);
+            var (primary, primaryLight, primaryDark, secondary) = ResolveColors(winnerTeamKey);
+            var activeStream = await activeStreamTask;
+            var latestSetupActivity = await latestSetupActivityTask;
+
+            return new LayoutData(
+                WinnerTeamKey: winnerTeamKey,
+                WinnerCarPrimary: primary,
+                WinnerCarPrimaryLight: primaryLight,
+                WinnerCarPrimaryDark: primaryDark,
+                WinnerCarSecondary: secondary,
+                ActiveStream: activeStream,
+                LatestSetupActivityUtc: latestSetupActivity);
+        }
+
+        private async Task<RaceResult?> LoadLatestRaceAsync(CancellationToken ct)
+        {
             try
             {
-                var latestRace = await _db.RaceResults
+                return await _db.RaceResults
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(r => r.ReserveAssignments)
                     .Include(r => r.GuestAssignments)
                     .OrderByDescending(r => r.Date)
                     .ThenByDescending(r => r.RowId)
                     .FirstOrDefaultAsync(ct);
-
-                if (!string.IsNullOrWhiteSpace(latestRace?.Winner))
-                {
-                    winnerTeamKey = F1TeamsHelper.GetCssKeyForDriver(latestRace.Winner);
-
-                    if (winnerTeamKey == null)
-                    {
-                        // Fallback: Standings konsultieren – Reserve-Mapping & ReserveForDriver-Kette berücksichtigen.
-                        var winnerLower = latestRace.Winner!.ToLower();
-                        var leagueId = latestRace.LeagueId;
-
-                        var winnerStanding = await _db.DriverStandings
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(s =>
-                                s.LeagueId == leagueId
-                                && !string.IsNullOrWhiteSpace(s.Driver)
-                                && s.Driver.ToLower() == winnerLower, ct);
-
-                        string? resolvedTeam = winnerStanding?.Team;
-
-                        var raceMainDriver = latestRace.ReserveAssignments
-                            .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
-                                && a.ReserveDriver.ToLower() == winnerLower)?.MainDriver;
-
-                        // Cross-League-Gast: Winner ist Gastfahrer → Team erbt vom Liga-Hauptfahrer.
-                        // Sentinel "(kein Hauptfahrer)" zaehlt als "kein Team".
-                        var guestMainDriver = raceMainDriver is null
-                            ? latestRace.GuestAssignments?
-                                .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
-                                    && g.GuestDriver.ToLower() == winnerLower
-                                    && !string.IsNullOrWhiteSpace(g.MainDriver)
-                                    && g.MainDriver != StatsService.GuestSentinelNoMain)?
-                                .MainDriver
-                            : null;
-
-                        var effectiveMainDriver = raceMainDriver ?? guestMainDriver;
-
-                        if (string.IsNullOrWhiteSpace(resolvedTeam) && !string.IsNullOrWhiteSpace(effectiveMainDriver))
-                        {
-                            var mainLower = effectiveMainDriver.ToLower();
-                            resolvedTeam = await _db.DriverStandings
-                                .AsNoTracking()
-                                .Where(s => s.LeagueId == leagueId
-                                    && !string.IsNullOrWhiteSpace(s.Driver)
-                                    && s.Driver.ToLower() == mainLower)
-                                .Select(s => s.Team)
-                                .FirstOrDefaultAsync(ct);
-                        }
-
-                        if (string.IsNullOrWhiteSpace(resolvedTeam)
-                            && winnerStanding?.IsReserveDriver == true
-                            && !string.IsNullOrWhiteSpace(winnerStanding.ReserveForDriver))
-                        {
-                            var fallbackLower = winnerStanding.ReserveForDriver!.ToLower();
-                            resolvedTeam = await _db.DriverStandings
-                                .AsNoTracking()
-                                .Where(s => s.LeagueId == leagueId
-                                    && !string.IsNullOrWhiteSpace(s.Driver)
-                                    && s.Driver.ToLower() == fallbackLower)
-                                .Select(s => s.Team)
-                                .FirstOrDefaultAsync(ct);
-                        }
-
-                        winnerTeamKey = F1TeamsHelper.GetTeamByName(resolvedTeam)?.CssKey;
-                    }
-                }
             }
             catch
             {
-                // Layout darf hier niemals knallen.
-                winnerTeamKey = null;
+                return null;
             }
+        }
 
-            var (primary, primaryLight, primaryDark, secondary) = ResolveColors(winnerTeamKey);
-
-            StreamSchedule? activeStream = null;
+        private async Task<StreamSchedule?> LoadActiveStreamAsync(CancellationToken ct)
+        {
             try
             {
                 // UtcNow konsistent zur Speicherung in AdminCommunityController (UtcNow für recurring).
@@ -152,37 +109,94 @@ namespace Erdi_ERC.Services
                     .Take(20)
                     .ToListAsync(ct);
 
-                activeStream = candidates.FirstOrDefault(s =>
+                return candidates.FirstOrDefault(s =>
                     s.StartAt.AddMinutes(s.DurationMinutes <= 0 ? 120 : s.DurationMinutes) >= now);
             }
             catch
             {
-                activeStream = null;
+                return null;
             }
+        }
 
-            // Jüngste Setup-Aktivität (UpdatedAt deckt auch neu angelegte Setups ab,
-            // da beide Timestamps beim Anlegen gesetzt werden). Speist das "!"-Badge
-            // am Setups-Navlink; läuft über denselben 30s-Cache wie der Rest.
-            DateTime? latestSetupActivity = null;
+        private async Task<DateTime?> LoadLatestSetupActivityAsync(CancellationToken ct)
+        {
             try
             {
-                latestSetupActivity = await _db.TrackSetups
+                return await _db.TrackSetups
                     .AsNoTracking()
                     .MaxAsync(x => (DateTime?)x.UpdatedAt, ct);
             }
             catch
             {
-                latestSetupActivity = null;
+                return null;
+            }
+        }
+
+        private async Task<string?> ResolveWinnerTeamKeyAsync(RaceResult? latestRace, CancellationToken ct)
+        {
+            if (latestRace is null || string.IsNullOrWhiteSpace(latestRace.Winner))
+                return null;
+
+            var winnerTeamKey = F1TeamsHelper.GetCssKeyForDriver(latestRace.Winner);
+            if (winnerTeamKey != null) return winnerTeamKey;
+
+            // Fallback: Standings konsultieren – Reserve-Mapping & ReserveForDriver-Kette berücksichtigen.
+            var winnerLower = latestRace.Winner!.ToLower();
+            var leagueId = latestRace.LeagueId;
+
+            var winnerStanding = await _db.DriverStandings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s =>
+                    s.LeagueId == leagueId
+                    && !string.IsNullOrWhiteSpace(s.Driver)
+                    && s.Driver.ToLower() == winnerLower, ct);
+
+            string? resolvedTeam = winnerStanding?.Team;
+
+            var raceMainDriver = latestRace.ReserveAssignments
+                .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
+                    && a.ReserveDriver.ToLower() == winnerLower)?.MainDriver;
+
+            // Cross-League-Gast: Winner ist Gastfahrer → Team erbt vom Liga-Hauptfahrer.
+            // Sentinel "(kein Hauptfahrer)" zaehlt als "kein Team".
+            var guestMainDriver = raceMainDriver is null
+                ? latestRace.GuestAssignments?
+                    .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
+                        && g.GuestDriver.ToLower() == winnerLower
+                        && !string.IsNullOrWhiteSpace(g.MainDriver)
+                        && g.MainDriver != StatsService.GuestSentinelNoMain)?
+                    .MainDriver
+                : null;
+
+            var effectiveMainDriver = raceMainDriver ?? guestMainDriver;
+
+            if (string.IsNullOrWhiteSpace(resolvedTeam) && !string.IsNullOrWhiteSpace(effectiveMainDriver))
+            {
+                var mainLower = effectiveMainDriver.ToLower();
+                resolvedTeam = await _db.DriverStandings
+                    .AsNoTracking()
+                    .Where(s => s.LeagueId == leagueId
+                        && !string.IsNullOrWhiteSpace(s.Driver)
+                        && s.Driver.ToLower() == mainLower)
+                    .Select(s => s.Team)
+                    .FirstOrDefaultAsync(ct);
             }
 
-            return new LayoutData(
-                WinnerTeamKey: winnerTeamKey,
-                WinnerCarPrimary: primary,
-                WinnerCarPrimaryLight: primaryLight,
-                WinnerCarPrimaryDark: primaryDark,
-                WinnerCarSecondary: secondary,
-                ActiveStream: activeStream,
-                LatestSetupActivityUtc: latestSetupActivity);
+            if (string.IsNullOrWhiteSpace(resolvedTeam)
+                && winnerStanding?.IsReserveDriver == true
+                && !string.IsNullOrWhiteSpace(winnerStanding.ReserveForDriver))
+            {
+                var fallbackLower = winnerStanding.ReserveForDriver!.ToLower();
+                resolvedTeam = await _db.DriverStandings
+                    .AsNoTracking()
+                    .Where(s => s.LeagueId == leagueId
+                        && !string.IsNullOrWhiteSpace(s.Driver)
+                        && s.Driver.ToLower() == fallbackLower)
+                    .Select(s => s.Team)
+                    .FirstOrDefaultAsync(ct);
+            }
+
+            return F1TeamsHelper.GetTeamByName(resolvedTeam)?.CssKey;
         }
 
         private static (string primary, string primaryLight, string primaryDark, string secondary) ResolveColors(string? teamKey)

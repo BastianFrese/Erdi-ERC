@@ -17,6 +17,7 @@ namespace Erdi_ERC.Controllers
             _db = db;
         }
 
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> Events()
         {
             var events = await _db.RealLifeEvents
