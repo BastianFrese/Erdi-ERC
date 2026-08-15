@@ -255,7 +255,18 @@
         display: block;
     }
     </style>
-    <div class="abp-page-bg" aria-hidden="true"><img src="@p.BackgroundUrl" alt="" loading="lazy" /></div>
+    <div class="abp-page-bg" aria-hidden="true">
+        @{
+            var bgPic = new PictureVm {
+                Src = @p.BackgroundUrl,
+                Alt = "",
+                Loading = "lazy",
+                Decoding = "async",
+                Widths = "640,1280,2560"
+            };
+        }
+        <partial name="_Picture" model="bgPic" />
+    </div>
 }
 
 @if (p == null)
@@ -282,7 +293,13 @@ else
         <div class="abp-identity @(!p.ShowBanner ? "abp-identity--no-banner" : "")">
             @if (!string.IsNullOrEmpty(p.AvatarUrl))
             {
-                <img class="abp-avatar" src="@p.AvatarUrl" alt="@p.DisplayName" />
+                var avatarPic = new PictureVm {
+                    Src = @p.AvatarUrl,
+                    Alt = @p.DisplayName,
+                    CssClass = "abp-avatar",
+                    Sizes = "(max-width: 768px) 96px, 128px"
+                };
+                <partial name="_Picture" model="avatarPic" />
             }
             else
             {

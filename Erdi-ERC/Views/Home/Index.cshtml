@@ -123,7 +123,19 @@
 
         <div class="col-lg-5 d-none d-lg-flex flex-column align-items-end gap-3">
             <div class="f1-hero__brand">
-                <img src="~/images/ERCLogoHighRes1.png" asp-append-version="true" alt="ERC Logo" class="f1-hero__brand-logo" />
+                @{
+                    var heroPic = new PictureVm {
+                        Src = "/images/ERCLogoHighRes1.png",
+                        Alt = "ERC Logo",
+                        CssClass = "f1-hero__brand-logo",
+                        Width = 512, Height = 512,
+                        Sizes = "(max-width: 992px) 40vw, 512px",
+                        Loading = "eager",
+                        Decoding = "sync",
+                        Priority = "high"
+                    };
+                }
+                <partial name="_Picture" model="heroPic" />
             </div>
 
             @if (lastWinnerItems.Count > 0)
@@ -490,7 +502,7 @@
             <button type="button" id="introVideoClose" class="f1-intro-overlay__close" aria-label="Intro schliessen">
                 <i class="f1-icon" data-lucide="x"></i>
             </button>
-            <video id="introVideoPlayer" controls playsinline muted preload="auto" poster="~/images/ERCLogoHighRes1.png">
+            <video id="introVideoPlayer" controls playsinline muted preload="metadata" poster="~/images/ERCLogoHighRes1.png">
                 <source src="@introVideoUrl" type="video/mp4" />
             </video>
         </div>

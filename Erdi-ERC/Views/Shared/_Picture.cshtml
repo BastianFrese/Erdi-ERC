@@ -1,0 +1,64 @@
+@model Erdi_ERC.Models.UiComponents.PictureVm
+@*
+  Rendert ein <picture>-Element mit AVIF + WebP <source>-Elementen und <img>-Fallback.
+  Pfad-Konvention (deterministisch, identisch zur MediaService-Pipeline in Block 2):
+    Original:    /uploads/events/foo.jpg
+    AVIF:        /uploads/events/foo-640.avif, foo-1280.avif, foo-2560.avif
+    WebP:        /uploads/events/foo-640.webp, foo-1280.webp, foo-2560.webp
+*@
+@using System.Text
+@using System.Web
+@{
+    var src = Model.Src;
+    var widths = string.IsNullOrWhiteSpace(Model.Widths)
+        ? new[] { 640, 1280, 2560 }
+        : Model.Widths.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(int.Parse).ToArray();
+    var isSvg = src.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+    var isPriority = string.Equals(Model.Priority, "high", StringComparison.OrdinalIgnoreCase);
+    var effectiveLoading = isPriority ? "eager" : Model.Loading;
+    var fetchPriority = isPriority ? "high" : null;
+    var sizes = string.IsNullOrWhiteSpace(Model.Sizes) ? "100vw" : Model.Sizes;
+
+    int dotIdx = src.LastIndexOf('.');
+    int slashIdx = src.LastIndexOf('/');
+    var lastDot = (dotIdx >= 0 && (slashIdx < 0 || dotIdx > slashIdx))
+        ? src[..dotIdx]
+        : src;
+
+    string BuildSrcset(string ext)
+    {
+        var sb = new StringBuilder(128);
+        for (int i = 0; i < widths.Length; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            sb.Append(lastDot).Append('-').Append(widths[i]).Append('.').Append(ext)
+              .Append(' ').Append(widths[i]).Append('w');
+        }
+        return sb.ToString();
+    }
+
+    var imgAttrs = new StringBuilder();
+    imgAttrs.Append(" src=\"").Append(HttpUtility.HtmlAttributeEncode(src)).Append("\"");
+    imgAttrs.Append(" alt=\"").Append(HttpUtility.HtmlAttributeEncode(Model.Alt ?? "")).Append("\"");
+    if (!string.IsNullOrEmpty(Model.CssClass))
+        imgAttrs.Append(" class=\"").Append(HttpUtility.HtmlAttributeEncode(Model.CssClass)).Append("\"");
+    if (Model.Width.HasValue)
+        imgAttrs.Append(" width=\"").Append(Model.Width.Value).Append("\"");
+    if (Model.Height.HasValue)
+        imgAttrs.Append(" height=\"").Append(Model.Height.Value).Append("\"");
+    imgAttrs.Append(" loading=\"").Append(HttpUtility.HtmlAttributeEncode(effectiveLoading)).Append("\"");
+    imgAttrs.Append(" decoding=\"").Append(HttpUtility.HtmlAttributeEncode(Model.Decoding)).Append("\"");
+    if (fetchPriority != null)
+        imgAttrs.Append(" fetchpriority=\"").Append(HttpUtility.HtmlAttributeEncode(fetchPriority)).Append("\"");
+    if (!string.IsNullOrEmpty(Model.ExtraAttrs))
+        imgAttrs.Append(" ").Append(Model.ExtraAttrs);
+}
+<picture>
+@if (!isSvg)
+{
+    <source type="image/avif" srcset="@BuildSrcset("avif")" sizes="@sizes">
+    <source type="image/webp" srcset="@BuildSrcset("webp")" sizes="@sizes">
+}
+<img @Html.Raw(imgAttrs.ToString())>
+</picture>

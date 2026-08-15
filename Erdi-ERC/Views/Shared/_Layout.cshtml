@@ -111,8 +111,12 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    @* LCP-Preload: Hero-Logo wird auf Home als groesstes above-the-fold-Element angezeigt. *@
+    <link rel="preload" as="image" href="~/images/ERCLogoHighRes1.png" fetchpriority="high">
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt. *@
