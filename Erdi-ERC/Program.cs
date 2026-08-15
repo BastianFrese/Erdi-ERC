@@ -603,6 +603,58 @@ forwardedOptions.KnownIPNetworks.Clear();
 forwardedOptions.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardedOptions);
 
+// --- OAuth-Diagnose-Middleware ---
+// Faengt AuthenticationFailureException (z.B. Discord 'invalid_client') ab, BEVOR
+// der generische Exception-Handler zuschlaegt. Zeigt dem Entwickler eine
+// verstaendliche Fehlermeldung mit konkreten Handlungsschritten statt eines
+// kryptischen 500ers. Im Production-Modus wird auf eine generische Meldung
+// reduziert (kein Stack-Trace-Leak).
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Microsoft.AspNetCore.Authentication.AuthenticationFailureException ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "OAuth-Fehler bei {Method} {Path}", context.Request.Method, context.Request.Path);
+
+        // Nur eigene Fehlermeldung rendern, keine weitere Middleware durchlaufen.
+        if (context.Response.HasStarted)
+        {
+            throw;
+        }
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        context.Response.ContentType = "text/html; charset=utf-8";
+
+        var isDev = context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment();
+        var inner = ex.InnerException?.Message ?? ex.Message;
+        var showDetails = isDev;
+
+        await context.Response.WriteAsync(
+            "<!doctype html><html lang='de'><head><meta charset='utf-8'>" +
+            "<title>OAuth-Fehler</title>" +
+            "<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;color:#222;background:#fafafa}" +
+            "h1{color:#b00020}.code{background:#f0f0f0;padding:.25rem .5rem;border-radius:4px;font-family:monospace}" +
+            "ol{line-height:1.6}details{margin-top:1rem}summary{cursor:pointer;font-weight:600}</style></head><body>" +
+            "<h1>Discord-Login fehlgeschlagen</h1>" +
+            "<p>Der OAuth-Handshake mit Discord wurde abgelehnt. Wahrscheinlichste Ursache: <code class='code'>invalid_client</code> &mdash; " +
+            "die Anwendung hat sich bei Discord mit leeren oder falschen Credentials angemeldet.</p>" +
+            "<ol>" +
+            "<li><strong>Pruefe <code class='code'>ASPNETCORE_ENVIRONMENT</code>:</strong> Leer? Dann defaultet ASP.NET auf <em>Production</em> und laedt <em>appsettings.Development.json</em> NICHT. Fix: <code class='code'>dotnet run --project Erdi-ERC --launch-profile http</code></li>" +
+            "<li><strong>Pruefe User-Secrets:</strong> <code class='code'>dotnet user-secrets list --project Erdi-ERC/Erdi-ERC.csproj</code>. Bei SEC001-Warnung sind sie leer &mdash; siehe Erdi-ERC/SETUP.md.</li>" +
+            "<li><strong>Pruefe Discord-Portal:</strong> Stimmt ClientId/ClientSecret noch? Wurde das Secret rotiert? Stimmt die Redirect-URI mit <em>/signin-discord</em> ueberein?</li>" +
+            "</ol>" +
+            (showDetails
+                ? $"<details><summary>Technische Details (nur Development)</summary><pre class='code'>{System.Net.WebUtility.HtmlEncode(inner)}</pre></details>"
+                : "<p>Technische Details sind im Production-Modus deaktiviert.</p>") +
+            "</body></html>");
+    }
+});
+
 if (!app.Environment.IsDevelopment())
 {
     // Unbehandelte Exceptions loggen, bevor zur Error-Page weitergeleitet wird.
