@@ -3,6 +3,7 @@
 # Lokale Secrets-Dateien — nutze die .example-Vorlage als Template.
 # Originale bleiben lokal, sind aber nicht im Repo, damit kein Push
 # versehentlich Klartext-DB-Passwoerter / Discord-Credentials leakt.
+appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 
