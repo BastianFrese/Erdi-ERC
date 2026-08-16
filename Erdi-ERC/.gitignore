@@ -5,3 +5,8 @@
 # versehentlich Klartext-DB-Passwoerter / Discord-Credentials leakt.
 appsettings.Development.json
 appsettings.Production.json
+
+# Publish-Profile Environment-Dateien — werden lokal mit echten Werten gefuellt,
+# die .example-Templates sind die git-tracked Vorlage.
+app.env.production
+app.env.development
