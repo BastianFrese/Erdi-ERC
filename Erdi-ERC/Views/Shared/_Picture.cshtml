@@ -5,6 +5,10 @@
     Original:    /uploads/events/foo.jpg
     AVIF:        /uploads/events/foo-640.avif, foo-1280.avif, foo-1920.avif, foo-3840.avif
     WebP:        /uploads/events/foo-640.webp, foo-1280.webp, foo-1920.webp, foo-3840.webp
+
+  <source>-Tags werden nur für konvertierbare Formate (jpg/jpeg/png) gerendert.
+  Bei .svg/.gif/.webp/.avif entfällt der Picture-Overhead komplett → kein
+  404-Spam, solange die Block-2-Pipeline die Varianten noch nicht erzeugt.
 *@
 @using System.Text
 @using System.Web
@@ -14,7 +18,12 @@
         ? new[] { 640, 1280, 1920, 3840 }
         : Model.Widths.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(int.Parse).ToArray();
-    var isSvg = src.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+    var ext = (System.IO.Path.GetExtension(src) ?? string.Empty).TrimStart('.').ToLowerInvariant();
+    // Nur Formate, aus denen die MediaService-Pipeline (Block 2) AVIF/WebP erzeugt.
+    // .svg/.gif/.webp/.avif werden NICHT nachgefragt → verhindert 404-Spam, solange
+    // Block 2 noch nicht deployed ist. Sobald Varianten existieren, fallen .jpg/.jpeg
+    // /.png automatisch auf den modernen Codec zurück.
+    var isConvertible = ext is "jpg" or "jpeg" or "png";
     var isPriority = string.Equals(Model.Priority, "high", StringComparison.OrdinalIgnoreCase);
     var effectiveLoading = isPriority ? "eager" : Model.Loading;
     var fetchPriority = isPriority ? "high" : null;
@@ -26,13 +35,13 @@
         ? src[..dotIdx]
         : src;
 
-    string BuildSrcset(string ext)
+    string BuildSrcset(string codec)
     {
         var sb = new StringBuilder(128);
         for (int i = 0; i < widths.Length; i++)
         {
             if (i > 0) sb.Append(", ");
-            sb.Append(lastDot).Append('-').Append(widths[i]).Append('.').Append(ext)
+            sb.Append(lastDot).Append('-').Append(widths[i]).Append('.').Append(codec)
               .Append(' ').Append(widths[i]).Append('w');
         }
         return sb.ToString();
@@ -55,7 +64,7 @@
         imgAttrs.Append(" ").Append(Model.ExtraAttrs);
 }
 <picture>
-@if (!isSvg)
+@if (isConvertible)
 {
     <source type="image/avif" srcset="@BuildSrcset("avif")" sizes="@sizes">
     <source type="image/webp" srcset="@BuildSrcset("webp")" sizes="@sizes">
