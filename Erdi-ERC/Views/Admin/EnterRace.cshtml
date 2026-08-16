@@ -167,21 +167,27 @@
                     <div id="guestAssignmentsContainer" class="mt-3 @(guestDrivers.Count > 0 ? "" : "d-none")">
                         <h6 class="mb-2 small text-uppercase text-info">Gast-Zuordnung (Pflicht)</h6>
                         <div id="guestAssignmentRows">
+                            @{
+                                var guestIndex = 0;
+                            }
                             @foreach (var guest in guestDrivers)
                             {
                                 var prefillMain = existingGuestMain.TryGetValue(guest, out var m) ? m : "";
+                                var gi = guestIndex++;
                                 <div class="row g-2 align-items-center mb-2" data-guest-row data-guest-name="@guest">
                                     <div class="col-md-5">
                                         <span class="badge bg-info me-1">Gast</span> <strong>@guest</strong>
                                     </div>
                                     <div class="col-md-7">
-                                        <select class="form-select form-select-sm guest-main-select" name="guestMainDrivers" required>
-                                            <option value="">-- Liga-Hauptfahrer wählen --</option>
+                                        <select class="form-select form-select-sm guest-main-select" name="guestAssignments[@gi].MainDriver" required>
+                                            <option value="">-- Liga-Hauptfahrer wählen (Pflicht) --</option>
+                                            <option value="__sentinel__">(kein Hauptfahrer — Gast zählt nicht für Overall)</option>
                                             @foreach (var mainDriver in mainDrivers)
                                             {
                                                 <option value="@mainDriver" selected="@(string.Equals(mainDriver, prefillMain, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
                                             }
                                         </select>
+                                        <input type="hidden" name="guestAssignments[@gi].GuestName" value="@guest" />
                                     </div>
                                 </div>
                             }
@@ -431,6 +437,9 @@
                 if (guestAssignmentRows && guestAssignmentsContainer) {
                     guestAssignmentsContainer.classList.remove('d-none');
                     const safeId = 'gmr-' + name.replace(/[^a-z0-9]/gi, '');
+                    // Strukturiertes Form-Pärchen (GuestName + MainDriver) statt zwei loser Arrays,
+                    // damit Model-Binding in AdminLeagueController.GuestAssignmentInput funktioniert.
+                    const gi = guestAssignmentRows.querySelectorAll('[data-guest-row]').length;
                     const row = document.createElement('div');
                     row.className = 'row g-2 align-items-center mb-2';
                     row.setAttribute('data-guest-row', '');
@@ -442,10 +451,12 @@
                             <span class="badge bg-info me-1">Gast</span> <strong>${name.replace(/</g, '&lt;')}</strong>
                         </div>
                         <div class="col-md-5">
-                            <select class="form-select form-select-sm guest-main-select" name="guestMainDrivers" required>
+                            <select class="form-select form-select-sm guest-main-select" name="guestAssignments[${gi}].MainDriver" required>
                                 <option value="">-- Liga-Hauptfahrer wählen --</option>
+                                <option value="__sentinel__">(kein Hauptfahrer — Gast zählt nicht für Overall)</option>
                                 ${mainOptions}
                             </select>
+                            <input type="hidden" name="guestAssignments[${gi}].GuestName" value="${name.replace(/"/g, '&quot;')}" />
                         </div>
                         <div class="col-md-2">
                             <button type="button" class="btn btn-sm btn-outline-danger btn-remove-guest">Entfernen</button>
@@ -453,6 +464,9 @@
                     guestAssignmentRows.appendChild(row);
                     row.querySelector('.btn-remove-guest')?.addEventListener('click', () => {
                         row.remove();
+                        // Nach Entfernen Indizes aller nachfolgenden Zeilen neu schreiben,
+                        // damit das ASP.NET-Model-Binding die Pärchen konsistent zuordnet.
+                        renumberGuestAssignments();
                         if (!guestAssignmentRows.querySelector('[data-guest-row]')) {
                             guestAssignmentsContainer.classList.add('d-none');
                         }
@@ -486,6 +500,19 @@
                         }
                     }
                 }
+            };
+
+            // Indizes der Gast-Zuordnungs-Pärchen nach jedem Hinzufügen/Entfernen neu schreiben,
+            // damit ASP.NET-Model-Binding die Paare konsistent GuestName<->MainDriver zuordnet.
+            const renumberGuestAssignments = () => {
+                if (!guestAssignmentRows) return;
+                const rows = Array.from(guestAssignmentRows.querySelectorAll('[data-guest-row]'));
+                rows.forEach((r, idx) => {
+                    const sel = r.querySelector('select.guest-main-select');
+                    const hid = r.querySelector('input[type="hidden"]');
+                    if (sel) sel.setAttribute('name', `guestAssignments[${idx}].MainDriver`);
+                    if (hid) hid.setAttribute('name', `guestAssignments[${idx}].GuestName`);
+                });
             };
 
             if (addGuestBtn) addGuestBtn.addEventListener('click', () => addGuestDriver(guestInput && guestInput.value));
