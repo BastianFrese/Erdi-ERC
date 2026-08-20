@@ -84,9 +84,6 @@ builder.Services.AddScoped<IApplicationTargetingService, ApplicationTargetingSer
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
 builder.Services.AddScoped<IStreamScheduleQueryService, StreamScheduleQueryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
-builder.Services.AddScoped<Erdi_ERC.Services.ImageProcessing.ImageVariantGenerator>();
-builder.Services.Configure<Erdi_ERC.Services.ImageProcessing.ImageProcessingOptions>(
-    builder.Configuration.GetSection(Erdi_ERC.Services.ImageProcessing.ImageProcessingOptions.SectionName));
 builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<OverallConstructorsService>();
 builder.Services.AddScoped<DatabaseTransactionHelper>();
@@ -821,7 +818,9 @@ Directory.CreateDirectory(uploadsPath);
             // Cache uploaded images for 1 year, immutable. Filenames are GUIDs (see
             // MediaService.SaveEventImageAsync / SaveDriverPhotoAsync / SaveAboutImageAsync /
             // SaveCalendarBackgroundAsync), so the URL is content-addressed and safe to
-            // cache forever. Permits push of long-lived AVIF/WebP variants in Block 2.
+            // cache forever. ETag/Last-Modified werden automatisch von der Static-File-
+            // Middleware gesetzt; der Browser nutzt sie für 304-Not-Modified-Roundtrips,
+            // wenn ein Bild aktualisiert wird (selbe URL nach Re-Upload → 200, sonst 304).
             ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
         }
     });
