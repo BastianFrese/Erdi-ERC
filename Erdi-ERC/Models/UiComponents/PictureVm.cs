@@ -29,8 +29,8 @@ public class PictureVm
     /// <summary>"high" → loading=eager + fetchpriority=high (für LCP).</summary>
     public string? Priority { get; set; }
 
-    /// <summary>Target-Breiten (px). Default: 640,1280,1920,3840 (4K-tauglich, identisch zur MediaService-Pipeline in Block 2).</summary>
-    public string Widths { get; set; } = "640,1280,1920,3840";
+    /// <summary>Wenn true: zusätzlich 2x-Retina-Version via srcset einbinden (sucht {stem}@2x.{ext}).</summary>
+    public bool Retina { get; set; }
 
     /// <summary>Zusätzliche Attribute, die in das &lt;img&gt; durchgereicht werden (data-*).</summary>
     public string? ExtraAttrs { get; set; }
