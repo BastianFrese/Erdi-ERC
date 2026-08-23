@@ -456,7 +456,7 @@ namespace Erdi_ERC.Controllers
             string leagueId, DateTime date, string track, string? fastestLapDriver,
             string[]? positions, string[]? raceTimes, int[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
-            string[]? guestMainDrivers = null,
+            GuestAssignmentInput[]? guestAssignments = null,
             int[]? qualiPositions = null)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(track))
@@ -468,7 +468,7 @@ namespace Erdi_ERC.Controllers
             var league = await _db.Leagues.Include(l => l.Standings).FirstOrDefaultAsync(l => l.Id == leagueId);
             if (league is null) return NotFound();
 
-            if (await TryValidateGuestAssignmentsAsync(positions, guestMainDrivers, league))
+            if (await TryValidateGuestAssignmentsAsync(positions, guestAssignments, league))
             {
                 return RedirectToAction(nameof(EnterRace), new { leagueId });
             }
@@ -487,9 +487,18 @@ namespace Erdi_ERC.Controllers
             _db.RaceResults.Add(race);
             await _db.SaveChangesAsync();
 
-            await ApplyRaceEntriesAsync(race, fastestLapDriver, positions, raceTimes, penaltySeconds, dnfDrivers, reserveDrivers, reserveMainDrivers, guestMainDrivers, qualiPositions);
+            var resolvedGuests = await ApplyRaceEntriesAsync(race, fastestLapDriver, positions, raceTimes, penaltySeconds, dnfDrivers, reserveDrivers, reserveMainDrivers, guestAssignments, qualiPositions);
             await _db.SaveChangesAsync();
             await RecalculateAsync(leagueId);
+
+            foreach (var g in resolvedGuests)
+            {
+                await _audit.LogAsync(
+                    "GuestTeamResolved",
+                    "RaceGuestAssignment",
+                    $"{race.RowId}/{g.Guest}",
+                    $"Guest={g.Guest} → Main={g.Main}");
+            }
 
             await _audit.LogAsync("SaveEnteredRace", "RaceResult", race.RowId.ToString(),
                 $"League={leagueId}, Track={track}, Date={date:yyyy-MM-dd}, Winner={race.Winner}");
@@ -531,7 +540,7 @@ namespace Erdi_ERC.Controllers
             int rowId, string leagueId, DateTime date, string track, string? fastestLapDriver,
             string[]? positions, string[]? raceTimes, int[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
-            string[]? guestMainDrivers = null,
+            GuestAssignmentInput[]? guestAssignments = null,
             int[]? qualiPositions = null)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(track))
@@ -550,7 +559,7 @@ namespace Erdi_ERC.Controllers
             var league = await _db.Leagues.Include(l => l.Standings).FirstOrDefaultAsync(l => l.Id == leagueId);
             if (league is null) return NotFound();
 
-            if (await TryValidateGuestAssignmentsAsync(positions, guestMainDrivers, league))
+            if (await TryValidateGuestAssignmentsAsync(positions, guestAssignments, league))
             {
                 return RedirectToAction(nameof(EditRace), new { rowId });
             }
@@ -562,12 +571,24 @@ namespace Erdi_ERC.Controllers
 
             race.Date = date;
             race.Track = track.Trim();
-            await ApplyRaceEntriesAsync(race, fastestLapDriver, positions, raceTimes, penaltySeconds, dnfDrivers, reserveDrivers, reserveMainDrivers, guestMainDrivers, qualiPositions);
+            var resolvedGuests = await ApplyRaceEntriesAsync(race, fastestLapDriver, positions, raceTimes, penaltySeconds, dnfDrivers, reserveDrivers, reserveMainDrivers, guestAssignments, qualiPositions);
 
             await _db.SaveChangesAsync();
             await RecalculateAsync(leagueId);
             await _audit.LogAsync("UpdateEnteredRace", "RaceResult", race.RowId.ToString(),
                 $"League={leagueId}, Track={race.Track}, Date={date:yyyy-MM-dd}, Winner={race.Winner}");
+
+            // Audit für jede persistierte Gast-Zuordnung — NACH dem SaveChanges, damit
+            // ein Throw in RecalculateAsync den Audit nicht verschluckt (siehe
+            // [[project_audit_persistence]] Konvention).
+            foreach (var g in resolvedGuests)
+            {
+                await _audit.LogAsync(
+                    "GuestTeamResolved",
+                    "RaceGuestAssignment",
+                    $"{race.RowId}/{g.Guest}",
+                    $"Guest={g.Guest} → Main={g.Main}");
+            }
 
             TempData["AdminMessage"] = $"Rennergebnis für {race.Track} aktualisiert. Punkte neu berechnet.";
             return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
@@ -578,17 +599,23 @@ namespace Erdi_ERC.Controllers
         /// Formular-Arrays auf, setzt Sieger und schnellste Runde. Strafzeit (Sek.) wird zur Rennzeit
         /// addiert; DNF-Fahrer erhalten Position 0. Der Aufrufer ruft anschließend SaveChanges.
         /// </summary>
-        private async Task ApplyRaceEntriesAsync(
+        /// <remarks>
+        /// <para>Audit-Hook: Gibt die tatsächlich persistierten (kanonisierten) Gast-Zuordnungen
+        /// zurück, damit der Controller den Audit-Log erst NACH <c>SaveChangesAsync</c> schreiben
+        /// kann (siehe <see cref="project_audit_persistence"/>).</para>
+        /// </remarks>
+        private async Task<List<(string Guest, string Main)>> ApplyRaceEntriesAsync(
             RaceResult race, string? fastestLapDriver,
             string[]? positions, string[]? raceTimes, int[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
-            string[]? guestMainDrivers = null,
+            GuestAssignmentInput[]? guestAssignments = null,
             int[]? qualiPositions = null,
             CancellationToken ct = default)
         {
             var fastestLap = fastestLapDriver?.Trim() ?? string.Empty;
             race.Winner = string.Empty;
             race.FastestLap = fastestLap;
+            var resolvedGuests = new List<(string Guest, string Main)>();
 
             if (reserveDrivers != null && reserveMainDrivers != null)
             {
@@ -606,25 +633,31 @@ namespace Erdi_ERC.Controllers
                 }
             }
 
-            // Gast-Zuordnungen (Cross-League): für jeden nicht-leeren gastMainDrivers[i]
-            // muss positions[i] einen Fahrer enthalten, der weder in dieser Liga als Standing
-            // existiert (sonst kein Gast) noch identisch mit dem MainDriver ist.
-            // Pflicht: jeder Cross-League-Gast MUSS einem Liga-Hauptfahrer zugeordnet werden.
+            // Gast-Zuordnungen (Cross-League): jeder Datensatz ist ein explizit vom Admin
+            // gewähltes (Guest, Main)-Paar — keine implizite Position-Index-Kopplung.
+            // Pflicht: jeder Cross-League-Gast MUSS einem Liga-Hauptfahrer ODER dem Sentinel
+            // "(kein Hauptfahrer)" zugeordnet werden.
             // Name wird kanonisch über DriverProfileService.ResolveAsync aufgelöst — verhindert
             // Drift zwischen RaceFinish.Driver und DriverProfile.GamerTag (Mick Schumaher → Mick Schumacher).
-            if (guestMainDrivers != null)
+            // Sentinel-Mapping: "__sentinel__" (HTML-Sentinel aus EnterRace.cshtml) →
+            //   StatsService.GuestSentinelNoMain (DB-Sentinel, identisch zu Migrations-Backfill).
+            if (guestAssignments != null)
             {
-                for (int i = 0; i < guestMainDrivers.Length; i++)
+                foreach (var ga in guestAssignments)
                 {
-                    var mainName = guestMainDrivers.ElementAtOrDefault(i)?.Trim();
-                    if (string.IsNullOrWhiteSpace(mainName)) continue;
-
-                    var rawGuest = positions?.ElementAtOrDefault(i)?.Trim();
+                    if (ga is null) continue;
+                    var rawGuest = (ga.GuestName ?? string.Empty).Trim();
+                    var rawMain  = (ga.MainDriver ?? string.Empty).Trim();
                     if (string.IsNullOrWhiteSpace(rawGuest)) continue;
+                    if (string.IsNullOrWhiteSpace(rawMain)) continue; // Validation hat das bereits abgefangen
 
                     var match = await _driverProfiles.ResolveAsync(rawGuest, ct);
-                    if (!match.ExactMatch) continue; // Gate lehnt bereits vor ApplyRaceEntries ab; defensive Skip
+                    if (!match.ExactMatch) continue;
                     var guestName = match.ResolvedName;
+
+                    var mainName = rawMain == "__sentinel__"
+                        ? StatsService.GuestSentinelNoMain
+                        : rawMain;
 
                     _db.RaceGuestAssignments.Add(new RaceGuestAssignment
                     {
@@ -632,6 +665,8 @@ namespace Erdi_ERC.Controllers
                         GuestDriver = guestName,
                         MainDriver = mainName
                     });
+
+                    resolvedGuests.Add((guestName, mainName));
                 }
             }
 
@@ -664,12 +699,14 @@ namespace Erdi_ERC.Controllers
                     if (pos == 1 && !isDnf) race.Winner = driver.Trim();
                 }
             }
+
+            return resolvedGuests;
         }
 
         /// <summary>
         /// Validiert die Gast-Zuordnungen für ein Rennen:
-        /// - Wenn <paramref name="guestMainDrivers"/> an Index i einen Wert hat, muss
-        ///   <paramref name="positions"/> an Index i ebenfalls einen Fahrer haben.
+        /// - Jeder <see cref="GuestAssignmentInput"/> muss einen Guest-Namen UND einen
+        ///   MainDriver (Liga-Hauptfahrer ODER Sentinel) haben.
         /// - Der Gast-Name MUSS einem registrierten Fahrerprofil exakt entsprechen
         ///   (case-insensitive, trim). Verhindert Tippfehler + halluzinierte Namen,
         ///   die sonst über die Team-Punkte-Berechnung Ghost-Einträge erzeugen.
@@ -678,54 +715,90 @@ namespace Erdi_ERC.Controllers
         /// Returns true + Fehlermeldung, falls Validation fehlschlaegt.
         /// </summary>
         private async Task<bool> TryValidateGuestAssignmentsAsync(
-            string[]? positions, string[]? guestMainDrivers, League league,
+            string[]? positions, GuestAssignmentInput[]? guestAssignments, League league,
             CancellationToken ct = default)
         {
-            if (guestMainDrivers is null) return false;
-
             var mainDrivers = new HashSet<string>(
                 league.Standings
                     .Where(s => !s.IsReserveDriver && !string.IsNullOrWhiteSpace(s.Driver))
                     .Select(s => s.Driver.Trim()),
                 StringComparer.OrdinalIgnoreCase);
 
-            for (int i = 0; i < guestMainDrivers.Length; i++)
+            const string sentinelMarker = "__sentinel__";
+
+            if (guestAssignments != null)
             {
-                var mainName = guestMainDrivers[i]?.Trim();
-                if (string.IsNullOrWhiteSpace(mainName)) continue;
-
-                var guestName = positions?.ElementAtOrDefault(i)?.Trim();
-                if (string.IsNullOrWhiteSpace(guestName))
+                foreach (var ga in guestAssignments)
                 {
-                    TempData["RaceError"] = $"Gast-Zuordnung auf Position {i + 1} ohne Fahrer — bitte den Gastnamen eintragen.";
-                    return true;
-                }
+                    if (ga is null) continue;
+                    var guestName = (ga.GuestName ?? string.Empty).Trim();
+                    var mainName  = (ga.MainDriver ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(guestName)) continue;
 
-                // Strikte Name-Validierung: Gast muss in DriverProfile/GamerTag existieren.
-                var match = await _driverProfiles.ResolveAsync(guestName, ct);
-                if (!match.ExactMatch)
-                {
-                    var hint = match.Suggestions.Count > 0
-                        ? $" Meinten Sie vielleicht '{match.Suggestions[0].GamerTag}'?"
-                        : " Bitte zuerst in der Fahrerverwaltung registrieren.";
-                    TempData["RaceError"] = $"Gast '{guestName}' ist kein bekannter Fahrer.{hint}";
-                    return true;
-                }
+                    // Pflicht: Cross-League-Gast braucht entweder Liga-Hauptfahrer oder
+                    // den expliziten Sentinel ("(kein Hauptfahrer)").
+                    if (string.IsNullOrWhiteSpace(mainName))
+                    {
+                        TempData["RaceError"] =
+                            $"Gast '{guestName}' braucht einen Liga-Hauptfahrer — oder explizit \"(kein Hauptfahrer)\" als Sentinel setzen.";
+                        return true;
+                    }
 
-                if (!mainDrivers.Contains(mainName))
-                {
-                    TempData["RaceError"] = $"Gast '{guestName}' wurde dem Hauptfahrer '{mainName}' zugeordnet — '{mainName}' ist in dieser Liga kein Stammfahrer.";
-                    return true;
-                }
+                    // Sentinel: nur prüfen, dass der Name selbst bekannt ist (kein MainDriver-Standing-Check).
+                    if (string.Equals(mainName, sentinelMarker, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var match = await _driverProfiles.ResolveAsync(guestName, ct);
+                        if (!match.ExactMatch)
+                        {
+                            var hint = match.Suggestions.Count > 0
+                                ? $" Meinten Sie vielleicht '{match.Suggestions[0].GamerTag}'?"
+                                : " Bitte zuerst in der Fahrerverwaltung registrieren.";
+                            TempData["RaceError"] = $"Gast '{guestName}' ist kein bekannter Fahrer.{hint}";
+                            return true;
+                        }
+                        continue;
+                    }
 
-                if (string.Equals(mainName, guestName, StringComparison.OrdinalIgnoreCase))
-                {
-                    TempData["RaceError"] = $"Gast '{guestName}' kann nicht sich selbst als Hauptfahrer haben.";
-                    return true;
+                    // Strikte Name-Validierung: Gast muss in DriverProfile/GamerTag existieren.
+                    var matchFull = await _driverProfiles.ResolveAsync(guestName, ct);
+                    if (!matchFull.ExactMatch)
+                    {
+                        var hint = matchFull.Suggestions.Count > 0
+                            ? $" Meinten Sie vielleicht '{matchFull.Suggestions[0].GamerTag}'?"
+                            : " Bitte zuerst in der Fahrerverwaltung registrieren.";
+                        TempData["RaceError"] = $"Gast '{guestName}' ist kein bekannter Fahrer.{hint}";
+                        return true;
+                    }
+
+                    if (!mainDrivers.Contains(mainName))
+                    {
+                        TempData["RaceError"] = $"Gast '{guestName}' wurde dem Hauptfahrer '{mainName}' zugeordnet — '{mainName}' ist in dieser Liga kein Stammfahrer.";
+                        return true;
+                    }
+
+                    if (string.Equals(mainName, guestName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        TempData["RaceError"] = $"Gast '{guestName}' kann nicht sich selbst als Hauptfahrer haben.";
+                        return true;
+                    }
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Form-Binding für eine einzelne Gast-Zuordnung. Razor rendert das Feld-Pärchen
+        /// als <c>name="guestAssignments[i].GuestName"</c> / <c>name="guestAssignments[i].MainDriver"</c>,
+        /// ASP.NET bindet es automatisch auf diese Klasse. Vorteil gegenüber zwei
+        /// parallelen <c>string[]</c> (Positions + Mains): die Source-of-Truth ist das
+        /// Paar selbst, kein impliziter Index — auch dann konsistent, wenn JS-Reihenfolge
+        /// und Form-Position-Index auseinanderlaufen.
+        /// </summary>
+        public class GuestAssignmentInput
+        {
+            public string GuestName { get; set; } = string.Empty;
+            public string MainDriver { get; set; } = string.Empty;
         }
 
         [HttpPost, ValidateAntiForgeryToken]

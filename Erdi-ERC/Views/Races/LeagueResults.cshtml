@@ -5,54 +5,13 @@
 @{
     ViewData["Title"] = $"{Model.League.Name} · Rennen";
 
+    // Wrapper: delegiert an RaceTeamHelper.ResolveTeamForRaceDriver, damit Helper
+    // und View nicht divergieren (Pfad 1.5, Reserve-Fallback, Sentinel-Filter).
     string ResolveTeamForRaceDriver(Erdi_ERC.Models.RaceResult race, string? driver)
     {
-        if (string.IsNullOrWhiteSpace(driver)) return "Ohne Team";
-        var normalizedDriver = driver.Trim();
-
-        var raceMain = race.ReserveAssignments
-            .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
-                                 && a.ReserveDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase))?.MainDriver;
-
-        if (!string.IsNullOrWhiteSpace(raceMain))
-        {
-            var mainTeam = Model.League.Standings.FirstOrDefault(s =>
-                !string.IsNullOrWhiteSpace(s.Driver)
-                && s.Driver.Trim().Equals(raceMain.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
-            if (!string.IsNullOrWhiteSpace(mainTeam)) return mainTeam.Trim();
-        }
-
-        // Pfad 1.5: Cross-League-Gast → Liga-Hauptfahrer → dessen Team. Spiegelung der
-        // Helper-Logik aus RaceTeamHelper.ResolveTeamForRaceDriver (Commit 3).
-        var guestMain = race.GuestAssignments?
-            .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
-                                 && g.GuestDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)
-                                 && !string.IsNullOrWhiteSpace(g.MainDriver)
-                                 && g.MainDriver != Erdi_ERC.Services.StatsService.GuestSentinelNoMain)?.MainDriver;
-
-        if (!string.IsNullOrWhiteSpace(guestMain))
-        {
-            var guestMainTeam = Model.League.Standings.FirstOrDefault(s =>
-                !string.IsNullOrWhiteSpace(s.Driver)
-                && s.Driver.Trim().Equals(guestMain.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
-            if (!string.IsNullOrWhiteSpace(guestMainTeam)) return guestMainTeam.Trim();
-        }
-
-        var standing = Model.League.Standings.FirstOrDefault(s =>
-            !string.IsNullOrWhiteSpace(s.Driver)
-            && s.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrWhiteSpace(standing?.Team)) return standing.Team.Trim();
-
-        if (standing?.IsReserveDriver == true && !string.IsNullOrWhiteSpace(standing.ReserveForDriver))
-        {
-            var fallbackTeam = Model.League.Standings.FirstOrDefault(s =>
-                !string.IsNullOrWhiteSpace(s.Driver)
-                && s.Driver.Trim().Equals(standing.ReserveForDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
-            if (!string.IsNullOrWhiteSpace(fallbackTeam)) return fallbackTeam.Trim();
-        }
-
-        return "Ohne Team";
+        var resolved = RaceTeamHelper.ResolveTeamForRaceDriver(
+            Model.League.Standings, race, driver);
+        return string.IsNullOrWhiteSpace(resolved) ? "Ohne Team" : resolved;
     }
 
     var allTeamNames = Model.League.Standings

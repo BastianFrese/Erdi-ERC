@@ -161,4 +161,109 @@ public class RaceTeamHelperGuestTests
 
         Assert.Equal(25, points);
     }
+
+    // ── Edge-Cases (Gast-Team-Override-Hardening) ───────────────────────────────
+
+    [Fact]
+    public void ResolveTeamForRaceDriver_guestWithMainButMainHasNoTeam_returnsNull()
+    {
+        // MainDriver ist im Standing, hat aber kein Team → Gast bekommt kein Team.
+        // Verhindert Phantom-Punkte in der Liga-Team-Wertung.
+        var race = BuildRace();
+        race.GuestAssignments.Add(new RaceGuestAssignment
+        {
+            GuestDriver = "Gast1",
+            MainDriver = "StammA"
+        });
+        var standings = new List<DriverStanding> { Standing("StammA", "") };
+
+        var team = Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
+
+        Assert.Null(team);
+    }
+
+    [Fact]
+    public void ResolveTeamForRaceDriver_guestWithNonExistentMain_returnsNull()
+    {
+        // MainDriver ist eingetragen, existiert aber nicht in league.Standings.
+        // Pfad 1.5 schlägt fehl → kein Team (Pfad 2 würde auch nichts finden, weil
+        // "Gast1" selbst kein Standing hat).
+        var race = BuildRace();
+        race.GuestAssignments.Add(new RaceGuestAssignment
+        {
+            GuestDriver = "Gast1",
+            MainDriver = "Phantom"
+        });
+        var standings = new List<DriverStanding> { Standing("StammA", "Ferrari") };
+
+        var team = Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race, "Gast1");
+
+        Assert.Null(team);
+    }
+
+    [Fact]
+    public void ResolveTeamForRaceDriver_guestInTwoRacesWithDifferentMains_resolvesPerRace()
+    {
+        // Derselbe Gast in zwei Rennen mit verschiedenen Hauptfahrern → jedes Rennen
+        // bekommt sein eigenes Team. Pfad 1.5 ist pro Rennen gescoped, nicht pro Gast.
+        var race1 = BuildRace();
+        race1.GuestAssignments.Add(new RaceGuestAssignment
+        {
+            GuestDriver = "Gast1",
+            MainDriver = "StammA"
+        });
+        var race2 = BuildRace();
+        race2.GuestAssignments.Add(new RaceGuestAssignment
+        {
+            GuestDriver = "Gast1",
+            MainDriver = "StammB"
+        });
+        var standings = new List<DriverStanding>
+        {
+            Standing("StammA", "Ferrari"),
+            Standing("StammB", "Mercedes")
+        };
+
+        Assert.Equal("Ferrari", Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race1, "Gast1"));
+        Assert.Equal("Mercedes", Erdi_ERC.Helpers.RaceTeamHelper.ResolveTeamForRaceDriver(standings, race2, "Gast1"));
+    }
+
+    [Fact]
+    public async Task ComputeTeamPointsForLeague_guestWithSentinel_excludedFromAllTeams()
+    {
+        // Sentinel-Gast zählt für KEIN Team in der Liga-Wertung — weder für den
+        // MainDriver (kein echter Main vorhanden) noch als Phantom.
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "l1", Name = "Testliga" });
+        ctx.Db.DriverStandings.Add(new DriverStanding
+        {
+            LeagueId = "l1",
+            Driver = "StammA",
+            Team = "Ferrari"
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        var race = new RaceResult { LeagueId = "l1", Date = DateTime.UtcNow, Track = "T" };
+        ctx.Db.RaceResults.Add(race);
+        await ctx.Db.SaveChangesAsync();
+
+        ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = "Gast1", Position = 1 });
+        ctx.Db.RaceGuestAssignments.Add(new RaceGuestAssignment
+        {
+            RaceResultId = race.RowId,
+            GuestDriver = "Gast1",
+            MainDriver = StatsService.GuestSentinelNoMain
+        });
+        await ctx.Db.SaveChangesAsync();
+
+        using var verify = ctx.NewContext();
+        var league = verify.Leagues
+            .Include(l => l.Standings)
+            .Include(l => l.Races).ThenInclude(r => r.Finishes)
+            .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
+            .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
+            .Single();
+
+        Assert.Equal(0, Erdi_ERC.Helpers.RaceTeamHelper.ComputeTeamPointsForLeague(league, "Ferrari"));
+    }
 }

@@ -1,41 +1,42 @@
 @model Erdi_ERC.Models.UiComponents.PictureVm
 @*
-  Rendert ein <picture>-Element mit AVIF + WebP <source>-Elementen und <img>-Fallback.
-  Pfad-Konvention (deterministisch, identisch zur MediaService-Pipeline in Block 2):
-    Original:    /uploads/events/foo.jpg
-    AVIF:        /uploads/events/foo-640.avif, foo-1280.avif, foo-1920.avif, foo-3840.avif
-    WebP:        /uploads/events/foo-640.webp, foo-1280.webp, foo-1920.webp, foo-3840.webp
+  Rendert ein <picture>-Element mit <img> + optionalem 2x-Retina-srcset.
+  Ohne serverseitige Bild-Konversion: das vom Uploader hochgeladene Format
+  wird ausgeliefert (jpg/png/webp/avif). Der Browser wählt das beste Bild
+  anhand seiner eigenen Capabilities + Accept-Header aus.
+
+  Pfad-Konvention:
+    Original:   /uploads/events/{guid}.jpg
+    2x-Variante: /uploads/events/{guid}@2x.jpg  (nur wenn Model.Retina == true)
+
+  Cache: HTTP-Header Cache-Control: public, max-age=31536000, immutable
+  wird von der /uploads-Static-File-Middleware in Program.cs gesetzt;
+  ETag/Last-Modified → Browser macht 304-Not-Modified bei Re-Visit.
+
+  Vorteile ggü. Block 2:
+   - Kein CPU-Job beim Upload (kein Fire-and-forget-Race-Conditions)
+   - Kein 5x Speicherverbrauch pro Bild
+   - Keine 404s für nicht-existierende Varianten
+   - Browser-native AVIF/WebP-Auswahl bleibt erhalten (Format vom Uploader)
 *@
 @using System.Text
 @using System.Web
 @{
     var src = Model.Src;
-    var widths = string.IsNullOrWhiteSpace(Model.Widths)
-        ? new[] { 640, 1280, 1920, 3840 }
-        : Model.Widths.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(int.Parse).ToArray();
-    var isSvg = src.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
     var isPriority = string.Equals(Model.Priority, "high", StringComparison.OrdinalIgnoreCase);
     var effectiveLoading = isPriority ? "eager" : Model.Loading;
     var fetchPriority = isPriority ? "high" : null;
     var sizes = string.IsNullOrWhiteSpace(Model.Sizes) ? "100vw" : Model.Sizes;
 
-    int dotIdx = src.LastIndexOf('.');
-    int slashIdx = src.LastIndexOf('/');
-    var lastDot = (dotIdx >= 0 && (slashIdx < 0 || dotIdx > slashIdx))
-        ? src[..dotIdx]
-        : src;
-
-    string BuildSrcset(string ext)
+    // 2x-Retina-Pfad: <stem>@2x.<ext>
+    string? retinaSrc = null;
+    if (Model.Retina)
     {
-        var sb = new StringBuilder(128);
-        for (int i = 0; i < widths.Length; i++)
-        {
-            if (i > 0) sb.Append(", ");
-            sb.Append(lastDot).Append('-').Append(widths[i]).Append('.').Append(ext)
-              .Append(' ').Append(widths[i]).Append('w');
-        }
-        return sb.ToString();
+        int dotIdx = src.LastIndexOf('.');
+        int slashIdx = src.LastIndexOf('/');
+        var stem = (dotIdx >= 0 && (slashIdx < 0 || dotIdx > slashIdx)) ? src[..dotIdx] : src;
+        var ext = (dotIdx >= 0 && (slashIdx < 0 || dotIdx > slashIdx)) ? src[dotIdx..] : string.Empty;
+        retinaSrc = $"{stem}@2x{ext}";
     }
 
     var imgAttrs = new StringBuilder();
@@ -49,16 +50,14 @@
         imgAttrs.Append(" height=\"").Append(Model.Height.Value).Append("\"");
     imgAttrs.Append(" loading=\"").Append(HttpUtility.HtmlAttributeEncode(effectiveLoading)).Append("\"");
     imgAttrs.Append(" decoding=\"").Append(HttpUtility.HtmlAttributeEncode(Model.Decoding)).Append("\"");
+    if (retinaSrc != null)
+        imgAttrs.Append(" srcset=\"").Append(HttpUtility.HtmlAttributeEncode(src))
+                .Append(" 1x, ").Append(HttpUtility.HtmlAttributeEncode(retinaSrc)).Append(" 2x\"");
     if (fetchPriority != null)
         imgAttrs.Append(" fetchpriority=\"").Append(HttpUtility.HtmlAttributeEncode(fetchPriority)).Append("\"");
     if (!string.IsNullOrEmpty(Model.ExtraAttrs))
         imgAttrs.Append(" ").Append(Model.ExtraAttrs);
 }
 <picture>
-@if (!isSvg)
-{
-    <source type="image/avif" srcset="@BuildSrcset("avif")" sizes="@sizes">
-    <source type="image/webp" srcset="@BuildSrcset("webp")" sizes="@sizes">
-}
-<img @Html.Raw(imgAttrs.ToString())>
+    <img @Html.Raw(imgAttrs.ToString())>
 </picture>

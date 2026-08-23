@@ -501,6 +501,77 @@
     object-fit:cover;
     display:block;
 }
+
+/* Hero ist klickbar (Lightbox öffnen) */
+.event-detail-gallery-hero-wrap[data-gallery-index] {
+    cursor:zoom-in;
+}
+.event-detail-gallery-hero-wrap[data-gallery-index]:focus-visible {
+    outline:2px solid var(--sig-cyan, #00e0ff);
+    outline-offset:2px;
+}
+
+/* ---- Event-Galerie Lightbox (F1-Look) ---- */
+.event-lightbox {
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    background:rgba(2,4,8,.92);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:2rem;
+    animation:evlb-fade .18s ease-out;
+}
+.event-lightbox[hidden] { display:none; }
+@keyframes evlb-fade { from { opacity:0 } to { opacity:1 } }
+.event-lightbox__img {
+    max-width:92vw;
+    max-height:88vh;
+    object-fit:contain;
+    border-radius:12px;
+    box-shadow:0 30px 80px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.06);
+    transform-origin:center center;
+    user-select:none;
+    -webkit-user-drag:none;
+}
+.event-lightbox__close,
+.event-lightbox__nav {
+    position:absolute;
+    background:rgba(15,18,24,.85);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    font-size:1.6rem;
+    line-height:1;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .15s, transform .15s, border-color .15s;
+}
+.event-lightbox__close:hover,
+.event-lightbox__nav:hover {
+    background:rgba(0,224,255,.18);
+    border-color:rgba(0,224,255,.55);
+    transform:scale(1.06);
+}
+.event-lightbox__close { top:1.2rem; right:1.2rem; font-size:1.8rem; }
+.event-lightbox__nav--prev { left:1.2rem; top:50%; transform:translateY(-50%); }
+.event-lightbox__nav--next { right:1.2rem; top:50%; transform:translateY(-50%); }
+.event-lightbox__nav--prev:hover { transform:translateY(-50%) scale(1.06); }
+.event-lightbox__nav--next:hover { transform:translateY(-50%) scale(1.06); }
+@media (max-width:640px) {
+    .event-lightbox { padding:.5rem; }
+    .event-lightbox__close { width:42px; height:42px; top:.6rem; right:.6rem; }
+    .event-lightbox__nav { width:42px; height:42px; }
+    .event-lightbox__nav--prev { left:.4rem; }
+    .event-lightbox__nav--next { right:.4rem; }
+}
 .event-detail-recap-body {
     line-height:1.75;
     font-size:1.05rem;

@@ -106,7 +106,7 @@ public class AdminLeagueControllerGuestValidationTests
             dnfDrivers: null,
             reserveDrivers: null,
             reserveMainDrivers: null,
-            guestMainDrivers: new[] { "Meier" });
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Hans Müller", MainDriver = "Meier" } });
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.True(ctrl.TempData.ContainsKey("RaceError"));
@@ -139,7 +139,7 @@ public class AdminLeagueControllerGuestValidationTests
             dnfDrivers: null,
             reserveDrivers: null,
             reserveMainDrivers: null,
-            guestMainDrivers: new[] { "Meier" });
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Mick Schumaher", MainDriver = "Meier" } });
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.True(ctrl.TempData.ContainsKey("RaceError"));
@@ -167,7 +167,7 @@ public class AdminLeagueControllerGuestValidationTests
             dnfDrivers: null,
             reserveDrivers: null,
             reserveMainDrivers: null,
-            guestMainDrivers: new[] { "Meier" });
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "mick schumacher", MainDriver = "Meier" } });
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.False(ctrl.TempData.ContainsKey("RaceError"));
@@ -204,7 +204,7 @@ public class AdminLeagueControllerGuestValidationTests
             dnfDrivers: null,
             reserveDrivers: null,
             reserveMainDrivers: null,
-            guestMainDrivers: null);
+            guestAssignments: null);
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.False(ctrl.TempData.ContainsKey("RaceError"));
@@ -233,7 +233,7 @@ public class AdminLeagueControllerGuestValidationTests
             dnfDrivers: null,
             reserveDrivers: null,
             reserveMainDrivers: null,
-            guestMainDrivers: null);
+            guestAssignments: null);
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.False(ctrl.TempData.ContainsKey("RaceError"));
@@ -241,6 +241,124 @@ public class AdminLeagueControllerGuestValidationTests
     }
 
     // ── UpdateEnteredRace ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task SaveEnteredRace_guestWithoutMainDriver_serverReturnsError()
+    {
+        // JS-Bypass: Cross-League-Gast ohne MainDriver-Zuordnung → Server lehnt ab.
+        // Vorher (vor Hardening) wurde der Gast stille uebersprungen — danach Pflicht-Validation.
+        using var ctx = new SqliteTestContext();
+        SeedLeagueWithStandings(ctx, "l1", ("StammA", false));
+        SeedProfile(ctx, "Mick Schumacher");
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var result = await ctrl.SaveEnteredRace(
+            leagueId: "l1",
+            date: DateTime.UtcNow,
+            track: "Spa",
+            fastestLapDriver: null,
+            positions: new[] { "StammA", "Mick Schumacher" },
+            raceTimes: null,
+            penaltySeconds: null,
+            dnfDrivers: null,
+            reserveDrivers: null,
+            reserveMainDrivers: null,
+            // Mick hat einen Eintrag mit leerem MainDriver — Server muss ablehnen.
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Mick Schumacher", MainDriver = "" } });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(ctrl.TempData.ContainsKey("RaceError"));
+        var msg = ctrl.TempData["RaceError"] as string;
+        Assert.NotNull(msg);
+        Assert.Contains("Mick Schumacher", msg!);
+        // Server-Validation schlaegt fehl: kein RaceFinish geschrieben.
+        Assert.Empty(ctx.Db.RaceFinishes);
+        Assert.Empty(ctx.Db.RaceGuestAssignments);
+    }
+
+    [Fact]
+    public async Task SaveEnteredRace_guestWithSentinelMain_persistsSentinel()
+    {
+        // Sentinel-Option "(kein Hauptfahrer)" aus dem Dropdown (value="__sentinel__")
+        // wird auf den DB-Sentinel GuestSentinelNoMain gemappt.
+        using var ctx = new SqliteTestContext();
+        SeedLeagueWithStandings(ctx, "l1", ("StammA", false));
+        SeedProfile(ctx, "Mick Schumacher");
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var result = await ctrl.SaveEnteredRace(
+            leagueId: "l1",
+            date: DateTime.UtcNow,
+            track: "Spa",
+            fastestLapDriver: null,
+            positions: new[] { "Mick Schumacher" },
+            raceTimes: null,
+            penaltySeconds: null,
+            dnfDrivers: null,
+            reserveDrivers: null,
+            reserveMainDrivers: null,
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Mick Schumacher", MainDriver = "__sentinel__" } });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.False(ctrl.TempData.ContainsKey("RaceError"));
+
+        var finish = Assert.Single(ctx.Db.RaceFinishes);
+        Assert.Equal("Mick Schumacher", finish.Driver);
+        var guest = Assert.Single(ctx.Db.RaceGuestAssignments);
+        Assert.Equal("Mick Schumacher", guest.GuestDriver);
+        Assert.Equal(StatsService.GuestSentinelNoMain, guest.MainDriver);
+    }
+
+    [Fact]
+    public async Task SaveEnteredRace_guestAtNonZeroPositionArray_isResolvedByNameNotIndex()
+    {
+        // Regression-Test für den Critical-Bug: Vor dem Refactor lieferte die Validation
+        // einen False-Positive, weil das alte guestMainDrivers[]-Array positionsindexiert
+        // ausgewertet wurde — die Browser-Realität ist aber: 22 positions[], N guestMainDrivers[]
+        // (parallel pro Gast-Zeile, nicht pro Position). Mit dem strukturierten Pärchen-
+        // Binding (guestAssignments[].{GuestName, MainDriver}) ist die Source-of-Truth
+        // das Paar selbst — daher darf die Reihenfolge/Index keine Rolle mehr spielen.
+        //
+        // Wir platzieren den Gast absichtlich an Position 5 (Index 4), um zu zeigen,
+        // dass die Validation ihn trotzdem findet.
+        using var ctx = new SqliteTestContext();
+        SeedLeagueWithStandings(ctx, "l1", ("StammA", false), ("StammB", false), ("StammC", false), ("StammD", false));
+        SeedProfile(ctx, "Mick Schumacher");
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var positions = new string[22];
+        positions[0] = "StammA";
+        positions[1] = "StammB";
+        positions[2] = "StammC";
+        positions[3] = "StammD";
+        positions[4] = "Mick Schumacher"; // Gast auf Position 5 (Index 4), weit weg von Index 0
+
+        var result = await ctrl.SaveEnteredRace(
+            leagueId: "l1",
+            date: DateTime.UtcNow,
+            track: "Spa",
+            fastestLapDriver: null,
+            positions: positions,
+            raceTimes: null,
+            penaltySeconds: null,
+            dnfDrivers: null,
+            reserveDrivers: null,
+            reserveMainDrivers: null,
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Mick Schumacher", MainDriver = "StammA" } });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.False(ctrl.TempData.ContainsKey("RaceError"));
+
+        var guest = Assert.Single(ctx.Db.RaceGuestAssignments);
+        Assert.Equal("Mick Schumacher", guest.GuestDriver);
+        Assert.Equal("StammA", guest.MainDriver);
+    }
 
     [Fact]
     public async Task UpdateEnteredRace_guestNameNotInDriverProfile_returnsTempDataError()
@@ -269,13 +387,89 @@ public class AdminLeagueControllerGuestValidationTests
             dnfDrivers: null,
             reserveDrivers: null,
             reserveMainDrivers: null,
-            guestMainDrivers: new[] { "Meier" });
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Hans Müller", MainDriver = "Meier" } });
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.True(ctrl.TempData.ContainsKey("RaceError"));
         // Kein neuer Finish, kein GuestAssignment geschrieben.
         Assert.Empty(ctx.Db.RaceFinishes);
         Assert.Empty(ctx.Db.RaceGuestAssignments);
+    }
+
+    [Fact]
+    public async Task UpdateEnteredRace_guestWithoutMainDriver_serverReturnsError()
+    {
+        // Edit-Mode-Pendant: gleiche Pflicht-Validation muss auch hier greifen.
+        using var ctx = new SqliteTestContext();
+        SeedLeagueWithStandings(ctx, "l1", ("StammA", false));
+        SeedProfile(ctx, "Mick Schumacher");
+
+        var existing = new RaceResult { LeagueId = "l1", Date = DateTime.UtcNow, Track = "Spa" };
+        ctx.Db.RaceResults.Add(existing);
+        ctx.Db.SaveChanges();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var result = await ctrl.UpdateEnteredRace(
+            rowId: existing.RowId,
+            leagueId: "l1",
+            date: DateTime.UtcNow,
+            track: "Spa",
+            fastestLapDriver: null,
+            positions: new[] { "StammA", "Mick Schumacher" },
+            raceTimes: null,
+            penaltySeconds: null,
+            dnfDrivers: null,
+            reserveDrivers: null,
+            reserveMainDrivers: null,
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Mick Schumacher", MainDriver = "" } });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(ctrl.TempData.ContainsKey("RaceError"));
+        Assert.Contains("Mick Schumacher", (string)ctrl.TempData["RaceError"]!);
+        Assert.Empty(ctx.Db.RaceFinishes);
+        Assert.Empty(ctx.Db.RaceGuestAssignments);
+    }
+
+    [Fact]
+    public async Task UpdateEnteredRace_guestWithSentinelMain_persistsSentinel()
+    {
+        // Edit-Mode-Pendant: Sentinel-Option muss auch im Update-Pfad auf
+        // GuestSentinelNoMain gemappt werden.
+        using var ctx = new SqliteTestContext();
+        SeedLeagueWithStandings(ctx, "l1", ("StammA", false));
+        SeedProfile(ctx, "Mick Schumacher");
+
+        var existing = new RaceResult { LeagueId = "l1", Date = DateTime.UtcNow, Track = "Spa" };
+        ctx.Db.RaceResults.Add(existing);
+        ctx.Db.SaveChanges();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var result = await ctrl.UpdateEnteredRace(
+            rowId: existing.RowId,
+            leagueId: "l1",
+            date: DateTime.UtcNow,
+            track: "Spa",
+            fastestLapDriver: null,
+            positions: new[] { "Mick Schumacher" },
+            raceTimes: null,
+            penaltySeconds: null,
+            dnfDrivers: null,
+            reserveDrivers: null,
+            reserveMainDrivers: null,
+            guestAssignments: new[] { new AdminLeagueController.GuestAssignmentInput { GuestName = "Mick Schumacher", MainDriver = "__sentinel__" } });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.False(ctrl.TempData.ContainsKey("RaceError"));
+
+        var finish = Assert.Single(ctx.Db.RaceFinishes);
+        Assert.Equal("Mick Schumacher", finish.Driver);
+        var guest = Assert.Single(ctx.Db.RaceGuestAssignments);
+        Assert.Equal("Mick Schumacher", guest.GuestDriver);
+        Assert.Equal(StatsService.GuestSentinelNoMain, guest.MainDriver);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

@@ -58,11 +58,18 @@
             SubText = $"{allImages.Count} Bild{(allImages.Count != 1 ? "er" : "")}"
         })" />
 
-        <div class="event-detail-gallery-card" style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);">
-            <div class="event-detail-gallery-hero-wrap">
+        <div class="event-detail-gallery-card"
+             style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);"
+             data-event-gallery
+             data-images="@string.Join(",", allImages.Select(f => $"\"/uploads/events/{f}\""))">
+            <div class="event-detail-gallery-hero-wrap"
+                 data-gallery-index="0"
+                 role="button"
+                 tabindex="0"
+                 aria-label="Bild 1 vergrößern">
                 @{
                     var heroPic = new PictureVm {
-                        Src = "/uploads/events/@allImages[0]",
+                        Src = $"/uploads/events/{allImages[0]}",
                         Alt = @Model.Title,
                         CssClass = "event-detail-gallery-hero",
                         Loading = "eager",
@@ -80,16 +87,15 @@
                         {
                             <button type="button"
                                     class="btn btn-ghost p-0 gallery-thumb event-detail-gallery-thumb @(i == 0 ? "is-active" : "")"
-                                    data-src="/uploads/events/@allImages[i]"
-                                    aria-label="Bild @(i + 1)">
+                                    data-gallery-index="@i"
+                                    aria-label="Bild @(i + 1) vergrößern">
                                 @{
                                     var thumbPic = new PictureVm {
-                                        Src = "/uploads/events/@allImages[i]",
+                                        Src = $"/uploads/events/{allImages[i]}",
                                         Alt = "Bild " + (i + 1),
                                         CssClass = "event-detail-gallery-thumb-image",
                                         Loading = "lazy",
-                                        Decoding = "async",
-                                        Widths = "160,320"
+                                        Decoding = "async"
                                     };
                                 }
                                 <partial name="_Picture" model="thumbPic" />
@@ -98,6 +104,17 @@
                     </div>
                 </div>
             }
+
+            @* Lightbox-Overlay (F1-Look). JS in wwwroot/js/event-lightbox(.min).js *@
+            <div class="event-lightbox" data-lightbox hidden aria-modal="true" role="dialog">
+                <button type="button" class="event-lightbox__close" data-lightbox-close aria-label="Schließen">×</button>
+                @if (allImages.Count > 1)
+                {
+                    <button type="button" class="event-lightbox__nav event-lightbox__nav--prev" data-lightbox-prev aria-label="Vorheriges Bild">‹</button>
+                    <button type="button" class="event-lightbox__nav event-lightbox__nav--next" data-lightbox-next aria-label="Nächstes Bild">›</button>
+                }
+                <img class="event-lightbox__img" data-lightbox-img alt="" />
+            </div>
         </div>
     </section>
 }
@@ -120,17 +137,5 @@
 </section>
 
 @section Scripts {
-    <script>
-        (function () {
-            var hero = document.getElementById('galleryHero');
-            var thumbs = document.querySelectorAll('.gallery-thumb');
-            thumbs.forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    if (hero) hero.src = this.dataset.src;
-                    thumbs.forEach(function (t) { t.classList.remove('is-active'); });
-                    this.classList.add('is-active');
-                });
-            });
-        })();
-    </script>
+    <script src="~/js/event-lightbox.min.js" asp-append-version="true"></script>
 }
