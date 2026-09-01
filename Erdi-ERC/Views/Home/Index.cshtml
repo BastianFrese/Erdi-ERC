@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "Home";
+    ViewData["PreloadHero"] = "hero"; @* aktiviert den LCP-Preload des Hero-Logos im Layout (nur hier above-the-fold) *@
     var preview = ViewBag.LeaguePreview as System.Collections.IEnumerable;
     var lastWinners = ViewBag.LastWinners as System.Collections.IEnumerable;
     var nextStream = ViewBag.NextStream;
@@ -268,7 +269,7 @@
                 </div>
                 <div class="f1-stat__label">Ligen</div>
                 <div class="f1-stat__value" data-count="@ViewBag.LeagueCount">@ViewBag.LeagueCount</div>
-                <div class="f1-stat__sub">Aktive Rennserien im Hub</div>
+                <div class="f1-stat__sub">Aktive Rennserien im ErdiHub</div>
                 <div class="f1-stat__bar"><span></span></div>
                 <div class="f1-stat__sector-bar" aria-hidden="true"><span></span><span></span><span></span></div>
             </div>
