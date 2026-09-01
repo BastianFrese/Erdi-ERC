@@ -17,8 +17,9 @@ namespace Erdi_ERC.Controllers
         private readonly IStaticDataCache _staticCache;
         private readonly IMediaService _media;
         private readonly ILogger<ProfileController> _logger;
+        private readonly ProfileHistoryService _history;
 
-        public ProfileController(AppDbContext db, IDriverProfileService profiles, IAdminAuditService audit, IStaticDataCache staticCache, IMediaService media, ILogger<ProfileController> logger)
+        public ProfileController(AppDbContext db, IDriverProfileService profiles, IAdminAuditService audit, IStaticDataCache staticCache, IMediaService media, ILogger<ProfileController> logger, ProfileHistoryService history)
         {
             _db = db;
             _profiles = profiles;
@@ -26,6 +27,7 @@ namespace Erdi_ERC.Controllers
             _staticCache = staticCache;
             _media = media;
             _logger = logger;
+            _history = history;
         }
 
         [HttpGet("/Profile/Driver/{driverName}")]
@@ -52,69 +54,15 @@ namespace Erdi_ERC.Controllers
             if (!string.IsNullOrWhiteSpace(profile.DisplayName)) aliases.Add(profile.DisplayName.Trim());
             var aliasSet = new HashSet<string>(aliases, StringComparer.OrdinalIgnoreCase);
 
-            var leagues = await _db.Leagues
-                .AsSplitQuery()
-                .Include(l => l.Standings)
-                .Include(l => l.Races).ThenInclude(r => r.Finishes)
-                .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
-                .ToListAsync();
-
-            var races = new List<DriverRaceEntry>();
-            int wins = 0, podiums = 0, fastest = 0, totalPoints = 0;
-            string? team = null;
-            int? driverNumber = null;
-
-            foreach (var l in leagues)
-            {
-                var standing = l.Standings.FirstOrDefault(s => aliasSet.Contains(s.Driver?.Trim() ?? ""));
-                if (standing is not null)
+            // Teure All-Ligen-Aggregation kommt gecacht aus dem ProfileHistoryService;
+            // die View selbst bleibt live (user-spezifisches HTML).
+            var detail = await _history.GetHistoryAsync(aliases)
+                ?? new DriverDetailViewModel
                 {
-                    totalPoints += standing.Points;
-                    team ??= standing.Team;
-                    driverNumber ??= standing.DriverNumber;
-                }
-
-                foreach (var r in l.Races)
-                {
-                    var finish = r.Finishes.FirstOrDefault(f => aliasSet.Contains(f.Driver?.Trim() ?? ""));
-                    if (finish is null) continue;
-
-                    if (finish.Position == 1) wins++;
-                    if (finish.Position is >= 1 and <= 3) podiums++;
-                    if (finish.FastestLap) fastest++;
-
-                    var reserveFor = r.ReserveAssignments.FirstOrDefault(a => aliasSet.Contains(a.ReserveDriver?.Trim() ?? ""))?.MainDriver;
-
-                    races.Add(new DriverRaceEntry
-                    {
-                        RaceId = r.RowId,
-                        LeagueId = l.Id,
-                        Date = r.Date,
-                        Track = r.Track,
-                        Position = finish.Position,
-                        Points = 0,
-                        FastestLap = finish.FastestLap,
-                        RaceTimeMs = finish.RaceTimeMs,
-                        Team = standing?.Team ?? string.Empty,
-                        WasReserve = !string.IsNullOrWhiteSpace(reserveFor),
-                        ReserveForDriver = reserveFor
-                    });
-                }
-            }
-
-            var detail = new DriverDetailViewModel
-            {
-                Driver = profile.DisplayName ?? profile.DiscordName,
-                Team = team ?? string.Empty,
-                DriverNumber = driverNumber,
-                TotalPoints = totalPoints,
-                Wins = wins,
-                Podiums = podiums,
-                FastestLaps = fastest,
-                BestFinish = races.Where(r => r.Position > 0).Select(r => (int?)r.Position).DefaultIfEmpty(null).Min(),
-                AverageFinish = races.Where(r => r.Position > 0).Select(r => (double)r.Position).DefaultIfEmpty().Average(),
-                Races = races.OrderByDescending(r => r.Date).ToList()
-            };
+                    Driver = string.Empty,
+                    Races = new List<DriverRaceEntry>()
+                };
+            detail.Driver = profile.DisplayName ?? profile.DiscordName;
 
             var custom = await _db.CustomAchievements
                 .Where(c => aliases.Contains(c.Driver))

@@ -23,6 +23,7 @@ namespace Erdi_ERC.Controllers
             _overallConstructors = overallConstructors;
         }
 
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> Results()
         {
             var leagues = await _db.Leagues
@@ -47,6 +48,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> LeagueResults(string leagueId)
         {
             if (string.IsNullOrWhiteSpace(leagueId)) return NotFound();
@@ -100,6 +102,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> RaceDetail(string leagueId, int raceId)
         {
             var league = await _db.Leagues
@@ -240,6 +243,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "public-2min")]
         public async Task<IActionResult> RaceCalendar()
         {
             var settings = await _db.RaceCalendarSettings.FirstOrDefaultAsync()

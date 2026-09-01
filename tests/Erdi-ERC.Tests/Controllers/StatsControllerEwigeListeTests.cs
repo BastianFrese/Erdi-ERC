@@ -50,7 +50,7 @@ public class StatsControllerEwigeListeTests
             var env = new StubWebHostEnvironment(tempRoot);
             var appOptions = Microsoft.Extensions.Options.Options.Create(new ApplicationOptions());
             var f1Scoring = Microsoft.Extensions.Options.Options.Create(new F1ScoringOptions());
-            var controller = new StatsController(ctx.Db, env, appOptions, f1Scoring, NullLogger<StatsController>.Instance);
+            var controller = new StatsController(ctx.Db, env, appOptions, f1Scoring, NullLogger<StatsController>.Instance, new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
 
             // Act + Assert: kein Throw, Live-Sheet ist vorhanden.
             var result = await controller.EwigeListe();
@@ -99,7 +99,7 @@ public class StatsControllerEwigeListeTests
             var env = new StubWebHostEnvironment(tempRoot);
             var appOptions = Microsoft.Extensions.Options.Options.Create(new ApplicationOptions());
             var f1Scoring = Microsoft.Extensions.Options.Options.Create(new F1ScoringOptions());
-            var controller = new StatsController(ctx.Db, env, appOptions, f1Scoring, NullLogger<StatsController>.Instance);
+            var controller = new StatsController(ctx.Db, env, appOptions, f1Scoring, NullLogger<StatsController>.Instance, new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
 
             var result = await controller.EwigeListe();
             var view = Assert.IsType<ViewResult>(result);
@@ -152,7 +152,7 @@ public class StatsControllerEwigeListeTests
             var env = new StubWebHostEnvironment(tempRoot);
             var appOptions = Microsoft.Extensions.Options.Options.Create(new ApplicationOptions());
             var f1Scoring = Microsoft.Extensions.Options.Options.Create(new F1ScoringOptions());
-            var controller = new StatsController(ctx.Db, env, appOptions, f1Scoring, NullLogger<StatsController>.Instance);
+            var controller = new StatsController(ctx.Db, env, appOptions, f1Scoring, NullLogger<StatsController>.Instance, new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
 
             var result = await controller.EwigeListe();
             var view = Assert.IsType<ViewResult>(result);

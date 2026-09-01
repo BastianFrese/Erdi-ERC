@@ -4,6 +4,7 @@ using Erdi_ERC.Options;
 using Erdi_ERC.Services;
 using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -19,6 +20,9 @@ namespace Erdi_ERC.Tests;
 public class OverallConstructorsServiceTests
 {
     private static IOptions<F1ScoringOptions> F1Scoring() => Microsoft.Extensions.Options.Options.Create(new F1ScoringOptions());
+
+    /// <summary>Frischer Cache pro Service-Instanz — verhindert, dass gecachte ComputeAsync-Ergebnisse zwischen Tests leaken.</summary>
+    private static IMemoryCache NewCache() => new MemoryCache(new MemoryCacheOptions());
 
     // ---- F1TeamsHelper: kanonischer Schlüssel -------------------------------------------------
 
@@ -91,7 +95,7 @@ public class OverallConstructorsServiceTests
         AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1), ("Beta", 2));
         AddLeagueWithRace(ctx, "am",  "Gamma", "mercedes", ("Delta", 1), ("Gamma", 2));
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         var mercedes = Assert.Single(rows);
@@ -110,7 +114,7 @@ public class OverallConstructorsServiceTests
         AddLeagueWithRace(ctx, "pro", "Alpha", "Sauber", ("Alpha", 1));
         AddLeagueWithRace(ctx, "am",  "Beta", "Audi",  ("Beta", 1));
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         var row = Assert.Single(rows);
@@ -130,7 +134,7 @@ public class OverallConstructorsServiceTests
         AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1));
         AddLeagueWithRace(ctx, "fun", "Bob",   "Ferrari",  ("Bob",  1));
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         Assert.Single(rows);
@@ -141,7 +145,7 @@ public class OverallConstructorsServiceTests
     public async Task ComputeAsync_handlesEmptyLeagueList()
     {
         var ctx = new SqliteTestContext();
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
 
         Assert.Empty(await service.ComputeAsync());
     }
@@ -153,7 +157,7 @@ public class OverallConstructorsServiceTests
         ctx.Db.Leagues.Add(new League { Id = "pro" });
         ctx.Db.SaveChanges();
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         Assert.Empty(await service.ComputeAsync());
     }
 
@@ -164,7 +168,7 @@ public class OverallConstructorsServiceTests
         AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1), ("Beta", 2));
         AddLeagueWithRace(ctx, "am",  "Gamma", "Ferrari",  ("Gamma", 1), ("Delta", 2));
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         Assert.Equal(2, rows.Count);
@@ -183,7 +187,7 @@ public class OverallConstructorsServiceTests
         var ctx = new SqliteTestContext();
         AddLeagueWithRace(ctx, "am", "Bob", "Mercedes", ("Bob", 1));
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         var mercedes = rows.Single();
@@ -205,7 +209,7 @@ public class OverallConstructorsServiceTests
         {
             PointMap = new[] { 10, 6, 4, 2 } // nur Top-4 kassiert
         });
-        var service = new OverallConstructorsService(ctx.Db, customScoring);
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), customScoring);
         var rows = await service.ComputeAsync();
 
         var mercedes = rows.Single();
@@ -226,7 +230,7 @@ public class OverallConstructorsServiceTests
             ("Gamma", -1)  // DNS
         );
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         var mercedes = rows.Single();
@@ -247,7 +251,7 @@ public class OverallConstructorsServiceTests
         AddLeagueWithRace(ctx, "am", "Bob", "Mercedes", ("Bob", 1));          // 25 Pkt. für Mercedes
         AddLeagueWithRace(ctx, "pro", "Bob", "Ferrari", ("Bob", 1));         // 25 Pkt. für Ferrari
 
-        var service = new OverallConstructorsService(ctx.Db, F1Scoring());
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
 
         Assert.Equal(2, rows.Count);

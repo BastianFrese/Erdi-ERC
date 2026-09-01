@@ -6,6 +6,7 @@ using Erdi_ERC.Options;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Erdi_ERC.Controllers
@@ -13,10 +14,16 @@ namespace Erdi_ERC.Controllers
     /// <summary>Statistik-Seiten: Ewige Liste, Racing Hub (Erdi10), Hall of Fame, Fahrer-Level und -Karten.</summary>
     public class StatsController : Controller
     {
+        private const string DriverCardsCacheKey = "stats:driver-cards:v1";
+        private static readonly TimeSpan DriverCardsCacheTtl = TimeSpan.FromMinutes(5);
+        private const string DriverLevelsCacheKey = "stats:driver-levels:v1";
+        private static readonly TimeSpan DriverLevelsCacheTtl = TimeSpan.FromMinutes(5);
+
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
         private readonly ApplicationOptions _appOptions;
         private readonly ILogger<StatsController> _logger;
+        private readonly IMemoryCache _cache;
         private readonly int[] _f1PointMap;
 
         public StatsController(
@@ -24,7 +31,8 @@ namespace Erdi_ERC.Controllers
             IWebHostEnvironment env,
             IOptions<ApplicationOptions> appOptions,
             IOptions<F1ScoringOptions> f1Scoring,
-            ILogger<StatsController> logger)
+            ILogger<StatsController> logger,
+            IMemoryCache cache)
         {
             _db = db;
             _env = env;
@@ -178,6 +186,25 @@ namespace Erdi_ERC.Controllers
         [HttpGet("/fahrerkarten")]
         public async Task<IActionResult> DriverCards()
         {
+            if (_cache.TryGetValue<List<(Models.League, List<(Models.DriverProfile, Models.DriverDetailViewModel)>)>>(DriverCardsCacheKey, out var cachedCards) && cachedCards is not null)
+            {
+                return View(cachedCards);
+            }
+
+            var result = await BuildDriverCardsAsync();
+
+            _cache.Set(DriverCardsCacheKey, result, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = DriverCardsCacheTtl,
+                Priority = CacheItemPriority.Low,
+                Size = 1
+            });
+
+            return View(result);
+        }
+
+        private async Task<List<(Models.League League, List<(Models.DriverProfile Profile, Models.DriverDetailViewModel Card)> Drivers)>> BuildDriverCardsAsync()
+        {
             var leagues = await _db.Leagues
                 .AsNoTracking()
                 .AsSplitQuery()
@@ -256,7 +283,7 @@ namespace Erdi_ERC.Controllers
                     result.Add((league, drivers));
             }
 
-            return View(result);
+            return result;
         }
 
         [HttpGet]
@@ -379,6 +406,25 @@ namespace Erdi_ERC.Controllers
         [HttpGet]
         public async Task<IActionResult> DriverLevels()
         {
+            if (_cache.TryGetValue<List<DriverLevelEntryViewModel>>(DriverLevelsCacheKey, out var cachedLevels) && cachedLevels is not null)
+            {
+                return View(new DriverLevelsPageViewModel { Entries = cachedLevels });
+            }
+
+            var entries = await BuildDriverLevelsAsync();
+
+            _cache.Set(DriverLevelsCacheKey, entries, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = DriverLevelsCacheTtl,
+                Priority = CacheItemPriority.Low,
+                Size = 1
+            });
+
+            return View(new DriverLevelsPageViewModel { Entries = entries });
+        }
+
+        private async Task<List<DriverLevelEntryViewModel>> BuildDriverLevelsAsync()
+        {
             var profiles = await _db.DriverProfiles
                 .Include(x => x.GamerTags)
                 .ToListAsync();
@@ -426,7 +472,7 @@ namespace Erdi_ERC.Controllers
             .ThenBy(x => x.Driver)
             .ToList();
 
-            return View(new DriverLevelsPageViewModel { Entries = entries });
+            return entries;
         }
 
         private sealed class DriverAggregate
