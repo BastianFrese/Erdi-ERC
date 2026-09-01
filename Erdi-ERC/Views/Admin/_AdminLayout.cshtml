@@ -52,6 +52,18 @@
 <!DOCTYPE html>
 <html lang="de" data-bs-theme="dark">
 <head>
+    @* ---------- Theme Pre-Paint (vor allen CSS-Links, kein FOUC) ----------
+       Geteilter Key mit dem öffentlichen Layout: localStorage "erc.theme.v1". *@
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('erc.theme.v1') === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                }
+            } catch (e) { /* Private Mode -> dunkel (Default) */ }
+        })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex,nofollow" />
@@ -59,8 +71,11 @@
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    @* Non-blocking wie im öffentlichen Layout: media="print" + onload Trick, Fallback <noscript>. *@
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></noscript>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -272,6 +287,12 @@
 
             <span class="adm-topbar__spacer"></span>
 
+            <button type="button" id="ercThemeToggle" class="adm-topbar__exit-btn"
+                    aria-label="Design umschalten (hell/dunkel)" aria-pressed="false"
+                    title="Design umschalten" style="padding:.35rem .6rem;">
+                <i class="bi bi-sun" aria-hidden="true"></i>
+            </button>
+
             <span class="adm-topbar__user">
                 <i class="bi bi-person-circle"></i>
                 @User.Identity?.Name
@@ -299,9 +320,20 @@
 
 </div>
 
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
-<script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="~/js/theme-toggle.min.js" asp-append-version="true" defer></script>
+@* Lokale, versionierte Lucide-Kopie statt render-blockierendem unpkg-CDN (@latest) — gleiche Quelle wie im öffentlichen Layout. *@
+<script src="~/lib/lucide/lucide.min.js" asp-append-version="true" defer></script>
+<script>
+    (function () {
+        var renderLucide = function () { if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons(); };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', renderLucide);
+        } else {
+            renderLucide();
+        }
+    })();
+</script>
 <script>
     (function () {
         var sidebar = document.getElementById('admSidebar');
