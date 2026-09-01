@@ -68,6 +68,7 @@
     <_JsBundleInputs Include="wwwroot/js/driver-card-fit.js" />
     <_JsBundleInputs Include="wwwroot/js/exclusive-consent.js" />
     <_JsBundleInputs Include="wwwroot/js/event-lightbox.js" />
+    <_JsBundleInputs Include="wwwroot/js/theme-toggle.js" />
   </ItemGroup>
 
   <!--
@@ -75,7 +76,7 @@
     zu /wwwroot/css/site.bundled.css. Ergebnis: 1 HTTP-Request statt 13 @import-Roundtrips (render-blocking).
     Inputs/Outputs sorgen für incrementell — läuft nur wenn Partials neuer sind als das Bundle.
   -->
-  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site/12-tokens-f1.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css" Outputs="wwwroot/css/site.bundled.css">
+  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site/12-tokens-f1.css;wwwroot/css/site/13-tokens-light.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css" Outputs="wwwroot/css/site.bundled.css">
     <ItemGroup>
       <_CssBundle Include="wwwroot/css/site/01-tokens.css" />
       <_CssBundle Include="wwwroot/css/site/02-base.css" />
@@ -89,6 +90,7 @@
       <_CssBundle Include="wwwroot/css/site/10-f1-quickwins.css" />
       <_CssBundle Include="wwwroot/css/site/11-unique-addons.css" />
       <_CssBundle Include="wwwroot/css/site/12-tokens-f1.css" />
+      <_CssBundle Include="wwwroot/css/site/13-tokens-light.css" />
       <_CssBundle Include="wwwroot/css/site.track-setups.css" />
       <_CssBundle Include="wwwroot/css/site.community.css" />
     </ItemGroup>
@@ -97,6 +99,23 @@
     </ReadLinesFromFile>
     <WriteLinesToFile File="wwwroot/css/site.bundled.css" Lines="@(_CssBundleLines)" Overwrite="true" />
     <Message Importance="high" Text="CSS-Bundle erzeugt: wwwroot/css/site.bundled.css" />
+  </Target>
+
+  <!--
+    CSS-Minify via esbuild (Parallele zu BundleSiteJs). Minifiziert das fertige Bundle zu
+    site.bundled.min.css — das Layout laedt nur die .min-Datei (asp-append-version hasht sie,
+    jede CSS-Aenderung = neue Version). Inputs/Outputs kleben am Bundle selbst: laeuft immer
+    dann, wenn BundleSiteCss das Bundle neu geschrieben hat.
+    Fallback: ohne esbuild (ContinueOnError) wird das unminified Bundle kopiert, damit das
+    Layout niemals ein fehlendes Stylesheet referenziert.
+  -->
+  <Target Name="MinifySiteCss" AfterTargets="BundleSiteCss" Inputs="wwwroot/css/site.bundled.css" Outputs="wwwroot/css/site.bundled.min.css">
+    <Exec Command="npx --yes esbuild &quot;wwwroot/css/site.bundled.css&quot; --minify --sourcemap --target=es2020 --outfile=&quot;wwwroot/css/site.bundled.min.css&quot;"
+          ContinueOnError="true" />
+    <Copy SourceFiles="wwwroot/css/site.bundled.css"
+          DestinationFiles="wwwroot/css/site.bundled.min.css"
+          Condition="!Exists('wwwroot/css/site.bundled.min.css')" />
+    <Message Importance="high" Text="CSS-Minify via esbuild: site.bundled.css -> site.bundled.min.css" />
   </Target>
 
   <!--
