@@ -86,6 +86,7 @@ builder.Services.AddScoped<IStreamScheduleQueryService, StreamScheduleQueryServi
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<OverallConstructorsService>();
+builder.Services.AddScoped<ProfileHistoryService>();
 builder.Services.AddScoped<DatabaseTransactionHelper>();
 builder.Services.Configure<DiscordSetupAccessOptions>(builder.Configuration.GetSection("Discord:SetupAccess"));
 builder.Services.Configure<DiscordGuildOptions>(builder.Configuration.GetSection(DiscordGuildOptions.SectionName));

@@ -1,6 +1,7 @@
 using Erdi_ERC.Data;
 using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Erdi_ERC.Services
 {
@@ -11,14 +12,38 @@ namespace Erdi_ERC.Services
     /// </summary>
     public sealed class StreamScheduleQueryService : IStreamScheduleQueryService
     {
-        private readonly AppDbContext _db;
+        private const string CacheKey = "stream-schedule:next:v1";
+        private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 
-        public StreamScheduleQueryService(AppDbContext db)
+        private readonly AppDbContext _db;
+        private readonly IMemoryCache _cache;
+
+        public StreamScheduleQueryService(AppDbContext db, IMemoryCache cache)
         {
             _db = db;
+            _cache = cache;
         }
 
         public async Task<StreamSchedule?> GetNextStreamScheduleAsync(CancellationToken cancellationToken = default)
+        {
+            if (_cache.TryGetValue<StreamSchedule?>(CacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            var result = await ComputeNextAsync(cancellationToken);
+
+            _cache.Set(CacheKey, result, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CacheTtl,
+                Priority = CacheItemPriority.Low,
+                Size = 1
+            });
+
+            return result;
+        }
+
+        private async Task<StreamSchedule?> ComputeNextAsync(CancellationToken cancellationToken)
         {
             var schedules = await _db.StreamSchedules.AsNoTracking().ToListAsync(cancellationToken);
             if (schedules.Count == 0) return null;

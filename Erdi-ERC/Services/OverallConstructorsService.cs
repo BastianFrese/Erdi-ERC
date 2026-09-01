@@ -3,6 +3,7 @@ using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Erdi_ERC.Services
@@ -21,12 +22,17 @@ namespace Erdi_ERC.Services
     /// </summary>
     public class OverallConstructorsService
     {
+        private const string CacheKey = "overall-constructors:v1";
+        private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
+
         private readonly AppDbContext _db;
+        private readonly IMemoryCache _cache;
         private readonly int[] _pointMap;
 
-        public OverallConstructorsService(AppDbContext db, IOptions<F1ScoringOptions> scoringOptions)
+        public OverallConstructorsService(AppDbContext db, IMemoryCache cache, IOptions<F1ScoringOptions> scoringOptions)
         {
             _db = db;
+            _cache = cache;
             var configured = scoringOptions.Value.PointMap;
             if (configured is { Length: > 0 })
             {
@@ -42,8 +48,29 @@ namespace Erdi_ERC.Services
         /// Berechnet die Liga-übergreifende Constructors-Tabelle. Es werden nur Ligen mit
         /// <see cref="League.CountsTowardOverall"/>=true berücksichtigt. Sind keine Ligen
         /// opt-in oder keine Rennen vorhanden, wird eine leere Liste zurückgegeben.
+        /// Ergebnis wird 2 Min. gecacht — der Full-Graph-Load läuft sonst bei jedem
+        /// Home-Hit und jedem /Races/Constructors-Aufruf.
         /// </summary>
         public async Task<List<OverallConstructorRow>> ComputeAsync(CancellationToken cancellationToken = default)
+        {
+            if (_cache.TryGetValue<List<OverallConstructorRow>>(CacheKey, out var cached) && cached is not null)
+            {
+                return cached;
+            }
+
+            var result = await ComputeUncachedAsync(cancellationToken);
+
+            _cache.Set(CacheKey, result, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CacheTtl,
+                Priority = CacheItemPriority.Low,
+                Size = 1
+            });
+
+            return result;
+        }
+
+        private async Task<List<OverallConstructorRow>> ComputeUncachedAsync(CancellationToken cancellationToken)
         {
             var leagues = await _db.Leagues
                 .AsNoTracking()
