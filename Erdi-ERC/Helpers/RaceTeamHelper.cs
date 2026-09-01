@@ -8,52 +8,45 @@ namespace Erdi_ERC.Helpers
     /// </summary>
     public static class RaceTeamHelper
     {
+        /// <summary>
+        /// Team-Auflösung per Standings-Liste (Kompatibilitäts-Wrapper): baut einen einmaligen
+        /// <see cref="RaceTeamLookup"/> und delegiert. Bestehende Caller bleiben unverändert.
+        /// </summary>
         public static string? ResolveTeamForRaceDriver(IEnumerable<DriverStanding> standings, RaceResult race, string? driverName)
+            => ResolveTeamForRaceDriver(new RaceTeamLookup(standings), race, driverName);
+
+        /// <summary>
+        /// Team-Auflösung mit vorgebautem Lookup (O(1) statt linearer Standings-Scan).
+        /// Decision-Order bitidentisch zum alten Pfad: Reserve → Gast → Standings → ReserveFor-Fallback.
+        /// </summary>
+        public static string? ResolveTeamForRaceDriver(RaceTeamLookup lookup, RaceResult race, string? driverName)
         {
             if (string.IsNullOrWhiteSpace(driverName)) return null;
             var normalizedDriver = driverName.Trim();
 
-            var raceMainDriver = race.ReserveAssignments
-                .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.ReserveDriver)
-                                     && a.ReserveDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase))?.MainDriver;
-
+            var raceMainDriver = RaceTeamLookup.ReserveMainDriver(race, normalizedDriver);
             if (!string.IsNullOrWhiteSpace(raceMainDriver))
             {
-                var mainTeam = standings.FirstOrDefault(s =>
-                    !string.IsNullOrWhiteSpace(s.Driver) &&
-                    s.Driver.Trim().Equals(raceMainDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
-
+                var mainTeam = lookup.TeamOf(raceMainDriver);
                 if (!string.IsNullOrWhiteSpace(mainTeam))
                 {
-                    return mainTeam.Trim();
+                    return mainTeam;
                 }
             }
 
             // Pfad 1.5: Cross-League-Gastfahrer → Liga-Hauptfahrer → dessen Team.
             // Sentinel "(kein Hauptfahrer)" (Bestandsdaten ohne Zuordnung) wird ignoriert.
-            var guestMainDriver = race.GuestAssignments?
-                .FirstOrDefault(g => !string.IsNullOrWhiteSpace(g.GuestDriver)
-                                     && g.GuestDriver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)
-                                     && !string.IsNullOrWhiteSpace(g.MainDriver)
-                                     && g.MainDriver.Trim() != Services.StatsService.GuestSentinelNoMain)?
-                .MainDriver;
-
+            var guestMainDriver = RaceTeamLookup.GuestMainDriver(race, normalizedDriver);
             if (!string.IsNullOrWhiteSpace(guestMainDriver))
             {
-                var guestMainTeam = standings.FirstOrDefault(s =>
-                    !string.IsNullOrWhiteSpace(s.Driver) &&
-                    s.Driver.Trim().Equals(guestMainDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
-
+                var guestMainTeam = lookup.TeamOf(guestMainDriver);
                 if (!string.IsNullOrWhiteSpace(guestMainTeam))
                 {
-                    return guestMainTeam.Trim();
+                    return guestMainTeam;
                 }
             }
 
-            var standing = standings.FirstOrDefault(s =>
-                !string.IsNullOrWhiteSpace(s.Driver) &&
-                s.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase));
-
+            var standing = lookup.FindDriver(normalizedDriver);
             if (standing is null) return null;
 
             if (!string.IsNullOrWhiteSpace(standing.Team))
@@ -63,11 +56,8 @@ namespace Erdi_ERC.Helpers
 
             if (standing.IsReserveDriver && !string.IsNullOrWhiteSpace(standing.ReserveForDriver))
             {
-                var fallbackTeam = standings.FirstOrDefault(s =>
-                    !string.IsNullOrWhiteSpace(s.Driver) &&
-                    s.Driver.Trim().Equals(standing.ReserveForDriver.Trim(), StringComparison.OrdinalIgnoreCase))?.Team;
-
-                return string.IsNullOrWhiteSpace(fallbackTeam) ? null : fallbackTeam.Trim();
+                var fallbackTeam = lookup.TeamOf(standing.ReserveForDriver);
+                return fallbackTeam;
             }
 
             return null;
@@ -93,11 +83,14 @@ namespace Erdi_ERC.Helpers
             var normalizedTeam = teamName.Trim();
             var total = 0;
 
+            // Ein Lookup pro Liga statt linearer Standings-Scan pro Finish (O(finishes) statt O(finishes × standings)).
+            var lookup = new RaceTeamLookup(league.Standings);
+
             foreach (var race in league.Races.OrderBy(r => r.Date).ThenBy(r => r.RowId))
             {
                 foreach (var finish in race.Finishes.Where(f => f.Position > 0))
                 {
-                    var resolvedTeam = ResolveTeamForRaceDriver(league.Standings, race, finish.Driver);
+                    var resolvedTeam = ResolveTeamForRaceDriver(lookup, race, finish.Driver);
                     if (string.IsNullOrWhiteSpace(resolvedTeam) || !resolvedTeam.Equals(normalizedTeam, StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
@@ -119,13 +112,14 @@ namespace Erdi_ERC.Helpers
             if (string.IsNullOrWhiteSpace(driverName)) return false;
 
             var normalizedDriver = driverName.Trim();
+            var lookup = new RaceTeamLookup(league.Standings);
 
             var teams = league.Races
                 .OrderBy(r => r.Date)
                 .ThenBy(r => r.RowId)
                 .Where(r => r.Finishes.Any(f => !string.IsNullOrWhiteSpace(f.Driver)
                                                 && f.Driver.Trim().Equals(normalizedDriver, StringComparison.OrdinalIgnoreCase)))
-                .Select(r => ResolveTeamForRaceDriver(league.Standings, r, normalizedDriver))
+                .Select(r => ResolveTeamForRaceDriver(lookup, r, normalizedDriver))
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .Select(t => t!.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)

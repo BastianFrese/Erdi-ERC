@@ -93,12 +93,15 @@ namespace Erdi_ERC.Services
                     .ThenBy(r => r.RowId)
                     .ToList();
 
+                // Ein Lookup pro Liga statt linearer Standings-Scan pro Finish.
+                var lookup = new RaceTeamLookup(league.Standings);
+
                 foreach (var race in orderedRaces)
                 {
                     foreach (var finish in race.Finishes.Where(f => f.Position > 0))
                     {
                         var resolvedTeamName = RaceTeamHelper.ResolveTeamForRaceDriver(
-                            league.Standings, race, finish.Driver);
+                            lookup, race, finish.Driver);
                         if (string.IsNullOrWhiteSpace(resolvedTeamName))
                         {
                             continue;
