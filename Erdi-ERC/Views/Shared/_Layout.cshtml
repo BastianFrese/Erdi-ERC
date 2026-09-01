@@ -72,6 +72,24 @@
 <!DOCTYPE html>
 <html lang="de" data-bs-theme="dark">
 <head>
+    @* ---------- Theme Pre-Paint (vor allen CSS-Links, kein FOUC) ----------
+       Liest localStorage "erc.theme.v1" und setzt data-theme/data-bs-theme
+       noch vor dem ersten Render. Failsafe: try/catch -> dunkel. *@
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('erc.theme.v1') === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                }
+                document.addEventListener('DOMContentLoaded', function () {
+                    var m = document.querySelector('meta[name="theme-color"]');
+                    if (m) m.setAttribute('content',
+                        document.documentElement.getAttribute('data-theme') === 'light' ? '#ffffff' : '#06070a');
+                });
+            } catch (e) { /* Private Mode -> dunkel (Default) */ }
+        })();
+    </script>
     @{
         var _ogTitle = (ViewData["OgTitle"] as string) ?? ($"{ViewData["Title"]} · Erdi's Racing Community");
         var _ogDescription = (ViewData["OgDescription"] as string)
@@ -118,13 +136,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></noscript>
 
-    @* LCP-Preload: Hero-Logo wird auf Home als groesstes above-the-fold-Element angezeigt. *@
-    <link rel="preload" as="image" href="~/images/ERCLogoHighRes1.png" fetchpriority="high">
+    @* LCP-Preload: Hero-Logo ist nur auf Pages relevant, die es above-the-fold zeigen (via ViewData["PreloadHero"]="hero"). Sonst wuerde jede Page 247 KB vorladen. *@
+    @if ((ViewData["PreloadHero"] as string) == "hero")
+    {
+        <link rel="preload" as="image" href="~/images/ERCLogoHighRes1.png" fetchpriority="high">
+    }
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt. *@
-    <link rel="stylesheet" href="~/css/site.bundled.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Erdi_ERC.styles.css" asp-append-version="true" />
+    @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt (inkl. Minify zu site.bundled.min.css). *@
+    <link rel="stylesheet" href="~/css/site.bundled.min.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="@(ViewData["BodyClass"] as string ?? "") @(string.IsNullOrEmpty(_winnerTeamKey) ? "" : $"team-{_winnerTeamKey}")">
@@ -343,6 +363,13 @@
                     </ul>
 
                     <ul class="navbar-nav navbar-nav--auth align-items-lg-center gap-2">
+                        <li class="nav-item">
+                            <button type="button" id="ercThemeToggle" class="btn btn-sm btn-ghost"
+                                    aria-label="Design umschalten (hell/dunkel)" aria-pressed="false"
+                                    title="Design umschalten">
+                                <i class="bi bi-sun" aria-hidden="true"></i>
+                            </button>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
@@ -426,6 +453,7 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="~/lib/lucide/lucide.min.js" asp-append-version="true" defer></script>
+    <script src="~/js/theme-toggle.min.js" asp-append-version="true" defer></script>
     <script src="~/js/site.min.js" asp-append-version="true" defer></script>
     <script src="~/js/exclusive-consent.min.js" asp-append-version="true" defer></script>
     <script>
