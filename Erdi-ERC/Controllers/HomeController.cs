@@ -18,200 +18,42 @@ namespace Erdi_ERC.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly BackgroundMusicOptions _backgroundMusic;
         private readonly IMemoryCache _cache;
-        private readonly OverallConstructorsService _overallConstructors;
-        private readonly IStreamScheduleQueryService _streamSchedules;
+        private readonly HomeIndexDataService _homeIndexData;
         private readonly ILogger<HomeController> _logger;
-        private readonly int[] _f1PointMap;
 
         public HomeController(
             AppDbContext db,
             IWebHostEnvironment env,
             IOptions<BackgroundMusicOptions> backgroundMusic,
-            IOptions<F1ScoringOptions> f1Scoring,
             IMemoryCache cache,
-            OverallConstructorsService overallConstructors,
-            IStreamScheduleQueryService streamSchedules,
+            HomeIndexDataService homeIndexData,
             ILogger<HomeController> logger)
         {
             _db = db;
             _env = env;
             _backgroundMusic = backgroundMusic.Value;
-            var configuredMap = f1Scoring.Value.PointMap;
-            _f1PointMap = configuredMap is { Length: > 0 }
-                ? configuredMap
-                : new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
             _cache = cache;
-            _overallConstructors = overallConstructors;
-            _streamSchedules = streamSchedules;
+            _homeIndexData = homeIndexData;
             _logger = logger;
         }
 
         public async Task<IActionResult> Index()
         {
-            var currentLeagueIds = await _db.Leagues
-                .Where(l => !l.IsArchived)
-                .Select(l => l.Id)
-                .ToListAsync();
+            // Alle ViewBag-Daten kommen aus dem 60s-gecachten HomeIndexDataService —
+            // die ~13 Queries (inkl. Last-Winner-Historie) laufen nur 1x pro Minute.
+            var data = await _homeIndexData.GetAsync();
 
-            ViewBag.LeagueCount = await _db.Leagues.CountAsync();
-            ViewBag.DriverCount = await _db.DriverStandings
-                .Where(s => currentLeagueIds.Contains(s.LeagueId) && !string.IsNullOrWhiteSpace(s.Driver))
-                .CountAsync();
-            ViewBag.RaceCount = await _db.RaceResults.CountAsync();
-            ViewBag.UpcomingCount = await _db.RaceWeekendLegs.CountAsync(l => l.Date >= DateTime.UtcNow.Date);
-            ViewBag.NextUpcomingEvent = await _db.RaceWeekendLegs
-                .Include(l => l.Weekend)
-                .Where(l => l.Date >= DateTime.UtcNow)
-                .OrderBy(l => l.Date)
-                .Select(l => new
-                {
-                    Track  = l.Weekend!.Track,
-                    Date   = l.Date,
-                    Format = l.Weekend!.DistancePercent + "% Race",
-                    LeagueId = l.LeagueId
-                })
-                .FirstOrDefaultAsync();
-            ViewBag.NextStream = await _streamSchedules.GetNextStreamScheduleAsync();
-            ViewBag.HasTrackSetups = await _db.TrackSetups.AnyAsync();
-
-            // Liga-übergreifende Constructors: Top-3 für den Chip auf der Startseite.
-            // Vollberechnung läuft nur einmal pro Request; das ist günstig genug, ohne
-            // einen eigenen Cache-Layer, weil die Seite ohnehin aggregiert rendert.
-            // Fail-open: Wenn die Aggregation hängt (z.B. defekte League-Daten), blenden
-            // wir den Chip einfach aus — die restliche Startseite muss weiterlaufen.
-            try
-            {
-                var overallRows = await _overallConstructors.ComputeAsync();
-                ViewBag.OverallConstructorsTop3 = overallRows.Take(3).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "OverallConstructors.Top3 konnte nicht berechnet werden — Chip wird ausgeblendet.");
-                ViewBag.OverallConstructorsTop3 = new List<OverallConstructorRow>();
-            }
-            ViewBag.CommunityNews = await _db.CommunityNewsPosts
-                .Where(x => x.IsPublished)
-                .OrderByDescending(x => x.IsPinned)
-                .ThenByDescending(x => x.PublishedAt)
-                .Take(4)
-                .ToListAsync();
-
-            var leaguePreviewBase = await _db.Leagues
-                .OrderBy(l => l.Name)
-                .Select(l => new
-                {
-                    l.Id,
-                    l.Name,
-                    l.Description,
-                    Drivers = l.Standings.Count
-                })
-                .ToListAsync();
-
-            var nextLegsByLeague = await _db.RaceWeekendLegs
-                .Include(l => l.Weekend)
-                .Where(l => l.Date >= DateTime.Today)
-                .OrderBy(l => l.Date)
-                .ToListAsync();
-
-            ViewBag.LeaguePreview = leaguePreviewBase
-                .Select(l =>
-                {
-                    var next = nextLegsByLeague.FirstOrDefault(x => x.LeagueId == l.Id);
-                    return new
-                    {
-                        l.Id,
-                        l.Name,
-                        l.Description,
-                        l.Drivers,
-                        NextEvent = next is null
-                            ? null
-                            : new
-                            {
-                                Track  = next.Weekend?.Track ?? string.Empty,
-                                Date   = next.Date,
-                                Format = (next.Weekend?.DistancePercent ?? 100) + "% Race"
-                            }
-                    };
-                })
-                .ToList();
-
-            var leaguesForWinners = await _db.Leagues
-                .AsNoTracking()
-                .Include(l => l.Races).ThenInclude(r => r.Finishes)
-                .Include(l => l.Races).ThenInclude(r => r.ReserveAssignments)
-                .Include(l => l.Races).ThenInclude(r => r.GuestAssignments)
-                .Include(l => l.Standings)
-                .OrderBy(l => l.Name)
-                .ToListAsync();
-
-            ViewBag.LastWinners = leaguesForWinners
-                .Select(l =>
-                {
-                    var lastRace = l.Races
-                        .Where(r => !string.IsNullOrWhiteSpace(r.Winner))
-                        .OrderByDescending(r => r.Date)
-                        .ThenByDescending(r => r.RowId)
-                        .FirstOrDefault();
-
-                    if (lastRace == null)
-                    {
-                        return new
-                        {
-                            l.Id,
-                            l.Name,
-                            Winner = (string?)null,
-                            Track = (string?)null,
-                            Date = (DateTime?)null,
-                            DriverPoints = (int?)null,
-                            WinnerTeam = (string?)null,
-                            TeamPoints = (int?)null,
-                            IsReserveWinner = false,
-                            ReserveForDriver = (string?)null,
-                            ReserveForInRace = (string?)null,
-                            IsGuestWinner = false,
-                            GuestForMain = (string?)null
-                        };
-                    }
-
-                    var winnerStanding = l.Standings.FirstOrDefault(s =>
-                        !string.IsNullOrWhiteSpace(s.Driver) &&
-                        s.Driver.Trim().Equals(lastRace.Winner!.Trim(), StringComparison.OrdinalIgnoreCase));
-
-                    var raceReserveMain = lastRace.ReserveAssignments.FirstOrDefault(a =>
-                        !string.IsNullOrWhiteSpace(a.ReserveDriver) &&
-                        a.ReserveDriver.Trim().Equals(lastRace.Winner!.Trim(), StringComparison.OrdinalIgnoreCase))?.MainDriver;
-
-                    // Cross-League-Gast: Winner kommt aus anderer Liga → Marker im View.
-                    var raceGuestMain = lastRace.GuestAssignments?.FirstOrDefault(g =>
-                        !string.IsNullOrWhiteSpace(g.GuestDriver) &&
-                        g.GuestDriver.Trim().Equals(lastRace.Winner!.Trim(), StringComparison.OrdinalIgnoreCase) &&
-                        !string.IsNullOrWhiteSpace(g.MainDriver) &&
-                        g.MainDriver != StatsService.GuestSentinelNoMain)?.MainDriver;
-
-                    var effectiveWinnerTeam = RaceTeamHelper.ResolveTeamForRaceDriver(l.Standings, lastRace, lastRace.Winner!);
-                    var isReserveWinner = winnerStanding?.IsReserveDriver == true || !string.IsNullOrWhiteSpace(raceReserveMain);
-                    var isGuestWinner  = !isReserveWinner && !string.IsNullOrWhiteSpace(raceGuestMain);
-                    var droveForMultipleTeams = isReserveWinner && RaceTeamHelper.HasDrivenForMultipleTeams(l, lastRace.Winner!);
-                    var teamPoints = droveForMultipleTeams ? null : RaceTeamHelper.ComputeTeamPointsForLeague(l, effectiveWinnerTeam, _f1PointMap);
-
-                    return new
-                    {
-                        l.Id,
-                        l.Name,
-                        Winner = (string?)lastRace.Winner,
-                        Track = (string?)lastRace.Track,
-                        Date = (DateTime?)lastRace.Date,
-                        DriverPoints = (int?)winnerStanding?.Points,
-                        WinnerTeam = (string?)effectiveWinnerTeam,
-                        TeamPoints = teamPoints,
-                        IsReserveWinner = isReserveWinner,
-                        ReserveForDriver = (string?)(raceReserveMain ?? winnerStanding?.ReserveForDriver),
-                        ReserveForInRace = (string?)raceReserveMain,
-                        IsGuestWinner = isGuestWinner,
-                        GuestForMain = (string?)raceGuestMain
-                    };
-                })
-                .ToList();
+            ViewBag.LeagueCount = data.LeagueCount;
+            ViewBag.DriverCount = data.DriverCount;
+            ViewBag.RaceCount = data.RaceCount;
+            ViewBag.UpcomingCount = data.UpcomingCount;
+            ViewBag.NextUpcomingEvent = data.NextUpcomingEvent;
+            ViewBag.NextStream = data.NextStream;
+            ViewBag.HasTrackSetups = data.HasTrackSetups;
+            ViewBag.OverallConstructorsTop3 = data.OverallConstructorsTop3;
+            ViewBag.CommunityNews = data.CommunityNews;
+            ViewBag.LeaguePreview = data.LeaguePreview;
+            ViewBag.LastWinners = data.LastWinners;
 
             return View();
         }
@@ -264,14 +106,77 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Stewarding()
+        public async Task<IActionResult> Stewarding(string? league = null)
         {
-            var penalties = await _db.LeaguePenalties
-                .Where(x => x.IsPublic)
+            // Liga-Filter-Buttons werden aus den LeagueId-Werten der oeffentlichen
+            // Berichte abgeleitet — so taucht auch eine inzwischen archivierte Liga
+            // als Button auf, solange es noch oeffentliche Dokumente fuer sie gibt.
+            // Namen kommen aus der Leagues-Tabelle (Fallback: rohe LeagueId).
+            var query = _db.LeaguePenalties.Where(x => x.IsPublic);
+            if (!string.IsNullOrWhiteSpace(league))
+            {
+                var needle = league.Trim().ToLower();
+                query = query.Where(x => x.LeagueId != null && x.LeagueId.ToLower() == needle);
+            }
+
+            var penalties = await query
                 .OrderByDescending(x => x.Date)
                 .ThenBy(x => x.Driver)
                 .ToListAsync();
+
+            // Liga-Tabelle fuer Namen — bewusst NICHT auf !IsArchived gefiltert,
+            // damit archivierte Ligen mit oeffentlichen Alt-Berichten ihren Namen zeigen.
+            var leagueNames = await _db.Leagues
+                .Select(l => new { l.Id, l.Name, l.IsArchived })
+                .ToListAsync();
+            var leagueLookup = leagueNames.ToDictionary(
+                x => x.Id,
+                x => new { x.Name, x.IsArchived },
+                StringComparer.OrdinalIgnoreCase);
+
+            // Eindeutige Liga-IDs aus den oeffentlichen Berichten ableiten,
+            // stabil sortiert (zunaechst nach "ist noch aktiv" zuerst, dann alphabetisch).
+            var leagueIds = penalties
+                .Select(p => p.LeagueId ?? string.Empty)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(id =>
+                {
+                    leagueLookup.TryGetValue(id, out var info);
+                    var isArchived = info?.IsArchived ?? false;
+                    return isArchived ? 1 : 0;
+                })
+                .ThenBy(id =>
+                {
+                    leagueLookup.TryGetValue(id, out var info);
+                    return info?.Name ?? id;
+                }, StringComparer.OrdinalIgnoreCase)
+                .Select(id => new
+                {
+                    Id         = id,
+                    Name       = leagueLookup.TryGetValue(id, out var info) ? info.Name : id,
+                    IsArchived = leagueLookup.TryGetValue(id, out var info2) && info2.IsArchived
+                })
+                .ToList();
+
+            ViewBag.ActiveLeagues = leagueIds;
+            ViewBag.LeagueFilter  = league ?? "";
             return View(penalties);
+        }
+
+        [HttpGet]
+        [Route("Stewarding/Doc/{id:int}")]
+        public async Task<IActionResult> StewardingDoc(int id)
+        {
+            // Öffentliche Detail-Ansicht eines Steward-Dokuments (eigener Tab).
+            // Nur oeffentliche Dokumente sind erreichbar — interne bleiben
+            // strikt im Admin-Bereich hinter [Authorize].
+            var penalty = await _db.LeaguePenalties
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id && x.IsPublic);
+            if (penalty is null) return NotFound();
+
+            return View(penalty);
         }
 
         // ── About ────────────────────────────────────────────────────────────────
