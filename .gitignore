@@ -53,6 +53,10 @@ Erdi-ERC/wwwroot/uploads/**/*
 Erdi-ERC/backgroundmusic/*
 !Erdi-ERC/backgroundmusic/.gitkeep
 
+# --- Downloads (App-Installer, große Binärdateien) ---
+Erdi-ERC/downloads/*
+!Erdi-ERC/downloads/.gitkeep
+
 # --- DB-Backups (personenbezogene Daten — NIE einchecken!) ---
 applicationforms-backup-*.json
 
