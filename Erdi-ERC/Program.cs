@@ -791,6 +791,24 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
+// Serve downloads (z.B. App-Installer) vom Projekt-Root-Ordner "downloads"
+var downloadsPath = Path.Combine(app.Environment.ContentRootPath, "downloads");
+Directory.CreateDirectory(downloadsPath);
+
+var downloadContentTypeProvider = new FileExtensionContentTypeProvider();
+downloadContentTypeProvider.Mappings[".exe"] = "application/octet-stream";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(downloadsPath),
+    RequestPath = "/downloads",
+    ContentTypeProvider = downloadContentTypeProvider,
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.CacheControl = "public, max-age=86400";
+    }
+});
+
 // Additionally configure uploads directory to be served with proper cache headers
 var uploadsPath = Path.Combine(app.Environment.WebRootPath, "uploads");
 // Ensure uploads directory exists so we can register a StaticFiles middleware for it

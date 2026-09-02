@@ -65,6 +65,26 @@ namespace Erdi_ERC.Controllers
         public IActionResult Regelwerk() => View();
         public IActionResult Maintenance() => View("Maintenance");
 
+        /// <summary>Liefert die neueste .exe aus dem downloads-Ordner als Download — kein fester Dateiname.</summary>
+        [HttpGet]
+        public IActionResult DownloadApp()
+        {
+            var downloadsPath = Path.Combine(_env.ContentRootPath, "downloads");
+
+            var installer = Directory.EnumerateFiles(downloadsPath, "*.exe")
+                .Select(f => new FileInfo(f))
+                .OrderByDescending(f => f.LastWriteTimeUtc)
+                .FirstOrDefault();
+
+            if (installer is null)
+            {
+                _logger.LogWarning("Download angefragt, aber keine .exe im Ordner {DownloadsPath}", downloadsPath);
+                return NotFound();
+            }
+
+            return PhysicalFile(installer.FullName, "application/octet-stream", installer.Name);
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
