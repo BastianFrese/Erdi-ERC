@@ -13,7 +13,7 @@
        KPI ROW
     ══════════════════════════════════════════════════════════════════ *@
     <section class="adm-kpi-grid">
-        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminRaceCalendar" asp-action="Index" style="--kpi-color:#ffb800;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminRaceCalendar" asp-action="Index" style="--kpi-color:#e8a93d;">
             <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.TotalRaces</div>
@@ -21,7 +21,7 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
-        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminAchievements" asp-action="Index" style="--kpi-color:#b95cff;">
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminAchievements" asp-action="Index" style="--kpi-color:#9d6ec4;">
             <div class="adm-kpi-card__icon"><i class="bi bi-people-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.TotalDrivers</div>
@@ -29,7 +29,7 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
-        <a class="adm-kpi-card text-decoration-none" asp-action="AuditLogs" style="--kpi-color:#00e5ff;">
+        <a class="adm-kpi-card text-decoration-none" asp-action="AuditLogs" style="--kpi-color:#58b7c9;">
             <div class="adm-kpi-card__icon"><i class="bi bi-clock-history"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@ViewBag.AuditCount24h</div>
@@ -175,7 +175,7 @@
             <div class="adm-panel">
                 <div class="adm-panel__head">
                     <span class="adm-panel__head-title">
-                        <i class="bi bi-person-badge me-2" style="color:#b95cff;"></i>EA-Namen Änderungen
+                        <i class="bi bi-person-badge me-2" style="color:#9d6ec4;"></i>EA-Namen Änderungen
                     </span>
                     <a class="adm-panel__head-action" asp-action="AuditLogs">
                         Alle <i class="bi bi-arrow-right ms-1"></i>
@@ -250,6 +250,41 @@
                         <i class="bi bi-journal-text me-1"></i>Audit Logs
                     </a>
                 </div>
+
+                @if (ViewBag.IsSuperAdmin is true)
+                {
+                    <div class="adm-system-action-group">
+                        <div class="adm-system-action-group__label">
+                            App-Download <span class="adm-badge ms-1" style="font-size:.7rem;">nur Superadmins</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge @(ViewBag.AppDownloadEnabled is true ? "bg-success" : "bg-secondary")">
+                                @(ViewBag.AppDownloadEnabled is true ? "AN — Button sichtbar" : "AUS — Button versteckt")
+                            </span>
+                            @if (ViewBag.AppDownloadFileAvailable is not true)
+                            {
+                                <span class="badge bg-warning text-dark" title="Im downloads-Ordner liegt keine .exe — der Download würde 404 geben.">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>keine EXE im downloads-Ordner
+                                </span>
+                            }
+                        </div>
+                        <form asp-action="ToggleAppDownload" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            @if (ViewBag.AppDownloadEnabled is true)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-eye-slash me-1"></i>Download deaktivieren
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-outline-success" type="submit">
+                                    <i class="bi bi-eye me-1"></i>Download aktivieren
+                                </button>
+                            }
+                        </form>
+                    </div>
+                }
 
                 <div class="adm-system-action-group">
                     <div class="adm-system-action-group__label">Race-Kalender</div>

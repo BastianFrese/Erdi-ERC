@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.FileProviders;
 using Serilog;
 using Serilog.Events;
@@ -87,6 +88,12 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<OverallConstructorsService>();
 builder.Services.AddScoped<ProfileHistoryService>();
+// Singleton: teilt Cache + Dateizustand über alle Requests (Layout liest das Flag bei jedem Render).
+builder.Services.AddSingleton<ISiteSettingsService>(sp =>
+    new SiteSettingsService(
+        builder.Environment.ContentRootPath,
+        sp.GetRequiredService<IMemoryCache>(),
+        sp.GetRequiredService<ILogger<SiteSettingsService>>()));
 builder.Services.AddScoped<HomeIndexDataService>();
 builder.Services.AddScoped<DatabaseTransactionHelper>();
 builder.Services.Configure<DiscordSetupAccessOptions>(builder.Configuration.GetSection("Discord:SetupAccess"));

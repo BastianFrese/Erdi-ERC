@@ -5,6 +5,7 @@ using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Erdi_ERC.Controllers
 {
@@ -15,12 +16,15 @@ namespace Erdi_ERC.Controllers
         private readonly AppDbContext _db;
         private readonly IAdminAuditService _audit;
         private readonly IStreamScheduleQueryService _streamSchedules;
+        private readonly ISiteSettingsService _siteSettings;
 
-        public AdminController(AppDbContext db, IAdminAuditService audit, IStreamScheduleQueryService streamSchedules)
+        public AdminController(AppDbContext db, IAdminAuditService audit, IStreamScheduleQueryService streamSchedules,
+            ISiteSettingsService siteSettings)
         {
             _db = db;
             _audit = audit;
             _streamSchedules = streamSchedules;
+            _siteSettings = siteSettings;
         }
 
         // ---- Dashboard / Main Übersicht ----
@@ -45,7 +49,29 @@ namespace Erdi_ERC.Controllers
                 .Take(8)
                 .ToListAsync();
 
+            ViewBag.IsSuperAdmin = IsSuperAdmin;
+            ViewBag.AppDownloadEnabled = _siteSettings.IsAppDownloadEnabled();
+            ViewBag.AppDownloadFileAvailable = _siteSettings.HasInstallerFile();
+
             return View(leagues);
+        }
+
+        // ---- App-Download Toggle (nur Superadmins) ----
+        private bool IsSuperAdmin => User.HasClaim("erdi:superadmin", "true");
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleAppDownload()
+        {
+            if (!IsSuperAdmin) return Forbid();
+
+            var newState = !_siteSettings.IsAppDownloadEnabled();
+            _siteSettings.SetAppDownloadEnabled(newState, User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unbekannt");
+            await _audit.LogAndSaveAsync(newState ? "EnableAppDownload" : "DisableAppDownload", "SiteSettings", "appDownload",
+                $"App-Download {(newState ? "aktiviert" : "deaktiviert")}");
+            TempData["AdminMessage"] = newState
+                ? "App-Download ist jetzt SICHTBAR (Layout-Cache: greift binnen ~30s)."
+                : "App-Download ist jetzt AUSGEBLENDET (Layout-Cache: greift binnen ~30s).";
+            return RedirectToAction(nameof(Index));
         }
 
         // ---- Audit Logs ----
