@@ -19,14 +19,14 @@
                 <div class="adm-kpi-card__label">Admins gesamt</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:#ffb800;">
+        <div class="adm-kpi-card" style="--kpi-color:#e8a93d;">
             <div class="adm-kpi-card__icon"><i class="bi bi-star-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count(x => x.IsSuperAdmin)</div>
                 <div class="adm-kpi-card__label">Superadmins</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#4caf6d;">
             <div class="adm-kpi-card__icon"><i class="bi bi-key-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@Model.Count(x => !x.IsSuperAdmin)</div>
@@ -55,7 +55,7 @@
                     <label class="adm-check-label">
                         <input type="checkbox" name="isSuperAdmin" value="true" class="adm-checkbox" />
                         <span class="adm-check-text">
-                            <i class="bi bi-star-fill me-1" style="color:#ffb800;"></i>
+                            <i class="bi bi-star-fill me-1" style="color:#e8a93d;"></i>
                             Superadmin <small class="adm-check-hint">(voller Zugriff auf alle Bereiche)</small>
                         </span>
                     </label>
@@ -78,7 +78,7 @@
         {
             <div class="adm-panel__body">
                 <div class="adm-empty">
-                    <i class="bi bi-exclamation-triangle-fill adm-empty__icon" style="color:#ffb800;opacity:1;"></i>
+                    <i class="bi bi-exclamation-triangle-fill adm-empty__icon" style="color:#e8a93d;opacity:1;"></i>
                     <span>Noch keine Admins hinterlegt. Trage mindestens deine eigene Discord-ID ein!</span>
                 </div>
             </div>
@@ -176,7 +176,7 @@
                                             <label class="adm-check-label">
                                                 <input type="checkbox" name="isSuperAdmin" value="true" class="adm-checkbox" @(admin.IsSuperAdmin ? "checked" : "") />
                                                 <span class="adm-check-text">
-                                                    <i class="bi bi-star-fill me-1" style="color:#ffb800;"></i>
+                                                    <i class="bi bi-star-fill me-1" style="color:#e8a93d;"></i>
                                                     Superadmin
                                                 </span>
                                             </label>

@@ -1,0 +1,182 @@
+@{
+    ViewData["Title"] = "Sende-Keys";
+    ViewData["Kicker"] = "Telemetrie";
+    ViewData["HeroTitle"] = "Telemetrie-Sende-Keys";
+
+    var keys = ViewBag.Keys as System.Collections.Generic.IReadOnlyList<Erdi_ERC.Models.TelemetrySenderKey>
+               ?? new System.Collections.Generic.List<Erdi_ERC.Models.TelemetrySenderKey>();
+    var profiles = ViewBag.Profiles as System.Collections.Generic.List<Erdi_ERC.Models.DriverProfile>
+                   ?? new System.Collections.Generic.List<Erdi_ERC.Models.DriverProfile>();
+    var profileName = new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+    foreach (var p in profiles)
+    {
+        if (!string.IsNullOrWhiteSpace(p.DiscordId))
+        {
+            profileName[p.DiscordId] = p.DisplayName ?? p.DiscordName ?? p.DiscordId;
+        }
+    }
+
+    string? plainKey = ViewBag.PlainKey as string;
+    string? plainKeyOwner = ViewBag.PlainKeyOwner as string;
+    var msg = TempData["AdminMessage"] as string;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/admin-applications.css" asp-append-version="true" />
+}
+
+<div class="adm-dashboard">
+
+    <a class="adm-back-bar" asp-action="Index">
+        <i class="bi bi-arrow-left-circle"></i> Zurück zur Eingangsliste
+    </a>
+
+    @if (!string.IsNullOrWhiteSpace(msg))
+    {
+        <div class="adm-alert"><i class="bi bi-info-circle"></i> @msg</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(plainKey))
+    {
+        <div class="adm-alert" style="border-color:rgba(var(--bs-warning-rgb),.6);background:rgba(var(--bs-warning-rgb),.08);">
+            <div style="display:flex;flex-direction:column;gap:.5rem;">
+                <div>
+                    <i class="bi bi-exclamation-triangle me-2" style="color:var(--bs-warning);"></i>
+                    <strong>Neuer Key für @(plainKeyOwner ?? "Fahrer") — nur JETZT anzeigen!</strong>
+                </div>
+                <div class="form-text">
+                    Er wird nur einmal angezeigt und danach verschlüsselt gespeichert. Kopiere ihn in die
+                    Telemetrie-App (Einstellungen → ERC-Ergebnis). Bei Verlust wird ein neuer Key erzeugt.
+                </div>
+                <div class="input-group input-group-sm" style="max-width:560px;">
+                    <input type="text" class="form-control font-monospace" id="plainKeyBox" readonly
+                           value="@plainKey" style="background:var(--surface-1);" />
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyPlainKey()">
+                        <i class="bi bi-clipboard"></i> Kopieren
+                    </button>
+                </div>
+                <div class="form-text" id="copyHint" style="display:none;color:#4ade80;"><i class="bi bi-check-circle"></i> In die Zwischenablage kopiert.</div>
+            </div>
+        </div>
+    }
+
+    @* Key erzeugen *@
+    <form method="post" asp-action="GenerateKey" class="adm-panel">
+        @Html.AntiForgeryToken()
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title"><i class="bi bi-key me-2" style="color:#22d3ee;"></i>Neuen Key erzeugen</span>
+        </div>
+        <div class="adm-panel__body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="discordId">Fahrer *</label>
+                    <select id="discordId" name="discordId" class="adm-form-select" required>
+                        <option value="">— Fahrer wählen —</option>
+                        @foreach (var p in profiles)
+                        {
+                            <option value="@p.DiscordId">@(p.DisplayName ?? p.DiscordName ?? p.DiscordId) (@p.DiscordId)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="description">Bezeichnung (optional)</label>
+                    <input type="text" id="description" name="description" class="adm-form-input"
+                           maxlength="64" placeholder="z.&nbsp;B. Sim-Rig, Laptop..." />
+                </div>
+            </div>
+            <div class="adm-table__secondary" style="margin-top:.75rem;">
+                Fahrer mit Key können Liga-Rennen-Ergebnisse an die Webseite senden (nur eigene Ligen, nur aktive Stammfahrer).
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">
+                <i class="bi bi-key-fill"></i> Key erzeugen
+            </button>
+        </div>
+    </form>
+
+    @* Key-Liste *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title"><i class="bi bi-key me-2"></i>Bestehende Keys (@keys.Count)</span>
+        </div>
+        <div class="adm-panel__body adm-panel__body--flush">
+            @if (keys.Count == 0)
+            {
+                <div class="adm-empty">
+                    <i class="bi bi-key"></i>
+                    <p>Noch keine Sende-Keys vergeben.</p>
+                </div>
+            }
+            else
+            {
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Fahrer</th>
+                            <th>Bezeichnung</th>
+                            <th>Erzeugt</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var k in keys)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="adm-table__primary">@(profileName.TryGetValue(k.DiscordId, out var n) ? n : k.DiscordId)</div>
+                                    <div class="adm-table__secondary"><code>@k.DiscordId</code></div>
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(k.Description) ? "–" : k.Description)</td>
+                                <td>@k.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    @if (k.RevokedAt is null)
+                                    {
+                                        <span class="f1-chip f1-chip--green">aktiv</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="f1-chip f1-chip--red">gesperrt @k.RevokedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (k.RevokedAt is null)
+                                    {
+                                        <form method="post" asp-action="RevokeKey" class="d-inline"
+                                              onsubmit="return confirm('Key für diesen Fahrer wirklich sperren? Die App kann damit keine Ergebnisse mehr senden.');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@k.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-slash-circle"></i> Sperren
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyPlainKey() {
+        const box = document.getElementById('plainKeyBox');
+        if (!box) return;
+        box.select();
+        box.setSelectionRange(0, 99999);
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(box.value)
+                .then(showCopyHint)
+                .catch(() => document.execCommand('copy') && showCopyHint());
+        } else {
+            document.execCommand('copy');
+            showCopyHint();
+        }
+    }
+    function showCopyHint() {
+        const hint = document.getElementById('copyHint');
+        if (hint) hint.style.display = 'block';
+    }
+</script>

@@ -7,7 +7,10 @@
     {
         if (!ms.HasValue) return "—";
         var t = TimeSpan.FromMilliseconds(ms.Value);
-        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+        // Gesamtzeit: ab 1 Stunde H:MM:SS.mmm, sonst M:SS.mmm.
+        return t.TotalHours >= 1
+            ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}.{t.Milliseconds:000}"
+            : $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
     }
 
     static string FormatGap(int? ms)

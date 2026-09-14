@@ -311,16 +311,16 @@
     width: fit-content;
 }
 .app-league-card__badge--free {
-    background: rgba(57,255,20,.10);
-    color: #39ff14;
+    background: rgba(76,175,109,.10);
+    color: #4caf6d;
 }
 .app-league-card__badge--wait {
-    background: rgba(255,184,0,.10);
-    color: var(--sig-amber, #ffb800);
+    background: rgba(232,169,61,.10);
+    color: var(--sig-amber, #e8a93d);
 }
 .app-league-card__badge--open {
-    background: rgba(61,169,252,.10);
-    color: #3da9fc;
+    background: rgba(109,156,196,.10);
+    color: #6d9cc4;
 }
 .app-league-card--full .app-league-card__body {
     background: rgba(255,255,255,.015);
@@ -375,20 +375,20 @@
     margin-bottom: .25rem;
 }
 .app-submit-card__icon--ok {
-    background: rgba(57,255,20,.10);
-    box-shadow: 0 0 24px rgba(57,255,20,.25);
+    background: rgba(76,175,109,.10);
+    box-shadow: 0 0 24px rgba(76,175,109,.25);
 }
 .app-submit-card__icon--wait {
-    background: rgba(255,184,0,.10);
-    box-shadow: 0 0 24px rgba(255,184,0,.25);
+    background: rgba(232,169,61,.10);
+    box-shadow: 0 0 24px rgba(232,169,61,.25);
 }
 .app-submit-card__icon--info {
-    background: rgba(61,169,252,.10);
-    box-shadow: 0 0 24px rgba(61,169,252,.25);
+    background: rgba(109,156,196,.10);
+    box-shadow: 0 0 24px rgba(109,156,196,.25);
 }
 .app-submit-card__icon--send {
-    background: rgba(0,229,255,.10);
-    box-shadow: 0 0 24px rgba(0,229,255,.25);
+    background: rgba(88,183,201,.10);
+    box-shadow: 0 0 24px rgba(88,183,201,.25);
 }
 .app-submit-card__title {
     font-family: var(--ff-tech);
@@ -412,8 +412,8 @@
     align-items: center;
     gap: .5rem;
     padding: .5rem 1rem;
-    background: rgba(255,184,0,.08);
-    border: 1px solid rgba(255,184,0,.2);
+    background: rgba(232,169,61,.08);
+    border: 1px solid rgba(232,169,61,.2);
     border-radius: var(--r-2);
     font-size: .78rem;
     color: var(--sig-amber);
@@ -431,8 +431,8 @@
     gap: .6rem;
     padding: .75rem 1rem;
     margin-bottom: 1.25rem;
-    background: rgba(61,169,252,.08);
-    border: 1px solid rgba(61,169,252,.25);
+    background: rgba(109,156,196,.08);
+    border: 1px solid rgba(109,156,196,.25);
     border-radius: var(--r-2, 8px);
     font-size: .85rem;
     color: #cfe9ff;
@@ -522,7 +522,7 @@
     margin: 1.75rem 0 .85rem;
 }
 .app-section-title i {
-    color: var(--sig-amber, #ffb800);
+    color: var(--sig-amber, #e8a93d);
     margin-right: .4rem;
 }
 .app-card--waitlist {
@@ -546,8 +546,8 @@
     font-family: var(--ff-tech);
     font-size: 1.9rem;
     font-weight: 900;
-    color: var(--sig-amber, #ffb800);
-    background: rgba(255,184,0,.07);
+    color: var(--sig-amber, #e8a93d);
+    background: rgba(232,169,61,.07);
     border-radius: var(--r-2, 8px);
 }
 

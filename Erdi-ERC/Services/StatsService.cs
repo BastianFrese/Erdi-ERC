@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
@@ -114,6 +115,11 @@ namespace Erdi_ERC.Services
             // nach der vollständigen Saison angewendet werden können.
             var racePointsByStanding = new Dictionary<DriverStanding, List<int>>();
 
+            // Positions-Zähler für den F1-Tiebreaker (meiste 1. Plätze, dann 2., dann 3., …).
+            // Keyed über den Namen des aufgelösten Standings (gleiche Attribution wie
+            // Wins/Punkte), damit die Sortierung exakt zur Punktevergabe passt.
+            var positionCounts = new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var race in races)
             {
                 var raceReserveToMain = race.ReserveAssignments
@@ -174,6 +180,18 @@ namespace Erdi_ERC.Services
                     }
                     raceScores.Add(points);
 
+                    // Nur gültige Positionen legen einen Zähler an — identisch zu
+                    // BuildPositionCounts, damit beide Pfade denselben Edge-Case haben.
+                    if (finish.Position <= StandingsRankingHelper.MaxPositions)
+                    {
+                        if (!positionCounts.TryGetValue(standing.Driver, out var posArr))
+                        {
+                            posArr = new int[StandingsRankingHelper.MaxPositions];
+                            positionCounts[standing.Driver] = posArr;
+                        }
+                        posArr[finish.Position - 1]++;
+                    }
+
                     if (finish.Position == 1)
                     {
                         standing.Wins += 1;
@@ -216,11 +234,10 @@ namespace Erdi_ERC.Services
             // Meisterschaftswertung hat. Soll ein Fahrer manuell Korrekturpunkte erhalten,
             // ist weiterhin DriverStanding.PointsAdjustment (Admin-Liga-Edit) der Weg.
 
-            var ranked = standings
-                .OrderByDescending(s => s.Points)
-                .ThenByDescending(s => s.Wins)
-                .ThenBy(s => s.Driver)
-                .ToList();
+            // F1-Tiebreaker: Punkte absteigend, dann meiste bessere Positionen
+            // (1. Plätze, dann 2., dann 3., …), dann Name. Der Position-1-Zähler
+            // subsumiert das frühere Wins-Kriterium.
+            var ranked = StandingsRankingHelper.Rank(standings, positionCounts);
 
             for (int i = 0; i < ranked.Count; i++)
             {

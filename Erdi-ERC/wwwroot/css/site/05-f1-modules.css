@@ -13,17 +13,17 @@
     -webkit-backdrop-filter:blur(14px) saturate(160%);
 }
 .icon-chip.is-accent { color:var(--accent); border-color:var(--accent-soft); box-shadow:0 0 0 1px var(--accent-soft), 0 0 24px -6px var(--accent-glow); }
-.icon-chip.is-cyan   { color:var(--sig-cyan); border-color:rgba(0,229,255,.3); box-shadow:0 0 24px -6px rgba(0,229,255,.5); }
-.icon-chip.is-amber  { color:var(--sig-amber); border-color:rgba(255,184,0,.35); box-shadow:0 0 24px -6px rgba(255,184,0,.45); }
-.icon-chip.is-green  { color:var(--sig-green); border-color:rgba(57,255,20,.35); box-shadow:0 0 24px -6px rgba(57,255,20,.45); }
+.icon-chip.is-cyan   { color:var(--sig-cyan); border-color:rgba(88,183,201,.3); box-shadow:0 0 24px -6px rgba(88,183,201,.5); }
+.icon-chip.is-amber  { color:var(--sig-amber); border-color:rgba(232,169,61,.35); box-shadow:0 0 24px -6px rgba(232,169,61,.45); }
+.icon-chip.is-green  { color:var(--sig-green); border-color:rgba(76,175,109,.35); box-shadow:0 0 24px -6px rgba(76,175,109,.45); }
 .icon-chip-sm { width:32px; height:32px; border-radius:10px; font-size:.95rem; }
 .icon-chip-lg { width:54px; height:54px; border-radius:14px; font-size:1.45rem; }
 .icon-chip-xl { width:72px; height:72px; border-radius:18px; font-size:2rem; }
 
 .ico-accent { color:var(--accent); filter:drop-shadow(0 0 6px var(--accent-glow)); }
-.ico-cyan   { color:var(--sig-cyan); filter:drop-shadow(0 0 6px rgba(0,229,255,.55)); }
-.ico-amber  { color:var(--sig-amber); filter:drop-shadow(0 0 6px rgba(255,184,0,.45)); }
-.ico-green  { color:var(--sig-green); filter:drop-shadow(0 0 6px rgba(57,255,20,.45)); }
+.ico-cyan   { color:var(--sig-cyan); filter:drop-shadow(0 0 6px rgba(88,183,201,.55)); }
+.ico-amber  { color:var(--sig-amber); filter:drop-shadow(0 0 6px rgba(232,169,61,.45)); }
+.ico-green  { color:var(--sig-green); filter:drop-shadow(0 0 6px rgba(76,175,109,.45)); }
 .ico-chrome { background:var(--g-chrome); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 .ico-lg { font-size:1.35rem; } .ico-xl { font-size:1.85rem; } .ico-2xl { font-size:2.6rem; }
 
@@ -217,7 +217,7 @@
     width:0;
     border-radius:inherit;
     background:linear-gradient(90deg, var(--sig-cyan), var(--sig-green), #ff3b2f);
-    box-shadow:0 0 10px rgba(0,229,255,.45);
+    box-shadow:0 0 10px rgba(88,183,201,.45);
     transition:width var(--t-base);
 }
 .setup-metric__value { font-family:var(--ff-mono); font-weight:700; font-size:.95rem; color:#fff; margin-top:.05rem; }
@@ -259,8 +259,8 @@
 }
 .status-pill::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--sig-green); box-shadow:0 0 10px var(--sig-green); animation:live-pulse 1.6s ease-in-out infinite; }
 .status-pill.is-live::before  { background:var(--accent); box-shadow:0 0 10px var(--accent-glow); }
-.status-pill.is-amber::before { background:var(--sig-amber); box-shadow:0 0 10px rgba(255,184,0,.7); }
-.status-pill.is-cyan::before  { background:var(--sig-cyan); box-shadow:0 0 10px rgba(0,229,255,.6); }
+.status-pill.is-amber::before { background:var(--sig-amber); box-shadow:0 0 10px rgba(232,169,61,.7); }
+.status-pill.is-cyan::before  { background:var(--sig-cyan); box-shadow:0 0 10px rgba(88,183,201,.6); }
 
 .flag-checker {
     background-color:#fff;
@@ -652,13 +652,13 @@
     border:1px solid var(--stroke-1);
     color:var(--ink-2);
 }
-.f1-chip--drs    { background:var(--sig-green); color:#000; box-shadow:0 0 12px rgba(57,255,20,.5); }
-.f1-chip--fastest{ background:var(--sig-magenta); color:#fff; box-shadow:0 0 14px rgba(185,92,255,.55); }
-.f1-chip--pit    { background:var(--sig-amber); color:#000; box-shadow:0 0 12px rgba(255,184,0,.45); }
+.f1-chip--drs    { background:var(--sig-green); color:#000; box-shadow:0 0 12px rgba(76,175,109,.5); }
+.f1-chip--fastest{ background:var(--sig-magenta); color:#fff; box-shadow:0 0 14px rgba(157,110,196,.55); }
+.f1-chip--pit    { background:var(--sig-amber); color:#000; box-shadow:0 0 12px rgba(232,169,61,.45); }
 .f1-chip--live   { background:var(--accent); color:#fff; box-shadow:0 0 14px var(--accent-glow); }
-.f1-chip--cyan   { background:rgba(0,229,255,.12); color:var(--sig-cyan); border-color:rgba(0,229,255,.32); }
-.f1-chip--amber  { background:rgba(255,184,0,.12); color:var(--sig-amber); border-color:rgba(255,184,0,.32); }
-.f1-chip--green  { background:rgba(57,255,20,.10); color:var(--sig-green); border-color:rgba(57,255,20,.32); }
+.f1-chip--cyan   { background:rgba(88,183,201,.12); color:var(--sig-cyan); border-color:rgba(88,183,201,.32); }
+.f1-chip--amber  { background:rgba(232,169,61,.12); color:var(--sig-amber); border-color:rgba(232,169,61,.32); }
+.f1-chip--green  { background:rgba(76,175,109,.10); color:var(--sig-green); border-color:rgba(76,175,109,.32); }
 
 /* --- F1 Eyebrow label (red left strip) --- */
 .f1-eyebrow {

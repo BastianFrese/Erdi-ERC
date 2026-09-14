@@ -80,7 +80,7 @@
     inset: 0;
     background:
         radial-gradient(120% 80% at 50% 110%, rgba(225,6,0,.25), transparent 60%),
-        radial-gradient(80% 60% at 50% -10%, rgba(57,255,20,.10), transparent 60%);
+        radial-gradient(80% 60% at 50% -10%, rgba(76,175,109,.10), transparent 60%);
     animation: rl-scan-pulse 2.4s ease-in-out infinite;
 }
 @keyframes rl-scan-pulse {
@@ -122,14 +122,14 @@
 /* GO state: switch palette to green */
 .race-lights.is-go .race-lights__scan {
     background:
-        radial-gradient(120% 80% at 50% 110%, rgba(57,255,20,.30), transparent 60%),
-        radial-gradient(80% 60% at 50% -10%, rgba(57,255,20,.18), transparent 60%);
+        radial-gradient(120% 80% at 50% 110%, rgba(76,175,109,.30), transparent 60%),
+        radial-gradient(80% 60% at 50% -10%, rgba(76,175,109,.18), transparent 60%);
 }
 .race-lights.is-go .race-lights__speedlines {
     background:
         repeating-linear-gradient(90deg,
             transparent 0 60px,
-            rgba(57,255,20,.22) 60px 62px,
+            rgba(76,175,109,.22) 60px 62px,
             transparent 62px 180px,
             rgba(255,255,255,.10) 180px 181px,
             transparent 181px 320px);
@@ -137,7 +137,7 @@
 }
 .race-lights.is-go .race-lights__icons > i {
     color: rgba(109,255,161,.18);
-    text-shadow: 0 0 22px rgba(57,255,20,.45);
+    text-shadow: 0 0 22px rgba(76,175,109,.45);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -186,7 +186,7 @@
     text-transform: uppercase;
 }
 .race-lights.is-go .race-lights__rig { background: transparent; border-color: transparent; box-shadow: none; }
-.race-lights.is-go .race-lights__lamp { background: radial-gradient(circle at 30% 30%, #6dffa1, #1ad15a 60%, #064a23); box-shadow: 0 0 26px rgba(57,255,20,.85); }
+.race-lights.is-go .race-lights__lamp { background: radial-gradient(circle at 30% 30%, #6dffa1, #1ad15a 60%, #064a23); box-shadow: 0 0 26px rgba(76,175,109,.85); }
 .race-lights.is-go .race-lights__label { color: #6dffa1; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -226,8 +226,8 @@
 .tire--soft     { --tire-color: #ff3b3b; }
 .tire--medium   { --tire-color: #ffd24a; }
 .tire--hard     { --tire-color: #f5f7fb; }
-.tire--inter    { --tire-color: #39ff14; }
-.tire--wet      { --tire-color: #3da9fc; }
+.tire--inter    { --tire-color: #4caf6d; }
+.tire--wet      { --tire-color: #6d9cc4; }
 
 /* ---------------------------------------------------------------------
    3) SECTOR TIMES
@@ -244,9 +244,9 @@
     border: 1px solid rgba(255,255,255,.08);
     color: var(--ink);
 }
-.sector--purple { color: #fff; background: linear-gradient(180deg, #b95cff, #6a14a8); border-color: #b95cff; box-shadow: 0 0 12px rgba(185,92,255,.55); }
-.sector--green  { color: #06210e; background: linear-gradient(180deg, #6dffa1, #1ad15a); border-color: #6dffa1; box-shadow: 0 0 12px rgba(57,255,20,.45); }
-.sector--yellow { color: #1a1305; background: linear-gradient(180deg, #ffd24a, #ffb800); border-color: #ffd24a; box-shadow: 0 0 10px rgba(255,184,0,.35); }
+.sector--purple { color: #fff; background: linear-gradient(180deg, #9d6ec4, #5f3a85); border-color: #9d6ec4; box-shadow: 0 0 12px rgba(157,110,196,.4); }
+.sector--green  { color: #06210e; background: linear-gradient(180deg, #5cc47e, #2f7a4a); border-color: #4caf6d; box-shadow: 0 0 12px rgba(76,175,109,.35); }
+.sector--yellow { color: #1a1305; background: linear-gradient(180deg, #ffd24a, #e8a93d); border-color: #ffd24a; box-shadow: 0 0 10px rgba(232,169,61,.3); }
 .sector--red    { color: #fff; background: linear-gradient(180deg, #ff6a5b, #c81f1f); border-color: #ff6a5b; box-shadow: 0 0 10px rgba(225,6,0,.4); }
 
 /* ---------------------------------------------------------------------
@@ -379,9 +379,9 @@
     box-shadow: inset 0 0 4px rgba(0,0,0,.85);
 }
 .race-lights-pill[data-state="ready"]   .race-lights-pill__lamp { background: radial-gradient(circle at 30% 30%, #ff6a5b, #e10600); box-shadow: 0 0 6px rgba(225,6,0,.75); }
-.race-lights-pill[data-state="formation"] .race-lights-pill__lamp:nth-child(-n+3) { background: radial-gradient(circle at 30% 30%, #ffd24a, #ffb800); box-shadow: 0 0 6px rgba(255,184,0,.6); }
-.race-lights-pill[data-state="green"]   .race-lights-pill__lamp { background: radial-gradient(circle at 30% 30%, #6dffa1, #1ad15a); box-shadow: 0 0 6px rgba(57,255,20,.6); }
-.race-lights-pill[data-state="sc"]      .race-lights-pill__lamp { background: radial-gradient(circle at 30% 30%, #ffd24a, #ffb800); box-shadow: 0 0 6px rgba(255,184,0,.6); }
+.race-lights-pill[data-state="formation"] .race-lights-pill__lamp:nth-child(-n+3) { background: radial-gradient(circle at 30% 30%, #ffd24a, #e8a93d); box-shadow: 0 0 6px rgba(232,169,61,.6); }
+.race-lights-pill[data-state="green"]   .race-lights-pill__lamp { background: radial-gradient(circle at 30% 30%, #6dffa1, #1ad15a); box-shadow: 0 0 6px rgba(76,175,109,.6); }
+.race-lights-pill[data-state="sc"]      .race-lights-pill__lamp { background: radial-gradient(circle at 30% 30%, #ffd24a, #e8a93d); box-shadow: 0 0 6px rgba(232,169,61,.6); }
 .race-lights-pill[data-state="red"]     .race-lights-pill__lamp { background: radial-gradient(circle at 30% 30%, #ff6a5b, #c81f1f); box-shadow: 0 0 6px rgba(225,6,0,.7); }
 
 /* ---------------------------------------------------------------------
@@ -490,9 +490,9 @@
     animation: rl-car-launch 1.0s cubic-bezier(.45, .05, .35, 1) both;
 }
 @keyframes rl-car-launch {
-    0%   { transform: translate3d(-50%, 0, 0); filter: drop-shadow(0 12px 18px rgba(0,0,0,.55)) drop-shadow(0 0 22px rgba(57,255,20,.45)); }
+    0%   { transform: translate3d(-50%, 0, 0); filter: drop-shadow(0 12px 18px rgba(0,0,0,.55)) drop-shadow(0 0 22px rgba(76,175,109,.45)); }
     20%  { transform: translate3d(calc(-50% - 24px), 0, 0); }
-    100% { transform: translate3d(calc(-50% + 130vw), 0, 0); filter: drop-shadow(0 12px 18px rgba(0,0,0,.55)) drop-shadow(0 0 30px rgba(57,255,20,.65)); }
+    100% { transform: translate3d(calc(-50% + 130vw), 0, 0); filter: drop-shadow(0 12px 18px rgba(0,0,0,.55)) drop-shadow(0 0 30px rgba(76,175,109,.65)); }
 }
 .race-lights.is-go .race-lights__car-wheel { animation-duration: 0.12s; }
 

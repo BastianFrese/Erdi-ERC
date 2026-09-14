@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -39,11 +40,26 @@ namespace Erdi_ERC.Services
                 return new SetupAccessResolution { Tier = 1, Success = false };
             }
 
-            var mappings = await _db.SetupAccessRoleMappings
-                .Where(x => x.Tier >= 3 && x.Tier <= 5)
-                .OrderByDescending(x => x.Tier)
-                .ThenBy(x => x.Id)
-                .ToListAsync(cancellationToken);
+            List<SetupAccessRoleMapping> mappings;
+            try
+            {
+                mappings = await _db.SetupAccessRoleMappings
+                    .Where(x => x.Tier >= 3 && x.Tier <= 5)
+                    .OrderByDescending(x => x.Tier)
+                    .ThenBy(x => x.Id)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // DB-Ausfall: als transient behandeln, damit OnValidatePrincipal die bestehenden
+                // Claims behält (fail-open) statt zu werfen → Wartungsmodus kann greifen.
+                _logger.LogWarning(ex, "SetupAccessRoleMappings nicht lesbar (DB-Ausfall?) – transient, Claims behalten");
+                return new SetupAccessResolution { Tier = 1, Success = false, IsTransientError = true };
+            }
 
             if (mappings.Count == 0)
             {
@@ -159,6 +175,51 @@ namespace Erdi_ERC.Services
             {
                 _logger.LogWarning(ex, "Resolving setup access via Discord failed (transient error – keeping existing claims)");
                 return new SetupAccessResolution { Tier = 1, Success = false, IsTransientError = true };
+            }
+        }
+
+        public async Task<DiscordUserInfo?> ResolveUserAsync(string? accessToken, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                return null;
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscordApi");
+                using var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.com/api/v10/users/@me");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Erdi-ERC", "1.0"));
+
+                var response = await client.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Discord user lookup failed with status code {StatusCode}", response.StatusCode);
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                var id = root.TryGetProperty("id", out var idElement) ? idElement.GetString() : null;
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    return null;
+                }
+
+                var username = root.TryGetProperty("username", out var u) ? u.GetString() : null;
+                var globalName = root.TryGetProperty("global_name", out var g) ? g.GetString() : null;
+                return new DiscordUserInfo(id, username, globalName);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Resolving Discord user failed (transient error)");
+                return null;
             }
         }
     }

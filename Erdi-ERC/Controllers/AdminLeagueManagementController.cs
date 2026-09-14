@@ -587,12 +587,12 @@ namespace Erdi_ERC.Controllers
                 return;
             }
 
-            var standings = league.Standings
-                .Where(s => !string.IsNullOrWhiteSpace(s.Driver))
-                .OrderByDescending(s => s.Points)
-                .ThenByDescending(s => s.Wins)
-                .ThenBy(s => s.Driver)
-                .ToList();
+            // F1-Tiebreaker wie beim Rebuild: Punkte, dann meiste bessere Positionen.
+            var positionCounts = StandingsRankingHelper.BuildPositionCounts(
+                league.Races.SelectMany(r => r.Finishes));
+            var standings = StandingsRankingHelper.Rank(
+                league.Standings.Where(s => !string.IsNullOrWhiteSpace(s.Driver)),
+                positionCounts);
 
             var races = league.Races
                 .OrderBy(r => r.Date)

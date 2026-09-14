@@ -498,6 +498,9 @@ public class ApplicationServiceTests
         var standing = ctx.Db.DriverStandings.SingleOrDefault(s => s.LeagueId == "pro" && s.Driver == "ManualRacer");
         Assert.NotNull(standing);
         Assert.False(standing!.IsReserveDriver);
+
+        // EA-Name (GamerTag) ist auch der sichtbare DisplayName des Profils.
+        Assert.Equal("ManualRacer", ctx.Db.DriverProfiles.Single(p => p.DiscordId == "222").DisplayName);
     }
 
     [Fact]
@@ -544,6 +547,40 @@ public class ApplicationServiceTests
         Assert.Empty(ctx.Db.DriverProfiles);
         Assert.Empty(ctx.Db.DriverGamerTags);
         Assert.Single(ctx.Db.DriverStandings);
+    }
+
+    [Fact]
+    public async Task ManualRegister_existingProfileWithoutDisplayName_getsEnteredEaName()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(NewLeague("pro", "ProLiga"));
+        ctx.Db.DriverProfiles.Add(new DriverProfile
+        {
+            DiscordId = "222",
+            DiscordName = "ManualUser",
+            GamerTags = new List<DriverGamerTag>
+            {
+                new() { DiscordId = "222", Platform = "PC", GamerTag = "OldTag", IsPrimary = true }
+            }
+        });
+
+        await ctx.Db.SaveChangesAsync();
+
+        var svc = BuildService(ctx);
+        var result = await svc.ManualRegisterAsync(ManualCmd(), "admin1", CancellationToken.None);
+
+        Assert.Equal(ManualRegisterOutcome.Ok, result.Outcome);
+        var profile = ctx.Db.DriverProfiles.Single(p => p.DiscordId == "222");
+        Assert.Equal("ManualRacer", profile.DisplayName);
+
+        // Tag-Regel: ein Tag pro Plattform — kein zweiter PC-Tag, kein Rename.
+        var tags = ctx.Db.DriverGamerTags.Where(t => t.DiscordId == "222").ToList();
+        Assert.Single(tags);
+        Assert.Equal("OldTag", tags[0].GamerTag);
+
+        // Standing unter dem eingegebenen EA-Namen angelegt.
+        Assert.NotNull(ctx.Db.DriverStandings.SingleOrDefault(
+            s => s.Driver == "ManualRacer" && s.LeagueId == "pro"));
     }
 
     [Fact]

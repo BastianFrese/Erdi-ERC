@@ -3,7 +3,15 @@ namespace Erdi_ERC.Services
     public interface ISetupAccessService
     {
         Task<SetupAccessResolution> ResolveSetupAccessAsync(string? accessToken, CancellationToken cancellationToken = default);
+
+        /// <summary>Löst den Discord-User hinter einem Access-Token auf (GET /users/@me).
+        /// Null bei fehlendem/ungültigem Token oder Discord-Fehler. Für den
+        /// SetupBlockedUsers-Check der Setups-API.</summary>
+        Task<DiscordUserInfo?> ResolveUserAsync(string? accessToken, CancellationToken cancellationToken = default);
     }
+
+    /// <summary>Minimaler Discord-User (aus /users/@me) für die Setups-API.</summary>
+    public sealed record DiscordUserInfo(string Id, string? Username, string? GlobalName);
 
     public sealed class SetupAccessResolution
     {

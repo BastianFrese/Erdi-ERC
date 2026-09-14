@@ -1,0 +1,170 @@
+@{
+    ViewData["Title"] = "Telemetrie";
+    ViewData["Kicker"] = "Liga";
+    ViewData["HeroTitle"] = "Telemetrie-Eingänge";
+
+    var items = ViewBag.Items as System.Collections.Generic.List<Erdi_ERC.Models.TelemetryListItem>
+                ?? new System.Collections.Generic.List<Erdi_ERC.Models.TelemetryListItem>();
+    var senderMap = ViewBag.SenderMap as System.Collections.Generic.Dictionary<string, string>
+                    ?? new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+    string? statusFilter = ViewBag.StatusFilter as string;
+    int pageNo = (int)(ViewBag.Page ?? 1);
+    bool hasMore = (bool)(ViewBag.HasMore ?? false);
+
+    var statusQs = string.IsNullOrEmpty(statusFilter) ? "" : $"&status={System.Uri.EscapeDataString(statusFilter)}";
+
+    string StatusBadge(int s) => ((Erdi_ERC.Models.PendingRaceStatus)s) switch
+    {
+        Erdi_ERC.Models.PendingRaceStatus.Pending  => "f1-chip f1-chip--amber",
+        Erdi_ERC.Models.PendingRaceStatus.Accepted => "f1-chip f1-chip--green",
+        Erdi_ERC.Models.PendingRaceStatus.Rejected => "f1-chip f1-chip--red",
+        _                                           => "f1-chip"
+    };
+
+    string StatusLabel(int s) => ((Erdi_ERC.Models.PendingRaceStatus)s) switch
+    {
+        Erdi_ERC.Models.PendingRaceStatus.Pending  => "In Prüfung",
+        Erdi_ERC.Models.PendingRaceStatus.Accepted => "Übernommen",
+        Erdi_ERC.Models.PendingRaceStatus.Rejected => "Abgelehnt",
+        _                                           => s.ToString()
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/admin-applications.css" asp-append-version="true" />
+}
+
+<div class="adm-dashboard">
+
+    <div class="adm-kpi-grid" style="margin-bottom:1.25rem;">
+        <a class="adm-kpi-card text-decoration-none" asp-action="Index" style="--kpi-color:#e8a93d;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-inbox"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@items.Count(s => s.Status == (int)Erdi_ERC.Models.PendingRaceStatus.Pending)</div>
+                <div class="adm-kpi-card__label">Offene Entwürfe (diese Seite)</div>
+            </div>
+        </a>
+        <a class="adm-kpi-card text-decoration-none" asp-action="Keys" style="--kpi-color:#22d3ee;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-key-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">Sende-Keys</div>
+                <div class="adm-kpi-card__label">Fahrer-Keys verwalten →</div>
+            </div>
+        </a>
+    </div>
+
+    @* Filter-Leiste *@
+    <form method="get" class="adm-filter-bar">
+        <div class="adm-filter-bar__field">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="adm-form-select">
+                <option value="" selected="@(string.IsNullOrEmpty(statusFilter))">Alle</option>
+                <option value="Pending"   selected="@(statusFilter == "Pending")">In Prüfung</option>
+                <option value="Accepted"  selected="@(statusFilter == "Accepted")">Übernommen</option>
+                <option value="Rejected"  selected="@(statusFilter == "Rejected")">Abgelehnt</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-funnel-fill"></i> Filtern
+        </button>
+        <a class="btn btn-ghost btn-sm" asp-action="Index">
+            <i class="bi bi-x-circle"></i> Zurücksetzen
+        </a>
+    </form>
+
+    @* Tabelle *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-radio me-2" style="color:#e8a93d;"></i>
+                <span>Telemetrie-Eingänge (@items.Count)</span>
+            </span>
+        </div>
+        <div class="adm-panel__body adm-panel__body--flush">
+            @if (items.Count == 0)
+            {
+                <div class="adm-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>Keine Telemetrie-Ergebnisse für diesen Filter.</p>
+                </div>
+            }
+            else
+            {
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Empfangen</th>
+                            <th>Strecke</th>
+                            <th>Renndatum</th>
+                            <th>Liga (Vorschlag)</th>
+                            <th>Sender</th>
+                            <th>Fahrer</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in items)
+                        {
+                            <tr>
+                                <td>@item.ReceivedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@(item.SourceTrack ?? "–")</td>
+                                <td>@(item.SourceDate?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "–")</td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(item.SourceLeague))
+                                    {
+                                        <span class="f1-chip f1-chip--ghost">ohne Liga</span>
+                                    }
+                                    else
+                                    {
+                                        @item.SourceLeague
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.SenderDiscordId))
+                                    {
+                                        <div class="adm-table__primary">@(senderMap.TryGetValue(item.SenderDiscordId, out var n) ? n : item.SenderDiscordId)</div>
+                                        <div class="adm-table__secondary"><code>@item.SenderDiscordId</code></div>
+                                    }
+                                    else
+                                    {
+                                        <span>–</span>
+                                    }
+                                </td>
+                                <td>@item.FinishCount</td>
+                                <td><span class="@StatusBadge(item.Status)">@StatusLabel(item.Status)</span></td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Detail" asp-route-id="@item.Id">
+                                        <i class="bi bi-eye"></i> @(item.Status == (int)Erdi_ERC.Models.PendingRaceStatus.Pending ? "Prüfen" : "Detail")
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    @* Pagination *@
+    @if (pageNo > 1 || hasMore)
+    {
+        <nav class="adm-pagination">
+            @if (pageNo > 1)
+            {
+                <a class="btn btn-ghost btn-sm"
+                   href="@($"/AdminTelemetry?page={pageNo - 1}{statusQs}")">
+                    <i class="bi bi-chevron-left"></i> Zurück
+                </a>
+            }
+            <span class="adm-pagination__page">Seite @pageNo</span>
+            @if (hasMore)
+            {
+                <a class="btn btn-ghost btn-sm"
+                   href="@($"/AdminTelemetry?page={pageNo + 1}{statusQs}")">
+                    Weiter <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </nav>
+    }
+</div>

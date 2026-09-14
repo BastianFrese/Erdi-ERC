@@ -191,9 +191,9 @@
 
 /* Reserve-Badge im neuen Stil */
 .f1-results-table .badge.bg-info {
-    background: rgba(0,229,255,.14) !important;
+    background: rgba(88,183,201,.14) !important;
     color: var(--sig-cyan) !important;
-    border: 1px solid rgba(0,229,255,.35);
+    border: 1px solid rgba(88,183,201,.35);
     font: 700 .58rem/1 var(--ff-tech);
     letter-spacing: .14em;
     text-transform: uppercase;

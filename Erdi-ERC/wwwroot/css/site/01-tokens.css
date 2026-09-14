@@ -23,12 +23,14 @@
     --accent-soft:rgba(225,6,0,.18);
     --accent-glow:rgba(225,6,0,.55);
 
-    --sig-cyan:#00e5ff;
-    --sig-amber:#ffb800;
-    --sig-green:#39ff14;
-    --sig-magenta:#b95cff;
-    --sig-blue:#3da9fc;
-    --sig-red:#ff4757;
+    /* Signalfarben — bewusst entsättigt ("Broadcast-Calm"): Neon gebrochen,
+       Rot/Amber bleiben die einzigen lauten Farben, alles andere matt. */
+    --sig-cyan:#58b7c9;
+    --sig-amber:#e8a93d;
+    --sig-green:#4caf6d;
+    --sig-magenta:#9d6ec4;
+    --sig-blue:#6d9cc4;
+    --sig-red:#e05252;
 
     --gold:#ffd24a;
     --silver:#d4d8e0;
@@ -58,9 +60,7 @@
     --sh-3:0 1px 0 rgba(255,255,255,.06) inset, 0 30px 80px -24px rgba(0,0,0,.75), 0 0 0 1px var(--stroke-1);
 
     --g-aurora:
-        radial-gradient(60% 80% at 20% 0%, rgba(0,229,255,.18), transparent 60%),
-        radial-gradient(50% 70% at 80% 10%, var(--accent-soft), transparent 60%),
-        radial-gradient(70% 60% at 50% 100%, rgba(185,92,255,.14), transparent 70%);
+        radial-gradient(55% 75% at 50% 0%, rgba(225,6,0,.10), transparent 65%);
     --g-chrome:linear-gradient(180deg,#f6f8ff 0%,#cfd6e4 45%,#7d8699 55%,#cfd6e4 100%);
     --g-text-1:linear-gradient(180deg,#ffffff 0%,#c8cdd8 100%);
     --g-text-2:linear-gradient(180deg,#ffffff 0%,#9aa3b6 100%);
@@ -96,5 +96,5 @@ body.team-kicksauber    { --accent:#52E252; --accent-2:#7feb7f; --accent-soft:rg
     --panel-bg:var(--surface-1); --carbon:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px);
     --f1-grid:repeating-linear-gradient(90deg, transparent 0 34px, rgba(255,255,255,.018) 34px 35px);
     --f1-checker:repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 6px, transparent 6px 12px);
-    --f1-telemetry:linear-gradient(90deg, var(--sig-cyan), var(--accent), var(--sig-magenta));
+    --f1-telemetry:linear-gradient(90deg, var(--accent-2), var(--accent));
 }

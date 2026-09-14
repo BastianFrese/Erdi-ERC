@@ -17,9 +17,9 @@ body {
     letter-spacing:-.005em;
     background:var(--bg-0);
     background-image:
-        radial-gradient(1400px 700px at 100% -10%, rgba(0,229,255,.07), transparent 60%),
+        radial-gradient(1400px 700px at 100% -10%, rgba(88,183,201,.07), transparent 60%),
         radial-gradient(1100px 600px at -10% 110%, var(--accent-soft), transparent 65%),
-        radial-gradient(900px 500px at 50% 50%, rgba(185,92,255,.05), transparent 70%),
+        radial-gradient(900px 500px at 50% 50%, rgba(157,110,196,.05), transparent 70%),
         linear-gradient(180deg,var(--bg-0) 0%, #050609 100%);
     background-attachment:fixed;
     -webkit-font-smoothing:antialiased;

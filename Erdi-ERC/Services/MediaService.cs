@@ -100,7 +100,7 @@ namespace Erdi_ERC.Services
         private static readonly HashSet<string> _allowedImageExtensions =
             new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif" };
 
-        private const long MaxImageSizeBytes = 10 * 1024 * 1024; // 10 MB
+        private const long MaxImageSizeBytes = 5 * 1024 * 1024; // 5 MB — großzügig für Fotos, verhindert Multi-MB-Monster im Client-Cache
 
         public async Task<string?> SaveEventImageAsync(IFormFile image)
         {

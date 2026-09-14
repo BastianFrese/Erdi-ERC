@@ -42,7 +42,7 @@
     border:1px solid var(--stroke-1);
     background:
         radial-gradient(60% 80% at 0% 0%, var(--accent-soft), transparent 60%),
-        radial-gradient(50% 70% at 100% 0%, rgba(0,229,255,.10), transparent 60%),
+        radial-gradient(50% 70% at 100% 0%, rgba(88,183,201,.10), transparent 60%),
         linear-gradient(160deg, var(--surface-2), var(--surface-1));
     box-shadow:var(--sh-2);
     backdrop-filter:var(--glass-blur-sm);
@@ -160,7 +160,7 @@
     color:var(--ink);
     padding:.85rem 1.1rem;
 }
-.admin-surface .list-group-item code { color:var(--sig-cyan); background:rgba(0,229,255,.08); padding:.1rem .35rem; border-radius:6px; }
+.admin-surface .list-group-item code { color:var(--sig-cyan); background:rgba(88,183,201,.08); padding:.1rem .35rem; border-radius:6px; }
 
 .admin-pill-row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.85rem; }
 .admin-pill {
@@ -173,9 +173,9 @@
     font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700;
 }
 .admin-pill.is-accent { color:var(--accent); border-color:var(--accent-soft); background:var(--accent-soft); }
-.admin-pill.is-cyan   { color:var(--sig-cyan); border-color:rgba(0,229,255,.25); background:rgba(0,229,255,.08); }
-.admin-pill.is-green  { color:var(--sig-green); border-color:rgba(57,255,20,.25); background:rgba(57,255,20,.08); }
-.admin-pill.is-amber  { color:var(--sig-amber); border-color:rgba(255,184,0,.25); background:rgba(255,184,0,.08); }
+.admin-pill.is-cyan   { color:var(--sig-cyan); border-color:rgba(88,183,201,.25); background:rgba(88,183,201,.08); }
+.admin-pill.is-green  { color:var(--sig-green); border-color:rgba(76,175,109,.25); background:rgba(76,175,109,.08); }
+.admin-pill.is-amber  { color:var(--sig-amber); border-color:rgba(232,169,61,.25); background:rgba(232,169,61,.08); }
 
 .admin-hero-side {
     display:flex; flex-direction:column; gap:.6rem; align-items:flex-end;
@@ -441,7 +441,7 @@
     padding:.95rem 1.05rem;
     border:1px solid var(--stroke-1);
     border-radius:var(--r-4);
-    background:linear-gradient(180deg, rgba(0,229,255,.04), rgba(255,255,255,0));
+    background:linear-gradient(180deg, rgba(88,183,201,.04), rgba(255,255,255,0));
 }
 .setup-ingame-metrics__title {
     grid-column:1 / -1;
@@ -770,7 +770,7 @@
     font-size:.65rem; font-weight:600; line-height:1.4;
     margin-right:.35rem; vertical-align:middle;
 }
-.adm-status-chip--green  { background:rgba(57,255,20,.12); color:#39ff14; }
+.adm-status-chip--green  { background:rgba(76,175,109,.12); color:#4caf6d; }
 .adm-status-chip--muted  { background:rgba(255,255,255,.06); color:var(--ink-3); }
 .adm-sidebar__footer {
     flex-shrink:0; padding:.6rem;
@@ -847,9 +847,9 @@
     display:flex; align-items:center; gap:.6rem;
     margin-bottom:1rem;
 }
-.adm-alert--success { border-color:rgba(57,255,20,.3); background:rgba(57,255,20,.07); color:#c3ffc0; }
-.adm-alert--warning { border-color:rgba(255,184,0,.3); background:rgba(255,184,0,.07); color:#ffe9a0; }
-.adm-alert--danger  { border-color:rgba(255,107,107,.3); background:rgba(255,107,107,.08); color:#ffc0c0; }
+.adm-alert--success { border-color:rgba(76,175,109,.3); background:rgba(76,175,109,.07); color:#c3ffc0; }
+.adm-alert--warning { border-color:rgba(232,169,61,.3); background:rgba(232,169,61,.07); color:#ffe9a0; }
+.adm-alert--danger  { border-color:rgba(224,82,82,.3); background:rgba(224,82,82,.08); color:#ffc0c0; }
 
 /* ---- Mobile overlay backdrop ---- */
 .adm-sidebar-overlay {
@@ -1027,7 +1027,7 @@
 .adm-league-table__row:last-child { border-bottom:0; }
 .adm-league-table__row:hover { background:rgba(255,255,255,.03); }
 .adm-league-table__id {
-    color:var(--sig-cyan); background:rgba(0,229,255,.08);
+    color:var(--sig-cyan); background:rgba(88,183,201,.08);
     padding:.15rem .45rem; border-radius:6px; font-size:.82rem;
     display:inline-block; width:fit-content;
 }
@@ -1058,10 +1058,10 @@
     font-size:.82rem; color:var(--ink-3);
 }
 .btn-outline-cyan {
-    color:var(--sig-cyan); border-color:rgba(0,229,255,.4);
-    background:rgba(0,229,255,.06);
+    color:var(--sig-cyan); border-color:rgba(88,183,201,.4);
+    background:rgba(88,183,201,.06);
 }
-.btn-outline-cyan:hover { color:#fff; background:rgba(0,229,255,.15); border-color:var(--sig-cyan); }
+.btn-outline-cyan:hover { color:#fff; background:rgba(88,183,201,.15); border-color:var(--sig-cyan); }
 
 /* Audit log list */
 .adm-log-list { display:flex; flex-direction:column; }
@@ -1131,7 +1131,7 @@
 }
 .adm-admin-row__name { font-weight:600; font-size:.95rem; }
 .adm-admin-row__id {
-    color:var(--sig-cyan); background:rgba(0,229,255,.08);
+    color:var(--sig-cyan); background:rgba(88,183,201,.08);
     padding:.1rem .4rem; border-radius:6px; font-size:.78rem;
 }
 .adm-admin-row__since { font-size:.75rem; color:var(--ink-3); }
@@ -1145,8 +1145,8 @@
     letter-spacing:.12em; text-transform:uppercase; font-weight:700;
 }
 .adm-role-badge--super {
-    color:#ffb800; background:rgba(255,184,0,.12);
-    border:1px solid rgba(255,184,0,.3);
+    color:#e8a93d; background:rgba(232,169,61,.12);
+    border:1px solid rgba(232,169,61,.3);
 }
 .adm-role-badge--limited {
     color:var(--ink-3); background:rgba(255,255,255,.05);
@@ -1169,16 +1169,16 @@
     border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .adm-perm-chip--partial {
-    color:#ffb800; background:rgba(255,184,0,.08);
-    border:1px solid rgba(255,184,0,.3);
+    color:#e8a93d; background:rgba(232,169,61,.08);
+    border:1px solid rgba(232,169,61,.3);
 }
 .adm-perm-chip--inactive {
     color:var(--ink-3); background:rgba(255,255,255,.03);
     border:1px solid var(--stroke-1);
 }
 .adm-perm-chip--super {
-    color:#ffb800; background:rgba(255,184,0,.1);
-    border:1px solid rgba(255,184,0,.25);
+    color:#e8a93d; background:rgba(232,169,61,.1);
+    border:1px solid rgba(232,169,61,.25);
 }
 
 /* Edit panel */
@@ -1306,12 +1306,12 @@
     font-family:var(--ff-tech); font-size:.64rem;
     letter-spacing:.1em; text-transform:uppercase; font-weight:700;
 }
-.adm-status-badge--green { color:#39ff14; background:rgba(57,255,20,.12); border:1px solid rgba(57,255,20,.3); }
+.adm-status-badge--green { color:#4caf6d; background:rgba(76,175,109,.12); border:1px solid rgba(76,175,109,.3); }
 .adm-status-badge--gray  { color:var(--ink-3); background:rgba(255,255,255,.05); border:1px solid var(--stroke-1); }
-.adm-status-badge--cyan  { color:var(--sig-cyan); background:rgba(0,229,255,.1); border:1px solid rgba(0,229,255,.3); }
-.adm-status-badge--amber { color:#ffb800; background:rgba(255,184,0,.12); border:1px solid rgba(255,184,0,.3); }
-.adm-status-badge--purple{ color:#b95cff; background:rgba(185,92,255,.1); border:1px solid rgba(185,92,255,.3); }
-.adm-status-badge--red   { color:#ff6b6b; background:rgba(255,107,107,.12); border:1px solid rgba(255,107,107,.35); }
+.adm-status-badge--cyan  { color:var(--sig-cyan); background:rgba(88,183,201,.1); border:1px solid rgba(88,183,201,.3); }
+.adm-status-badge--amber { color:#e8a93d; background:rgba(232,169,61,.12); border:1px solid rgba(232,169,61,.3); }
+.adm-status-badge--purple{ color:#9d6ec4; background:rgba(157,110,196,.1); border:1px solid rgba(157,110,196,.3); }
+.adm-status-badge--red   { color:#e05252; background:rgba(224,82,82,.12); border:1px solid rgba(224,82,82,.35); }
 
 /* Event gallery */
 .adm-gallery { display:flex; flex-wrap:wrap; gap:.6rem; }

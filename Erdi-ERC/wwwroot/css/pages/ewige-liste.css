@@ -45,10 +45,10 @@
     border-color: var(--stroke-2);
 }
 .f1-ewige-tabs__tab.is-active {
-    background: rgba(0,229,255,.1);
+    background: rgba(88,183,201,.1);
     color: var(--sig-cyan);
-    border-color: rgba(0,229,255,.4);
-    box-shadow: 0 0 12px rgba(0,229,255,.12), inset 0 1px 0 rgba(0,229,255,.2);
+    border-color: rgba(88,183,201,.4);
+    box-shadow: 0 0 12px rgba(88,183,201,.12), inset 0 1px 0 rgba(88,183,201,.2);
 }
 
 /* =====================================================================

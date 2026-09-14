@@ -1,9 +1,11 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Erdi_ERC.Controllers
@@ -127,6 +129,7 @@ namespace Erdi_ERC.Controllers
                 }
             }
 
+            var oldName = entity.Driver?.Trim() ?? string.Empty;
             entity.Position = position;
             entity.Driver = normalizedDriver;
             entity.Team = normalizedTeam;
@@ -138,6 +141,21 @@ namespace Erdi_ERC.Controllers
             entity.ReserveForDriver = isReserveDriver ? normalizedReserveFor : null;
 
             await _db.SaveChangesAsync();
+
+            // Systemweite Umbenennung: nur wenn der alte Name zu einem DriverProfile
+            // aufgelöst werden kann (Fahrerkarte, andere Ligen, Renn-Ergebnisse).
+            if (oldName.Length > 0
+                && !string.Equals(oldName, normalizedDriver, StringComparison.OrdinalIgnoreCase))
+            {
+                var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var changed = await _driverProfiles.RenameStandingDriverAsync(oldName, normalizedDriver, actorId);
+                if (changed > 0)
+                {
+                    await _audit.LogAsync("SaveStandingRename", "DriverProfile", oldName,
+                        $"'{oldName}' → '{normalizedDriver}', {changed} Referenz(en) aktualisiert");
+                }
+            }
+
             await RecalculateAsync(leagueId);
             await _audit.LogAsync("SaveStanding", "DriverStanding", entity.RowId.ToString(),
                 $"League={leagueId}, Driver={entity.Driver}, Number={entity.DriverNumber}, Reserve={entity.IsReserveDriver}, Adj={pointsAdjustment}");
@@ -300,18 +318,28 @@ namespace Erdi_ERC.Controllers
                 return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
             }
 
-            var ranked = standings
-                .OrderByDescending(s => s.Points)
-                .ThenByDescending(s => s.Wins)
-                .ThenBy(s => s.Driver, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            // F1-Tiebreaker wie beim Rebuild: Punkte, dann meiste bessere Positionen.
+            // Wichtig: dieselbe Saison-Filterung wie RebuildLeagueStandingsAsync, sonst
+            // mischen sich Positions-Zähler aus alten Saisons in die aktuelle Wertung.
+            var currentSeason = await _db.Leagues
+                .Where(l => l.Id == leagueId)
+                .Select(l => l.CurrentSeason)
+                .FirstOrDefaultAsync();
+            var finishesQuery = _db.RaceResults.Where(r => r.LeagueId == leagueId);
+            if (!string.IsNullOrWhiteSpace(currentSeason))
+                finishesQuery = finishesQuery.Where(r => r.Season == currentSeason);
+            var finishes = await finishesQuery
+                .SelectMany(r => r.Finishes)
+                .ToListAsync();
+            var positionCounts = StandingsRankingHelper.BuildPositionCounts(finishes);
+            var ranked = StandingsRankingHelper.Rank(standings, positionCounts);
 
             for (int i = 0; i < ranked.Count; i++)
                 ranked[i].Position = i + 1;
 
             await _db.SaveChangesAsync();
             await _audit.LogAsync("ResortStandings", "League", leagueId, $"Renumbered={ranked.Count}");
-            TempData["AdminMessage"] = $"{ranked.Count} Fahrer nach Punkten neu nummeriert.";
+            TempData["AdminMessage"] = $"{ranked.Count} Fahrer nach Punkten & besten Positionen neu nummeriert.";
             return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
         }
 
@@ -381,6 +409,7 @@ namespace Erdi_ERC.Controllers
 
             // 3) Anwenden: Löschen, Ändern, Anlegen.
             int deleted = 0, updated = 0, created = 0;
+            var renames = new List<(string Old, string New)>();
             foreach (var delId in deleteSet)
             {
                 if (byRowId.TryGetValue(delId, out var toDelete))
@@ -408,6 +437,12 @@ namespace Erdi_ERC.Controllers
                 {
                     entity = existingEntity;
                     updated++;
+                    var oldName = existingEntity.Driver?.Trim() ?? string.Empty;
+                    if (oldName.Length > 0
+                        && !string.Equals(oldName, name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        renames.Add((oldName, name));
+                    }
                 }
                 else
                 {
@@ -424,12 +459,53 @@ namespace Erdi_ERC.Controllers
                 entity.ReserveForDriver = isReserve && reserveFor.Length > 0 ? reserveFor : null;
             }
 
+            // Swap-/Ketten-Umbenennung in einem Submit verhindern: Wenn der neue Name
+            // einer Zeile dem alten Namen einer anderen Zeile entspricht, wäre die
+            // Referenz-Propagation mehrdeutig (Rename 1 überschreibt den Eingang von
+            // Rename 2). Bitte Fahrer einzeln umbenennen.
+            var renameTargets = renames.Select(r => r.New).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (renames.Any(r => renameTargets.Contains(r.Old)))
+            {
+                TempData["AdminMessage"] = "Umbenennung abgebrochen: Der neue Name einer Zeile entspricht dem alten Namen einer anderen Zeile (Tausch/Kette). Bitte Fahrer einzeln umbenennen.";
+                return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
+            }
+
             await _db.SaveChangesAsync();
+
+            // Systemweite Umbenennung: nur wenn der alte Name zu einem DriverProfile
+            // aufgelöst werden kann (Fahrerkarte, andere Ligen, Renn-Ergebnisse).
+            // Läuft VOR RecalculateAsync, damit Standings-Punkte aus bereits
+            // umbenannten Finishes abgeleitet werden.
+            int renamed = 0;
+            if (renames.Count > 0)
+            {
+                var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                // Alle Profile VOR der ersten Umbenennung auflösen (Snapshot): Nach der
+                // ersten Umbenennung wäre der alte Name bereits überschrieben und würde
+                // zum falschen Profil auflösen.
+                var resolved = new List<(string DiscordId, string OldName, string NewName)>();
+                foreach (var (oldName, newName) in renames)
+                {
+                    var profile = await _driverProfiles.FindByDriverNameAsync(oldName);
+                    if (profile is not null) resolved.Add((profile.DiscordId, oldName, newName));
+                }
+
+                foreach (var (discordId, oldName, newName) in resolved)
+                {
+                    var changed = await _driverProfiles.RenameIngameNameAsync(discordId, newName, actorId);
+                    renamed++;
+                    await _audit.LogAsync("SaveAllStandingsRename", "DriverProfile", oldName,
+                        $"'{oldName}' → '{newName}', {changed} Referenz(en) aktualisiert");
+                }
+            }
+
             await RecalculateAsync(leagueId); // Punkte + Positionen neu ableiten
             await _audit.LogAsync("SaveAllStandings", "League", leagueId,
                 $"Created={created}, Updated={updated}, Deleted={deleted}");
 
-            TempData["AdminMessage"] = $"Fahrerliste gespeichert — {created} neu, {updated} geändert, {deleted} gelöscht. Punkte & Positionen neu berechnet.";
+            var renameNote = renamed > 0 ? $" {renamed} Fahrer systemweit umbenannt." : "";
+            TempData["AdminMessage"] = $"Fahrerliste gespeichert — {created} neu, {updated} geändert, {deleted} gelöscht. Punkte & Positionen neu berechnet.{renameNote}";
             return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
         }
 
@@ -454,10 +530,10 @@ namespace Erdi_ERC.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveEnteredRace(
             string leagueId, DateTime date, string track, string? fastestLapDriver,
-            string[]? positions, string[]? raceTimes, int[]? penaltySeconds,
+            string[]? positions, string[]? raceTimes, string[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
             GuestAssignmentInput[]? guestAssignments = null,
-            int[]? qualiPositions = null)
+            string[]? qualiPositions = null)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(track))
             {
@@ -538,10 +614,10 @@ namespace Erdi_ERC.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateEnteredRace(
             int rowId, string leagueId, DateTime date, string track, string? fastestLapDriver,
-            string[]? positions, string[]? raceTimes, int[]? penaltySeconds,
+            string[]? positions, string[]? raceTimes, string[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
             GuestAssignmentInput[]? guestAssignments = null,
-            int[]? qualiPositions = null)
+            string[]? qualiPositions = null)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(track))
             {
@@ -594,6 +670,37 @@ namespace Erdi_ERC.Controllers
             return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
         }
 
+        /// <summary>Anfrage-DTO für <see cref="ParseRaceCsv"/> (JSON-Body).</summary>
+        public sealed record ParseRaceCsvRequest(string? Csv);
+
+        /// <summary>
+        /// JSON-Endpoint für den CSV-Rennimport (F1-Spiel-Export) in <c>EnterRace</c>.
+        /// Parst den eingefügten Textblock und liefert pro Position Fahrer, Team sowie die aus
+        /// Siegerzeit + Gap berechnete <b>Gesamt</b>zeit. Reine Auswertung — schreibt nichts in die DB.
+        /// Der Antiforgery-Token kommt per <c>RequestVerificationToken</c>-Header (ASP.NET-Default),
+        /// da der Body JSON statt Formular-Daten ist.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult ParseRaceCsv([FromBody] ParseRaceCsvRequest request)
+        {
+            var result = RaceCsvParser.Parse(request?.Csv);
+            return Json(new
+            {
+                entries = result.Entries
+                    .Select(e => new
+                    {
+                        position = e.Position,
+                        driver = e.Driver,
+                        team = e.Team,
+                        totalTimeMs = e.TotalTimeMs,
+                        isDnf = e.IsDnf,
+                        lappedText = e.LappedText
+                    }),
+                skippedLines = result.SkippedLines,
+                error = result.Error
+            });
+        }
+
         /// <summary>
         /// Baut Reserve-Zuordnungen, Gast-Zuordnungen und Zieleinläufe für ein (bereits gespeichertes) Rennen aus den
         /// Formular-Arrays auf, setzt Sieger und schnellste Runde. Strafzeit (Sek.) wird zur Rennzeit
@@ -606,10 +713,10 @@ namespace Erdi_ERC.Controllers
         /// </remarks>
         private async Task<List<(string Guest, string Main)>> ApplyRaceEntriesAsync(
             RaceResult race, string? fastestLapDriver,
-            string[]? positions, string[]? raceTimes, int[]? penaltySeconds,
+            string[]? positions, string[]? raceTimes, string[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
             GuestAssignmentInput[]? guestAssignments = null,
-            int[]? qualiPositions = null,
+            string[]? qualiPositions = null,
             CancellationToken ct = default)
         {
             var fastestLap = fastestLapDriver?.Trim() ?? string.Empty;
@@ -680,10 +787,15 @@ namespace Erdi_ERC.Controllers
                     var pos = i + 1;
                     var isDnf = dnfSet.Contains(driver);
                     var timeMs = ParseRaceTimeMs(raceTimes?.ElementAtOrDefault(i));
-                    var penalty = penaltySeconds?.ElementAtOrDefault(i) ?? 0;
-                    if (penalty > 0 && timeMs.HasValue) timeMs = timeMs.Value + (penalty * 1000);
+                    // penaltySeconds/qualiPositions kommen als string[] an: leere
+                    // Zeilen posten "" und BLEIBEN im Array. Ein int[] wuerde vom
+                    // MVC-Model-Binding komprimiert — Strafsekunden/Quali-Positionen
+                    // waeren dann auf den falschen Fahrer verschoben oder komplett weg.
+                    var penalty = ParseSignedInt(penaltySeconds?.ElementAtOrDefault(i));
+                    // Negative Werte = Minus-Strafe (Zeit-Abzug). Zeit kann nicht negativ werden → mind. 1 ms.
+                    if (penalty != 0 && timeMs.HasValue) timeMs = Math.Max(1, timeMs.Value + (penalty * 1000));
 
-                    var qualiRaw = qualiPositions?.ElementAtOrDefault(i) ?? 0;
+                    var qualiRaw = ParseNonNegativeInt(qualiPositions?.ElementAtOrDefault(i));
                     int? qualiPos = qualiRaw > 0 ? qualiRaw : (int?)null;
 
                     _db.RaceFinishes.Add(new RaceFinish
@@ -974,24 +1086,31 @@ namespace Erdi_ERC.Controllers
             return RedirectToAction("EditLeague", "AdminLeagueManagement", new { id = leagueId });
         }
 
+        /// <summary>
+        /// Parst die EINGETRAGENE Gesamt-Rennzeit (gesamt gefahrene Zeit des Fahrers,
+        /// keine Rundenzeit) in Millisekunden.
+        /// Unterstuetzte Formate: H:MM:SS.mmm, M:SS.mmm oder SS.mmm.
+        /// </summary>
+        /// <summary>
+        /// Delegiert an <see cref="RaceTimeParser.ParseMs"/> (Single Source of Truth für
+        /// Zeit-Formate, auch vom CSV-Import genutzt — kein Drift-Risiko mehr). Der
+        /// int-Cast genügt: reale Rennzeiten liegen weit unter 24 h (= 86,4 Mio. ms
+        /// &lt; int.MaxValue).
+        /// </summary>
         private static int? ParseRaceTimeMs(string? raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw)) return null;
-            var clean = raw.Trim().Replace(",", ".");
-            // Format: M:SS.mmm or SS.mmm
-            if (clean.Contains(':'))
-            {
-                var parts = clean.Split(':');
-                if (parts.Length == 2
-                    && int.TryParse(parts[0], out var mins)
-                    && double.TryParse(parts[1], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var secs))
-                    return (int)((mins * 60 + secs) * 1000);
-            }
-            else if (double.TryParse(clean, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var secs))
-            {
-                return (int)(secs * 1000);
-            }
-            return null;
-        }
+            => (int?)RaceTimeParser.ParseMs(raw);
+
+        /// <summary>
+        /// Formular-Eingaben (leer = "") tolerance parsen: nichtnumerisch/negativ → 0.
+        /// </summary>
+        private static int ParseNonNegativeInt(string? raw)
+            => int.TryParse(raw, out var v) && v > 0 ? v : 0;
+
+        /// <summary>
+        /// Vorzeichenbehaftete Strafsekunden parsen (leer = 0). Negative Werte sind
+        /// zulässig und bedeuten eine Minus-Strafe (Zeit-Abzug von der Gesamtzeit).
+        /// </summary>
+        private static int ParseSignedInt(string? raw)
+            => int.TryParse(raw, out var v) ? v : 0;
     }
 }

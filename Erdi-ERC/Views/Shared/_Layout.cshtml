@@ -1,5 +1,6 @@
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @inject Erdi_ERC.Services.ILayoutDataService _layoutDataService
+@inject Erdi_ERC.Services.ISiteSettingsService SiteSettings
 @using Erdi_ERC.Helpers
 @{
     // -------- Layout-Daten aus Memory-Cache (30s TTL) statt DB-Query pro Page-Load --------
@@ -350,8 +351,11 @@
                                 {
                                     <li><a class="dropdown-item" asp-controller="Application" asp-action="MyApplication"><i class="bi bi-clipboard2-check me-1"></i>Meine Bewerbungen</a></li>
                                 }
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="DownloadApp"><i class="bi bi-download me-1"></i>App herunterladen</a></li>
+                                @if (SiteSettings.IsAppDownloadEnabled())
+                                {
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Home" asp-action="DownloadApp"><i class="bi bi-download me-1"></i>App herunterladen</a></li>
+                                }
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
                                 <li><a class="dropdown-item" href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener">Erdi10 Shop</a></li>

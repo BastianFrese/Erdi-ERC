@@ -1,5 +1,6 @@
 using AspNet.Security.OAuth.Discord;
 using Erdi_ERC.Data;
+using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -88,6 +89,10 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<OverallConstructorsService>();
 builder.Services.AddScoped<ProfileHistoryService>();
+// Telemetrie-Ingest: per-Fahrer-API-Keys + Review-Inbox (Pending-Rennergebnisse).
+builder.Services.AddScoped<ITelemetryKeyService, TelemetryKeyService>();
+builder.Services.AddScoped<ITelemetryIngestService, TelemetryIngestService>();
+builder.Services.AddScoped<IPendingRacePromotionService, PendingRacePromotionService>();
 // Singleton: teilt Cache + Dateizustand über alle Requests (Layout liest das Flag bei jedem Render).
 builder.Services.AddSingleton<ISiteSettingsService>(sp =>
     new SiteSettingsService(
@@ -194,6 +199,20 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));
+
+    // "telemetry"-Policy für den Rennergebnis-Ingest (POST /api/telemetry/race): Sliding-Window
+    // pro IP, damit ein fehlkonfigurierter Client den Endpoint nicht mit Retries flutet.
+    options.AddPolicy("telemetry", httpContext =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = rlOpts.Telemetry.PermitLimit,
+                Window = TimeSpan.FromSeconds(rlOpts.Telemetry.WindowSeconds),
+                SegmentsPerWindow = 6,
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
 });
 
 builder.Services.AddHttpLogging(options =>
@@ -293,104 +312,130 @@ builder.Services.AddAuthentication(options =>
                 return;
             }
 
-            var resolution = await setupAccessService.ResolveSetupAccessAsync(accessToken, context.HttpContext.RequestAborted);
-
-            if (!resolution.Success)
+            try
             {
-                if (resolution.IsTransientError)
+                var resolution = await setupAccessService.ResolveSetupAccessAsync(accessToken, context.HttpContext.RequestAborted);
+
+                if (!resolution.Success)
                 {
-                    // Discord-API war nicht erreichbar (Netzwerkfehler/Timeout).
-                    // Existierende Claims behalten, nächsten Sync-Versuch auf in 5 Min. schieben.
-                    var identity2 = context.Principal?.Identity as ClaimsIdentity;
-                    if (identity2 is not null)
+                    if (resolution.IsTransientError)
                     {
-                        var old = identity2.FindFirst("erdi:setup-sync-at");
-                        if (old is not null) identity2.RemoveClaim(old);
-                        identity2.AddClaim(new Claim("erdi:setup-sync-at",
-                            DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(10)).ToString("O")));
-                        context.ShouldRenew = true;
+                        // Discord-API war nicht erreichbar (Netzwerkfehler/Timeout).
+                        // Existierende Claims behalten, nächsten Sync-Versuch auf in 5 Min. schieben.
+                        var identity2 = context.Principal?.Identity as ClaimsIdentity;
+                        if (identity2 is not null)
+                        {
+                            var old = identity2.FindFirst("erdi:setup-sync-at");
+                            if (old is not null) identity2.RemoveClaim(old);
+                            identity2.AddClaim(new Claim("erdi:setup-sync-at",
+                                DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(10)).ToString("O")));
+                            context.ShouldRenew = true;
+                        }
+                        return;
                     }
+
+                    // Discord-API hat eindeutig geantwortet: Token ungültig oder User nicht mehr auf Guild.
+                    // Ausloggen, damit beim nächsten Login frisch geprüft wird.
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                     return;
                 }
 
-                // Discord-API hat eindeutig geantwortet: Token ungültig oder User nicht mehr auf Guild.
-                // Ausloggen, damit beim nächsten Login frisch geprüft wird.
-                context.RejectPrincipal();
-                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return;
-            }
-
-            var identity = context.Principal?.Identity as ClaimsIdentity;
-            if (identity is null)
-            {
-                return;
-            }
-
-            static void RemoveClaim(ClaimsIdentity identity, string claimType)
-            {
-                var claims = identity.FindAll(claimType).ToList();
-                foreach (var claim in claims)
+                var identity = context.Principal?.Identity as ClaimsIdentity;
+                if (identity is null)
                 {
-                    identity.RemoveClaim(claim);
+                    return;
                 }
-            }
 
-            RemoveClaim(identity, "erdi:setup-tier");
-            RemoveClaim(identity, "erdi:setup-role");
-            RemoveClaim(identity, "erdi:on-community-guild");
-            RemoveClaim(identity, "erdi:guild-joined-at");
-            RemoveClaim(identity, "erdi:tenure-pending");
-            RemoveClaim(identity, "erdi:setup-sync-at");
-            RemoveClaim(identity, "erdi:admin");
-            RemoveClaim(identity, "erdi:superadmin");
-            RemoveClaim(identity, "erdi:perm");
-
-            identity.AddClaim(new Claim("erdi:setup-tier", resolution.Tier.ToString()));
-            if (!string.IsNullOrWhiteSpace(resolution.RoleLabel))
-            {
-                identity.AddClaim(new Claim("erdi:setup-role", resolution.RoleLabel));
-            }
-            identity.AddClaim(new Claim("erdi:on-community-guild", resolution.IsOnCommunityGuild ? "true" : "false"));
-            if (resolution.GuildJoinedAtUtc.HasValue)
-            {
-                identity.AddClaim(new Claim("erdi:guild-joined-at", resolution.GuildJoinedAtUtc.Value.ToString("O")));
-            }
-            identity.AddClaim(new Claim("erdi:tenure-pending", resolution.IsPendingTenure ? "true" : "false"));
-            identity.AddClaim(new Claim("erdi:setup-sync-at", DateTimeOffset.UtcNow.ToString("O")));
-
-            // Admin-Check: prüfen ob die Discord-ID in der AdminUsers-Tabelle steht
-            var discordId = identity.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(discordId))
-            {
-                var db = context.HttpContext.RequestServices.GetRequiredService<Erdi_ERC.Data.AppDbContext>();
-                var adminUser = await db.AdminUsers
-                    .Include(a => a.Permissions)
-                    .FirstOrDefaultAsync(a => a.DiscordId == discordId);
-
-                if (adminUser is not null)
+                static void RemoveClaim(ClaimsIdentity identity, string claimType)
                 {
-                    identity.AddClaim(new Claim("erdi:admin", "true"));
-
-                    if (adminUser.IsSuperAdmin)
+                    var claims = identity.FindAll(claimType).ToList();
+                    foreach (var claim in claims)
                     {
-                        identity.AddClaim(new Claim("erdi:superadmin", "true"));
-                        // Superadmin bekommt alle Berechtigungen implizit
-                        foreach (var perm in Erdi_ERC.Models.AdminPermissions.All)
-                        {
-                            identity.AddClaim(new Claim("erdi:perm", perm.Key));
-                        }
+                        identity.RemoveClaim(claim);
                     }
-                    else
+                }
+
+                RemoveClaim(identity, "erdi:setup-tier");
+                RemoveClaim(identity, "erdi:setup-role");
+                RemoveClaim(identity, "erdi:on-community-guild");
+                RemoveClaim(identity, "erdi:guild-joined-at");
+                RemoveClaim(identity, "erdi:tenure-pending");
+                RemoveClaim(identity, "erdi:setup-sync-at");
+                RemoveClaim(identity, "erdi:admin");
+                RemoveClaim(identity, "erdi:superadmin");
+                RemoveClaim(identity, "erdi:perm");
+
+                identity.AddClaim(new Claim("erdi:setup-tier", resolution.Tier.ToString()));
+                if (!string.IsNullOrWhiteSpace(resolution.RoleLabel))
+                {
+                    identity.AddClaim(new Claim("erdi:setup-role", resolution.RoleLabel));
+                }
+                identity.AddClaim(new Claim("erdi:on-community-guild", resolution.IsOnCommunityGuild ? "true" : "false"));
+                if (resolution.GuildJoinedAtUtc.HasValue)
+                {
+                    identity.AddClaim(new Claim("erdi:guild-joined-at", resolution.GuildJoinedAtUtc.Value.ToString("O")));
+                }
+                identity.AddClaim(new Claim("erdi:tenure-pending", resolution.IsPendingTenure ? "true" : "false"));
+                identity.AddClaim(new Claim("erdi:setup-sync-at", DateTimeOffset.UtcNow.ToString("O")));
+
+                // Admin-Check: prüfen ob die Discord-ID in der AdminUsers-Tabelle steht
+                var discordId = identity.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrWhiteSpace(discordId))
+                {
+                    var db = context.HttpContext.RequestServices.GetRequiredService<Erdi_ERC.Data.AppDbContext>();
+                    var adminUser = await db.AdminUsers
+                        .Include(a => a.Permissions)
+                        .FirstOrDefaultAsync(a => a.DiscordId == discordId);
+
+                    if (adminUser is not null)
                     {
-                        foreach (var perm in adminUser.Permissions)
+                        identity.AddClaim(new Claim("erdi:admin", "true"));
+
+                        if (adminUser.IsSuperAdmin)
                         {
-                            identity.AddClaim(new Claim("erdi:perm", perm.Permission));
+                            identity.AddClaim(new Claim("erdi:superadmin", "true"));
+                            // Superadmin bekommt alle Berechtigungen implizit
+                            foreach (var perm in Erdi_ERC.Models.AdminPermissions.All)
+                            {
+                                identity.AddClaim(new Claim("erdi:perm", perm.Key));
+                            }
+                        }
+                        else
+                        {
+                            foreach (var perm in adminUser.Permissions)
+                            {
+                                identity.AddClaim(new Claim("erdi:perm", perm.Permission));
+                            }
                         }
                     }
                 }
-            }
 
-            context.ShouldRenew = true;
+                context.ShouldRenew = true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // DB/Discord-Ausfall beim Claims-Sync: bestehende Claims behalten und den
+                // nächsten Sync aufschieben (fail-open). Sonst wirft UseAuthentication VOR
+                // dem Wartungsmodus-Middleware → Exception-Handler → Redirect-Loop, und die
+                // Wartungsseite (deren Hauptzweck ein DB-Ausfall ist) würde nie erscheinen.
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning(ex, "Claims-Sync fehlgeschlagen ({Path}) – bestehende Claims behalten",
+                    context.HttpContext.Request.Path);
+                var identity2 = context.Principal?.Identity as ClaimsIdentity;
+                if (identity2 is not null)
+                {
+                    var old = identity2.FindFirst("erdi:setup-sync-at");
+                    if (old is not null) identity2.RemoveClaim(old);
+                    identity2.AddClaim(new Claim("erdi:setup-sync-at",
+                        DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(10)).ToString("O")));
+                    context.ShouldRenew = true;
+                }
+            }
         }
     };
 })
@@ -910,6 +955,12 @@ app.Use(async (context, next) =>
 app.UseRouting();
 
 app.UseAuthentication();
+
+// Wartungsmodus: blockiert Nicht-Admins mit einer self-contained 503-Seite, wenn das
+// Flag in site-settings.json aktiv ist. Muss NACH UseAuthentication laufen (braucht den
+// "erdi:admin"-Claim), aber VOR UseAuthorization. Health-Checks + Login bleiben frei.
+app.UseMiddleware<Erdi_ERC.Middleware.MaintenanceModeMiddleware>();
+
 app.UseAuthorization();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions
@@ -935,6 +986,139 @@ app.MapGet("/health/ready", async (AppDbContext db, CancellationToken cancellati
         utc = DateTimeOffset.UtcNow
     });
 }).AllowAnonymous();
+
+// ── Telemetrie-Ingest (server-to-server, Key-Auth im Handler) ──────────────────
+// Persönlicher API-Key pro Fahrer (X-Api-Key). Empfängt Rennergebnisse aus der
+// Telemetrie-App als Pending-Entwurf für die Admin-Review-Inbox. Bewusst als
+// Minimal-API: der globale AutoValidateAntiforgeryToken-Filter betrifft Controller
+// nur, Minimal-APIs nicht. Rate-Limit: nur der POST bekommt ein Sliding-Window
+// ("telemetry"-Policy), damit ein fehlkonfigurierter Client nicht mit Retries flutet.
+app.MapPost("/api/telemetry/race", async (
+    HttpRequest request,
+    ITelemetryIngestService ingest,
+    CancellationToken ct) =>
+{
+    using var reader = new StreamReader(request.Body);
+    var body = await reader.ReadToEndAsync(ct);
+    var apiKey = request.Headers["X-Api-Key"].FirstOrDefault();
+    var result = await ingest.IngestAsync(body, apiKey, ct);
+
+    if (result.IsSuccess)
+    {
+        return Results.Json(new { id = result.PendingId }, statusCode: result.StatusCode);
+    }
+
+    return Results.Json(new { error = result.Error }, statusCode: result.StatusCode);
+}).AllowAnonymous().RequireRateLimiting("telemetry");
+
+app.MapGet("/api/telemetry/leagues", async (
+    HttpRequest request,
+    ITelemetryIngestService ingest,
+    ITelemetryKeyService keys,
+    CancellationToken ct) =>
+{
+    var apiKey = request.Headers["X-Api-Key"].FirstOrDefault();
+    var senderKey = await keys.ValidateAsync(apiKey, ct);
+    if (senderKey is null)
+    {
+        return Results.Json(new { error = "Ungültiger oder fehlender API-Key." }, statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var leagues = await ingest.MemberLeaguesAsync(senderKey.DiscordId, ct);
+    return Results.Json(leagues.Select(l => new { id = l.LeagueId, name = l.Name }));
+}).AllowAnonymous();
+
+// GET /api/telemetry/me — wer gehört zu diesem API-Key? Die App gleicht die DiscordId
+// mit dem eingeloggten Discord-User ab („Verbindung testen“), damit ein Key-Inhaber
+// sicher ist, dass sein Key gültig ist und zu ihm gehört.
+app.MapGet("/api/telemetry/me", async (
+    HttpRequest request,
+    ITelemetryKeyService keys,
+    AppDbContext db,
+    CancellationToken ct) =>
+{
+    var apiKey = request.Headers["X-Api-Key"].FirstOrDefault();
+    var senderKey = await keys.ValidateAsync(apiKey, ct);
+    if (senderKey is null)
+    {
+        return Results.Json(new { error = "Ungültiger oder fehlender API-Key." }, statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var profile = await db.DriverProfiles.AsNoTracking()
+        .FirstOrDefaultAsync(p => p.DiscordId == senderKey.DiscordId, ct);
+    return Results.Json(new
+    {
+        discordId = senderKey.DiscordId,
+        name = profile?.DiscordName,
+        displayName = profile?.DisplayName,
+    });
+}).AllowAnonymous();
+
+// ── Setups-API (App ↔ Website) ─────────────────────────────────────────────────
+// Track-Setups für die Telemetrie-App. Auth: Discord-Access-Token (Bearer) aus dem
+// App-Login (ShareServer). Tier-Zugriff via SetupAccessService + TrackSetupAccessPolicy;
+// SetupBlockedUsers werden ausgeschlossen. Optional nach Strecke/Spieljahr filterbar.
+app.MapGet("/api/setups", async (
+    HttpRequest request,
+    ISetupAccessService setupAccess,
+    ITrackSetupAccessPolicy policy,
+    AppDbContext db,
+    string? track,
+    string? gameYear,
+    CancellationToken ct) =>
+{
+    var token = request.Headers.Authorization.FirstOrDefault()?
+        .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase);
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Json(new { error = "Fehlender Discord-Zugriffstoken." }, statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var access = await setupAccess.ResolveSetupAccessAsync(token, ct);
+    if (!access.Success)
+    {
+        return Results.Json(new { error = "Discord-Zugriff nicht auflösbar." }, statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var user = await setupAccess.ResolveUserAsync(token, ct);
+    var isBlocked = user is not null
+        && await db.SetupBlockedUsers.AnyAsync(x => x.DiscordId == user.Id, ct);
+
+    var query = db.TrackSetups.AsNoTracking();
+    if (!string.IsNullOrWhiteSpace(track))
+    {
+        query = query.Where(x => x.Track == track.Trim());
+    }
+    if (!string.IsNullOrWhiteSpace(gameYear))
+    {
+        query = query.Where(x => x.GameYear == gameYear.Trim());
+    }
+
+    var setups = await query
+        .OrderBy(x => x.Track)
+        .ThenByDescending(x => x.RequiredAccessTier)
+        .ThenByDescending(x => x.UpdatedAt)
+        .ToListAsync(ct);
+
+    var visible = isBlocked
+        ? new List<TrackSetup>()
+        : setups.Where(x => policy.CanView(x, access.Tier, access.RoleLabel)).ToList();
+
+    return Results.Json(new
+    {
+        tier = access.Tier,
+        role = access.RoleLabel,
+        setups = visible.Select(s => new
+        {
+            id = s.Id,
+            track = s.Track,
+            title = s.Title,
+            gameYear = s.GameYear,
+            updatedAt = s.UpdatedAt,
+            payload = s.SetupText,
+        }),
+    });
+}).AllowAnonymous().RequireRateLimiting("telemetry");
 
 app.MapControllerRoute(
     name: "uber-mich",

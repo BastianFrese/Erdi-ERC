@@ -31,6 +31,8 @@ namespace Erdi_ERC.Services
         private sealed class SettingsFile
         {
             public bool AppDownloadEnabled { get; set; }
+            public bool MaintenanceMode { get; set; }
+            public string? MaintenanceMessage { get; set; }
             public string? UpdatedAt { get; set; }
             public string? UpdatedBy { get; set; }
         }
@@ -38,21 +40,7 @@ namespace Erdi_ERC.Services
         public bool IsAppDownloadEnabled() => Load().AppDownloadEnabled;
 
         public void SetAppDownloadEnabled(bool enabled, string changedBy)
-        {
-            var settings = new SettingsFile
-            {
-                AppDownloadEnabled = enabled,
-                UpdatedAt = DateTime.UtcNow.ToString("o"),
-                UpdatedBy = changedBy
-            };
-
-            Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_settingsPath, json);
-
-            _cache.Remove(CacheKey);
-            _logger.LogInformation("App-Download {State} (von {ChangedBy})", enabled ? "AKTIVIERT" : "DEAKTIVIERT", changedBy);
-        }
+            => Update(s => s.AppDownloadEnabled = enabled, changedBy, enabled ? "App-Download AKTIVIERT" : "App-Download DEAKTIVIERT");
 
         public bool HasInstallerFile()
         {
@@ -60,7 +48,52 @@ namespace Erdi_ERC.Services
             return Directory.EnumerateFiles(_downloadsPath, "*.exe").Any();
         }
 
+        public bool IsMaintenanceMode() => Load().MaintenanceMode;
+
+        public void SetMaintenanceMode(bool enabled, string changedBy)
+            => Update(s => s.MaintenanceMode = enabled, changedBy, enabled ? "Wartungsmodus AKTIVIERT" : "Wartungsmodus DEAKTIVIERT");
+
+        public string GetMaintenanceMessage() => Load().MaintenanceMessage ?? string.Empty;
+
+        public void SetMaintenanceMessage(string message, string changedBy)
+            => Update(s => s.MaintenanceMessage = message, changedBy, "Wartungsmeldung aktualisiert");
+
         private const string CacheKey = "site-settings-file";
+
+        // Serialisiert Read-Modify-Write: zwei gleichzeitige Setter (z.B. zwei Superadmin-Sessions)
+        // dürfen sich nicht gegenseitig überschreiben. Singleton → ein Lock reicht.
+        private readonly object _writeLock = new();
+
+        /// <summary>Read-Modify-Write unter Lock. Baut IMMER ein frisches <see cref="SettingsFile"/>
+        /// aus dem Disk-Stand — nie das gecachte Objekt mutieren.</summary>
+        private void Update(Action<SettingsFile> change, string changedBy, string logMessage)
+        {
+            lock (_writeLock)
+            {
+                var current = LoadFromDisk();
+                var settings = new SettingsFile
+                {
+                    AppDownloadEnabled = current.AppDownloadEnabled,
+                    MaintenanceMode = current.MaintenanceMode,
+                    MaintenanceMessage = current.MaintenanceMessage
+                };
+                change(settings);
+                Persist(settings, changedBy, logMessage);
+            }
+        }
+
+        private void Persist(SettingsFile settings, string changedBy, string logMessage)
+        {
+            settings.UpdatedAt = DateTime.UtcNow.ToString("o");
+            settings.UpdatedBy = changedBy;
+
+            Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
+            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_settingsPath, json);
+
+            _cache.Remove(CacheKey);
+            _logger.LogInformation("{LogMessage} (von {ChangedBy})", logMessage, changedBy);
+        }
 
         private SettingsFile LoadFromDisk()
         {

@@ -35,7 +35,10 @@
     string FormatMs(int ms)
     {
         var ts = TimeSpan.FromMilliseconds(ms);
-        return ts.Minutes > 0 ? $"{ts.Minutes}:{ts.Seconds:00}.{ts.Milliseconds:000}" : $"{ts.Seconds}.{ts.Milliseconds:000}";
+        // Gesamtzeit-Anzeige: ab 1 Stunde H:MM:SS.mmm, sonst M:SS.mmm.
+        return ts.TotalHours >= 1
+            ? $"{(int)ts.TotalHours}:{ts.Minutes:00}:{ts.Seconds:00}.{ts.Milliseconds:000}"
+            : $"{(int)ts.TotalMinutes}:{ts.Seconds:00}.{ts.Milliseconds:000}";
     }
 
     var posToDriver = new Dictionary<int, string>();
@@ -111,7 +114,7 @@
                 <div class="adm-kpi-card__label">Reservefahrer</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#4caf6d;">
             <div class="adm-kpi-card__icon"><i class="bi bi-flag-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">22</div>
@@ -130,7 +133,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,#ffb800);"></i>@(isEdit ? "Renn-Ergebnis bearbeiten" : "Neues Renn-Ergebnis") · @Model.Name
+                <i class="bi bi-flag-fill me-2" style="color:var(--sig-amber,#e8a93d);"></i>@(isEdit ? "Renn-Ergebnis bearbeiten" : "Neues Renn-Ergebnis") · @Model.Name
             </span>
         </div>
         <div class="adm-panel__body">
@@ -219,19 +222,53 @@
                     </div>
                 }
 
+                <div class="border rounded p-3 mb-4" style="border-color:rgba(91,140,255,.35)!important;">
+                    <h5 class="mb-2"><i class="bi bi-clipboard-data me-1"></i>CSV aus dem Spiel-Export einfügen</h5>
+                    <p class="text-muted small mb-2">
+                        Füge den kompletten Ergebnis-Textblock aus dem Spiel-Export hier ein und klicke auf
+                        <strong>„CSV übernehmen"</strong>. Positionen, Fahrer (wo der Name bekannt ist) und die
+                        <strong>Gesamt-Rennzeit</strong> werden automatisch befüllt — die Gesamtzeit wird aus
+                        Siegerzeit + Abstand zum Vordermann berechnet. Überrundete Fahrer behalten den Export-Text
+                        (z.&nbsp;B. „+1 Runde"). <span class="text-warning">Ersetzt die aktuelle Positions-/Zeit-Füllung.</span>
+                    </p>
+                    <textarea id="raceCsvInput" class="form-control font-monospace" rows="4" spellcheck="false"
+                              placeholder='"Pos.","Fahrer","Team","Grid","Stopps","Beste","Zeit","Pkt.","Fahrertyp"&#10;"1","Spieler:in","Mercedes-AMG F1 Team","1","1","1:20,126","45:31,798","25","Spieler:in"&#10;…'></textarea>
+                    <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-info btn-sm" id="raceCsvApplyBtn"><i class="bi bi-magic me-1"></i>CSV übernehmen</button>
+                        <span id="raceCsvStatus" class="small text-muted"></span>
+                    </div>
+                </div>
+                <style>
+                    select.needs-driver { box-shadow: 0 0 0 2px rgba(232,169,61,.55); }
+                    .race-position-block { transition: background-color .15s ease, border-color .15s ease; }
+                    .race-position-block.race-dragging { opacity: .45; }
+                    .race-position-block.race-drop-target { box-shadow: 0 0 0 2px rgba(91,140,255,.55); }
+                    .race-sort-handle { cursor: grab; touch-action: none; }
+                    .race-sort-handle:active { cursor: grabbing; }
+                </style>
+
                 <hr />
-                <h5 class="mb-3">Startaufstellung / Zieleinlauf</h5>
-                <p class="text-muted small">Wähle den Fahrer für die jeweilige Position. Optional kannst du die Zeit als m:ss.fff eintragen (z. B. 1:35.228). <strong>Neue Option:</strong> Trage Strafzeit in Sekunden ein (z. B. 5 oder 10), die werden automatisch zur Zeit addiert und die Positionen neu berechnet.</p>
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <h5 class="mb-0">Startaufstellung / Zieleinlauf</h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="sortByTimeBtn"
+                            title="Ordnet alle Zeilen nach Gesamtzeit aufsteigend (Strafen sind bereits im Gesamtzeit-Feld eingerechnet) — Schnellste auf Position 1. Zeilen ohne parsebare Zeit wandern ans Ende und behalten ihre relative Reihenfolge.">
+                        <i class="bi bi-sort-numeric-down me-1"></i>Nach Zeit sortieren
+                    </button>
+                </div>
+                <p class="text-muted small">Wähle den Fahrer für die jeweilige Position. Optional trägst du die <strong>Gesamt-Rennzeit</strong> des Fahrers ein (gesamt gefahrene Zeit, keine Rundenzeit) — z. B. <code>1:24:35.100</code> (h:mm:ss) oder <code>24:35.100</code> (m:ss). Eine Strafe (positive <strong>und</strong> negative Zahl) wird <strong>sofort</strong> auf die Gesamt-Rennzeit angerechnet und direkt in das <strong>Gesamtzeit</strong>-Feld übernommen — die <em>Endposition</em> basiert damit immer auf der angezeigten, korrigierten Zeit. Fahrer-Zeilen kannst du am Griff <i class="bi bi-grip-vertical"></i> per Drag &amp; Drop verschieben.</p>
 
                 <div class="row g-4 align-items-start">
                     <div class="col-lg-8">
                         <div class="row g-3">
                             @for(int i = 0; i < 22; i++)
                             {
-                                <div class="col-12 mb-3">
-                                    <label class="form-label fw-bold">Position @(i+1) (@pointsMap[i] Pkt.)</label>
-                                    <div class="row g-2">
-                                        <div class="col-md-4">
+                                <div class="col-12 mb-3 race-position-block" data-pos="@(i+1)">
+                                    <label class="form-label fw-bold"><span class="race-pos-text">Position @(i+1) (@pointsMap[i] Pkt.)</span></label>
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-auto">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary race-sort-handle" draggable="true" title="Zeile per Drag &amp; Drop verschieben — Endposition = Gesamtzeit + Strafsekunden" aria-label="Fahrer-Zeile verschieben"><i class="bi bi-grip-vertical"></i></button>
+                                        </div>
+                                        <div class="col-md-3">
                                             <select class="form-select race-position-select" name="positions">
                                                 <option value="">-- Leer --</option>
                                                 @{ var selectedDriverForPos = posToDriver.TryGetValue(i + 1, out var pd) ? pd : null; }
@@ -245,10 +282,10 @@
                                             <input class="form-control" name="qualiPositions" type="number" min="0" max="30" step="1" placeholder="Quali" title="Startposition aus dem Qualifying (Pole = 1)" value="@(posToQuali.TryGetValue(i + 1, out var qp) ? qp.ToString() : "")" />
                                         </div>
                                         <div class="col-md-3">
-                                            <input class="form-control" name="raceTimes" placeholder="Zeit (z. B. 1:35.228)" value="@(posToTime.TryGetValue(i + 1, out var pt) ? pt : "")" />
+                                            <input class="form-control race-time-input" name="raceTimes" placeholder="Gesamtzeit (z. B. 1:24:35.100)" title="Gesamt gefahrene Rennzeit des Fahrers. Formate: h:mm:ss oder m:ss" value="@(posToTime.TryGetValue(i + 1, out var pt) ? pt : "")" />
                                         </div>
-                                        <div class="col-md-3">
-                                            <input class="form-control" name="penaltySeconds" type="number" min="0" step="1" placeholder="Strafe (Sek.)" />
+                                        <div class="col-md-2">
+                                            <input class="form-control race-penalty-input" name="penaltySeconds" type="number" step="1" placeholder="Strafe (± Sek.)" title="Strafzeit in Sekunden. Positive Werte addieren zur Gesamtzeit, negative Werte (Minus-Strafe) ziehen Zeit ab." />
                                         </div>
                                     </div>
                                 </div>
@@ -260,7 +297,7 @@
                         <div class="border rounded p-3 mb-3">
                             <h5 class="mb-2">⚠️ Strafen-System</h5>
                             <p class="text-muted small mb-0">
-                                <strong>Neu:</strong> Strafzeit in Sekunden wird automatisch zur Rennzeit addiert. Die finalen Positionen werden nach Gesamtzeit (Zeit + Strafe) neu berechnet und gespeichert.
+                                Strafe in <strong>Sekunden</strong> ins Straf-Feld tippen: <strong>positive Zahl</strong> addiert Zeit, eine <strong>negative Zahl</strong> (Minus-Strafe) zieht Zeit ab. Die Strafe wird <strong>sofort</strong> auf die Gesamt-Rennzeit angerechnet und genau dort in das <strong>Gesamtzeit</strong>-Feld geschrieben — das Straf-Feld leert sich danach. Die Gesamtzeit kann dabei nie unter 1&nbsp;ms sinken.
                             </p>
                         </div>
                         <div class="border rounded p-3">
@@ -737,6 +774,310 @@
                     }
                 }
             });
+
+            // ── CSV-Rennimport: Spiel-Export einfügen → Positionen/Zeiten auto-füllen ──
+            const raceCsvInput = document.getElementById('raceCsvInput');
+            const raceCsvApplyBtn = document.getElementById('raceCsvApplyBtn');
+            const raceCsvStatus = document.getElementById('raceCsvStatus');
+            const timeInputs = Array.from(document.querySelectorAll('input[name="raceTimes"]'));
+
+            const formatRaceMs = (ms) => {
+                const totalSec = Math.floor(ms / 1000);
+                const milli = ms - totalSec * 1000;
+                const h = Math.floor(totalSec / 3600);
+                const m = Math.floor((totalSec % 3600) / 60);
+                const s = totalSec % 60;
+                const pad = (n, w = 2) => String(n).padStart(w, '0');
+                return h >= 1
+                    ? `${h}:${pad(m)}:${pad(s)}.${pad(milli, 3)}`
+                    : `${m}:${pad(s)}.${pad(milli, 3)}`;
+            };
+
+            const setRaceCsvStatus = (msg, kind) => {
+                if (!raceCsvStatus) return;
+                raceCsvStatus.textContent = msg;
+                raceCsvStatus.className = 'small ' + (kind === 'err' ? 'text-danger fw-bold' : kind === 'warn' ? 'text-warning' : 'text-muted');
+            };
+
+            const clearNeedsDriverMarks = () => {
+                for (const select of selects) {
+                    select.classList.remove('needs-driver');
+                    select.removeAttribute('title');
+                }
+            };
+
+            const applyRaceCsv = async () => {
+                if (!raceCsvInput || !raceCsvApplyBtn) return;
+                const text = raceCsvInput.value.trim();
+                if (!text) { setRaceCsvStatus('Bitte zuerst den Export-Text einfügen.', 'warn'); return; }
+
+                const token = form ? form.querySelector('input[name="__RequestVerificationToken"]')?.value : null;
+                if (!token) { setRaceCsvStatus('Sicherheits-Token fehlt — bitte Seite neu laden.', 'err'); return; }
+
+                raceCsvApplyBtn.disabled = true;
+                setRaceCsvStatus('Wird geparst …');
+                try {
+                    const resp = await fetch('/AdminLeague/ParseRaceCsv', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ csv: text })
+                    });
+                    if (!resp.ok) { setRaceCsvStatus(`Server-Fehler (HTTP ${resp.status}).`, 'err'); return; }
+
+                    const data = await resp.json().catch(() => null);
+                    if (!data) { setRaceCsvStatus('Ungültige Server-Antwort.', 'err'); return; }
+                    if (data.error) { setRaceCsvStatus(data.error, 'err'); return; }
+                    if (!Array.isArray(data.entries) || data.entries.length === 0) {
+                        setRaceCsvStatus('Keine Positions-Zeilen in der Eingabe gefunden.', 'warn');
+                        return;
+                    }
+
+                    // „Übernehmen"-Semantik: bestehende Füllung vorher vollständig leeren.
+                    clearNeedsDriverMarks();
+                    for (const select of selects) select.value = '';
+                    for (const input of timeInputs) input.value = '';
+
+                    let filled = 0, needsDriver = 0, dnfCount = 0, lappedCount = 0;
+                    for (const entry of data.entries) {
+                        const idx = entry.position - 1;
+                        if (!Number.isInteger(idx) || idx < 0 || idx >= selects.length) continue;
+                        const select = selects[idx];
+                        const timeInput = timeInputs[idx];
+
+                        if (entry.isDnf) {
+                            // DNF behält die bestehende Semantik: Positions-Slot leer, Checkbox an.
+                            dnfCount++;
+                            const check = dnfChecks.find(c =>
+                                (c.value || '').toLowerCase() === String(entry.driver || '').toLowerCase());
+                            if (check) check.checked = true;
+                            continue;
+                        }
+
+                        // Fahrer nur zuordnen, wenn der Name im Dropdown existiert (case-insensitive).
+                        // "Spieler:in"/unbekannte Namen → leer + gelbe Markierung + Team-Tooltip.
+                        const known = Array.from(select.options).find(o =>
+                            (o.value || '').toLowerCase() === String(entry.driver || '').toLowerCase());
+                        if (known && entry.driver) {
+                            select.value = known.value;
+                            filled++;
+                        } else {
+                            needsDriver++;
+                            select.classList.add('needs-driver');
+                            if (entry.team) select.title = `CSV-Team: ${entry.team}`;
+                        }
+
+                        if (entry.lappedText) {
+                            if (timeInput) timeInput.value = entry.lappedText;
+                            lappedCount++;
+                        } else if (entry.totalTimeMs != null && timeInput) {
+                            timeInput.value = formatRaceMs(entry.totalTimeMs);
+                        }
+                    }
+
+                    syncDisabledOptions();
+                    syncRowBaseTimes();
+
+                    const parts = [
+                        `${data.entries.length} Zeilen übernommen`,
+                        `${filled} Fahrer zugeordnet`,
+                        needsDriver > 0 ? `${needsDriver} manuell nachzutragen (gelb markiert)` : null,
+                        lappedCount > 0 ? `${lappedCount} überrundet` : null,
+                        dnfCount > 0 ? `${dnfCount} DNF erkannt` : null
+                    ].filter(Boolean);
+                    setRaceCsvStatus(parts.join(' · '), needsDriver > 0 ? 'warn' : '');
+                } catch {
+                    setRaceCsvStatus('Verbindungsfehler — bitte erneut versuchen.', 'err');
+                } finally {
+                    raceCsvApplyBtn.disabled = false;
+                }
+            };
+
+            if (raceCsvApplyBtn) raceCsvApplyBtn.addEventListener('click', applyRaceCsv);
+
+            // ── Drag & Drop + Sortierung: komplette Fahrer-Zeile verschieben ──
+            // Position im DOM = Position im Formular-Array = finale Endposition (Server
+            // übernimmt den Index direkt). Sortier-Basis ist die EFFEKTIVE Zeit =
+            // Gesamtzeit + Strafsekunden.
+            const racePointsMap = @Html.Raw(JsonSerializer.Serialize(pointsMap));
+            const rowEls = () => Array.from(document.querySelectorAll('.race-position-block'));
+
+            // Position-Label + data-pos an die aktuelle DOM-Reihenfolge angleichen.
+            const renumberRaceRows = () => {
+                rowEls().forEach((row, i) => {
+                    row.dataset.pos = String(i + 1);
+                    const text = row.querySelector('.race-pos-text');
+                    if (text) text.textContent = `Position ${i + 1} (${racePointsMap[i] ?? 0} Pkt.)`;
+                });
+            };
+
+            // selects/timeInputs sind const-Snapshots: nach jedem Umordnen in-place neu
+            // befüllen, damit CSV-Import & Validierung die aktuelle DOM-Reihenfolge sehen.
+            const refreshRaceFieldArrays = () => {
+                selects.length = 0;
+                selects.push(...document.querySelectorAll('.race-position-select'));
+                timeInputs.length = 0;
+                timeInputs.push(...document.querySelectorAll('input[name="raceTimes"]'));
+            };
+
+            // Vorzeichenbehaftet: negativ = Minus-Strafe (Zeit-Abzug), leer/nichtnumerisch = 0.
+            const parsePenaltySecs = (raw) => {
+                const v = parseInt(String(raw ?? '').trim(), 10);
+                return Number.isFinite(v) ? v : 0;
+            };
+
+            // Spiegel von RaceTimeParser.ParseMs (Single Source of Truth, server):
+            // [H:]MM:SS(.mmm), MM:SS(.mmm) oder nackte Sekunden (12.423, 2700).
+            // Absichtlich keine Ziffern-Bounds — der Server akzeptiert z. B. "24:60"
+            // und "1:2:3" auch, sonst würden server-valid Zeiten beim Sortieren still
+            // ans Ende rutschen. Komma = Dezimaltrenner wird auf "." normalisiert.
+            const parseTimeToMs = (raw) => {
+                let s = String(raw ?? '').trim().replace(/,/g, '.');
+                if (!s) return null;
+                // Strikte Zahlenprüfung statt parseFloat: "+1 Runde" (CSV-Lapped-Text)
+                // und andere Nicht-Zahlen werden wie beim Server (double.TryParse) zu
+                // null — parseFloat hätte "+1 Runde" still als 1000 ms gelesen.
+                const numRe = /^\d+(?:\.\d+)?$/;
+                if (s.includes(':')) {
+                    const parts = s.split(':');
+                    if (parts.length === 3 && numRe.test(parts[0]) && numRe.test(parts[1]) && numRe.test(parts[2]))
+                        return Math.floor((parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseFloat(parts[2])) * 1000);
+                    if (parts.length === 2 && numRe.test(parts[0]) && numRe.test(parts[1]))
+                        return Math.floor((parseInt(parts[0], 10) * 60 + parseFloat(parts[1])) * 1000);
+                    return null;
+                }
+                if (!numRe.test(s)) return null;
+                return Math.floor(parseFloat(s) * 1000);
+            };
+
+            const getRowEffectiveMs = (row) => {
+                const timeMs = parseTimeToMs(row.querySelector('input[name="raceTimes"]')?.value);
+                if (timeMs == null) return null;
+                // Effektive Zeit kann durch eine zu hohe Minus-Strafe nicht negativ werden → mind. 1 ms
+                // (gleiche Klemme wie serverseitig in ApplyRaceEntriesAsync).
+                return Math.max(1, timeMs + parsePenaltySecs(row.querySelector('input[name="penaltySeconds"]')?.value) * 1000);
+            };
+
+            // Basis-Gesamtzeit je Zeitfeld merken (data-base-ms), damit eine eingetragene
+            // Strafe immer von der ORIGINAL eingegebenen Gesamtzeit rechnet — nie von einem
+            // bereits korrigierten Wert (kein kumulatives Aufaddieren über mehrere Strafen).
+            const syncRowBaseTimes = () => {
+                for (const input of timeInputs) {
+                    const ms = parseTimeToMs(input.value);
+                    input.dataset.baseMs = ms == null ? '' : String(ms);
+                }
+            };
+
+            let dragSourceRow = null;
+            const dropCleanup = (clearSource = true) => {
+                for (const r of rowEls()) r.classList.remove('race-dragging', 'race-drop-target');
+                if (clearSource) dragSourceRow = null;
+            };
+
+            const wireRowDragHandlers = (row) => {
+                const handle = row.querySelector('.race-sort-handle');
+                if (handle && !handle.dataset.raceDragBound) {
+                    handle.dataset.raceDragBound = '1';
+                    handle.addEventListener('dragstart', (e) => {
+                        dragSourceRow = row;
+                        e.stopPropagation();
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', String(row.dataset.pos));
+                        // Drag erst nach dem Frame sichtbar dämpfen, damit das Drag-Image
+                        // die Zeile nicht gedimmt abfotografiert. Guard gegen rAF-Ghost:
+                        // war der Drag schon beendet (dropCleanup → dragSourceRow = null),
+                        // wird die Klasse nicht mehr gesetzt und bleibt nicht hängen.
+                        requestAnimationFrame(() => { if (dragSourceRow === row) row.classList.add('race-dragging'); });
+                    });
+                    handle.addEventListener('dragend', () => dropCleanup());
+                }
+                if (row.dataset.raceRowBound) return;
+                row.dataset.raceRowBound = '1';
+                row.addEventListener('dragover', (e) => {
+                    if (dragSourceRow && dragSourceRow !== row) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        row.classList.add('race-drop-target');
+                    }
+                });
+                row.addEventListener('dragleave', (e) => {
+                    if (!row.contains(e.relatedTarget)) row.classList.remove('race-drop-target');
+                });
+                row.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!dragSourceRow || dragSourceRow === row) { dropCleanup(); return; }
+                    const rect = row.getBoundingClientRect();
+                    const insertBefore = (e.clientY - rect.top) < rect.height / 2;
+                    dropCleanup(false);
+                    dragSourceRow.parentNode.removeChild(dragSourceRow);
+                    row.parentNode.insertBefore(dragSourceRow, insertBefore ? row : row.nextSibling);
+                    renumberRaceRows();
+                    refreshRaceFieldArrays();
+                    syncDisabledOptions();
+                });
+            };
+
+            // Sortierung: aufsteigend nach Gesamtzeit (Strafen sind per Absorb-Verhalten
+            // bereits ins Gesamtzeit-Feld eingerechnet, das Straf-Feld ist leer). Zeilen
+            // ohne parsebare Zeit (leer, „+1 Runde“) wandern ans Ende, relative Reihenfolge
+            // bleibt. getRowEffectiveMs wendet eine evtl. noch gefüllte Strafe trotzdem an.
+            const sortRowsByEffectiveTime = () => {
+                const rows = rowEls();
+                if (rows.length === 0) return;
+                const withTime = [];
+                const withoutTime = [];
+                rows.forEach((row, i) => {
+                    const eff = getRowEffectiveMs(row);
+                    (eff == null ? withoutTime : withTime).push({ row, eff, i });
+                });
+                withTime.sort((a, b) => (a.eff - b.eff) || (a.i - b.i));
+                const ordered = withTime.map(x => x.row).concat(withoutTime.map(x => x.row));
+                const parent = rows[0].parentNode;
+                for (const r of ordered) parent.appendChild(r);
+                renumberRaceRows();
+                refreshRaceFieldArrays();
+                syncDisabledOptions();
+            };
+
+            const sortByTimeBtn = document.getElementById('sortByTimeBtn');
+            if (sortByTimeBtn) sortByTimeBtn.addEventListener('click', sortRowsByEffectiveTime);
+
+            for (const row of rowEls()) wireRowDragHandlers(row);
+
+            // Straf-Eingabe = Rechner: Eine eingetragene Strafe (± Sekunden) wird SOFORT
+            // auf die Basis-Gesamtzeit addiert bzw. subtrahiert und das Ergebnis direkt in
+            // das Gesamtzeit-Feld geschrieben. Das Straf-Feld leert sich danach wieder.
+            // So landet die "neu berechnete Zeit" genau dort, wo der Fahrer sie nachher
+            // eintragen würde — und der Server (der die Strafen OHNE Doppel-Addierung
+            // verarbeitet, weil das Feld leer bleibt) erhält die korrigierte Endzeit.
+            for (const row of rowEls()) {
+                const timeInput = row.querySelector('input[name="raceTimes"]');
+                const penaltyInput = row.querySelector('input[name="penaltySeconds"]');
+                if (!timeInput || !penaltyInput) continue;
+                timeInput.addEventListener('input', () => {
+                    const ms = parseTimeToMs(timeInput.value);
+                    timeInput.dataset.baseMs = ms == null ? '' : String(ms);
+                });
+                penaltyInput.addEventListener('input', () => {
+                    const base = Number(timeInput.dataset.baseMs);
+                    const penalty = parsePenaltySecs(penaltyInput.value);
+                    // Nur anwenden, wenn eine echte Basis-Zeit existiert ("+1 Runde" etc.
+                    // wird bewusst NICHT mit Strafe verrechnet) und tatsächlich eine Strafe
+                    // eingegeben wurde. Gesamtzeit nie negativ → Klemme auf 1 ms wie server.
+                    if (Number.isFinite(base) && base > 0 && penalty !== 0) {
+                        timeInput.value = formatRaceMs(Math.max(1, base + penalty * 1000));
+                    }
+                    penaltyInput.value = '';
+                });
+            }
+
+            renumberRaceRows();
+            syncRowBaseTimes();
 
             syncDisabledOptions();
         })();

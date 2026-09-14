@@ -15,7 +15,8 @@ namespace Erdi_ERC.Migrations
                 table: "ApplicationForms",
                 type: "varchar(64)",
                 maxLength: 64,
-                nullable: true)
+                nullable: true,
+                collation: "utf8mb4_general_ci")
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(

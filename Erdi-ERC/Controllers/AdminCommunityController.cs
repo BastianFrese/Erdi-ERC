@@ -619,6 +619,19 @@ namespace Erdi_ERC.Controllers
             entity.Reason             = reason.Trim();
             entity.IsPublic           = isPublic;
 
+            // Strafpunkte-Gesamtstand: Nur beim ANLEGEN als Snapshot speichern (Stand des
+            // Fahrers in dieser Liga, inkl. der Punkte dieses Dokuments). Bei Bearbeitung
+            // eines Alt-Dokuments bleibt der Wert eingefroren — alte Berichte dürfen den
+            // Wert nicht aktualisieren (User-Anforderung). entity ist beim Anlegen zwar
+            // getrackt, aber noch nicht gespeichert → fließt nicht in die Summen-Query ein.
+            if (isNew)
+            {
+                var prior = await _db.LeaguePenalties
+                    .Where(x => x.LeagueId == entity.LeagueId && x.Driver == entity.Driver)
+                    .SumAsync(x => (int?)x.Points) ?? 0;
+                entity.DriverPointsTotal = prior + entity.Points;
+            }
+
             await _db.SaveChangesAsync();
             await _audit.LogAsync(
                 isNew ? "CreatePenalty" : "UpdatePenalty",
