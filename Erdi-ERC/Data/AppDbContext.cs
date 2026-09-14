@@ -40,6 +40,7 @@ namespace Erdi_ERC.Data
         public DbSet<CommunityVoteResponse> CommunityVoteResponses => Set<CommunityVoteResponse>();
         public DbSet<AdminUserPermission> AdminUserPermissions => Set<AdminUserPermission>();
         public DbSet<RaceHighlightClip> RaceHighlightClips => Set<RaceHighlightClip>();
+        public DbSet<Giveaway> Giveaways => Set<Giveaway>();
         public DbSet<DiscordWebhook> DiscordWebhooks => Set<DiscordWebhook>();
         public DbSet<AboutMeProfile> AboutMeProfiles => Set<AboutMeProfile>();
         public DbSet<WebhookAutomationRule> WebhookAutomationRules => Set<WebhookAutomationRule>();
@@ -463,6 +464,17 @@ namespace Erdi_ERC.Data
                 b.Property(x => x.SubmittedByDiscordId).HasMaxLength(32);
                 b.Property(x => x.SubmittedByName).HasMaxLength(128).IsRequired();
                 b.HasIndex(x => new { x.IsApproved, x.CreatedAt });
+            });
+
+            modelBuilder.Entity<Giveaway>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Title).HasMaxLength(160).IsRequired();
+                b.Property(x => x.Description).HasMaxLength(480);
+                b.Property(x => x.Prize).HasMaxLength(160);
+                b.Property(x => x.Link).HasMaxLength(512);
+                // Hot-Query der Startseite: nur aktive Giveaways (StartAt ≤ jetzt ≤ EndAt).
+                b.HasIndex(x => new { x.StartAt, x.EndAt });
             });
 
             modelBuilder.Entity<RegelwerkDocument>(b =>

@@ -488,7 +488,8 @@ builder.Services.AddAuthorization(options =>
                   HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityHub,        Erdi_ERC.Models.AdminPermissions.Community) ||
                   HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityEvents,     Erdi_ERC.Models.AdminPermissions.Community) ||
                   HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStreams,    Erdi_ERC.Models.AdminPermissions.Community) ||
-                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStewarding, Erdi_ERC.Models.AdminPermissions.Community)));
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStewarding, Erdi_ERC.Models.AdminPermissions.Community) ||
+                  HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityGiveaways,  Erdi_ERC.Models.AdminPermissions.Community)));
 
     options.AddPolicy("Admin.Community.Hub", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
@@ -505,6 +506,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin.Community.Stewarding", policy =>
         policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
               .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityStewarding, Erdi_ERC.Models.AdminPermissions.Community)));
+
+    options.AddPolicy("Admin.Community.Giveaways", policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("erdi:admin", "true")
+              .RequireAssertion(ctx => HasPerm(ctx.User, Erdi_ERC.Models.AdminPermissions.CommunityGiveaways, Erdi_ERC.Models.AdminPermissions.Community)));
 
     // ── Fahrer ───────────────────────────────────────────────────────────────────
     options.AddPolicy("Admin.Drivers", policy =>

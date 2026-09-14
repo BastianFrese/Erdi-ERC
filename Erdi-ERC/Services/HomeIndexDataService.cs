@@ -24,6 +24,7 @@ namespace Erdi_ERC.Services
         HomeNextEvent? NextUpcomingEvent, StreamSchedule? NextStream, bool HasTrackSetups,
         List<OverallConstructorRow> OverallConstructorsTop3,
         List<CommunityNewsPost> CommunityNews,
+        List<Giveaway> ActiveGiveaways,
         List<HomeLeaguePreview> LeaguePreview,
         List<HomeLastWinner> LastWinners);
 
@@ -133,6 +134,13 @@ namespace Erdi_ERC.Services
                 .Take(4)
                 .ToListAsync(ct);
 
+            // Laufende Giveaways (Zeitraum-basiert): nur StartAt ≤ jetzt ≤ EndAt,
+            // nächste Deadline zuerst. Vergangene tauchen gar nicht erst auf.
+            var activeGiveaways = await _db.Giveaways
+                .Where(x => x.StartAt <= DateTime.UtcNow && x.EndAt >= DateTime.UtcNow)
+                .OrderBy(x => x.EndAt)
+                .ToListAsync(ct);
+
             var leaguePreviewBase = await _db.Leagues
                 .OrderBy(l => l.Name)
                 .Select(l => new
@@ -170,7 +178,7 @@ namespace Erdi_ERC.Services
             return new HomeIndexData(
                 leagueCount, driverCount, raceCount, upcomingCount,
                 nextUpcomingEvent, nextStream, hasTrackSetups,
-                overallTop3, communityNews, leaguePreview, lastWinners);
+                overallTop3, communityNews, activeGiveaways, leaguePreview, lastWinners);
         }
 
         // --- Last Winners -------------------------------------------------

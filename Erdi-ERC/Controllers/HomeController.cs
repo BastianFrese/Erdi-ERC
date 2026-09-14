@@ -52,6 +52,7 @@ namespace Erdi_ERC.Controllers
             ViewBag.HasTrackSetups = data.HasTrackSetups;
             ViewBag.OverallConstructorsTop3 = data.OverallConstructorsTop3;
             ViewBag.CommunityNews = data.CommunityNews;
+            ViewBag.ActiveGiveaways = data.ActiveGiveaways;
             ViewBag.LeaguePreview = data.LeaguePreview;
             ViewBag.LastWinners = data.LastWinners;
 

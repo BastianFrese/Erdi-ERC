@@ -329,6 +329,92 @@ namespace Erdi_ERC.Controllers
             return RedirectToAction(nameof(Events));
         }
 
+        // ── Giveaways (Infotafel-Startseite) ───────────────────────────────────────
+
+        [HttpGet]
+        [Authorize(Policy = "Admin.Community.Giveaways")]
+        public async Task<IActionResult> Giveaways()
+        {
+            var giveaways = await _db.Giveaways
+                .OrderByDescending(x => x.StartAt)
+                .ToListAsync();
+            return View("~/Views/Admin/Giveaways.cshtml", giveaways);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Admin.Community.Giveaways")]
+        public async Task<IActionResult> SaveGiveaway(int? id, string title, string? description, string? prize, DateTime startAt, DateTime endAt, string? link)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                TempData["AdminMessage"] = "Titel ist erforderlich.";
+                return RedirectToAction(nameof(Giveaways));
+            }
+
+            var normalizedLink = string.IsNullOrWhiteSpace(link) ? null : link.Trim();
+            if (!string.IsNullOrWhiteSpace(normalizedLink))
+            {
+                if (!Uri.TryCreate(normalizedLink, UriKind.Absolute, out var parsed)
+                    || (parsed.Scheme != Uri.UriSchemeHttp && parsed.Scheme != Uri.UriSchemeHttps))
+                {
+                    TempData["AdminMessage"] = "Der Link ist ungültig — bitte eine http(s)-Adresse angeben.";
+                    return RedirectToAction(nameof(Giveaways));
+                }
+                normalizedLink = parsed!.ToString();
+            }
+
+            if (endAt <= startAt)
+            {
+                TempData["AdminMessage"] = "Das Enddatum muss nach dem Startdatum liegen.";
+                return RedirectToAction(nameof(Giveaways));
+            }
+
+            Giveaway? entity = id.HasValue && id.Value > 0
+                ? await _db.Giveaways.FindAsync(id.Value)
+                : null;
+            var isNew = entity is null;
+
+            if (entity is null)
+            {
+                entity = new Giveaway();
+                _db.Giveaways.Add(entity);
+            }
+
+            entity.Title = title.Trim();
+            entity.Description = description?.Trim() ?? "";
+            entity.Prize = prize?.Trim() ?? "";
+            entity.StartAt = startAt;
+            entity.EndAt = endAt;
+            entity.Link = normalizedLink;
+
+            await _db.SaveChangesAsync();
+            if (isNew)
+            {
+                await _audit.LogAsync("SaveGiveaway", "Giveaway", entity.Id.ToString(), $"Title={entity.Title}, End={entity.EndAt:O}");
+            }
+
+            TempData["AdminMessage"] = "Giveaway gespeichert.";
+            return RedirectToAction(nameof(Giveaways));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Admin.Community.Giveaways")]
+        public async Task<IActionResult> DeleteGiveaway(int id)
+        {
+            var entity = await _db.Giveaways.FindAsync(id);
+            if (entity is null)
+            {
+                TempData["AdminMessage"] = "Giveaway nicht gefunden.";
+                return RedirectToAction(nameof(Giveaways));
+            }
+
+            _db.Giveaways.Remove(entity);
+            await _db.SaveChangesAsync();
+            await _audit.LogAsync("DeleteGiveaway", "Giveaway", id.ToString(), $"Title={entity.Title}");
+            TempData["AdminMessage"] = "Giveaway gelöscht.";
+            return RedirectToAction(nameof(Giveaways));
+        }
+
         [HttpGet]
         [Authorize(Policy = "Admin.Community.Streams")]
         public async Task<IActionResult> StreamSchedules()
