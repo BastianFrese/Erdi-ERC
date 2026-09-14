@@ -277,6 +277,10 @@ namespace Erdi_ERC.Models
         /// <summary>Freier PenaltyType. Standardtypen: DSQ, Zeitstrafe, Gridstrafe, Verwarnung, "Zeitstrafe + Strafpunkte".</summary>
         public string PenaltyType { get; set; } = "Zeitstrafe";
         public int Points { get; set; }
+        /// <summary>Strafpunkte-Gesamtstand des Fahrers (in dieser Liga) zum Zeitpunkt dieses
+        /// Dokuments, inkl. der Punkte dieses Dokuments. Wird NUR beim Anlegen gesetzt und
+        /// danach nie wieder aktualisiert — alte Berichte dürfen den Wert nicht nachziehen.</summary>
+        public int? DriverPointsTotal { get; set; }
         public string? RaceTrack { get; set; }
         public string? SecondDriver { get; set; }
         /// <summary>Startnummer des zweiten beteiligten Fahrers.</summary>

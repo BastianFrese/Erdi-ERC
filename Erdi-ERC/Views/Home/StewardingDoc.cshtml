@@ -1,0 +1,222 @@
+@using Erdi_ERC.Models
+@model LeaguePenalty
+@{
+    ViewData["Title"] = $"Steward-Dokument #{Model.Id} · {Model.Driver}";
+
+    string NormalizedType() => (Model.PenaltyType ?? string.Empty).ToLowerInvariant();
+    bool HasTime()   => NormalizedType().Contains("zeitstrafe") || NormalizedType().Contains("time penalty");
+    bool HasPoints() => NormalizedType().Contains("strafpunkte") || NormalizedType().Contains("penalty points") || NormalizedType().Contains("punkte");
+    string DecisionText()
+    {
+        if (HasTime() && HasPoints()) return $"Time penalty and {Model.Points} penalty points imposed.";
+        if (HasPoints())              return $"{Model.Points} penalty points imposed.";
+        if (HasTime())                return "Time penalty imposed.";
+        return $"{Model.PenaltyType} imposed.";
+    }
+    var gpLabel = !string.IsNullOrWhiteSpace(Model.RaceTrack)
+        ? Model.RaceTrack.ToUpperInvariant() + " GRAND PRIX"
+        : (Model.LeagueId ?? "ERC").ToUpperInvariant();
+    var docNum   = Model.Id.ToString("D2");
+    var metaDate = Model.Date.ToString("dd.MM.yyyy");
+    var metaTime = Model.CreatedAt.ToLocalTime().ToString("HH:mm");
+    var driverLine = Model.DriverNumber.HasValue
+        ? $"{Model.DriverNumber.Value} – {Model.Driver}"
+        : Model.Driver;
+    var secondLine = Model.SecondDriverNumber.HasValue && !string.IsNullOrWhiteSpace(Model.SecondDriver)
+        ? $"{Model.SecondDriverNumber.Value} – {Model.SecondDriver}"
+        : (Model.SecondDriver ?? string.Empty);
+    var reasonParagraphs = (Model.Reason ?? string.Empty)
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var factText = Model.Incident ?? string.Empty;
+    if (Model.IsBetweenTwoDrivers && !string.IsNullOrWhiteSpace(Model.SecondDriver))
+    {
+        var p1 = Model.DriverNumber.HasValue ? $"Car {Model.DriverNumber.Value} ({Model.Driver})" : Model.Driver;
+        var p2 = Model.SecondDriverNumber.HasValue ? $"Car {Model.SecondDriverNumber.Value} ({Model.SecondDriver})" : Model.SecondDriver;
+        factText = $"Incident between {p1} and {p2}." + (string.IsNullOrEmpty(factText) ? null : " " + factText);
+    }
+}
+
+@section Styles {
+<style>
+    body { background: #1a1a1a; }
+    .stw-doc-page {
+        max-width: 720px;
+        margin: 1.5rem auto 3rem;
+        padding: 0 1rem;
+    }
+    .stw-doc-toolbar {
+        display: flex; align-items: center; gap: .75rem;
+        margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .stw-doc-toolbar a {
+        color: var(--ink-2);
+        font-size: .75rem;
+        font-family: var(--ff-tech);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        border: 1px solid var(--stroke-1);
+        padding: .35rem .75rem;
+        border-radius: var(--r-pill);
+        transition: background var(--t-fast), color var(--t-fast);
+    }
+    .stw-doc-toolbar a:hover { background: var(--surface-2); color: var(--ink); }
+    .stw-doc-toolbar .stw-doc-toolbar__title { color: var(--ink-3); font-size: .8rem; }
+
+    /* FIA-Dokument selbst ist 1:1 aus dem Overlay uebernommen, damit
+       der Druck-/Tab-Look identisch ist. */
+    .fia-doc { background: #f7f6f1; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+    .fia-doc__lh { padding: .7rem 1.2rem .5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #c00; }
+    .fia-doc__brand { display: flex; align-items: center; gap: .5rem; }
+    .fia-doc__brand-mark { background: #e10600; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .1em; padding: .15rem .5rem; border-radius: 2px; text-transform: uppercase; }
+    .fia-doc__brand-text { font-size: 11px; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: .08em; }
+    .fia-doc__num { font-size: 11px; font-weight: 700; color: #e10600; }
+    .fia-doc__title { text-align: center; padding: .65rem 1.2rem .5rem; border-bottom: 1px solid #ccc; }
+    .fia-doc__event { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; font-variant: small-caps; }
+    .fia-doc__event-date { font-size: 11px; color: #555; }
+    .fia-meta { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #ccc; }
+    .fia-meta__col { padding: .5rem 1rem; display: flex; flex-direction: column; gap: .2rem; }
+    .fia-meta__col + .fia-meta__col { border-left: 1px solid #ddd; }
+    .fia-meta__row { display: grid; grid-template-columns: 70px 1fr; font-size: 12px; }
+    .fia-meta__label { font-weight: 700; }
+    .fia-meta__value { color: #111; }
+    .fia-meta__value--red { color: #c00; font-weight: 600; }
+    .fia-doc__body { padding: .7rem 1.1rem .8rem; }
+    .fia-doc__intro { font-size: 12px; line-height: 1.6; color: #333; margin-bottom: .6rem; padding-bottom: .5rem; border-bottom: 1px solid #ddd; }
+    .fia-def { display: flex; flex-direction: column; }
+    .fia-def__row { display: grid; grid-template-columns: 100px 1fr; gap: .25rem .6rem; padding: .3rem 0; border-bottom: 1px solid #e8e8e3; font-size: 12px; line-height: 1.5; }
+    .fia-def__row:last-child { border-bottom: none; }
+    .fia-def__key { font-weight: 700; color: #111; }
+    .fia-def__val { color: #222; }
+    .fia-def__decision { font-weight: 700; }
+    .fia-def__decision-pts { color: #c00; font-weight: 700; }
+    .fia-def__reason { color: #222; }
+    .fia-def__reason p { margin: 0 0 .4rem; color: #222; }
+    .fia-def__reason p:last-child { margin: 0; }
+    .fia-doc-footer { background: #eeeee8; border-top: 1px solid #ccc; padding: .45rem 1.1rem; font-size: 11px; color: #666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .3rem; }
+    .fia-doc-footer__stewards { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+</style>
+}
+
+<div class="stw-doc-page">
+    <div class="stw-doc-toolbar">
+        <a asp-controller="Home" asp-action="Stewarding" rel="noopener">
+            <i class="bi bi-arrow-left me-1"></i>Zur&#252;ck zur Liste
+        </a>
+        <span class="stw-doc-toolbar__title">Steward-Dokument #@Model.Id</span>
+    </div>
+
+    <article class="fia-doc" aria-label="Steward-Entscheidung Dokument @docNum">
+        <div class="fia-doc__lh">
+            <div class="fia-doc__brand">
+                <span class="fia-doc__brand-mark">ERC</span>
+                <span class="fia-doc__brand-text">Erdi's Racing Community</span>
+            </div>
+            <span class="fia-doc__num">Document @docNum</span>
+        </div>
+        <div class="fia-doc__title">
+            <div class="fia-doc__event">@gpLabel</div>
+            <div class="fia-doc__event-date">@metaDate</div>
+        </div>
+        <div class="fia-meta">
+            <div class="fia-meta__col">
+                <div class="fia-meta__row">
+                    <span class="fia-meta__label">From</span>
+                    <span class="fia-meta__value">The Stewards</span>
+                </div>
+                <div class="fia-meta__row">
+                    <span class="fia-meta__label">To</span>
+                    <span class="fia-meta__value fia-meta__value--red">
+                        @Model.Driver@(string.IsNullOrEmpty(secondLine) ? null : " & " + Model.SecondDriver)
+                    </span>
+                </div>
+            </div>
+            <div class="fia-meta__col">
+                <div class="fia-meta__row">
+                    <span class="fia-meta__label">Document</span>
+                    <span class="fia-meta__value">@docNum</span>
+                </div>
+                <div class="fia-meta__row">
+                    <span class="fia-meta__label">Date</span>
+                    <span class="fia-meta__value">@metaDate</span>
+                </div>
+                <div class="fia-meta__row">
+                    <span class="fia-meta__label">Time</span>
+                    <span class="fia-meta__value">@metaTime</span>
+                </div>
+            </div>
+        </div>
+        <div class="fia-doc__body">
+            <p class="fia-doc__intro">The Stewards, having received a report from the Race Director, examined the available evidence and determine the following:</p>
+            <div class="fia-def">
+                <div class="fia-def__row">
+                    <span class="fia-def__key">No / Driver</span>
+                    <span class="fia-def__val">@driverLine</span>
+                </div>
+                <div class="fia-def__row">
+                    <span class="fia-def__key">Competitor</span>
+                    <span class="fia-def__val">@Model.LeagueId</span>
+                </div>
+                <div class="fia-def__row">
+                    <span class="fia-def__key">Time</span>
+                    <span class="fia-def__val">@metaDate</span>
+                </div>
+                <div class="fia-def__row">
+                    <span class="fia-def__key">Session</span>
+                    <span class="fia-def__val">Race</span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.RaceTrack))
+                {
+                    <div class="fia-def__row">
+                        <span class="fia-def__key">Track</span>
+                        <span class="fia-def__val">@Model.RaceTrack</span>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.SecondDriver))
+                {
+                    <div class="fia-def__row">
+                        <span class="fia-def__key">2nd Driver</span>
+                        <span class="fia-def__val">@secondLine</span>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(factText))
+                {
+                    <div class="fia-def__row">
+                        <span class="fia-def__key">Fact</span>
+                        <span class="fia-def__val">@factText</span>
+                    </div>
+                }
+                <div class="fia-def__row">
+                    <span class="fia-def__key">Infringement</span>
+                    <span class="fia-def__val">Breach of ERC Sporting Regulations &#8212; @Model.PenaltyType.</span>
+                </div>
+                <div class="fia-def__row">
+                    <span class="fia-def__key">Decision</span>
+                    <div class="fia-def__val">
+                        <span class="fia-def__decision">@DecisionText()</span>
+                    </div>
+                </div>
+                <div class="fia-def__row">
+                    <span class="fia-def__key">Reason</span>
+                    <div class="fia-def__val fia-def__reason">
+                        @foreach (var line in reasonParagraphs)
+                        {
+                            <p>@line</p>
+                        }
+                    </div>
+                </div>
+                @if (Model.DriverPointsTotal.HasValue)
+                {
+                    <div class="fia-def__row">
+                        <span class="fia-def__key">Penalty Points</span>
+                        <div class="fia-def__val"><span class="fia-def__decision-pts">@Model.DriverPointsTotal.Value</span> (current total)</div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="fia-doc-footer">
+            <span class="fia-doc-footer__stewards">The Stewards &middot; @(string.IsNullOrWhiteSpace(Model.CreatedBy) ? "ERC Stewards" : Model.CreatedBy)</span>
+            <span>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") Uhr</span>
+        </div>
+    </article>
+</div>

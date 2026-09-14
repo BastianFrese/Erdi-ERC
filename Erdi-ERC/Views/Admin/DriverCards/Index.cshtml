@@ -1,11 +1,13 @@
 @model List<(Erdi_ERC.Models.DriverProfile Profile, Erdi_ERC.Models.DriverDetailViewModel CardData)>
 @using Erdi_ERC.Models
+@using Erdi_ERC.Services
 @{
     ViewData["Title"] = "Fahrerkarten";
     ViewData["Kicker"] = "Fahrer";
     ViewData["HeroTitle"] = "Fahrerkarten";
 
     bool canEdit = ViewBag.CanEditNames == true;
+    var unlinked = (ViewBag.UnlinkedDrivers as IReadOnlyList<UnlinkedDriver>) ?? new List<UnlinkedDriver>();
 }
 
 @section Styles {
@@ -99,6 +101,88 @@
             color: #5b8cff;
             font-size: 1.3rem;
         }
+
+        /* Panel: Fahrer ohne Discord-Zuordnung */
+        .dc-unlinked {
+            margin-bottom: 2rem;
+            background: rgba(255, 165, 0, .04);
+            border: 1px solid rgba(255, 165, 0, .25);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+        .dc-unlinked__head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: .75rem; gap: 1rem; flex-wrap: wrap;
+        }
+        .dc-unlinked__title {
+            font-family: var(--ff-tech, 'JetBrains Mono', monospace);
+            font-size: .8rem; letter-spacing: .12em; text-transform: uppercase;
+            color: #e8a93d;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .dc-unlinked__count {
+            background: rgba(255, 184, 0, .18);
+            color: #e8a93d;
+            border: 1px solid rgba(255, 184, 0, .35);
+            border-radius: 999px;
+            padding: .1rem .55rem;
+            font-size: .68rem; font-weight: 700;
+        }
+        .dc-unlinked__hint {
+            font-size: .72rem; color: var(--ink-3, #888);
+            margin: 0 0 .75rem 0;
+        }
+        .dc-unlinked__table {
+            width: 100%; border-collapse: collapse; font-size: .82rem;
+        }
+        .dc-unlinked__table th {
+            text-align: left; font-weight: 600; font-size: .7rem;
+            text-transform: uppercase; letter-spacing: .06em;
+            color: var(--ink-3, #888);
+            padding: .35rem .5rem;
+            border-bottom: 1px solid rgba(255, 165, 0, .18);
+        }
+        .dc-unlinked__table td {
+            padding: .55rem .5rem;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+            vertical-align: top;
+        }
+        .dc-unlinked__name {
+            font-weight: 700; color: var(--ink, #fff);
+            display: flex; align-items: center; gap: .4rem;
+        }
+        .dc-unlinked__meta {
+            color: var(--ink-3, #888);
+            font-size: .72rem; line-height: 1.45;
+        }
+        .dc-unlinked__form {
+            display: flex; flex-wrap: wrap; gap: .4rem; align-items: center;
+        }
+        .dc-unlinked__input {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 6px;
+            color: #fff; font-size: .78rem;
+            padding: .3rem .55rem; outline: none;
+            min-width: 110px;
+        }
+        .dc-unlinked__input:focus { border-color: #5b8cff; }
+        .dc-unlinked__select {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 6px;
+            color: #fff; font-size: .78rem;
+            padding: .3rem .55rem; outline: none;
+        }
+        .dc-unlinked__btn {
+            background: #4caf6d; color: #08120a;
+            border: none; border-radius: 6px;
+            font-size: .76rem; font-weight: 700;
+            padding: .35rem .8rem; cursor: pointer;
+            transition: background .15s;
+            white-space: nowrap;
+        }
+        .dc-unlinked__btn:hover { background: #2bcc0d; }
     </style>
 }
 
@@ -107,6 +191,96 @@
     <p class="dc-kpi">
         <strong>@Model.Count</strong> aktive Fahrer mit verknüpftem Profil
     </p>
+
+    @* Panel: Fahrer, die in DriverStandings auftauchen, aber zu denen es
+       KEIN passendes DriverProfile gibt. Pro Name ein Form zum Anlegen
+       des DriverProfile + DriverGamerTag. Kein Rename — nur Backfill. *@
+    @if (unlinked.Any())
+    {
+        <section class="dc-unlinked" aria-label="Fahrer ohne Discord-Zuordnung">
+            <div class="dc-unlinked__head">
+                <div class="dc-unlinked__title">
+                    <i class="bi bi-link-45deg"></i>
+                    Fahrer ohne Discord-Zuordnung
+                    <span class="dc-unlinked__count">@unlinked.Count</span>
+                </div>
+            </div>
+            <p class="dc-unlinked__hint">
+                Diese Namen stehen in einer Liga, haben aber kein <code>DriverProfile</code> &mdash; das oeffentliche Profil liefert daher 404.
+                Mit Discord-ID zuordnen erstellt ein neues <code>DriverProfile</code> + <code>DriverGamerTag</code> (kein Rename der Standings).
+            </p>
+            <table class="dc-unlinked__table">
+                <thead>
+                    <tr>
+                        <th>Fahrer</th>
+                        <th>Ligen</th>
+                        <th>Discord zuordnen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in unlinked)
+                    {
+                        <tr>
+                            <td>
+                                <div class="dc-unlinked__name">
+                                    @if (u.DriverNumber.HasValue)
+                                    {
+                                        <span>#@u.DriverNumber.Value</span>
+                                    }
+                                    <span>@u.Name</span>
+                                </div>
+                                <div class="dc-unlinked__meta">
+                                    @(u.OccurrenceCount) Liga-Zeile@(u.OccurrenceCount == 1 ? null : "n")
+                                    @if (!string.IsNullOrWhiteSpace(u.Team))
+                                    {
+                                        <span> &middot; @u.Team</span>
+                                    }
+                                    @if (u.RaceCount > 0)
+                                    {
+                                        <span> &middot; @u.RaceCount Rennen</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dc-unlinked__meta">
+                                    @string.Join(", ", u.LeagueIds)
+                                </div>
+                            </td>
+                            <td>
+                                <form asp-controller="AdminDriverCards" asp-action="LinkDriver" method="post" class="dc-unlinked__form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="driverName" value="@u.Name" />
+                                    <input type="text" name="discordId"
+                                           class="dc-unlinked__input"
+                                           placeholder="Discord-ID"
+                                           pattern="^\d{5,25}$"
+                                           title="Numerische Discord-Snowflake (5–25 Stellen)"
+                                           required
+                                           autocomplete="off"
+                                           aria-label="Discord-ID fuer @u.Name" />
+                                    <input type="text" name="discordName"
+                                           class="dc-unlinked__input"
+                                           placeholder="Discord-Name"
+                                           maxlength="128"
+                                           required
+                                           aria-label="Discord-Anzeigename fuer @u.Name" />
+                                    <select name="platform" class="dc-unlinked__select" aria-label="Plattform fuer @u.Name">
+                                        <option value="EA" selected>EA</option>
+                                        <option value="Steam">Steam</option>
+                                        <option value="Xbox">Xbox</option>
+                                        <option value="Playstation">Playstation</option>
+                                    </select>
+                                    <button type="submit" class="dc-unlinked__btn" title="DriverProfile + GamerTag anlegen">
+                                        <i class="bi bi-link-45deg me-1"></i>Zuordnen
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
 
     @if (Model.Count == 0)
     {

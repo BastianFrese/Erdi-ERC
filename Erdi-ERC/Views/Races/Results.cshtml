@@ -230,7 +230,7 @@ else
                                     else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "#ffd24a"; }
                                     else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "#d4d8e0"; }
                                     else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "#d68a4a"; }
-                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);"; cellColor = "#aef3ff"; }
+                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(88,183,201,.08);border:1px solid rgba(88,183,201,.22);"; cellColor = "#aef3ff"; }
                                     else { cellStyle = "background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; }
 
                                     var cellText = fin == null ? "–" : fin.Position.ToString();
@@ -251,7 +251,7 @@ else
                                                 @cellText
                                                 @if (fin?.FastestLap == true)
                                                 {
-                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:#fff;filter:drop-shadow(0 0 4px rgba(185,92,255,.9));" title="Schnellste Runde"></i>
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:#fff;filter:drop-shadow(0 0 4px rgba(157,110,196,.9));" title="Schnellste Runde"></i>
                                                 }
                                             </span>
                                         }
@@ -261,7 +261,7 @@ else
                                                 @cellText
                                                 @if (fin?.FastestLap == true)
                                                 {
-                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-4px;right:-4px;font-size:.55rem;color:var(--sig-magenta);filter:drop-shadow(0 0 4px rgba(185,92,255,.7));" title="Schnellste Runde"></i>
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-4px;right:-4px;font-size:.55rem;color:var(--sig-magenta);filter:drop-shadow(0 0 4px rgba(157,110,196,.7));" title="Schnellste Runde"></i>
                                                 }
                                             </span>
                                         }
@@ -372,7 +372,7 @@ else
             var t when t.Contains("japan") || t.Contains("suzuka") || t.Contains("jpn") => "JPN",
             var t when t.Contains("china") || t.Contains("shanghai") => "CHN",
             var t when t.Contains("miami") => "MIA",
-            var t when t.Contains("imola") || t.Contains("emilia") => "ITA",
+            var t when t.Contains("imola") || t.Contains("emilia") => "Imola",
             var t when t.Contains("monaco") => "MON",
             var t when t.Contains("kanada") || t.Contains("canada") || t.Contains("can") => "CAN",
             var t when t.Contains("spanien") || t.Contains("spain") || t.Contains("barcelona") => "ESP",
@@ -381,7 +381,7 @@ else
             var t when t.Contains("ungarn") || t.Contains("hungary") || t.Contains("budapest") => "HUN",
             var t when t.Contains("belgien") || t.Contains("belgium") || t.Contains("spa") || t.Contains("bel") => "BEL",
             var t when t.Contains("niederland") || t.Contains("netherlands") || t.Contains("zandvoort") || t.Contains("ned") => "NED",
-            var t when t.Contains("italien") || t.Contains("italy") || t.Contains("monza") || t.Contains("ita") => "ITA",
+            var t when t.Contains("italien") || t.Contains("italy") || t.Contains("monza") || t.Contains("ita") => "Monza",
             var t when t.Contains("aserbaidschan") || t.Contains("azerbaijan") || t.Contains("baku") => "AZE",
             var t when t.Contains("singapur") || t.Contains("singapore") => "SGP",
             var t when t.Contains("austin") || t.Contains("cota") || t.Contains("usa") => "USA",

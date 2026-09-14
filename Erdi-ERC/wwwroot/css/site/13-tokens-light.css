@@ -1,0 +1,278 @@
+/* =====================================================================
+   13 · TOKENS — LIGHT & MINIMAL THEME
+   Aktiv per <html data-theme="light"> (gesetzt von theme-toggle.min.js
+   + Inline-Pre-Paint-Script im Layout, Key: localStorage "erc.theme.v1").
+
+   Design-Idee: gleiches Layout, aber hell & schlicht — Weiss/Hellgrau,
+   ein Akzent (F1-Rot), flache Karten ohne Broadcast-Deko (Chamfer,
+   Telemetrie-Streifen, Glas-Blur, Carbon, Scanlines, Gradients).
+
+   BEKANNTE RESTE (bewusst deferred, nicht Teil von v1):
+   - Hex-Literale in wwwroot/css/pages/*.css (14 Page-CSS-Dateien)
+   - driver-card.css (Fahrerkarte ist eigenes Dark-Layout)
+   - SVG-Rennauto im Race-Lights-Overlay (_Layout, bewusst cineastisch dunkel)
+   - Inline-Styles mit Hex-Werten in einzelnen Views (v.a. Admin)
+   ===================================================================== */
+
+html[data-theme="light"] {
+    /* Flächen: opak (das Dark-Theme rechnet mit Alpha-über-Dunkel) */
+    --bg-0:#ffffff;
+    --bg-1:#f7f8fa;
+    --bg-2:#eef1f5;
+    --surface-1:#ffffff;
+    --surface-2:#fafbfc;
+    --surface-3:#f4f6f8;
+
+    --stroke-1:#e3e7ec;
+    --stroke-2:#d2d8e0;
+    --stroke-3:#bcc4cf;
+
+    --ink:#15191f;
+    --ink-2:#4a5260;
+    --ink-3:#6b7480;
+    --ink-4:#98a1ac;
+
+    --accent:#e10600;
+    --accent-2:#c00500;
+    --accent-soft:rgba(225,6,0,.10);
+    --accent-glow:rgba(225,6,0,.25);
+
+    /* Signalfarben: abgedunkelt fuer Weiss (>= 4.5:1) */
+    --sig-cyan:#00779e;
+    --sig-amber:#9a6100;
+    --sig-green:#0b8a3c;
+    --sig-magenta:#8a33c4;
+    --sig-blue:#1a6fd4;
+    --sig-red:#c9382f;
+
+    --gold:#a8781a;
+    --silver:#8b929c;
+    --bronze:#a5652c;
+
+    /* Schatten: statt Inset-Glanz nur dezente Drops */
+    --sh-1:0 1px 2px rgba(16,24,40,.06);
+    --sh-2:0 2px 6px rgba(16,24,40,.06), 0 8px 24px -12px rgba(16,24,40,.14);
+    --sh-3:0 2px 6px rgba(16,24,40,.06), 0 18px 48px -20px rgba(16,24,40,.20);
+
+    /* Deko killen — ausschliesslich via Tokens */
+    --g-aurora:none;
+    --g-chrome:#d9dee6;
+    --g-text-1:var(--ink);
+    --g-text-2:var(--ink-2);
+    --g-accent:var(--accent);
+    --glass-blur:none;
+    --glass-blur-sm:none;
+
+    --f1-checker:repeating-linear-gradient(45deg, rgba(21,25,31,.06) 0 6px, transparent 6px 12px);
+    --f1-grid:repeating-linear-gradient(90deg, transparent 0 34px, rgba(21,25,31,.06) 34px 35px);
+    --carbon:none;
+    --f1-telemetry:var(--accent);
+    --telemetry-stripe:var(--accent);
+    --telemetry-stripe-soft:var(--accent-soft);
+
+    --asphalt-0:#ffffff;
+    --asphalt-1:#f7f8fa;
+    --asphalt-2:#eef1f5;
+    --carbon-fine:none;
+    --carbon-coarse:none;
+    --grid-fine:none;
+    --scanline:none;
+    --brake-glow:none;
+
+    --sector-purple:#7a3bb5;
+    --sector-green:#0b8a3c;
+    --sector-yellow:#b39000;
+    --sector-red:#c9382f;
+
+    /* Cockpit-Topbar (Tokens aus 03-layout.css) → helle Konsole */
+    --cabin-panel-1:#ffffff;
+    --cabin-panel-2:#fafbfc;
+    --cabin-bezel:#d2d8e0;
+    --cabin-cap-1:#ffffff;
+    --cabin-cap-2:#eef1f5;
+    --cabin-cap-edge:#d2d8e0;
+    --cabin-legend:#15191f;
+    --cabin-legend-dim:#6b7480;
+    --led-red:#e10600;
+    --led-red-deep:#c00500;
+}
+
+/* Team-Accents, die auf Weiss Kontrast verlieren */
+html[data-theme="light"] body.team-haas        { --accent:#5f6468; --accent-2:#4a4f53; --accent-soft:rgba(95,100,104,.14); --accent-glow:rgba(95,100,104,.30); }
+html[data-theme="light"] body.team-sauber,
+html[data-theme="light"] body.team-kicksauber  { --accent:#0b8a3c; --accent-2:#0a7a35; --accent-soft:rgba(11,138,60,.14);  --accent-glow:rgba(11,138,60,.30); }
+html[data-theme="light"] body.team-williams    { --accent:#0f78c2; --accent-2:#0d66a5; --accent-soft:rgba(15,120,194,.14); --accent-glow:rgba(15,120,194,.30); }
+html[data-theme="light"] body.team-alpine      { --accent:#d6457f; --accent-2:#b93a6c; --accent-soft:rgba(214,69,127,.16); --accent-glow:rgba(214,69,127,.30); }
+
+/* ── Gezielte Overrides (nicht token-getrieben) ─────────────────────────── */
+
+/* Body-Backdrop: flach, ohne Gradients/Grid/Scanline */
+html[data-theme="light"] body {
+    background:var(--bg-1);
+    background-image:none;
+    background-attachment:scroll;
+}
+html[data-theme="light"] body::before,
+html[data-theme="light"] body::after {
+    content:none;
+    background-image:none;
+    animation:none;
+    opacity:0;
+}
+
+/* 02-base.css hardcodiert Weiß für Links */
+html[data-theme="light"] a { color:var(--ink); }
+html[data-theme="light"] a:hover { color:var(--accent); }
+
+/* Cockpit-Topbar: flache helle Pille statt Glas-Konsole */
+html[data-theme="light"] .topbar {
+    background:rgba(247,248,250,.9);
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+}
+html[data-theme="light"] .topbar .navbar {
+    background:var(--surface-1);
+    border:1px solid var(--cabin-bezel);
+    box-shadow:var(--sh-1), var(--cabin-team-glow, 0 0 #0000);
+}
+html[data-theme="light"] .topbar .navbar::before,
+html[data-theme="light"] .topbar .navbar::after { content:none; }
+
+/* Navbar-/Dropdown-Look ist dark-codiert → Bootstrap-Variablen umstellen */
+html[data-theme="light"] .navbar { --bs-navbar-color:var(--ink-2); --bs-navbar-hover-color:var(--ink); --bs-navbar-active-color:var(--accent); }
+html[data-theme="light"] .navbar-dark .navbar-toggler { border-color:var(--stroke-2); }
+html[data-theme="light"] .navbar-dark .navbar-toggler-icon {
+    background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%2315191f' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+html[data-theme="light"] .dropdown-menu-dark,
+html[data-theme="light"] .navbar-dark .dropdown-menu {
+    --bs-dropdown-bg:var(--surface-1);
+    --bs-dropdown-border-color:var(--stroke-1);
+    --bs-dropdown-link-color:var(--ink);
+    --bs-dropdown-link-hover-color:var(--ink);
+    --bs-dropdown-link-hover-bg:var(--accent-soft);
+    --bs-dropdown-link-active-color:#fff;
+    --bs-dropdown-link-active-bg:var(--accent);
+    background-color:var(--surface-1);
+    border:1px solid var(--stroke-1);
+    box-shadow:var(--sh-2);
+}
+
+html[data-theme="light"] code,
+html[data-theme="light"] kbd {
+    background:var(--bg-2);
+    color:var(--sig-cyan);
+}
+html[data-theme="light"] .text-white { color:var(--ink) !important; }
+html[data-theme="light"] .border-light { border-color:var(--stroke-1) !important; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background:rgba(21,25,31,.18); background-clip:padding-box; }
+html[data-theme="light"] hr { background:linear-gradient(90deg, transparent, var(--stroke-2), transparent); }
+
+/* Theme-Toggle-Button passt sich den Ghost-Buttons der Navbar an */
+html[data-theme="light"] #ercThemeToggle { color:var(--ink-2); line-height:1; }
+#ercThemeToggle { font-size:1.05rem; line-height:1; }
+#ercThemeToggle:hover { color:var(--accent); }
+
+/* ── Admin-Shell (reduziert — adm-Seiten haben eigene Reste) ────────────── */
+html[data-theme="light"] .adm-body { background:var(--bg-1); color:var(--ink); }
+html[data-theme="light"] .adm-sidebar,
+html[data-theme="light"] .adm-topbar { background:var(--surface-1); border-color:var(--stroke-1); color:var(--ink); }
+html[data-theme="light"] .adm-nav-link { color:var(--ink-2); }
+html[data-theme="light"] .adm-nav-link:hover,
+html[data-theme="light"] .adm-nav-link.is-active { color:var(--ink); background:var(--accent-soft); }
+
+/* =====================================================================
+   RUNDE 2 (visueller Verifikations-Pass):
+   Buttons / Formulare / Cockpit-Tasten / Footer / Hero
+   ===================================================================== */
+
+/* 04-components.css defaultet .btn auf weißes --btn-fg → auf Weiss unlesbar.
+   Gefüllte Varianten (Primary/Danger/Success/Warning/Info) behalten ihre Farbe. */
+html[data-theme="light"] .btn { --btn-fg:var(--ink); }
+html[data-theme="light"] .btn:not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-warning):not(.btn-info):not(.btn-dark):not(.btn-light) {
+    --btn-bg:rgba(21,25,31,.04);
+}
+html[data-theme="light"] .btn.btn-primary,
+html[data-theme="light"] .btn.btn-danger,
+html[data-theme="light"] .btn.btn-dark { --btn-fg:#fff; }
+html[data-theme="light"] .btn:not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-warning):not(.btn-info):not(.btn-dark):not(.btn-light):hover {
+    background:rgba(21,25,31,.07);
+    border-color:var(--stroke-3);
+}
+html[data-theme="light"] .btn-ghost:hover { color:var(--ink)!important; }
+
+/* Form-Controls erzwingen Weiß + Transparenz → helle Felder */
+html[data-theme="light"] .form-control,
+html[data-theme="light"] .form-select,
+html[data-theme="light"] .input-group-text {
+    background:#fff!important;
+    border-color:var(--stroke-2)!important;
+    color:var(--ink)!important;
+}
+html[data-theme="light"] select,
+html[data-theme="light"] select.form-select {
+    background-color:#fff!important;
+    color:var(--ink)!important;
+    color-scheme:light;
+}
+html[data-theme="light"] select option,
+html[data-theme="light"] select optgroup,
+html[data-theme="light"] .form-select option,
+html[data-theme="light"] .form-select optgroup {
+    background-color:#fff!important;
+    color:var(--ink)!important;
+}
+
+/* Cockpit-Tasten (03-layout.css hardcodiert dunklen Klavierlack) → flache helle Tasten */
+html[data-theme="light"] .topbar .navbar .nav-link {
+    color:var(--ink-2)!important;
+    text-shadow:none;
+    border:1px solid var(--cabin-cap-edge);
+    background:linear-gradient(180deg, #ffffff, #eef1f5 72%);
+    box-shadow:0 1px 2px rgba(16,24,40,.08);
+}
+html[data-theme="light"] .topbar .navbar .nav-link:hover {
+    color:var(--ink)!important;
+    background:linear-gradient(180deg, #ffffff, #e3e7ec 72%);
+    box-shadow:0 2px 5px rgba(16,24,40,.12);
+}
+html[data-theme="light"] .topbar .navbar .nav-link.active {
+    color:var(--accent)!important;
+    text-shadow:none;
+    background:linear-gradient(180deg, #ffffff, #fdeceb 80%);
+    border-color:#f2b8b5;
+    box-shadow:0 2px 5px rgba(225,6,0,.15);
+}
+html[data-theme="light"] .nav-ico { color:var(--ink-2); filter:none; }
+html[data-theme="light"] .navbar .nav-link.active .nav-ico { color:var(--accent); filter:none; }
+html[data-theme="light"] .navbar-auth-user { background:rgba(21,25,31,.04); color:var(--ink-2); }
+html[data-theme="light"] .navbar-brand { color:var(--ink)!important; }
+
+/* Footer: helle Leiste statt dunklem Gradient */
+html[data-theme="light"] .footer {
+    background:var(--surface-1);
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    border-top:1px solid var(--stroke-1);
+}
+
+/* Hero: animierter Akzent-Stripe (page-CSS) → im Minimal-Design aus */
+html[data-theme="light"] .f1-hero::before { display:none; }
+html[data-theme="light"] .f1-hero__lead strong { color:var(--ink)!important; }
+html[data-theme="light"] .f1-hero__telemetry { box-shadow:none; }
+
+/* Page-CSS-Reste mit hoher Sichtbarkeit (Ergebnis-Tabellen/Filter) */
+html[data-theme="light"] .f1-filter-bar__input,
+html[data-theme="light"] .f1-filter-bar__select { background:#fff; }
+html[data-theme="light"] .f1-filter-bar__input:focus,
+html[data-theme="light"] .f1-filter-bar__select:focus { background:#fff; }
+html[data-theme="light"] .f1-filter-bar__reset:hover {
+    color:var(--ink);
+    background:rgba(21,25,31,.07);
+}
+html[data-theme="light"] .f1-results-table thead th,
+html[data-theme="light"] .f1-ewige-table thead th {
+    background:var(--surface-3);
+    color:var(--ink-2);
+}
+html[data-theme="light"] .f1-results-card__telemetry { box-shadow:none; }

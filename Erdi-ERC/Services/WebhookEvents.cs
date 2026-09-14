@@ -21,6 +21,9 @@ namespace Erdi_ERC.Services
         public const string ApplicationWithdrawn  = "application.withdrawn";
         public const string ApplicationSeasonClosed = "application.season.closed";
 
+        // ── Telemetrie-Ingest ─────────────────────────────────────────────────────
+        public const string TelemetryResultReceived = "telemetry.result.received";
+
         /// <summary>Human-readable labels shown in the admin UI.</summary>
         public static readonly IReadOnlyList<(string Key, string Label, string Icon, string Description)> All =
         [
@@ -37,6 +40,7 @@ namespace Erdi_ERC.Services
             (ApplicationWaitlisted, "Bewerbung auf Warteliste",     "bi-hourglass-split",             "Wird ausgelöst, wenn eine Bewerbung wegen voller Liga auf die Warteliste umgeleitet wird."),
             (ApplicationWithdrawn,  "Bewerbung zurückgezogen",      "bi-arrow-counterclockwise",      "Wird ausgelöst, wenn ein User seine offene Bewerbung selbst zurückzieht."),
             (ApplicationSeasonClosed, "Saison geschlossen",         "bi-calendar-x",                 "Wird ausgelöst, wenn ein Admin eine Saison für eine Liga schließt (Rollover oder RejectAll)."),
+            (TelemetryResultReceived, "Telemetrie-Ergebnis empfangen", "bi-radio",                  "Wird ausgelöst, wenn ein Rennergebnis von der Telemetrie-App in die Review-Inbox kommt."),
         ];
     }
 }

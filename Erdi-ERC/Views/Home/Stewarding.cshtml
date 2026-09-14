@@ -1,6 +1,5 @@
 @using Erdi_ERC.Models
 @using Erdi_ERC.Models.UiComponents
-@using System.Text.Json
 @model List<LeaguePenalty>
 @{
     ViewData["Title"] = "Stewarding";
@@ -8,7 +7,7 @@
     {
         "DSQ"                    => "#ff6b6b",
         "Zeitstrafe + Strafpunkte"=> "#ff8a4c",
-        "Zeitstrafe"             => "#ffb800",
+        "Zeitstrafe"             => "#e8a93d",
         "Gridstrafe"             => "#5b8cff",
         "Verwarnung"             => "#c084fc",
         _                        => "#888"
@@ -17,6 +16,11 @@
     var dsqCount  = Model.Count(p => p.PenaltyType == "DSQ");
     var comboCount= Model.Count(p => p.PenaltyType == "Zeitstrafe + Strafpunkte");
     var filterTypes = Model.Select(p => p.PenaltyType).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
+
+    // Liga-Filter: nur aktive (nicht-archivierte) Ligen anzeigen.
+    // ViewBag.ActiveLeagues kommt aus HomeController.Stewarding().
+    var activeLeagues  = ViewBag.ActiveLeagues as List<dynamic> ?? new();
+    var leagueFilter   = (ViewBag.LeagueFilter as string) ?? "";
 }
 
 @section Styles {
@@ -70,55 +74,53 @@
 .stw-filter-btn:hover { border-color: var(--stroke-2); color: var(--ink-2); }
 .stw-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-/* FIA Overlay */
-.fia-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    display: flex; align-items: center; justify-content: center; padding: 1rem;
-    opacity: 0; pointer-events: none; transition: opacity var(--t-base);
+/* Liga-Filter: Button-Liste (GET-Links) statt Dropdown. */
+.stw-league-filter {
+    display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+    margin: -.25rem 0 1rem;
+    padding: .5rem .75rem;
+    background: var(--surface-1);
+    border: 1px solid var(--stroke-1);
+    border-radius: var(--r-3);
 }
-.fia-overlay.is-open { opacity: 1; pointer-events: all; }
-.fia-overlay__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.78); backdrop-filter: blur(4px); }
-.fia-overlay__scroll { position: relative; z-index: 1; max-height: 92vh; overflow-y: auto; width: 100%; max-width: 680px; border-radius: var(--r-3); overflow: hidden; box-shadow: var(--sh-3); }
-.fia-overlay__close {
-    position: absolute; top: .6rem; right: .6rem; z-index: 2;
-    background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: #fff;
-    width: 30px; height: 30px; border-radius: 50%; font-size: .85rem; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background var(--t-fast);
+.stw-league-filter__label {
+    font-size: .65rem;
+    font-family: var(--ff-tech);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-right: .25rem;
 }
-.fia-overlay__close:hover { background: rgba(225,6,0,.7); }
+.stw-league-filter__btn {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .65rem;
+    font-family: var(--ff-tech);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .25rem .85rem;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--stroke-1);
+    background: var(--surface-2);
+    color: var(--ink-3);
+    text-decoration: none;
+    transition: all var(--t-fast);
+}
+.stw-league-filter__btn:hover { border-color: var(--stroke-2); color: var(--ink-2); }
+.stw-league-filter__btn.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+.stw-league-filter__btn.is-archived {
+    border-style: dashed;
+    opacity: .85;
+}
+.stw-league-filter__btn.is-archived .bi { color: var(--ink-3); }
+.stw-league-filter__btn.is-archived.is-active .bi { color: #fff; }
 
-/* FIA Document */
-.fia-doc { background: #f7f6f1; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
-.fia-doc__lh { padding: .7rem 1.2rem .5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #c00; }
-.fia-doc__brand { display: flex; align-items: center; gap: .5rem; }
-.fia-doc__brand-mark { background: #e10600; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .1em; padding: .15rem .5rem; border-radius: 2px; text-transform: uppercase; }
-.fia-doc__brand-text { font-size: 11px; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: .08em; }
-.fia-doc__num { font-size: 11px; font-weight: 700; color: #e10600; }
-.fia-doc__title { text-align: center; padding: .65rem 1.2rem .5rem; border-bottom: 1px solid #ccc; }
-.fia-doc__event { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; font-variant: small-caps; }
-.fia-doc__event-date { font-size: 11px; color: #555; }
-.fia-meta { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #ccc; }
-.fia-meta__col { padding: .5rem 1rem; display: flex; flex-direction: column; gap: .2rem; }
-.fia-meta__col + .fia-meta__col { border-left: 1px solid #ddd; }
-.fia-meta__row { display: grid; grid-template-columns: 70px 1fr; font-size: 12px; }
-.fia-meta__label { font-weight: 700; }
-.fia-meta__value { color: #111; }
-.fia-meta__value--red { color: #c00; font-weight: 600; }
-.fia-doc__body { padding: .7rem 1.1rem .8rem; }
-.fia-doc__intro { font-size: 12px; line-height: 1.6; color: #333; margin-bottom: .6rem; padding-bottom: .5rem; border-bottom: 1px solid #ddd; }
-.fia-def { display: flex; flex-direction: column; }
-.fia-def__row { display: grid; grid-template-columns: 100px 1fr; gap: .25rem .6rem; padding: .3rem 0; border-bottom: 1px solid #e8e8e3; font-size: 12px; line-height: 1.5; }
-.fia-def__row:last-child { border-bottom: none; }
-.fia-def__key { font-weight: 700; color: #111; }
-.fia-def__val { color: #222; }
-.fia-def__decision { font-weight: 700; }
-.fia-def__decision-pts { color: #c00; font-weight: 700; }
-.fia-def__reason { color: #222; }
-.fia-def__reason p { margin: 0 0 .4rem; color: #222; }
-.fia-def__reason p:last-child { margin: 0; }
-.fia-doc-footer { background: #eeeee8; border-top: 1px solid #ccc; padding: .45rem 1.1rem; font-size: 11px; color: #666; display: flex; justify-content: space-between; flex-wrap: wrap; gap: .3rem; }
-.fia-doc-footer__stewards { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+/* Item als Link: kein Default-Underline, ganzer Bereich klickbar. */
+.stw-item--link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+.stw-item--link:hover .stw-item__type { box-shadow: 0 0 0 2px color-mix(in srgb, var(--item-color) 35%, transparent); }
 </style>
 }
 
@@ -169,6 +171,33 @@
         }
     </div>
 
+    @* Liga-Filter: ein Button pro Liga, die mindestens einen oeffentlichen
+       Bericht hat. Klick = GET-Request mit ?league=… an die Liste. "Alle"
+       setzt den Filter zurueck. Aktive Ligen zuerst; archivierte Ligen mit
+       Alt-Berichten bekommen einen eigenen Button mit "Archiviert"-Marker.
+       URL ist Source of Truth (teilbar, Browser-Back funktioniert). *@
+    <nav class="stw-league-filter" aria-label="Liga-Filter">
+        <span class="stw-league-filter__label">Liga</span>
+        <a class="stw-league-filter__btn @(string.IsNullOrEmpty(leagueFilter) ? "is-active" : null)"
+           asp-controller="Home" asp-action="Stewarding"
+           aria-current="@(string.IsNullOrEmpty(leagueFilter) ? "page" : null)">Alle</a>
+        @foreach (var lg in activeLeagues)
+        {
+            var isActive = string.Equals(lg.Id, leagueFilter, StringComparison.OrdinalIgnoreCase);
+            var isArchived = lg.IsArchived;
+            <a class="stw-league-filter__btn @(isActive ? "is-active" : null) @(isArchived ? "is-archived" : null)"
+               asp-controller="Home" asp-action="Stewarding" asp-route-league="@lg.Id"
+               aria-current="@(isActive ? "page" : null)"
+               title="@(isArchived ? "Archivierte Liga — " : "")@lg.Name (@lg.Id)">
+                @lg.Name
+                @if (isArchived)
+                {
+                    <i class="bi bi-archive-fill ms-1" aria-hidden="true"></i>
+                }
+            </a>
+        }
+    </nav>
+
     @if (!Model.Any())
     {
         <div class="empty-state">
@@ -183,271 +212,70 @@
             @foreach (var p in Model)
             {
                 var col = TypeColor(p.PenaltyType);
-                <div class="stw-item" style="--item-color:@col;" data-type="@p.PenaltyType" onclick="openDoc(@p.Id)">
-                    <div class="stw-item__body">
-                        <span class="stw-item__type">@p.PenaltyType</span>
-                        <div class="stw-item__driver">
-                            @if (p.DriverNumber.HasValue)
+                <div class="stw-item" style="--item-color:@col;" data-type="@p.PenaltyType">
+                    <a class="stw-item--link" asp-controller="Home" asp-action="StewardingDoc" asp-route-id="@p.Id" target="_blank" rel="noopener" aria-label="Steward-Dokument @p.Id in neuem Tab öffnen">
+                        <div class="stw-item__body">
+                            <span class="stw-item__type">@p.PenaltyType</span>
+                            <div class="stw-item__driver">
+                                @if (p.DriverNumber.HasValue)
+                                {
+                                    <span>@p.DriverNumber.Value – @p.Driver</span>
+                                }
+                                else
+                                {
+                                    <span>@p.Driver</span>
+                                }
+                            </div>
+                            <div class="stw-item__meta">
+                                <code style="color:var(--sig-cyan);font-size:.7rem;">@p.LeagueId</code>
+                                <span>@p.Date.ToString("dd.MM.yyyy")</span>
+                                @if (!string.IsNullOrEmpty(p.RaceTrack))
+                                {
+                                    <span><i class="bi bi-geo-alt me-1"></i>@p.RaceTrack</span>
+                                }
+                                @if (!string.IsNullOrEmpty(p.SecondDriver))
+                                {
+                                    <span><i class="bi bi-person me-1"></i>@p.SecondDriver</span>
+                                }
+                                @if (p.Points > 0)
+                                {
+                                    <span style="color:@col;font-weight:700;">@p.Points&thinsp;Pkt.</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(p.Incident))
                             {
-                                <span>@p.DriverNumber.Value – @p.Driver</span>
+                                <div class="stw-item__reason">@p.Incident</div>
                             }
-                            else
+                            else if (!string.IsNullOrEmpty(p.Reason))
                             {
-                                <span>@p.Driver</span>
+                                <div class="stw-item__reason">@p.Reason</div>
                             }
                         </div>
-                        <div class="stw-item__meta">
-                            <code style="color:var(--sig-cyan);font-size:.7rem;">@p.LeagueId</code>
-                            <span>@p.Date.ToString("dd.MM.yyyy")</span>
-                            @if (!string.IsNullOrEmpty(p.RaceTrack))
-                            {
-                                <span><i class="bi bi-geo-alt me-1"></i>@p.RaceTrack</span>
-                            }
-                            @if (!string.IsNullOrEmpty(p.SecondDriver))
-                            {
-                                <span><i class="bi bi-person me-1"></i>@p.SecondDriver</span>
-                            }
-                            @if (p.Points > 0)
-                            {
-                                <span style="color:@col;font-weight:700;">@p.Points&thinsp;Pkt.</span>
-                            }
+                        <div class="stw-item__docbadge">
+                            <div class="stw-item__docicon"><i class="bi bi-file-text-fill"></i></div>
+                            <span class="stw-item__doclabel">DOK. @p.Id</span>
                         </div>
-                        @if (!string.IsNullOrEmpty(p.Incident))
-                        {
-                            <div class="stw-item__reason">@p.Incident</div>
-                        }
-                        else if (!string.IsNullOrEmpty(p.Reason))
-                        {
-                            <div class="stw-item__reason">@p.Reason</div>
-                        }
-                    </div>
-                    <div class="stw-item__docbadge">
-                        <div class="stw-item__docicon"><i class="bi bi-file-text-fill"></i></div>
-                        <span class="stw-item__doclabel">DOK. @p.Id</span>
-                    </div>
+                    </a>
                 </div>
             }
         </div>
     }
 </section>
 
-@* FIA Overlay *@
-<div class="fia-overlay" id="fiaOverlay">
-    <div class="fia-overlay__backdrop" onclick="closeDoc()"></div>
-    <button class="fia-overlay__close" onclick="closeDoc()"><i class="bi bi-x-lg"></i></button>
-    <div class="fia-overlay__scroll">
-        <div class="fia-doc">
-            <div class="fia-doc__lh">
-                <div class="fia-doc__brand">
-                    <span class="fia-doc__brand-mark">ERC</span>
-                    <span class="fia-doc__brand-text">Erdi's Racing Community</span>
-                </div>
-                <span class="fia-doc__num" id="fiaDocNum">Document --</span>
-            </div>
-            <div class="fia-doc__title">
-                <div class="fia-doc__event" id="fiaEvent">--</div>
-                <div class="fia-doc__event-date" id="fiaEventDate">--</div>
-            </div>
-            <div class="fia-meta">
-                <div class="fia-meta__col">
-                    <div class="fia-meta__row">
-                        <span class="fia-meta__label">From</span>
-                        <span class="fia-meta__value">The Stewards</span>
-                    </div>
-                    <div class="fia-meta__row">
-                        <span class="fia-meta__label">To</span>
-                        <span class="fia-meta__value fia-meta__value--red" id="fiaMetaTo">--</span>
-                    </div>
-                </div>
-                <div class="fia-meta__col">
-                    <div class="fia-meta__row">
-                        <span class="fia-meta__label">Document</span>
-                        <span class="fia-meta__value" id="fiaMetaDocNum">--</span>
-                    </div>
-                    <div class="fia-meta__row">
-                        <span class="fia-meta__label">Date</span>
-                        <span class="fia-meta__value" id="fiaMetaDate">--</span>
-                    </div>
-                    <div class="fia-meta__row">
-                        <span class="fia-meta__label">Time</span>
-                        <span class="fia-meta__value" id="fiaMetaTime">--</span>
-                    </div>
-                </div>
-            </div>
-            <div class="fia-doc__body">
-                <p class="fia-doc__intro">The Stewards, having received a report from the Race Director, examined the available evidence and determine the following:</p>
-                <div class="fia-def">
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">No / Driver</span>
-                        <span class="fia-def__val" id="fdDriver">--</span>
-                    </div>
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">Competitor</span>
-                        <span class="fia-def__val" id="fdLeague">--</span>
-                    </div>
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">Time</span>
-                        <span class="fia-def__val" id="fdDate">--</span>
-                    </div>
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">Session</span>
-                        <span class="fia-def__val">Race</span>
-                    </div>
-                    <div class="fia-def__row" id="fdTrackRow">
-                        <span class="fia-def__key">Track</span>
-                        <span class="fia-def__val" id="fdTrack">--</span>
-                    </div>
-                    <div class="fia-def__row" id="fd2ndRow" style="display:none;">
-                        <span class="fia-def__key">2nd Driver</span>
-                        <span class="fia-def__val" id="fd2ndDriver">--</span>
-                    </div>
-                    <div class="fia-def__row" id="fdFactRow" style="display:none;">
-                        <span class="fia-def__key">Fact</span>
-                        <span class="fia-def__val" id="fdFact">--</span>
-                    </div>
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">Infringement</span>
-                        <span class="fia-def__val" id="fdOffence">--</span>
-                    </div>
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">Decision</span>
-                        <div class="fia-def__val">
-                            <span class="fia-def__decision" id="fdDecision">--</span>
-                            <span class="fia-def__decision-pts" id="fdDecisionPts" style="display:none;"></span>
-                        </div>
-                    </div>
-                    <div class="fia-def__row">
-                        <span class="fia-def__key">Reason</span>
-                        <div class="fia-def__val fia-def__reason" id="fdReason">--</div>
-                    </div>
-                </div>
-            </div>
-            <div class="fia-doc-footer">
-                <span class="fia-doc-footer__stewards">The Stewards &middot; <span id="fdCreatedBy">ERC Stewards</span></span>
-                <span id="fdCreatedAt">--</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-@* JSON data island *@
-<script id="penaltiesData" type="application/json">
-    @Html.Raw(JsonSerializer.Serialize(Model.Select(p => new {
-        id              = p.Id,
-        driver          = p.Driver,
-        driverNumber    = p.DriverNumber,
-        leagueId        = p.LeagueId,
-        date            = p.Date.ToString("dd.MM.yyyy"),
-        penaltyType     = p.PenaltyType,
-        points          = p.Points,
-        raceTrack       = p.RaceTrack       ?? "",
-        secondDriver    = p.SecondDriver    ?? "",
-        secondDriverNumber = p.SecondDriverNumber,
-        isBetweenTwoDrivers = p.IsBetweenTwoDrivers,
-        incident        = p.Incident        ?? "",
-        reason          = p.Reason          ?? "",
-        createdBy       = p.CreatedBy       ?? "ERC Stewards",
-        createdAt       = p.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") + " Uhr"
-    })))
-</script>
+@* Berichte werden ueber /Stewarding/Doc/{id} in einem neuen Tab geoeffnet
+   (siehe HomeController.StewardingDoc). Kein Modal mehr noetig. *@
 
 @section Scripts {
 <script>
+// Decision-Type-Filter: blendet Items per data-type clientseitig aus.
+// Liga-Filter laeuft ueber GET-Reload (URL = Source of Truth).
 (function () {
-    const raw  = document.getElementById('penaltiesData');
-    const data = raw ? JSON.parse(raw.textContent) : [];
-    const byId = {};
-    data.forEach(function(p) { byId[p.id] = p; });
-    const overlay = document.getElementById('fiaOverlay');
-
-    function setText(id, val) { var e = document.getElementById(id); if (e) e.textContent = val || '--'; }
-    function show(id) { var e = document.getElementById(id); if (e) e.style.display = ''; }
-    function hide(id) { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
-
-    window.openDoc = function (id) {
-        var p = byId[id]; if (!p) return;
-        var docNum   = String(p.id).padStart(2, '0');
-        var gpLabel  = p.raceTrack ? p.raceTrack.toUpperCase() + ' GRAND PRIX' : (p.leagueId || 'ERC').toUpperCase();
-        var timePart = p.createdAt ? p.createdAt.replace(' Uhr', '').split(' ').pop() : '--';
-
-        setText('fiaDocNum',     'Document ' + docNum);
-        setText('fiaEvent',      gpLabel);
-        setText('fiaEventDate',  p.date);
-        var mainDriverLine = p.driverNumber ? (p.driverNumber + ' \u2013 ' + p.driver) : p.driver;
-        var secondDriverLine = p.secondDriverNumber && p.secondDriver
-            ? (p.secondDriverNumber + ' \u2013 ' + p.secondDriver)
-            : (p.secondDriver || '');
-
-        setText('fiaMetaTo',     p.driver + (p.secondDriver ? ' & ' + p.secondDriver : ''));
-        setText('fiaMetaDocNum', docNum);
-        setText('fiaMetaDate',   p.date);
-        setText('fiaMetaTime',   timePart);
-        setText('fdDriver',      mainDriverLine);
-        setText('fdLeague',      p.leagueId || '--');
-        setText('fdDate',        p.date);
-
-        if (p.raceTrack)    { setText('fdTrack',     p.raceTrack);    show('fdTrackRow'); } else { hide('fdTrackRow'); }
-        if (p.secondDriver) { setText('fd2ndDriver', secondDriverLine); show('fd2ndRow');   } else { hide('fd2ndRow');   }
-
-        var factText = p.incident || '';
-        if (p.isBetweenTwoDrivers && p.secondDriver) {
-            var part1 = p.driverNumber ? ('Car ' + p.driverNumber + ' (' + p.driver + ')') : p.driver;
-            var part2 = p.secondDriverNumber ? ('Car ' + p.secondDriverNumber + ' (' + p.secondDriver + ')') : p.secondDriver;
-            var autoText = 'Incident between ' + part1 + ' and ' + part2 + '.';
-            factText = autoText + (factText ? ' ' + factText : '');
-        }
-        if (factText) { setText('fdFact', factText); show('fdFactRow'); } else { hide('fdFactRow'); }
-
-        setText('fdOffence',  'Breach of ERC Sporting Regulations \u2014 ' + p.penaltyType + '.');
-
-        var normalizedType = (p.penaltyType || '').toLowerCase().replace(/\s+/g, ' ').trim();
-        var hasTime = normalizedType.indexOf('zeitstrafe') !== -1 || normalizedType.indexOf('time penalty') !== -1;
-        var hasPoints = normalizedType.indexOf('strafpunkte') !== -1 || normalizedType.indexOf('penalty points') !== -1 || normalizedType.indexOf('punkte') !== -1;
-        var decisionText = '--';
-        if (hasTime && hasPoints) {
-            decisionText = 'Time penalty and ' + p.points + ' penalty points imposed.';
-        } else if (hasPoints) {
-            decisionText = p.points + ' penalty points imposed.';
-        } else if (hasTime) {
-            decisionText = 'Time penalty imposed.';
-        } else {
-            decisionText = p.penaltyType + ' imposed.';
-        }
-        setText('fdDecision', decisionText);
-
-        // Penalty-Punkte sind ein dokumentarischer Wert im Stewarding-Bericht.
-        // Sie flie\u00dfen NICHT in die Meisterschaftswertung ein \u2014 daher kein
-        // "Championship"-Suffix mehr (siehe StatsService.RebuildLeagueStandingsAsync).
-        var pts = document.getElementById('fdDecisionPts');
-        pts.style.display = 'none';
-
-        var reasonEl = document.getElementById('fdReason');
-        reasonEl.innerHTML = '';
-        (p.reason || '--').split(/\n+/).filter(function(l) { return l.trim(); }).forEach(function(line) {
-            var para = document.createElement('p');
-            para.textContent = line;
-            reasonEl.appendChild(para);
-        });
-
-        setText('fdCreatedBy', p.createdBy || 'ERC Stewards');
-        setText('fdCreatedAt', p.createdAt || '--');
-        overlay.classList.add('is-open');
-        document.body.style.overflow = 'hidden';
-    };
-
-    window.closeDoc = function () {
-        overlay.classList.remove('is-open');
-        document.body.style.overflow = '';
-    };
-
-    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDoc(); });
-
-    document.querySelectorAll('.stw-filter-btn').forEach(function(btn) {
+    document.querySelectorAll('.stw-filter-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            document.querySelectorAll('.stw-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.stw-filter-btn').forEach(function (b) { b.classList.remove('active'); });
             btn.classList.add('active');
             var f = btn.dataset.filter;
-            document.querySelectorAll('.stw-item').forEach(function(item) {
+            document.querySelectorAll('.stw-item').forEach(function (item) {
                 item.style.display = (f === 'all' || item.dataset.type === f) ? '' : 'none';
             });
         });

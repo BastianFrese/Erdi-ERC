@@ -30,7 +30,7 @@ namespace Erdi_ERC.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Platform = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    TargetLeagueId = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
+                    TargetLeagueId = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Role = table.Column<string>(type: "varchar(32)", maxLength: 32, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -73,7 +73,7 @@ namespace Erdi_ERC.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Platform = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    LeagueId = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
+                    LeagueId = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Position = table.Column<int>(type: "int", nullable: false),
                     Note = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)

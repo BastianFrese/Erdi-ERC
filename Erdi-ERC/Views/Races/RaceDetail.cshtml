@@ -17,7 +17,10 @@
     {
         if (!ms.HasValue) return "—";
         var t = TimeSpan.FromMilliseconds(ms.Value);
-        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+        // Gesamtzeit: ab 1 Stunde H:MM:SS.mmm, sonst M:SS.mmm.
+        return t.TotalHours >= 1
+            ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}.{t.Milliseconds:000}"
+            : $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
     }
 
     static string FormatGap(int? ms)
@@ -29,17 +32,12 @@
     }
 
     var podium     = Model.Rows.Where(r => r.Position is >= 1 and <= 3).OrderBy(r => r.Position).ToList();
-    var fastest    = Model.Rows.FirstOrDefault(r => r.FastestLap);
 
     var orderedRaces = Model.League.Races.OrderBy(r => r.Date).ToList();
     var raceIndex    = orderedRaces.FindIndex(r => r.RowId == Model.Race.RowId);
     if (raceIndex < 0) raceIndex = 0;
     var raceNumber   = raceIndex + 1;
     var raceTotal    = Math.Max(orderedRaces.Count, raceNumber);
-
-    var flSubText = fastest != null
-        ? $"FL · {fastest.Driver} · {FormatRaceTime(fastest.RaceTimeMs)}"
-        : null;
 }
 
 @section Styles {
@@ -75,15 +73,6 @@
         Value      = Model.Rows.Count.ToString("00"),
         Sub        = "Klassifizierte Starter"
     })" />
-    @if (fastest != null)
-    {
-        <partial name="_F1StatTile" model="@(new F1StatTileVm {
-            IconLucide = "zap",
-            Label      = "Fastest Lap",
-            Value      = fastest.Driver,
-            Sub        = FormatRaceTime(fastest.RaceTimeMs)
-        })" />
-    }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════ PODIUM -->
@@ -92,8 +81,7 @@
     <section class="f1-section reveal">
         <partial name="_F1Section" model="@(new F1SectionVm {
             Chip    = "Podium",
-            Title   = "Podium",
-            SubText = flSubText
+            Title   = "Podium"
         })" />
 
         <div class="row g-3">

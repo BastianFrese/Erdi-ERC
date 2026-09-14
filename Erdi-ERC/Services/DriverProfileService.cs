@@ -83,17 +83,42 @@ namespace Erdi_ERC.Services
         {
             if (string.IsNullOrWhiteSpace(driverName)) return null;
             var n = driverName.Trim();
+            var nLower = n.ToLowerInvariant();
 
             var byTag = await _db.DriverGamerTags
-                .FirstOrDefaultAsync(t => t.GamerTag == n, ct);
+                .FirstOrDefaultAsync(t => t.GamerTag != null && t.GamerTag.Trim().ToLower() == nLower, ct);
             if (byTag is not null)
             {
                 return await GetByDiscordIdAsync(byTag.DiscordId, ct);
             }
 
+            // DisplayName ODER DiscordName — explizites ToLower für SQLite-Determinismus.
+            // Schließt die Lücke, wenn ein Liga-Name dem Discord-Namen entspricht.
             return await _db.DriverProfiles
                 .Include(p => p.GamerTags)
-                .FirstOrDefaultAsync(p => p.DisplayName == n, ct);
+                .FirstOrDefaultAsync(p =>
+                    (p.DisplayName != null && p.DisplayName.Trim().ToLower() == nLower)
+                 || (p.DiscordName != null && p.DiscordName.Trim().ToLower() == nLower), ct);
+        }
+
+        /// <summary>
+        /// Umbenennung eines Fahrers über die Ligaverwaltung (SaveAllStandings):
+        /// Nur wenn der alte Name zu einem DriverProfile aufgelöst werden kann, wird
+        /// systemweit propagiert (Fahrerkarte/Profil, andere Ligen, Renn-Ergebnisse).
+        /// Ohne Profil-Match passiert nichts — kein Risiko, einen gleichnamigen
+        /// Fremdfahrer in einer anderen Liga umzubenennen.
+        /// </summary>
+        public async Task<int> RenameStandingDriverAsync(string oldName, string newName, string? actorDiscordId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(oldName)) return 0;
+            var normalizedNew = newName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedNew)) return 0;
+            if (string.Equals(oldName.Trim(), normalizedNew, StringComparison.OrdinalIgnoreCase)) return 0;
+
+            var profile = await FindByDriverNameAsync(oldName, ct);
+            if (profile is null) return 0;
+
+            return await RenameIngameNameAsync(profile.DiscordId, normalizedNew, actorDiscordId, ct);
         }
 
         public Task<int> RenameEaNameAsync(string discordId, string newName, string? actorDiscordId, CancellationToken ct = default)
@@ -267,6 +292,253 @@ namespace Erdi_ERC.Services
             }
 
             return prev[b.Length];
+        }
+
+        public async Task<IReadOnlyList<UnlinkedDriver>> GetUnlinkedDriversAsync(CancellationToken ct = default)
+        {
+            // 1) Vollstaendige Alias-Menge aufbauen: alle GamerTags, DisplayNames,
+            //    DiscordNames aller Profile. Trim + OrdinalIgnoreCase.
+            var profiles = await _db.DriverProfiles
+                .AsNoTracking()
+                .Include(p => p.GamerTags)
+                .ToListAsync(ct);
+
+            var aliasKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var p in profiles)
+            {
+                foreach (var tag in p.GamerTags)
+                {
+                    if (!string.IsNullOrWhiteSpace(tag.GamerTag))
+                        aliasKeys.Add(tag.GamerTag.Trim());
+                }
+                if (!string.IsNullOrWhiteSpace(p.DisplayName))
+                    aliasKeys.Add(p.DisplayName.Trim());
+                if (!string.IsNullOrWhiteSpace(p.DiscordName))
+                    aliasKeys.Add(p.DiscordName.Trim());
+            }
+
+            // 2) DriverStandings aggregieren, alles ohne Alias-Match.
+            var standings = await _db.DriverStandings
+                .AsNoTracking()
+                .Where(s => s.Driver != null && s.Driver != "")
+                .Select(s => new { s.Driver, s.LeagueId, s.DriverNumber, s.Team })
+                .ToListAsync(ct);
+
+            // 3) RaceCount pro Name (Finishes, optional ReserveMatches ueber
+            //    RaceFinishes.Driver-Match). Distinct counts.
+            var allNames = standings
+                .Select(s => s.Driver!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var unlinkedNames = allNames
+                .Where(n => !aliasKeys.Contains(n))
+                .ToList();
+
+            if (unlinkedNames.Count == 0)
+                return Array.Empty<UnlinkedDriver>();
+
+            var lower = unlinkedNames
+                .Select(n => n.ToLowerInvariant())
+                .Distinct()
+                .ToList();
+
+            var raceCounts = await _db.RaceFinishes
+                .AsNoTracking()
+                .Where(f => f.Driver != null && lower.Contains(f.Driver.Trim().ToLower()))
+                .GroupBy(f => f.Driver!.Trim().ToLower())
+                .Select(g => new { NameLower = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+            var raceCountMap = raceCounts.ToDictionary(x => x.NameLower, x => x.Count, StringComparer.OrdinalIgnoreCase);
+
+            // 4) Aggregation pro Name.
+            var result = new List<UnlinkedDriver>();
+            foreach (var name in unlinkedNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            {
+                var matches = standings
+                    .Where(s => string.Equals(s.Driver!.Trim(), name, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                if (matches.Count == 0) continue;
+
+                var leagues = matches
+                    .Select(m => m.LeagueId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var driverNumber = matches
+                    .Where(m => m.DriverNumber.HasValue)
+                    .Select(m => m.DriverNumber!.Value)
+                    .Cast<int?>()
+                    .FirstOrDefault();
+                var team = matches
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Team))
+                    .Select(m => m.Team!.Trim())
+                    .FirstOrDefault();
+
+                raceCountMap.TryGetValue(name.ToLowerInvariant(), out var rc);
+
+                result.Add(new UnlinkedDriver(
+                    Name:           name,
+                    OccurrenceCount: matches.Count,
+                    DriverNumber:   driverNumber,
+                    Team:           team,
+                    LeagueIds:      leagues,
+                    RaceCount:      rc));
+            }
+
+            return result;
+        }
+
+        public async Task<(bool Created, string? ExistingDiscordId, string Message)> LinkDriverAsync(
+            string driverName, string discordId, string discordName,
+            string? platform, string? actorDiscordId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(driverName))
+                return (false, null, "Fahrername fehlt.");
+            if (string.IsNullOrWhiteSpace(discordId))
+                return (false, null, "Discord-ID fehlt.");
+            if (string.IsNullOrWhiteSpace(discordName))
+                return (false, null, "Discord-Name fehlt.");
+
+            var name = driverName.Trim();
+            var dId  = discordId.Trim();
+            var dName = discordName.Trim();
+            var platformNorm = string.IsNullOrWhiteSpace(platform) ? "EA" : platform.Trim();
+
+            // 1) Existiert bereits ein DriverProfile mit dieser DiscordId?
+            //    AsTracking: DbContext laeuft per Default auf NoTracking — ohne
+            //    explizites Tracking wuerden Tag-Add/DisplayName-Aenderungen
+            //    still verschluckt (siehe UnlinkDriverAsync).
+            var existing = await _db.DriverProfiles
+                .AsTracking()
+                .Include(p => p.GamerTags)
+                .FirstOrDefaultAsync(p => p.DiscordId == dId, ct);
+            if (existing is not null)
+            {
+                // Wenn der angefragte Name schon ein Alias dieses Profils ist: no-op.
+                var already = existing.GamerTags.Any(t =>
+                    string.Equals(t.GamerTag.Trim(), name, StringComparison.OrdinalIgnoreCase))
+                    || string.Equals(existing.DisplayName?.Trim() ?? "", name, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(existing.DiscordName.Trim(), name, StringComparison.OrdinalIgnoreCase);
+
+                if (already)
+                {
+                    return (false, dId, $"\"{name}\" ist bereits mit {dId} verknuepft.");
+                }
+
+                // Andernfalls: DriverGamerTag an das bestehende Profil anhaengen.
+                // Unique-Index (DiscordId, Platform): nur EIN Tag pro Plattform.
+                // Belegt ein vorhandener Tag diese Plattform schon, registrieren
+                // wir den Alias stattdessen ueber DisplayName (falls frei) —
+                // niemals einen zweiten Tag anhaengen (sonst DbUpdateException/500).
+                var platformTag = existing.GamerTags.FirstOrDefault(t =>
+                    string.Equals(t.Platform, platformNorm, StringComparison.OrdinalIgnoreCase));
+
+                if (platformTag is null)
+                {
+                    existing.GamerTags.Add(new DriverGamerTag
+                    {
+                        DiscordId         = dId,
+                        Platform          = platformNorm,
+                        GamerTag          = name,
+                        IsPrimary         = existing.GamerTags.Count == 0,
+                        LinkedAt          = DateTime.UtcNow,
+                        LinkedByDiscordId = actorDiscordId
+                    });
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    await _db.SaveChangesAsync(ct);
+                    return (true, dId, $"Bestehender DriverProfile {dId} um Alias \"{name}\" erweitert.");
+                }
+
+                if (string.IsNullOrWhiteSpace(existing.DisplayName))
+                {
+                    existing.DisplayName = name;
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    await _db.SaveChangesAsync(ct);
+                    return (true, dId,
+                        $"\"{name}\" als DisplayName an Profil {dId} ({existing.DiscordName}, " +
+                        $"Tag \"{platformTag.GamerTag}\" auf {platformNorm}) verknuepft.");
+                }
+
+                return (false, dId,
+                    $"Profil {dId} ({existing.DiscordName}) hat \"{platformTag.GamerTag}\" bereits auf {platformNorm}, " +
+                    $"und DisplayName \"{existing.DisplayName}\" ist belegt. Andere Plattform waehlen oder Ingame-Namen anpassen.");
+            }
+
+            // 2) Existiert bereits ein Profil mit einem matchenden Alias?
+            //    In dem Fall leiten wir um, statt ein zweites Profil anzulegen.
+            var aliasMatch = await _db.DriverGamerTags
+                .FirstOrDefaultAsync(t => t.GamerTag == name, ct);
+            if (aliasMatch is not null)
+            {
+                return (false, aliasMatch.DiscordId,
+                    $"\"{name}\" ist bereits mit Discord-ID {aliasMatch.DiscordId} verknuepft. Erst Unlink durchfuehren.");
+            }
+
+            // 3) Frisch anlegen.
+            var profile = new DriverProfile
+            {
+                DiscordId         = dId,
+                DiscordName       = dName,
+                DisplayName       = name,
+                PreferredPlatform = platformNorm,
+                CreatedAt         = DateTime.UtcNow,
+                UpdatedAt         = DateTime.UtcNow,
+                GamerTags = new List<DriverGamerTag>
+                {
+                    new()
+                    {
+                        DiscordId         = dId,
+                        Platform          = platformNorm,
+                        GamerTag          = name,
+                        IsPrimary         = true,
+                        LinkedAt          = DateTime.UtcNow,
+                        LinkedByDiscordId = actorDiscordId
+                    }
+                }
+            };
+            _db.DriverProfiles.Add(profile);
+            await _db.SaveChangesAsync(ct);
+            return (true, dId, $"Neuer DriverProfile fuer \"{name}\" angelegt (Discord {dId}).");
+        }
+
+        public async Task<int> UnlinkDriverAsync(string discordId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(discordId)) return -1;
+
+            // AsTracking erzwingen: DbContext laeuft per Default auf
+            // NoTrackingWithIdentityResolution (siehe Program.cs und
+            // SqliteTestContext); ohne explizites Tracking wuerde EF die
+            // bereits aus dem Store geladenen GamerTags beim Remove() als
+            // "andere Instanz mit gleichem Schluessel" zurueckweisen.
+            var profile = await _db.DriverProfiles
+                .AsTracking()
+                .Include(p => p.GamerTags)
+                .FirstOrDefaultAsync(p => p.DiscordId == discordId, ct);
+            if (profile is null) return 0;
+
+            var tagCount = profile.GamerTags.Count;
+            if (tagCount == 0)
+            {
+                _db.DriverProfiles.Remove(profile);
+                await _db.SaveChangesAsync(ct);
+                return 0;
+            }
+
+            // Default: nur den ersten GamerTag loeschen, Profil bleibt.
+            // Wenn danach 0 Tags uebrig sind, loeschen wir das Profil ebenfalls.
+            var firstTag = profile.GamerTags.OrderBy(t => t.LinkedAt).First();
+            _db.DriverGamerTags.Remove(firstTag);
+            await _db.SaveChangesAsync(ct);
+
+            if (profile.GamerTags.Count == 0)
+            {
+                _db.DriverProfiles.Remove(profile);
+                await _db.SaveChangesAsync(ct);
+            }
+            return 1;
         }
     }
 }

@@ -16,7 +16,7 @@
     border: 1px solid var(--stroke-1);
     border-left: 4px solid var(--sig-cyan);
     border-radius: var(--r-3);
-    box-shadow: var(--sh-2), 0 0 30px -12px rgba(0,229,255,.15);
+    box-shadow: var(--sh-2), 0 0 30px -12px rgba(88,183,201,.15);
     overflow: hidden;
 }
 .f1-next-event__badge { flex-shrink: 0; }
@@ -51,8 +51,8 @@
     flex-shrink: 0;
     text-align: right;
     padding: .5rem .85rem;
-    background: rgba(0,229,255,.06);
-    border: 1px solid rgba(0,229,255,.25);
+    background: rgba(88,183,201,.06);
+    border: 1px solid rgba(88,183,201,.25);
     border-radius: var(--r-2);
 }
 .f1-next-event__countdown-label {

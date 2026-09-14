@@ -121,6 +121,15 @@
                     <a class="@Nav("AdminRaceCalendar","Index")" asp-controller="AdminRaceCalendar" asp-action="Index">
                         <i class="bi bi-calendar3"></i> Rennkalender
                     </a>
+                    @{
+                        // Telemetrie-Eingänge: alle drei Actions (Index/Detail/Keys) gehören zum selben Nav-Punkt.
+                        var telemetryNavClass = (_ctrl == "AdminTelemetry")
+                            ? "adm-nav-link is-active"
+                            : "adm-nav-link";
+                    }
+                    <a class="@telemetryNavClass" asp-controller="AdminTelemetry" asp-action="Index">
+                        <i class="bi bi-radio"></i> Telemetrie
+                    </a>
                 </div>
             }
 

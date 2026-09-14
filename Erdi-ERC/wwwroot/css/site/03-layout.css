@@ -337,7 +337,7 @@ main { display:block; flex:1 0 auto; min-height:60vh; padding:clamp(1.2rem,2vw,1
 .scroll-progress {
     position:fixed; top:0; left:0; height:2px; width:0;
     background:linear-gradient(90deg, var(--accent), var(--sig-cyan), var(--sig-magenta));
-    box-shadow:0 0 12px var(--accent-glow), 0 0 24px rgba(0,229,255,.4);
+    box-shadow:0 0 12px var(--accent-glow), 0 0 24px rgba(88,183,201,.4);
     z-index:2000; pointer-events:none;
     transition:width 60ms linear;
 }

@@ -54,6 +54,11 @@ namespace Erdi_ERC.Data
         public DbSet<Application> Applications => Set<Application>();
         public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
 
+        // ── Telemetrie-Ingest (Pending-Rennergebnisse, telemetrie.erdi-erc.de) ────────
+        public DbSet<PendingRaceResult> PendingRaceResults => Set<PendingRaceResult>();
+        public DbSet<PendingRaceFinish> PendingRaceFinishes => Set<PendingRaceFinish>();
+        public DbSet<TelemetrySenderKey> TelemetrySenderKeys => Set<TelemetrySenderKey>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -125,6 +130,48 @@ namespace Erdi_ERC.Data
                 b.Property(x => x.RaceTimeMs).IsRequired(false);
                 // Driver-Lookup für Rename + DriverDetail-Statistik.
                 b.HasIndex(x => x.Driver);
+            });
+
+            modelBuilder.Entity<PendingRaceResult>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.SourcePayload).IsRequired();
+                b.Property(x => x.PayloadHash).HasMaxLength(64).IsRequired();
+                b.Property(x => x.SourceTrack).HasMaxLength(128);
+                b.Property(x => x.SourceSeason).HasMaxLength(32);
+                b.Property(x => x.SourceLeague).HasMaxLength(128);
+                b.Property(x => x.SenderDiscordId).HasMaxLength(32);
+                b.Property(x => x.DecidedByDiscordId).HasMaxLength(32);
+                b.Property(x => x.ReviewNote).HasMaxLength(1024);
+                // Inbox: nach Absender filtern/suchen.
+                b.HasIndex(x => x.SenderDiscordId);
+                // Dedup: identisches Payload der Telemetrie-App (Re-Send/Retry)
+                // erzeugt keine zweite Zeile — Ingest ist idempotent.
+                b.HasIndex(x => x.PayloadHash).IsUnique();
+                // Admin-Inbox: Filter auf Status + Sortierung nach Empfang.
+                b.HasIndex(x => new { x.Status, x.ReceivedAt });
+                b.HasMany(x => x.Finishes)
+                    .WithOne(x => x.PendingRaceResult)
+                    .HasForeignKey(x => x.PendingRaceResultId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PendingRaceFinish>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Driver).HasMaxLength(128).IsRequired();
+                b.HasIndex(x => x.PendingRaceResultId);
+            });
+
+            modelBuilder.Entity<TelemetrySenderKey>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.DiscordId).HasMaxLength(32).IsRequired();
+                b.Property(x => x.KeyHash).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Description).HasMaxLength(64);
+                // Lookup bei jedem Ingest über den präsentierten Klartext-Hash.
+                b.HasIndex(x => x.KeyHash).IsUnique();
+                b.HasIndex(x => x.DiscordId);
             });
 
             modelBuilder.Entity<RaceWeekend>(b =>
@@ -235,6 +282,7 @@ namespace Erdi_ERC.Data
                 b.Property(x => x.Driver).HasMaxLength(128).IsRequired();
                 b.Property(x => x.DriverNumber);
                 b.Property(x => x.PenaltyType).HasMaxLength(64).IsRequired();
+                b.Property(x => x.DriverPointsTotal);
                 b.Property(x => x.RaceTrack).HasMaxLength(128);
                 b.Property(x => x.SecondDriver).HasMaxLength(128);
                 b.Property(x => x.SecondDriverNumber);

@@ -194,9 +194,9 @@
 .f1-hub-tabs__tab.is-active {
     background: var(--surface-1);
     color: var(--sig-cyan);
-    border-color: rgba(0,229,255,.4);
+    border-color: rgba(88,183,201,.4);
     border-bottom-color: var(--surface-1);
-    box-shadow: 0 0 10px rgba(0,229,255,.1);
+    box-shadow: 0 0 10px rgba(88,183,201,.1);
     margin-bottom: -1px;
 }
 
@@ -228,9 +228,9 @@
     color: var(--ink);
 }
 .f1-sub-tabs__tab.is-active {
-    background: rgba(0,229,255,.1);
+    background: rgba(88,183,201,.1);
     color: var(--sig-cyan);
-    border-color: rgba(0,229,255,.35);
+    border-color: rgba(88,183,201,.35);
 }
 
 /* =====================================================================

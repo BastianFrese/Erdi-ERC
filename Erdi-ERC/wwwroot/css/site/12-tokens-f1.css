@@ -14,19 +14,19 @@
                 repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px);
     --scanline:repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 3px);
 
-    /* Sektor-Farben (iRacing/F1-TV-Stil) */
-    --sector-purple:#b95cff;
-    --sector-green:#39ff14;
-    --sector-yellow:#ffcc00;
-    --sector-red:#ff3357;
+    /* Sektor-Farben (iRacing/F1-TV-Stil) — Semantik bleibt, Ton mattiert */
+    --sector-purple:#9d6ec4;
+    --sector-green:#4caf6d;
+    --sector-yellow:#dcc24f;
+    --sector-red:#d9534f;
 
     /* Brake-Glow / Speed-Lines */
     --brake-glow:0 0 24px var(--accent-glow), 0 0 6px rgba(255,255,255,.18);
     --speed-line:linear-gradient(90deg, transparent 0%, var(--accent-2) 40%, var(--accent) 65%, transparent 100%);
 
-    /* Telemetrie-Farbverlauf (Cyan -> Akzent -> Magenta) */
-    --telemetry-stripe:linear-gradient(90deg, var(--sig-cyan) 0%, var(--accent-2) 50%, var(--sig-magenta) 100%);
-    --telemetry-stripe-soft:linear-gradient(90deg, rgba(0,229,255,.25) 0%, var(--accent-soft) 50%, rgba(185,92,255,.25) 100%);
+    /* Telemetrie-Farbverlauf — einfarbig im Akzent statt 3-Farb-Regenbogen */
+    --telemetry-stripe:linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 100%);
+    --telemetry-stripe-soft:linear-gradient(90deg, rgba(255,59,47,.22) 0%, var(--accent-soft) 100%);
 
     /* Motion-Easings (F1-Vokabular) */
     --ease-launch:cubic-bezier(.16,.84,.34,1);

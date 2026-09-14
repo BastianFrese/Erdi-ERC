@@ -57,8 +57,12 @@ Erdi-ERC/backgroundmusic/*
 Erdi-ERC/downloads/*
 !Erdi-ERC/downloads/.gitkeep
 
+# --- Laufzeit-Einstellungen (SiteSettingsService) ---
+Erdi-ERC/data/
+
 # --- DB-Backups (personenbezogene Daten — NIE einchecken!) ---
 applicationforms-backup-*.json
+Erdi-ERC/erdierc*.sql
 
 # --- Migration Bootstrap (enthält ggf. sensible Daten) ---
 # migration_bootstrap.sql  # optional auskommentieren falls du es behalten willst

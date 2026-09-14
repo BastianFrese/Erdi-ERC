@@ -10,9 +10,9 @@
     pointer-events: none;
     z-index: 0;
     background:
-        radial-gradient(60% 70% at 18% 8%, rgba(0,229,255,.10), transparent 60%),
+        radial-gradient(60% 70% at 18% 8%, rgba(88,183,201,.10), transparent 60%),
         radial-gradient(50% 65% at 82% 0%, var(--accent-soft), transparent 65%),
-        radial-gradient(75% 60% at 50% 100%, rgba(185,92,255,.06), transparent 70%);
+        radial-gradient(75% 60% at 50% 100%, rgba(157,110,196,.06), transparent 70%);
 }
 .f1-home-backdrop::after {
     content: "";
@@ -232,7 +232,7 @@
     font: 700 1.4rem/1 var(--ff-mono);
     color: var(--sig-amber);
     letter-spacing: .1em;
-    text-shadow: 0 0 16px rgba(255,184,0,.45);
+    text-shadow: 0 0 16px rgba(232,169,61,.45);
 }
 
 /* =====================================================================
@@ -476,7 +476,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,.07) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(88,183,201,.07) 50%, transparent 100%);
     transform: translateX(-110%);
     transition: transform .8s var(--ease-overtake);
     pointer-events: none;
@@ -610,10 +610,10 @@
     border-color: transparent;
 }
 .f1-pitcard__icon .f1-icon { width: 1.4rem; height: 1.4rem; }
-.f1-pitcard__icon--cyan   { color: var(--sig-cyan); background: rgba(0,229,255,.10); border-color: rgba(0,229,255,.25); }
-.f1-pitcard__icon--amber  { color: var(--sig-amber); background: rgba(255,184,0,.10); border-color: rgba(255,184,0,.28); }
-.f1-pitcard__icon--green  { color: var(--sig-green); background: rgba(57,255,20,.10); border-color: rgba(57,255,20,.28); }
-.f1-pitcard__icon--magenta{ color: var(--sig-magenta); background: rgba(185,92,255,.12); border-color: rgba(185,92,255,.30); }
+.f1-pitcard__icon--cyan   { color: var(--sig-cyan); background: rgba(88,183,201,.10); border-color: rgba(88,183,201,.25); }
+.f1-pitcard__icon--amber  { color: var(--sig-amber); background: rgba(232,169,61,.10); border-color: rgba(232,169,61,.28); }
+.f1-pitcard__icon--green  { color: var(--sig-green); background: rgba(76,175,109,.10); border-color: rgba(76,175,109,.28); }
+.f1-pitcard__icon--magenta{ color: var(--sig-magenta); background: rgba(157,110,196,.12); border-color: rgba(157,110,196,.30); }
 
 .f1-pitcard__tag {
     margin-left: auto;
@@ -800,7 +800,7 @@
     background: var(--sig-amber);
     color: #000;
     border-color: transparent;
-    box-shadow: 0 0 12px rgba(255,184,0,.4);
+    box-shadow: 0 0 12px rgba(232,169,61,.4);
 }
 .f1-newscard__date {
     font: 600 .7rem/1 var(--ff-mono);

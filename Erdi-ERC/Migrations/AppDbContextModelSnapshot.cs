@@ -340,6 +340,11 @@ namespace Erdi_ERC.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("varchar(32)");
 
+                    b.Property<string>("Season")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -355,6 +360,8 @@ namespace Erdi_ERC.Migrations
                     b.HasIndex("Status", "CreatedAt");
 
                     b.HasIndex("TargetLeagueId", "Status");
+
+                    b.HasIndex("TargetLeagueId", "Season", "Status");
 
                     b.ToTable("Applications");
                 });
@@ -825,6 +832,9 @@ namespace Erdi_ERC.Migrations
                     b.Property<bool>("AcceptsApplications")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("ApplicationsOpenForNextSeason")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime?>("ArchivedAt")
                         .HasColumnType("datetime(6)");
 
@@ -856,6 +866,10 @@ namespace Erdi_ERC.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
+
+                    b.Property<string>("NextSeason")
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
@@ -889,6 +903,9 @@ namespace Erdi_ERC.Migrations
                         .HasColumnType("varchar(128)");
 
                     b.Property<int?>("DriverNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DriverPointsTotal")
                         .HasColumnType("int");
 
                     b.Property<string>("Incident")
@@ -937,6 +954,112 @@ namespace Erdi_ERC.Migrations
                     b.HasIndex("LeagueId", "Date");
 
                     b.ToTable("LeaguePenalties");
+                });
+
+            modelBuilder.Entity("Erdi_ERC.Models.PendingRaceFinish", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Driver")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<bool>("FastestLap")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDnf")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("PendingRaceResultId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QualifyingPosition")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("RaceTimeMs")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PendingRaceResultId");
+
+                    b.ToTable("PendingRaceFinishes");
+                });
+
+            modelBuilder.Entity("Erdi_ERC.Models.PendingRaceResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("DecidedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DecidedByDiscordId")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int?>("PromotedRaceResultId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReceivedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1024)
+                        .HasColumnType("varchar(1024)");
+
+                    b.Property<string>("SenderDiscordId")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<DateTime?>("SourceDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SourceLeague")
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("SourcePayload")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SourceSeason")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("SourceTrack")
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PayloadHash")
+                        .IsUnique();
+
+                    b.HasIndex("SenderDiscordId");
+
+                    b.HasIndex("Status", "ReceivedAt");
+
+                    b.ToTable("PendingRaceResults");
                 });
 
             modelBuilder.Entity("Erdi_ERC.Models.ProfileWallMessage", b =>
@@ -1628,6 +1751,44 @@ namespace Erdi_ERC.Migrations
                     b.ToTable("StreamSchedules");
                 });
 
+            modelBuilder.Entity("Erdi_ERC.Models.TelemetrySenderKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("DiscordId")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscordId");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("TelemetrySenderKeys");
+                });
+
             modelBuilder.Entity("Erdi_ERC.Models.TrackSetup", b =>
                 {
                     b.Property<int>("Id")
@@ -1840,11 +2001,16 @@ namespace Erdi_ERC.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<string>("Season")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DiscordId", "LeagueId");
+                    b.HasIndex("DiscordId", "LeagueId", "Season");
 
-                    b.HasIndex("LeagueId", "Position");
+                    b.HasIndex("LeagueId", "Season", "Position");
 
                     b.ToTable("WaitlistEntries");
                 });
@@ -1984,6 +2150,17 @@ namespace Erdi_ERC.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Erdi_ERC.Models.PendingRaceFinish", b =>
+                {
+                    b.HasOne("Erdi_ERC.Models.PendingRaceResult", "PendingRaceResult")
+                        .WithMany("Finishes")
+                        .HasForeignKey("PendingRaceResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PendingRaceResult");
+                });
+
             modelBuilder.Entity("Erdi_ERC.Models.RaceFinish", b =>
                 {
                     b.HasOne("Erdi_ERC.Models.RaceResult", null)
@@ -2082,6 +2259,11 @@ namespace Erdi_ERC.Migrations
                     b.Navigation("Races");
 
                     b.Navigation("Standings");
+                });
+
+            modelBuilder.Entity("Erdi_ERC.Models.PendingRaceResult", b =>
+                {
+                    b.Navigation("Finishes");
                 });
 
             modelBuilder.Entity("Erdi_ERC.Models.RaceResult", b =>

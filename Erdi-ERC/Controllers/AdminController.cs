@@ -4,6 +4,7 @@ using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -17,14 +18,16 @@ namespace Erdi_ERC.Controllers
         private readonly IAdminAuditService _audit;
         private readonly IStreamScheduleQueryService _streamSchedules;
         private readonly ISiteSettingsService _siteSettings;
+        private readonly IOutputCacheStore _outputCache;
 
         public AdminController(AppDbContext db, IAdminAuditService audit, IStreamScheduleQueryService streamSchedules,
-            ISiteSettingsService siteSettings)
+            ISiteSettingsService siteSettings, IOutputCacheStore outputCache)
         {
             _db = db;
             _audit = audit;
             _streamSchedules = streamSchedules;
             _siteSettings = siteSettings;
+            _outputCache = outputCache;
         }
 
         // ---- Dashboard / Main Übersicht ----
@@ -52,6 +55,8 @@ namespace Erdi_ERC.Controllers
             ViewBag.IsSuperAdmin = IsSuperAdmin;
             ViewBag.AppDownloadEnabled = _siteSettings.IsAppDownloadEnabled();
             ViewBag.AppDownloadFileAvailable = _siteSettings.HasInstallerFile();
+            ViewBag.MaintenanceMode = _siteSettings.IsMaintenanceMode();
+            ViewBag.MaintenanceMessage = _siteSettings.GetMaintenanceMessage();
 
             return View(leagues);
         }
@@ -71,6 +76,45 @@ namespace Erdi_ERC.Controllers
             TempData["AdminMessage"] = newState
                 ? "App-Download ist jetzt SICHTBAR (Layout-Cache: greift binnen ~30s)."
                 : "App-Download ist jetzt AUSGEBLENDET (Layout-Cache: greift binnen ~30s).";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ---- Wartungsmodus Toggle (nur Superadmins) ----
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleMaintenanceMode()
+        {
+            if (!IsSuperAdmin) return Forbid();
+
+            var newState = !_siteSettings.IsMaintenanceMode();
+            _siteSettings.SetMaintenanceMode(newState, User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unbekannt");
+            await _audit.LogAndSaveAsync(newState ? "EnableMaintenanceMode" : "DisableMaintenanceMode", "SiteSettings", "maintenanceMode",
+                $"Wartungsmodus {(newState ? "aktiviert" : "deaktiviert")}");
+
+            // OutputCache leeren: gecachte öffentliche Seiten (bis zu 2 Min) dürfen nach dem
+            // Toggle nicht mehr ausgeliefert werden — sonst umgehen sie die Wartungsseite.
+            _outputCache.EvictByTagAsync("public", default).GetAwaiter().GetResult();
+
+            TempData["AdminMessage"] = newState
+                ? "Wartungsmodus ist jetzt AKTIV — alle Nicht-Admins sehen die Wartungsseite."
+                : "Wartungsmodus ist jetzt AUS — die Seite ist wieder öffentlich.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveMaintenanceMessage(string maintenanceMessage)
+        {
+            if (!IsSuperAdmin) return Forbid();
+
+            var message = (maintenanceMessage ?? string.Empty).Trim();
+            if (message.Length > 300)
+            {
+                TempData["AdminMessage"] = "Wartungsmeldung darf höchstens 300 Zeichen lang sein.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _siteSettings.SetMaintenanceMessage(message, User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unbekannt");
+            await _audit.LogAndSaveAsync("UpdateMaintenanceMessage", "SiteSettings", "maintenanceMessage", "Wartungsmeldung aktualisiert");
+            TempData["AdminMessage"] = "Wartungsmeldung gespeichert.";
             return RedirectToAction(nameof(Index));
         }
 

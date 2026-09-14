@@ -85,13 +85,13 @@
     inset: 0 auto 0 0;
     width: 0;
     border-radius: inherit;
-    background: linear-gradient(90deg, #25d7ff 0%, #39ff14 55%, #ff5a3d 100%);
-    box-shadow: 0 0 10px rgba(37,215,255,.25);
+    background: linear-gradient(90deg, #7a0a05 0%, #e10600 100%);
+    box-shadow: 0 0 10px rgba(225,6,0,.2);
     transition: width var(--t-base);
 }
 
 .setup-strategy-block {
-    background: rgba(255, 193, 7, .08);
+    background: rgba(232,169,61,.08);
 }
 
 /* ── Interaktive Slider (immer aktiv) ────────────────────────────── */

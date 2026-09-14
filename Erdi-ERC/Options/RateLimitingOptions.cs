@@ -12,6 +12,10 @@ namespace Erdi_ERC.Options
         public RateLimiterBucket Auth   { get; set; } = new() { PermitLimit = 10,  WindowSeconds = 60 };
         public RateLimiterBucket Forms  { get; set; } = new() { PermitLimit = 20,  WindowSeconds = 60 };
 
+        /// <summary>Telemetrie-Ingest (POST /api/telemetry/race): Sliding-Window pro IP,
+        /// damit ein fehlkonfigurierter Client den Endpoint nicht mit Retries flutet.</summary>
+        public RateLimiterBucket Telemetry { get; set; } = new() { PermitLimit = 10, WindowSeconds = 60 };
+
         public sealed class RateLimiterBucket
         {
             public int PermitLimit { get; set; }

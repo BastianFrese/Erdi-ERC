@@ -176,4 +176,33 @@ public class StatsServiceTests
         var alpha = await verify.DriverStandings.SingleAsync(s => s.Driver == "Alpha");
         Assert.Equal(25, alpha.Points); // nur Renn-Punkte, kein Penalty-Abzug
     }
+
+    [Fact]
+    public async Task RebuildLeagueStandings_equalPoints_moreBetterPositionsGetsHigherPosition()
+    {
+        // F1-Tiebreaker: Alice (P1+P6 = 25+12 = 37) und Bob (P2+P4 = 21+16 = 37)
+        // haben dieselbe Punktzahl, aber Alice hat die bessere Position (1× P1).
+        // Sie muss Position 1 bekommen, Bob Position 2.
+        using var ctx = new SqliteTestContext();
+        await SeedLeagueAsync(ctx, "l1");
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Alice" });
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Bob" });
+        await ctx.Db.SaveChangesAsync();
+        await AddRaceAsync(ctx, "l1", ("Alice", 1), ("Bob", 2));
+        await AddRaceAsync(ctx, "l1", ("Alice", 6), ("Bob", 4));
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert — gleiche Punkte, aber Alice (mehr P1) führt.
+        await using var verify = ctx.NewContext();
+        var alice = await verify.DriverStandings.SingleAsync(s => s.Driver == "Alice");
+        var bob = await verify.DriverStandings.SingleAsync(s => s.Driver == "Bob");
+        Assert.Equal(37, alice.Points);
+        Assert.Equal(37, bob.Points);
+        Assert.Equal(1, alice.Position);
+        Assert.Equal(2, bob.Position);
+    }
 }

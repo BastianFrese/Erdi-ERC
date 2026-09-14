@@ -292,6 +292,12 @@ namespace Erdi_ERC.Services
         }
 
         /// <summary>DriverProfile anlegen/aktualisieren + GamerTag für die Plattform verknüpfen.</summary>
+        /// <remarks>
+        /// Der eingegebene EA-Name (GamerTag) wird auch als DisplayName am Profil
+        /// registriert, wenn dieser frei ist — sonst zeigt die Fahrerkarte den
+        /// Discord-Namen statt des EA-Namens, und der Liga-Eintrag
+        /// (DriverStandings.Driver = EA-Name) löst nicht auf das Profil auf.
+        /// </remarks>
         private async Task<DriverProfile> UpsertProfileAndTagAsync(
             string discordId, string discordName, string gamerTag, string platform,
             string adminDiscordId, CancellationToken ct)
@@ -303,6 +309,9 @@ namespace Erdi_ERC.Services
                 {
                     DiscordId = discordId,
                     DiscordName = discordName,
+                    // EA-Name (GamerTag) ist Default-Anzeige — ohne ihn zeigt die
+                    // Fahrerkarte den Discord-Namen statt des EA-Namens.
+                    DisplayName = gamerTag.Trim(),
                     PreferredPlatform = platform,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
@@ -314,6 +323,8 @@ namespace Erdi_ERC.Services
                 profile.UpdatedAt = DateTime.UtcNow;
                 if (string.IsNullOrEmpty(profile.PreferredPlatform))
                     profile.PreferredPlatform = platform;
+                if (string.IsNullOrWhiteSpace(profile.DisplayName))
+                    profile.DisplayName = gamerTag.Trim();
             }
 
             var existingTag = await _db.DriverGamerTags

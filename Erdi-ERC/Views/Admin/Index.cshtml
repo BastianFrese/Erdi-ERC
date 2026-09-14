@@ -284,6 +284,44 @@
                             }
                         </form>
                     </div>
+
+                    <div class="adm-system-action-group">
+                        <div class="adm-system-action-group__label">
+                            Wartungsmodus <span class="adm-badge ms-1" style="font-size:.7rem;">nur Superadmins</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge @(ViewBag.MaintenanceMode is true ? "bg-danger" : "bg-secondary")">
+                                @(ViewBag.MaintenanceMode is true ? "AN — Wartungsseite aktiv" : "AUS — Seite öffentlich")
+                            </span>
+                        </div>
+                        <form asp-action="ToggleMaintenanceMode" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            @if (ViewBag.MaintenanceMode is true)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-power me-1"></i>Wartungsmodus beenden
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-outline-warning" type="submit">
+                                    <i class="bi bi-power me-1"></i>Wartungsmodus aktivieren
+                                </button>
+                            }
+                        </form>
+                        <form asp-action="SaveMaintenanceMessage" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <label class="form-label small text-muted mb-1" for="maintenanceMessage">Meldung auf der Wartungsseite</label>
+                            <div class="d-flex gap-2 align-items-start flex-wrap">
+                                <input class="form-control form-control-sm" type="text" id="maintenanceMessage" name="maintenanceMessage"
+                                       value="@ViewBag.MaintenanceMessage" maxlength="300"
+                                       placeholder="Wir sind gleich wieder da…" style="max-width:320px" />
+                                <button class="btn btn-sm btn-outline-secondary" type="submit">
+                                    <i class="bi bi-check2 me-1"></i>Speichern
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 }
 
                 <div class="adm-system-action-group">

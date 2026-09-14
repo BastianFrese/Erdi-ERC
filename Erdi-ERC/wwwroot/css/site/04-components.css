@@ -103,13 +103,13 @@
     --btn-bg:linear-gradient(180deg,#4be07a,#1aa84a);
     --btn-bd:rgba(255,255,255,.14); --btn-fg:#04140a;
     font-weight:700;
-    box-shadow:0 10px 24px -10px rgba(57,255,20,.55), 0 0 0 1px rgba(57,255,20,.25);
+    box-shadow:0 10px 24px -10px rgba(76,175,109,.55), 0 0 0 1px rgba(76,175,109,.25);
 }
 .btn-warning {
-    --btn-bg:linear-gradient(180deg,#ffd24a,#ffb800);
+    --btn-bg:linear-gradient(180deg,#ffd24a,#e8a93d);
     --btn-bd:rgba(255,255,255,.14); --btn-fg:#1a1305;
     font-weight:700;
-    box-shadow:0 10px 24px -10px rgba(255,184,0,.55);
+    box-shadow:0 10px 24px -10px rgba(232,169,61,.55);
 }
 .btn-danger {
     --btn-bg:linear-gradient(180deg,#ff5b5b,#c81f1f);
@@ -120,7 +120,7 @@
     --btn-bg:linear-gradient(180deg,#5be3ff,#1aa3c8);
     --btn-bd:rgba(255,255,255,.14); --btn-fg:#04141a;
     font-weight:700;
-    box-shadow:0 10px 24px -10px rgba(0,229,255,.5);
+    box-shadow:0 10px 24px -10px rgba(88,183,201,.5);
 }
 .btn-ghost {
     --btn-bg:transparent; --btn-bd:transparent;
@@ -320,10 +320,10 @@ select option:focus,
     color:var(--ink);
 }
 .badge.bg-primary { background:var(--accent-soft)!important; color:#fff!important; border-color:var(--accent)!important; }
-.badge.bg-success { background:rgba(57,255,20,.14)!important; color:#a8ffba!important; border-color:rgba(57,255,20,.4)!important; }
-.badge.bg-warning { background:rgba(255,184,0,.14)!important; color:#ffe19a!important; border-color:rgba(255,184,0,.4)!important; }
+.badge.bg-success { background:rgba(76,175,109,.14)!important; color:#a8ffba!important; border-color:rgba(76,175,109,.4)!important; }
+.badge.bg-warning { background:rgba(232,169,61,.14)!important; color:#ffe19a!important; border-color:rgba(232,169,61,.4)!important; }
 .badge.bg-danger  { background:var(--accent-soft)!important; color:#ffb4b1!important; border-color:var(--accent)!important; }
-.badge.bg-info    { background:rgba(0,229,255,.14)!important; color:#aef3ff!important; border-color:rgba(0,229,255,.4)!important; }
+.badge.bg-info    { background:rgba(88,183,201,.14)!important; color:#aef3ff!important; border-color:rgba(88,183,201,.4)!important; }
 .badge.bg-secondary { background:rgba(255,255,255,.08)!important; color:var(--ink)!important; }
 
 .alert {

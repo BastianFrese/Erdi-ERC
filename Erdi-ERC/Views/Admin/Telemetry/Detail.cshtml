@@ -1,0 +1,262 @@
+@model Erdi_ERC.Models.TelemetryDetailViewModel
+@{
+    ViewData["Title"] = "Telemetrie-Detail";
+    ViewData["Kicker"] = "Liga";
+    ViewData["HeroTitle"] = "Ergebnis-Entwurf";
+
+    var pending = Model.Pending;
+    var isPending = pending.Status == (int)Erdi_ERC.Models.PendingRaceStatus.Pending;
+    var sourceLeagueName = pending.SourceLeague?.Trim();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/admin-applications.css" asp-append-version="true" />
+}
+
+<div class="adm-dashboard">
+
+    <a class="adm-back-bar" asp-action="Index">
+        <i class="bi bi-arrow-left-circle"></i> Zurück zur Eingangsliste
+    </a>
+
+    @if (!isPending)
+    {
+        <div class="adm-alert">
+            <i class="bi bi-info-circle"></i>
+            Dieser Entwurf wurde bereits bearbeitet
+            @((Erdi_ERC.Models.PendingRaceStatus)pending.Status == Erdi_ERC.Models.PendingRaceStatus.Accepted
+                ? $"und als Rennen #{pending.PromotedRaceResultId} übernommen"
+                : "und abgelehnt")
+            @if (!string.IsNullOrWhiteSpace(pending.DecidedByDiscordId))
+            {
+                <text> von <strong>@(Model.DeciderName ?? pending.DecidedByDiscordId)</strong></text>
+            }
+            @if (pending.DecidedAt is not null)
+            {
+                <text> am @pending.DecidedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</text>
+            }.
+        </div>
+        @if (!string.IsNullOrWhiteSpace(pending.ReviewNote))
+        {
+            <div class="adm-panel">
+                <div class="adm-panel__head"><span class="adm-panel__head-title"><i class="bi bi-chat-left-text me-2"></i>Anmerkung</span></div>
+                <div class="adm-panel__body"><p style="white-space:pre-wrap;">@pending.ReviewNote</p></div>
+            </div>
+        }
+    }
+
+    @* Metadaten *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title"><i class="bi bi-info-circle me-2"></i>Entwurf</span>
+        </div>
+        <div class="adm-panel__body">
+            <dl class="adm-dl">
+                <dt>Empfangen</dt>       <dd>@pending.ReceivedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") Uhr</dd>
+                <dt>Sender</dt>          <dd>@(Model.SenderName ?? pending.SenderDiscordId ?? "unbekannt")@(pending.SenderDiscordId is not null ? $" ({pending.SenderDiscordId})" : "")</dd>
+                <dt>Strecke</dt>        <dd>@(pending.SourceTrack ?? "–")</dd>
+                <dt>Renndatum</dt>      <dd>@(pending.SourceDate?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "–")</dd>
+                <dt>Saison</dt>         <dd>@(string.IsNullOrWhiteSpace(pending.SourceSeason) ? "–" : pending.SourceSeason)</dd>
+                <dt>Liga-Vorschlag</dt>
+                <dd>
+                    @if (string.IsNullOrWhiteSpace(sourceLeagueName))
+                    {
+                        <span class="f1-chip f1-chip--ghost">ohne Liga</span>
+                    }
+                    else
+                    {
+                        @sourceLeagueName
+                    }
+                </dd>
+                <dt>Fahrer</dt>         <dd>@pending.Finishes.Count</dd>
+            </dl>
+        </div>
+    </div>
+
+    @* Review-Formular nur bei Pending *@
+    @if (isPending)
+    {
+        <form method="post" asp-action="Accept">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="PendingId" value="@pending.Id" />
+
+            <div class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__head-title"><i class="bi bi-pencil-square me-2"></i>Übernahme-Daten</span>
+                </div>
+                <div class="adm-panel__body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="leagueId">Liga *</label>
+                            <select id="leagueId" name="LeagueId" class="adm-form-select" required>
+                                <option value="">— Liga wählen —</option>
+                                @foreach (var league in Model.Leagues)
+                                {
+                                    <option value="@league.Id"
+                                            selected="@(league.Name.Trim().Equals(sourceLeagueName, System.StringComparison.OrdinalIgnoreCase))">
+                                        @league.Name@(string.IsNullOrWhiteSpace(league.CurrentSeason) ? "" : $" ({league.CurrentSeason})")
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="track">Strecke *</label>
+                            <input type="text" id="track" name="Track" class="adm-form-input"
+                                   value="@(pending.SourceTrack ?? "")" required maxlength="128" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="date">Renndatum</label>
+                            <input type="datetime-local" id="date" name="Date" class="adm-form-input"
+                                   value="@(pending.SourceDate?.ToLocalTime().ToString("yyyy-MM-ddTHH:mm") ?? "")" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="season">Saison</label>
+                            <input type="text" id="season" name="Season" class="adm-form-input"
+                                   value="@(pending.SourceSeason ?? "")" maxlength="32"
+                                   placeholder="leer = Liga-Saison" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="fastestLapDriver">Schnellste Runde (Fahrer)</label>
+                            <input type="text" id="fastestLapDriver" name="FastestLapDriver" class="adm-form-input"
+                                   value="@(Model.Parsed?.FastestLap ?? "")" maxlength="128"
+                                   placeholder="leer = aus dem Payload übernehmen" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__head-title"><i class="bi bi-flag me-2"></i>Ergebnis (editiert — Übernahme übernimmt diese Zeilen)</span>
+                </div>
+                <div class="adm-panel__body adm-panel__body--flush">
+                    @if (pending.Finishes.Count == 0)
+                    {
+                        <div class="adm-empty"><i class="bi bi-flag"></i><p>Keine Finish-Zeilen im Payload.</p></div>
+                    }
+                    else
+                    {
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-pos">Pos</th>
+                                    <th>Fahrer</th>
+                                    <th class="col-dnf">DNF</th>
+                                    <th class="col-time">Zeit (ms)</th>
+                                    <th class="col-quali">Quali</th>
+                                    <th class="col-fl">Schnellste Runde</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < pending.Finishes.Count; i++)
+                                {
+                                    var f = pending.Finishes[i];
+                                    <tr>
+                                        <td>
+                                            <input type="number" class="adm-form-input"
+                                                   name="Finishes[@i].Position" value="@(f.Position > 0 ? f.Position : 0)"
+                                                   min="0" max="999" />
+                                        </td>
+                                        <td>
+                                            <input type="text" class="adm-form-input"
+                                                   name="Finishes[@i].Driver" value="@f.Driver" required maxlength="128" />
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" class="form-check-input mt-1"
+                                                   name="Finishes[@i].IsDnf" value="true" checked="@f.IsDnf" />
+                                            <input type="hidden" name="Finishes[@i].IsDnf" value="false" />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="adm-form-input"
+                                                   name="Finishes[@i].RaceTimeMs" value="@(f.RaceTimeMs ?? 0)"
+                                                   min="0" step="1" />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="adm-form-input"
+                                                   name="Finishes[@i].QualifyingPosition" value="@(f.QualifyingPosition ?? 0)"
+                                                   min="0" max="999" />
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" class="form-check-input mt-1"
+                                                   name="Finishes[@i].FastestLap" value="true" checked="@f.FastestLap" />
+                                            <input type="hidden" name="Finishes[@i].FastestLap" value="false" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <div class="adm-table__secondary" style="padding:.75rem 1rem;">
+                            <i class="bi bi-info-circle"></i>
+                            DNF-Zeilen werden bei der Übernahme unabhängig vom Positions-Feld als Position 0
+                            gespeichert (gleiche Semantik wie manuell erfasste Rennen).
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Reserve-/Gast-Zuordnungen aus dem Payload (nur Anzeige — wird bei Übernahme reprozessiert) *@
+            @if (Model.Parsed is not null
+                 && (Model.Parsed.ReserveAssignments.Count > 0 || Model.Parsed.GuestAssignments.Count > 0))
+            {
+                <div class="adm-panel">
+                    <div class="adm-panel__head">
+                        <span class="adm-panel__head-title"><i class="bi bi-people me-2"></i>Reserve-/Gast-Zuordnungen (aus Payload)</span>
+                    </div>
+                    <div class="adm-panel__body">
+                        <div class="row g-4">
+                            @if (Model.Parsed.ReserveAssignments.Count > 0)
+                            {
+                                <div class="col-md-6">
+                                    <div class="adm-table__secondary" style="margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;">Reserve</div>
+                                    @foreach (var r in Model.Parsed.ReserveAssignments)
+                                    {
+                                        <div class="d-flex justify-content-between" style="padding:.25rem 0;border-bottom:1px dashed var(--stroke-1);">
+                                            <span>@r.Driver</span>
+                                            <span class="adm-table__secondary"><i class="bi bi-arrow-right me-1"></i>@r.MainDriver</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @if (Model.Parsed.GuestAssignments.Count > 0)
+                            {
+                                <div class="col-md-6">
+                                    <div class="adm-table__secondary" style="margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;">Gäste</div>
+                                    @foreach (var g in Model.Parsed.GuestAssignments)
+                                    {
+                                        <div class="d-flex justify-content-between" style="padding:.25rem 0;border-bottom:1px dashed var(--stroke-1);">
+                                            <span>@g.Driver</span>
+                                            <span class="adm-table__secondary"><i class="bi bi-arrow-right me-1"></i>@g.MainDriver</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="adm-action-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Als Rennen übernehmen
+                </button>
+            </div>
+        </form>
+
+        <form method="post" asp-action="Reject" class="adm-panel" style="margin-top:1.25rem;border-color:rgba(var(--bs-danger-rgb),.35);">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@pending.Id" />
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title" style="color:var(--bs-danger);"><i class="bi bi-x-circle me-2"></i>Entwurf ablehnen</span>
+            </div>
+            <div class="adm-panel__body">
+                <label class="form-label" for="note">Anmerkung (optional)</label>
+                <textarea id="note" name="note" class="adm-form-textarea" rows="2" maxlength="1024"
+                          placeholder="z.&nbsp;B. doppelt gesendet, falsche Liga..."></textarea>
+                <button type="submit" class="btn btn-outline-danger mt-3"
+                        onclick="return confirm('Entwurf wirklich ablehnen? Das Rennen wird NICHT gespeichert.');">
+                    <i class="bi bi-x-circle"></i> Ablehnen
+                </button>
+            </div>
+        </form>
+    }
+</div>

@@ -31,7 +31,7 @@
     {
         "DSQ"                    => "#ff6b6b",
         "Zeitstrafe + Strafpunkte"=> "#ff8a4c",
-        "Zeitstrafe"             => "#ffb800",
+        "Zeitstrafe"             => "#e8a93d",
         "Gridstrafe"             => "#5b8cff",
         "Verwarnung"             => "#c084fc",
         _                        => "var(--ink-3)"
@@ -105,7 +105,7 @@
                 <div class="adm-kpi-card__label">Dokumente gesamt</div>
             </div>
         </div>
-        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
+        <div class="adm-kpi-card" style="--kpi-color:#4caf6d;">
             <div class="adm-kpi-card__icon"><i class="bi bi-eye-fill"></i></div>
             <div class="adm-kpi-card__body">
                 <div class="adm-kpi-card__value">@pub</div>
@@ -132,7 +132,7 @@
     <div class="adm-panel">
         <div class="adm-panel__head">
             <span class="adm-panel__head-title">
-                <i class="bi bi-file-earmark-plus-fill me-2" style="color:#39ff14;"></i>Neues Steward-Dokument erstellen
+                <i class="bi bi-file-earmark-plus-fill me-2" style="color:#4caf6d;"></i>Neues Steward-Dokument erstellen
             </span>
         </div>
         <div class="adm-panel__body">
@@ -191,7 +191,7 @@
                                     foreach (var d in driverList) { <option value="@d">@d</option> }
                                 }
                             </select>
-                            <span id="f_driver_num_badge" class="badge mt-1" style="display:none;background:rgba(0,229,255,.12);color:var(--sig-cyan);border:1px solid rgba(0,229,255,.35);"></span>
+                            <span id="f_driver_num_badge" class="badge mt-1" style="display:none;background:rgba(88,183,201,.12);color:var(--sig-cyan);border:1px solid rgba(88,183,201,.35);"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="adm-form-label">Zweiter beteiligter Fahrer</label>
@@ -207,7 +207,7 @@
                                     foreach (var d in driverList) { <option value="@d">@d</option> }
                                 }
                             </select>
-                            <span id="f_driver2_num_badge" class="badge mt-1" style="display:none;background:rgba(0,229,255,.12);color:var(--sig-cyan);border:1px solid rgba(0,229,255,.35);"></span>
+                            <span id="f_driver2_num_badge" class="badge mt-1" style="display:none;background:rgba(88,183,201,.12);color:var(--sig-cyan);border:1px solid rgba(88,183,201,.35);"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="adm-form-label">Decision / Penalty Type *</label>
@@ -245,7 +245,7 @@
                                 <input type="hidden" name="isPublic" value="false" />
                                 <input class="adm-checkbox" type="checkbox" name="isPublic" value="true" id="f_public" checked />
                                 <span class="adm-check-text">
-                                    <i class="bi bi-eye-fill me-1" style="color:#39ff14;"></i>Sofort oeffentlich veroeffentlichen
+                                    <i class="bi bi-eye-fill me-1" style="color:#4caf6d;"></i>Sofort oeffentlich veroeffentlichen
                                 </span>
                             </label>
                             <button class="btn btn-sm btn-success ms-auto" type="submit">
@@ -395,7 +395,7 @@
         {
             <div class="adm-panel__body">
                 <div class="adm-empty">
-                    <i class="bi bi-shield-check adm-empty__icon" style="color:#39ff14;opacity:1;"></i>
+                    <i class="bi bi-shield-check adm-empty__icon" style="color:#4caf6d;opacity:1;"></i>
                     <span>Keine Dokumente gefunden.</span>
                 </div>
             </div>
@@ -442,6 +442,12 @@
                                     <div class="stw-doc-card__reason"><i class="bi bi-chat-square-text me-1"></i>@p.Incident</div>
                                 }
                                 <div class="stw-doc-card__reason" style="font-style:normal;color:var(--ink);">@p.Reason</div>
+                                @if (p.DriverPointsTotal.HasValue)
+                                {
+                                    <div style="font-size:.78rem;font-weight:700;color:@col;margin-top:.15rem;">
+                                        <i class="bi bi-lightning-charge-fill me-1"></i>Strafpunkte gesamt: @p.DriverPointsTotal.Value
+                                    </div>
+                                }
                                 @if (!string.IsNullOrEmpty(p.CreatedBy))
                                 {
                                     <div style="font-size:.7rem;color:var(--ink-3);margin-top:.2rem;">
@@ -573,7 +579,7 @@
                                         <input class="adm-checkbox" type="checkbox" name="isPublic" value="true"
                                                id="editPub-@p.Id" @(p.IsPublic ? "checked" : "") />
                                         <span class="adm-check-text">
-                                            <i class="bi bi-eye-fill me-1" style="color:#39ff14;"></i>Oeffentlich
+                                            <i class="bi bi-eye-fill me-1" style="color:#4caf6d;"></i>Oeffentlich
                                         </span>
                                     </label>
                                     <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Speichern</button>

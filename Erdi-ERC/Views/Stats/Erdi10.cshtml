@@ -12,7 +12,10 @@
     {
         if (!ms.HasValue) return "–";
         var t = TimeSpan.FromMilliseconds(ms.Value);
-        return $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
+        // Gesamtzeit: ab 1 Stunde H:MM:SS.mmm, sonst M:SS.mmm.
+        return t.TotalHours >= 1
+            ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}.{t.Milliseconds:000}"
+            : $"{(int)t.TotalMinutes}:{t.Seconds:00}.{t.Milliseconds:000}";
     }
 
     var latestRace   = Model.Leagues.SelectMany(l => l.Races).OrderByDescending(r => r.Date).FirstOrDefault();
@@ -51,8 +54,8 @@
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
     Eyebrow   = "F1 26 · Racing Hub",
     LiveDot   = true,
-    Title     = "Erdi10",
-    Highlight = "Racing Hub",
+    Title     = "Erdi",
+    Highlight = "Hub",
     Lead      = $"Offizielle Fan-Page des Twitch-Streamers <a href=\"https://twitch.tv/{Model.TwitchChannel}\" style=\"color:var(--accent);\" target=\"_blank\" rel=\"noopener\">@{Model.TwitchChannel}</a>. Bestenlisten, vergangene Rennen und kommende Events der ERC-Ligen.",
     Actions   = new() {
         new F1ButtonVm { Label="Auf Twitch",  Variant="primary", IconLucide="external-link", Href=$"https://twitch.tv/{Model.TwitchChannel}", Target="_blank" },

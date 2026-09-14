@@ -39,6 +39,13 @@
         retinaSrc = $"{stem}@2x{ext}";
     }
 
+    // WebP-Zweitvariante (Offline erzeugt vom Tool tools/MediaWebPConverter):
+    // existiert {stem}.webp neben dem Original, bekommt der Browser eine
+    // <source type="image/webp"> — deutlich kleinere Downloads, gleiche URLs
+    // für DB/Cache. Ohne Variante greift der Original-Fallback.
+    var env = (Microsoft.AspNetCore.Hosting.IWebHostEnvironment?)Context.RequestServices.GetService(typeof(Microsoft.AspNetCore.Hosting.IWebHostEnvironment));
+    var webpSrc = env is null ? null : TryGetWebpVariant(src, env.WebRootPath ?? "wwwroot");
+
     var imgAttrs = new StringBuilder();
     imgAttrs.Append(" src=\"").Append(HttpUtility.HtmlAttributeEncode(src)).Append("\"");
     imgAttrs.Append(" alt=\"").Append(HttpUtility.HtmlAttributeEncode(Model.Alt ?? "")).Append("\"");
@@ -59,5 +66,34 @@
         imgAttrs.Append(" ").Append(Model.ExtraAttrs);
 }
 <picture>
+    @if (!string.IsNullOrEmpty(webpSrc))
+    {
+        <source type="image/webp" srcset="@webpSrc">
+    }
     <img @Html.Raw(imgAttrs.ToString())>
 </picture>
+@functions {
+    // Prozessweiter Cache der Varianten-Existenz (pos. wie neg. Ergebnisse),
+    // damit pro Bild max. einmal File.Exists läuft. Neue Varianten werden mit
+    // dem nächsten App-Restart sichtbar (Publish startet die App eh neu).
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> WebpVariantExists = new();
+
+    private static string? TryGetWebpVariant(string src, string webRootPath)
+    {
+        if (string.IsNullOrWhiteSpace(src)) return null;
+        if (src.StartsWith("//") || src.Contains("://", StringComparison.Ordinal)) return null; // extern/absolut
+
+        var path = src.StartsWith("~/", StringComparison.Ordinal) ? src[2..] : src;
+        if (!path.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return null; // Varianten nur für Uploads
+
+        var dot = path.LastIndexOf('.');
+        if (dot < 0) return null;
+        var ext = path[dot..].ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png")) return null; // nur vom Tool konvertierte Formate
+
+        var webpPath = path[..dot] + ".webp";
+        var exists = WebpVariantExists.GetOrAdd(webpPath, p =>
+            File.Exists(System.IO.Path.Combine(webRootPath, p.TrimStart('/').Replace('/', System.IO.Path.DirectorySeparatorChar))));
+        return exists ? webpPath : null;
+    }
+}
