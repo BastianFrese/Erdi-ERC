@@ -36,6 +36,7 @@ namespace Erdi_ERC.Controllers
         {
             _db = db;
             _env = env;
+            _cache = cache;
             _appOptions = appOptions.Value;
             _logger = logger;
             var configuredMap = f1Scoring.Value.PointMap;

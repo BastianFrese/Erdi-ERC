@@ -54,18 +54,17 @@ namespace Erdi_ERC.Services
 
         private async Task<LayoutData> BuildAsync(CancellationToken ct)
         {
-            // 3 unabhängige DB-Reads parallelisieren (Block 3). Die Folge-Resolution
-            // (Winner-Team-Lookup) haengt nur am ersten Read und bleibt sequentiell.
-            var latestRaceTask = LoadLatestRaceAsync(ct);
-            var activeStreamTask = LoadActiveStreamAsync(ct);
-            var latestSetupActivityTask = LoadLatestSetupActivityAsync(ct);
+            // 3 unabhängige DB-Reads AUFEINANDERFOLGEND statt parallel: alle nutzen
+            // denselben scoped AppDbContext, und parallele Queries auf einem Context
+            // werfen "A second operation was started on this context instance ..."
+            // (EF-Core erlaubt kein Concurrent-Use). Die Folge-Resolution
+            // (Winner-Team-Lookup) haengt am ersten Read und bleibt sequentiell.
+            var latestRace = await LoadLatestRaceAsync(ct);
+            var activeStream = await LoadActiveStreamAsync(ct);
+            var latestSetupActivity = await LoadLatestSetupActivityAsync(ct);
 
-            await Task.WhenAll(latestRaceTask, activeStreamTask, latestSetupActivityTask);
-
-            var winnerTeamKey = await ResolveWinnerTeamKeyAsync(await latestRaceTask, ct);
+            var winnerTeamKey = await ResolveWinnerTeamKeyAsync(latestRace, ct);
             var (primary, primaryLight, primaryDark, secondary) = ResolveColors(winnerTeamKey);
-            var activeStream = await activeStreamTask;
-            var latestSetupActivity = await latestSetupActivityTask;
 
             return new LayoutData(
                 WinnerTeamKey: winnerTeamKey,
