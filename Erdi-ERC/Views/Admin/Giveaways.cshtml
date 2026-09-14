@@ -1,0 +1,213 @@
+@model List<Erdi_ERC.Models.Giveaway>
+@{
+    ViewData["Title"] = "Giveaways";
+    ViewData["Kicker"] = "Community";
+    ViewData["HeroTitle"] = "Giveaways";
+    var now = DateTime.UtcNow;
+    var runningCount = Model.Count(x => x.StartAt <= now && x.EndAt >= now);
+    var upcomingCount = Model.Count(x => x.StartAt > now);
+    var pastCount = Model.Count - runningCount - upcomingCount;
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:#c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-gift-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Count</div>
+                <div class="adm-kpi-card__label">Giveaways gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#4caf6d;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-fire"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@runningCount</div>
+                <div class="adm-kpi-card__label">Läuft gerade</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#ffc24c;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@upcomingCount</div>
+                <div class="adm-kpi-card__label">Startet noch</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#8a8a93;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-archive"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@pastCount</div>
+                <div class="adm-kpi-card__label">Beendet</div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- Neues Giveaway anlegen ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-plus-circle-fill me-2" style="color:#c78cff;"></i>Neues Giveaway anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-action="SaveGiveaway" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="0" />
+
+                <div class="col-md-5">
+                    <label class="adm-form-label">Titel *</label>
+                    <input class="form-control form-control-sm" name="title" required maxlength="160" placeholder="z.B. Fanatec-Lenkrad verlosen" />
+                </div>
+                <div class="col-md-3">
+                    <label class="adm-form-label">Preis / Gewinn</label>
+                    <input class="form-control form-control-sm" name="prize" maxlength="160" placeholder="z.B. Fanatec-Pedalset" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Start *</label>
+                    <input class="form-control form-control-sm" name="startAt" type="datetime-local" required value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Ende (Deadline) *</label>
+                    <input class="form-control form-control-sm" name="endAt" type="datetime-local" required value="@DateTime.Now.AddDays(7).ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+                <div class="col-md-6">
+                    <label class="adm-form-label">Teilnahme-Link (optional)</label>
+                    <input class="form-control form-control-sm" name="link" maxlength="512" placeholder="https://…" />
+                </div>
+                <div class="col-12">
+                    <label class="adm-form-label">Beschreibung</label>
+                    <textarea class="form-control form-control-sm" name="description" rows="3" placeholder="Was wird verlost, wie kann man teilnehmen?"></textarea>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Giveaway anlegen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Bestehende Giveaways ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-gift-fill me-2" style="color:var(--accent);"></i>Bestehende Giveaways
+            </span>
+            <span class="adm-badge">@Model.Count</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-gift adm-empty__icon"></i>
+                    <span>Noch keine Giveaways vorhanden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var g in Model)
+                {
+                    var isRunning = g.StartAt <= now && g.EndAt >= now;
+                    var isUpcoming = g.StartAt > now;
+                    <div class="adm-item-row">
+                        <div class="adm-item-row__main">
+                            <div class="adm-item-row__body">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="adm-item-row__title">@g.Title</span>
+                                    @if (isRunning)
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--green">Läuft</span>
+                                    }
+                                    else if (isUpcoming)
+                                    {
+                                        <span class="adm-status-badge" style="background:rgba(199,140,255,.15);color:#c78cff;border-color:rgba(199,140,255,.35);">Startet noch</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--gray">Beendet</span>
+                                    }
+                                </div>
+                                <div class="adm-item-row__meta">
+                                    <span><i class="bi bi-clock-history me-1"></i>@g.StartAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") &ndash; @g.EndAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    @if (!string.IsNullOrWhiteSpace(g.Prize))
+                                    {
+                                        <span><i class="bi bi-gift me-1"></i>@g.Prize</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(g.Link))
+                                    {
+                                        <a href="@g.Link" target="_blank" rel="noopener" style="color:var(--accent);font-size:.78rem;"><i class="bi bi-box-arrow-up-right me-1"></i>Link</a>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(g.Description))
+                                {
+                                    <div style="font-size:.78rem;color:var(--ink-3);white-space:pre-wrap;margin-top:.2rem;max-height:3em;overflow:hidden;text-overflow:ellipsis;">@g.Description</div>
+                                }
+                            </div>
+
+                            <div class="adm-item-row__actions">
+                                <button class="btn btn-xs btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#edit-ga-@g.Id"
+                                        title="Bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <form asp-action="DeleteGiveaway" method="post" class="d-inline"
+                                      onsubmit="return confirm('Giveaway &quot;@g.Title&quot; wirklich löschen?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@g.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        @* Edit-Panel *@
+                        <div class="collapse adm-item-row__edit" id="edit-ga-@g.Id">
+                            <div class="mb-3">
+                                <form asp-action="SaveGiveaway" method="post" class="row g-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@g.Id" />
+
+                                    <div class="col-md-5">
+                                        <label class="adm-form-label">Titel</label>
+                                        <input class="form-control form-control-sm" name="title" required maxlength="160" value="@g.Title" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="adm-form-label">Preis / Gewinn</label>
+                                        <input class="form-control form-control-sm" name="prize" maxlength="160" value="@g.Prize" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="adm-form-label">Start</label>
+                                        <input class="form-control form-control-sm" name="startAt" type="datetime-local" required value="@g.StartAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="adm-form-label">Ende (Deadline)</label>
+                                        <input class="form-control form-control-sm" name="endAt" type="datetime-local" required value="@g.EndAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="adm-form-label">Teilnahme-Link</label>
+                                        <input class="form-control form-control-sm" name="link" maxlength="512" value="@g.Link" placeholder="https://…" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="adm-form-label">Beschreibung</label>
+                                        <textarea class="form-control form-control-sm" name="description" rows="3">@g.Description</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-sm btn-success" type="submit">
+                                            <i class="bi bi-check-lg me-1"></i>Speichern
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

@@ -823,6 +823,47 @@ namespace Erdi_ERC.Migrations
                     b.ToTable("DriverStandings");
                 });
 
+            modelBuilder.Entity("Erdi_ERC.Models.Giveaway", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(480)
+                        .HasColumnType("varchar(480)");
+
+                    b.Property<DateTime>("EndAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)");
+
+                    b.Property<string>("Prize")
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StartAt", "EndAt");
+
+                    b.ToTable("Giveaways");
+                });
+
             modelBuilder.Entity("Erdi_ERC.Models.League", b =>
                 {
                     b.Property<string>("Id")

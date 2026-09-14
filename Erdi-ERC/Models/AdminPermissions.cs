@@ -22,6 +22,8 @@ namespace Erdi_ERC.Models
         public const string CommunityStreams     = "community.streams";
         /// <summary>Stewarding: Strafen anlegen, bearbeiten, löschen</summary>
         public const string CommunityStewarding = "community.stewarding";
+        /// <summary>Giveaways: Gewinnspiele für die Startseiten-Infotafel verwalten</summary>
+        public const string CommunityGiveaways  = "community.giveaways";
 
         // ── Fahrer ────────────────────────────────────────────────────────────────
         /// <summary>Fahrer-Achievements vergeben</summary>
@@ -74,6 +76,7 @@ namespace Erdi_ERC.Models
                 new(CommunityEvents,     "Events",            "bi-calendar-event"),
                 new(CommunityStreams,    "Streams",           "bi-camera-video"),
                 new(CommunityStewarding,"Stewarding",        "bi-shield-fill-exclamation"),
+                new(CommunityGiveaways,  "Giveaways",         "bi-gift-fill"),
             ]),
             new("Fahrer", "bi-person-badge-fill", "#c084fc",
             [

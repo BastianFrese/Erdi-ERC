@@ -7,6 +7,7 @@
     var nextUpcomingEvent = ViewBag.NextUpcomingEvent;
     var introVideoUrl = Url.Content("~/videos/vorstellung%20erdi10.mp4");
     var communityNews = (ViewBag.CommunityNews as IEnumerable<Erdi_ERC.Models.CommunityNewsPost>)?.ToList() ?? new List<Erdi_ERC.Models.CommunityNewsPost>();
+    var activeGiveaways = (ViewBag.ActiveGiveaways as IEnumerable<Erdi_ERC.Models.Giveaway>)?.ToList() ?? new List<Erdi_ERC.Models.Giveaway>();
     var overallTop3 = (ViewBag.OverallConstructorsTop3 as IEnumerable<Erdi_ERC.Models.OverallConstructorRow> ?? new List<Erdi_ERC.Models.OverallConstructorRow>()).ToList();
 
     var lastWinnerItems = new List<dynamic>();
@@ -399,6 +400,44 @@
                             <div class="f1-leaguecard__event-label">N&auml;chstes Event</div>
                             <div class="f1-leaguecard__event-format" style="margin-top:.35rem;">Keine kommenden Events geplant.</div>
                         </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@* ============== GIVEAWAYS · GEWINNSPIELE ============== *@
+@if (activeGiveaways.Any())
+{
+    <div class="f1-rc-bar reveal">Giveaways &middot; Gewinnspiele</div>
+    <section class="f1-section reveal">
+        <div class="f1-section__head">
+            <span class="f1-section__bar" aria-hidden="true"></span>
+            <h2 class="f1-section__title">Giveaways</h2>
+            <span class="f1-section__chip">Laufende Gewinnspiele</span>
+        </div>
+        <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
+        <div class="f1-news-grid f1-stagger">
+            @foreach (var g in activeGiveaways)
+            {
+                <div class="f1-newscard f1-tiltable f1-border-anim f1-holographic">
+                    <div class="f1-newscard__head">
+                        <span class="f1-newscard__cat">@(string.IsNullOrWhiteSpace(g.Prize) ? "Giveaway" : g.Prize)</span>
+                        <span class="f1-newscard__date">Endet @g.EndAt.ToLocalTime().ToString("dd.MM.")</span>
+                    </div>
+                    <h5 class="f1-newscard__title">@g.Title</h5>
+                    @if (!string.IsNullOrWhiteSpace(g.Description))
+                    {
+                        <p class="f1-newscard__body">@g.Description</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(g.Link))
+                    {
+                        <a class="f1-newscard__cta" href="@g.Link" target="_blank" rel="noopener">Jetzt mitmachen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+                    }
+                    else
+                    {
+                        <span class="f1-newscard__cta">Teilnahme &uuml;ber Discord</span>
                     }
                 </div>
             }
