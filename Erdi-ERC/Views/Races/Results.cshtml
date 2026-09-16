@@ -104,12 +104,25 @@ else
         r => r.RowId,
         r => r.Finishes.ToDictionary(f => f.Driver, f => f, StringComparer.OrdinalIgnoreCase));
 
+    // Geplante Renngesamtzahl aus dem Kalender ("Round X of N"); ohne Kalender-Eintrag
+    // fällt der Nenner auf die tatsächlich gefahrenen Rennen zurück.
+    var calendarTotal = Model.CalendarRaceCounts != null
+        && Model.CalendarRaceCounts.TryGetValue(league.Id, out var calendarCount)
+            ? calendarCount
+            : 0;
+    var constructorsUrl = Url.Action("LeagueResults", "Races", new { leagueId = league.Id }) + "#constructors";
+
     <section id="league-@league.Id" class="f1-section reveal">
         <partial name="_F1Section" model="@(new F1SectionVm {
             Chip = "Standings",
             Title = league.Name,
+            ActionHref = constructorsUrl,
+            ActionLabel = "Constructors",
+            ActionIconLucide = "trophy",
             SubLink = Url.Action("LeagueResults", "Races", new { leagueId = league.Id }),
-            SubText = races.Any() ? $"Round {races.Count} of {races.Count}" : "Saison startet bald"
+            SubText = races.Any()
+                ? $"Round {races.Count} of {Math.Max(races.Count, calendarTotal)}"
+                : "Saison startet bald"
         })" />
 
         <div class="f1-filter-bar">

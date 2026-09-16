@@ -11,6 +11,16 @@
         <span class="f1-section__chip">@Model.Chip</span>
     }
     <h2 class="f1-section__title">@Model.Title</h2>
+    @if (!string.IsNullOrWhiteSpace(Model.ActionHref))
+    {
+        <a class="f1-section__action" href="@Model.ActionHref">
+            @if (!string.IsNullOrWhiteSpace(Model.ActionIconLucide))
+            {
+                <i class="f1-icon" data-lucide="@Model.ActionIconLucide"></i>
+            }
+            @Model.ActionLabel
+        </a>
+    }
     @if (!string.IsNullOrWhiteSpace(Model.SubLink) && !string.IsNullOrWhiteSpace(Model.SubText))
     {
         <a class="f1-section__sub" href="@Model.SubLink">
