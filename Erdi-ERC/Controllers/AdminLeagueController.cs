@@ -674,9 +674,11 @@ namespace Erdi_ERC.Controllers
         public sealed record ParseRaceCsvRequest(string? Csv);
 
         /// <summary>
-        /// JSON-Endpoint für den CSV-Rennimport (F1-Spiel-Export) in <c>EnterRace</c>.
-        /// Parst den eingefügten Textblock und liefert pro Position Fahrer, Team sowie die aus
-        /// Siegerzeit + Gap berechnete <b>Gesamt</b>zeit. Reine Auswertung — schreibt nichts in die DB.
+        /// JSON-Endpoint für den CSV-Rennimport in <c>EnterRace</c>. Parst den eingefügten
+        /// Textblock und liefert pro Position Fahrer, Team sowie die aus Siegerzeit + Gap
+        /// berechnete <b>Gesamt</b>zeit. Versteht automatisch zwei Formate: den F1-Spiel-Export
+        /// und den Semicolon-Export der ERDi-Telemetrie (Gesamtzeit inkl. Strafsekunden,
+        /// Grid→Quali, DNF aus resultStatus). Reine Auswertung — schreibt nichts in die DB.
         /// Der Antiforgery-Token kommt per <c>RequestVerificationToken</c>-Header (ASP.NET-Default),
         /// da der Body JSON statt Formular-Daten ist.
         /// </summary>
@@ -694,9 +696,11 @@ namespace Erdi_ERC.Controllers
                         team = e.Team,
                         totalTimeMs = e.TotalTimeMs,
                         isDnf = e.IsDnf,
-                        lappedText = e.LappedText
+                        lappedText = e.LappedText,
+                        qualiPosition = e.QualifyingPosition
                     }),
                 skippedLines = result.SkippedLines,
+                fastestLapDriver = result.FastestLapDriver,
                 error = result.Error
             });
         }

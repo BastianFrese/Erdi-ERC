@@ -223,13 +223,19 @@
                 }
 
                 <div class="border rounded p-3 mb-4" style="border-color:rgba(91,140,255,.35)!important;">
-                    <h5 class="mb-2"><i class="bi bi-clipboard-data me-1"></i>CSV aus dem Spiel-Export einfügen</h5>
+                    <h5 class="mb-2"><i class="bi bi-clipboard-data me-1"></i>CSV-Rennimport (Spiel-Export oder Telemetrie-Export)</h5>
                     <p class="text-muted small mb-2">
                         Füge den kompletten Ergebnis-Textblock aus dem Spiel-Export hier ein und klicke auf
                         <strong>„CSV übernehmen"</strong>. Positionen, Fahrer (wo der Name bekannt ist) und die
                         <strong>Gesamt-Rennzeit</strong> werden automatisch befüllt — die Gesamtzeit wird aus
                         Siegerzeit + Abstand zum Vordermann berechnet. Überrundete Fahrer behalten den Export-Text
                         (z.&nbsp;B. „+1 Runde"). <span class="text-warning">Ersetzt die aktuelle Positions-/Zeit-Füllung.</span>
+                    </p>
+                    <p class="text-muted small mb-0">
+                        Auch der <strong>Semicolon-Export der ERDi-Telemetrie</strong> wird erkannt
+                        (<code>position;name;team;…;gridPosition;resultStatus;bestLapMs;totalRaceSeconds;penaltiesTime;…</code>):
+                        Die Grid-Position wird ins Quali-Feld übernommen, die Gesamtzeit inkl. Strafsekunden berechnet,
+                        DNF aus dem Status gesetzt und die schnellste Runde aus <code>bestLapMs</code> vorbelegt.
                     </p>
                     <textarea id="raceCsvInput" class="form-control font-monospace" rows="4" spellcheck="false"
                               placeholder='"Pos.","Fahrer","Team","Grid","Stopps","Beste","Zeit","Pkt.","Fahrertyp"&#10;"1","Spieler:in","Mercedes-AMG F1 Team","1","1","1:20,126","45:31,798","25","Spieler:in"&#10;…'></textarea>
@@ -780,6 +786,7 @@
             const raceCsvApplyBtn = document.getElementById('raceCsvApplyBtn');
             const raceCsvStatus = document.getElementById('raceCsvStatus');
             const timeInputs = Array.from(document.querySelectorAll('input[name="raceTimes"]'));
+            const qualiInputs = Array.from(document.querySelectorAll('input[name="qualiPositions"]'));
 
             const formatRaceMs = (ms) => {
                 const totalSec = Math.floor(ms / 1000);
@@ -842,7 +849,26 @@
                     for (const select of selects) select.value = '';
                     for (const input of timeInputs) input.value = '';
 
-                    let filled = 0, needsDriver = 0, dnfCount = 0, lappedCount = 0;
+                    // Nur der Telemetrie-Export transportiert Grid-Daten. Liegt er vor,
+                    // werden die Quali-Felder neu befüllt; der Komma-Spiel-Export liefert
+                    // keine Quali-Werte und darf manuell eingegebene Felder NICHT leeren.
+                    const hasQualiData = data.entries.some(e =>
+                        Number.isInteger(e.qualiPosition) && e.qualiPosition > 0);
+                    if (hasQualiData) for (const input of qualiInputs) input.value = '';
+
+                    // Telemetrie-Export: Grid-Position → Quali-Feld. Auch DNF-Zeilen
+                    // tragen eine gridPosition und werden befüllt; Positionen ohne
+                    // gültigen Wert bleiben leer (wurden beim Clear oben schon geleert).
+                    const setQualiFor = (entry, idx) => {
+                        const input = qualiInputs[idx];
+                        if (!input || !hasQualiData) return;
+                        if (Number.isInteger(entry.qualiPosition) && entry.qualiPosition > 0) {
+                            input.value = String(entry.qualiPosition);
+                            qualiCount++;
+                        }
+                    };
+
+                    let filled = 0, needsDriver = 0, dnfCount = 0, lappedCount = 0, qualiCount = 0;
                     for (const entry of data.entries) {
                         const idx = entry.position - 1;
                         if (!Number.isInteger(idx) || idx < 0 || idx >= selects.length) continue;
@@ -855,6 +881,7 @@
                             const check = dnfChecks.find(c =>
                                 (c.value || '').toLowerCase() === String(entry.driver || '').toLowerCase());
                             if (check) check.checked = true;
+                            setQualiFor(entry, idx); // Telemetrie: auch DNF trägt gridPosition
                             continue;
                         }
 
@@ -877,15 +904,25 @@
                         } else if (entry.totalTimeMs != null && timeInput) {
                             timeInput.value = formatRaceMs(entry.totalTimeMs);
                         }
+
+                        setQualiFor(entry, idx); // Telemetrie: Grid-Position → Quali-Feld
                     }
 
                     syncDisabledOptions();
                     syncRowBaseTimes();
 
+                    // Telemetrie-Export: schnellste Runde (bestLapMs min) → hidden Feld.
+                    // Der Komma-Spiel-Export liefert keinen Wert → Feld leeren, damit kein
+                    // alter Stand aus einem früheren Telemetrie-Import mitgespeichert wird.
+                    const fastestLapInput = form.querySelector('input[name="fastestLapDriver"]');
+                    if (fastestLapInput) fastestLapInput.value = data.fastestLapDriver || '';
+
                     const parts = [
                         `${data.entries.length} Zeilen übernommen`,
                         `${filled} Fahrer zugeordnet`,
                         needsDriver > 0 ? `${needsDriver} manuell nachzutragen (gelb markiert)` : null,
+                        qualiCount > 0 ? `${qualiCount} Quali gesetzt` : null,
+                        data.fastestLapDriver ? `Schnellste Runde: ${data.fastestLapDriver}` : null,
                         lappedCount > 0 ? `${lappedCount} überrundet` : null,
                         dnfCount > 0 ? `${dnfCount} DNF erkannt` : null
                     ].filter(Boolean);
@@ -915,13 +952,16 @@
                 });
             };
 
-            // selects/timeInputs sind const-Snapshots: nach jedem Umordnen in-place neu
-            // befüllen, damit CSV-Import & Validierung die aktuelle DOM-Reihenfolge sehen.
+            // selects/timeInputs/qualiInputs sind const-Snapshots: nach jedem Umordnen
+            // in-place neu befüllen, damit CSV-Import & Validierung die aktuelle
+            // DOM-Reihenfolge sehen (sonst schriebe der Import Quali-Werte in falsche Zeilen).
             const refreshRaceFieldArrays = () => {
                 selects.length = 0;
                 selects.push(...document.querySelectorAll('.race-position-select'));
                 timeInputs.length = 0;
                 timeInputs.push(...document.querySelectorAll('input[name="raceTimes"]'));
+                qualiInputs.length = 0;
+                qualiInputs.push(...document.querySelectorAll('input[name="qualiPositions"]'));
             };
 
             // Vorzeichenbehaftet: negativ = Minus-Strafe (Zeit-Abzug), leer/nichtnumerisch = 0.
