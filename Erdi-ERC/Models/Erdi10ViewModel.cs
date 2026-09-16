@@ -4,6 +4,10 @@ namespace Erdi_ERC.Models
     {
         public string TwitchChannel { get; set; } = "erdi10";
         public List<League> Leagues { get; set; } = new();
+
+        /// <summary>Geplante Renngesamtzahl pro Liga aus dem Rennkalender (RaceWeekendLegs
+        /// gruppiert nach Liga). Fehlt eine Liga, enthält der Dictionary keinen Eintrag.</summary>
+        public Dictionary<string, int> CalendarRaceCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
     public class AllRacesViewModel

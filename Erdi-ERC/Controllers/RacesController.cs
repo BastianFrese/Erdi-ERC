@@ -40,10 +40,19 @@ namespace Erdi_ERC.Controllers
                 l.Races = l.Races.OrderBy(r => r.Date).ToList();
             }
 
+            // Geplante Renngesamtzahl pro Liga aus dem Rennkalender, damit der
+            // "Round X of N"-Header den echten Saisonumfang zeigt statt X von X.
+            var calendarRaceCounts = await _db.RaceWeekendLegs
+                .AsNoTracking()
+                .GroupBy(l => l.LeagueId)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Key, x => x.Count, StringComparer.OrdinalIgnoreCase);
+
             return View(new Erdi10ViewModel
             {
                 TwitchChannel = _appOptions.TwitchChannel,
-                Leagues = leagues
+                Leagues = leagues,
+                CalendarRaceCounts = calendarRaceCounts
             });
         }
 

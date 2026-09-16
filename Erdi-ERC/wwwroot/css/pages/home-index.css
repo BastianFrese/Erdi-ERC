@@ -434,6 +434,29 @@
 }
 .f1-section__sub:hover { color: var(--accent-2); }
 .f1-section__sub .f1-icon { width: 1em; height: 1em; }
+.f1-section__action {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .42rem .85rem;
+    font: 700 .7rem/1 var(--ff-tech);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--stroke-1);
+    border-left: 3px solid var(--g-accent);
+    border-radius: 3px;
+    text-decoration: none;
+    transition: border-color .15s, background .15s, transform .15s;
+}
+.f1-section__action:hover {
+    background: rgba(255,255,255,.1);
+    border-color: var(--stroke-2);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.f1-section__action .f1-icon { width: .92em; height: .92em; color: var(--accent-2); }
 
 /* =====================================================================
    HUD-STAT-TILES (Telemetrie-Look)

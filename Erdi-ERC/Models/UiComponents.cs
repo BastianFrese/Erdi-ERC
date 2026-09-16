@@ -27,6 +27,10 @@ namespace Erdi_ERC.Models.UiComponents
         public string? Chip { get; set; }
         public string? SubLink { get; set; }
         public string? SubText { get; set; }
+        /// <summary>Optionaler CTA direkt neben dem Title (vor dem SubLink auf der rechten Seite).</summary>
+        public string? ActionHref { get; set; }
+        public string? ActionLabel { get; set; }
+        public string? ActionIconLucide { get; set; }
     }
 
     public class F1PitCardVm
