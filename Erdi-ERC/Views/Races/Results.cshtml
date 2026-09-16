@@ -234,19 +234,33 @@ else
                                         !string.IsNullOrWhiteSpace(a.ReserveDriver)
                                         && a.ReserveDriver.Trim().Equals(driverKey.Trim(), StringComparison.OrdinalIgnoreCase))?.MainDriver;
 
-                                    string cellStyle, cellColor = "var(--ink-3)";
+                                    string cellStyle, cellColor, cellText;
                                     if (fin == null)
                                     {
+                                        // Kein Ergebnis-Eintrag = nicht gefahren → DNS (Did Not Start).
                                         cellStyle = "background:transparent;";
                                         cellColor = "var(--ink-4)";
+                                        cellText = "DNS";
                                     }
-                                    else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "#ffd24a"; }
-                                    else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "#d4d8e0"; }
-                                    else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "#d68a4a"; }
-                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(88,183,201,.08);border:1px solid rgba(88,183,201,.22);"; cellColor = "#aef3ff"; }
-                                    else { cellStyle = "background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; }
-
-                                    var cellText = fin == null ? "–" : fin.Position.ToString();
+                                    else if (fin.Position == 0)
+                                    {
+                                        // Im Rennen gestartet, aber nicht ins Ziel gekommen → DNF.
+                                        cellStyle = "background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);";
+                                        cellColor = "#f87171";
+                                        cellText = "DNF";
+                                    }
+                                    else if (fin.Position < 0)
+                                    {
+                                        // Explizit als DNS gesetzter Eintrag (Position -1).
+                                        cellStyle = "background:transparent;";
+                                        cellColor = "var(--ink-4)";
+                                        cellText = "DNS";
+                                    }
+                                    else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "#ffd24a"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "#d4d8e0"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "#d68a4a"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(88,183,201,.08);border:1px solid rgba(88,183,201,.22);"; cellColor = "#aef3ff"; cellText = fin.Position.ToString(); }
+                                    else { cellStyle = "background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; cellText = fin.Position.ToString(); }
                                     var cellHover = !string.IsNullOrWhiteSpace(raceMainForDriver)
                                         ? $"{r.Track} · {r.Date:dd.MM.yy} · Ersatz für {raceMainForDriver}"
                                         : $"{r.Track} · {r.Date:dd.MM.yy}";
