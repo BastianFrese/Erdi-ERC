@@ -170,15 +170,18 @@ public class SetupAccessServiceTests
         using var ctx = new SqliteTestContext();
         ctx.Db.SetupAccessRoleMappings.Add(new SetupAccessRoleMapping { Tier = 3, RoleId = "role3", Label = "T1" });
         await ctx.Db.SaveChangesAsync();
+        // Datum relativ zu "jetzt": ein festes Literal veraltet, sobald die Tenure-Frist verstrichen
+        // ist — der Test kippte dadurch von selbst (Literal 2026-09-10 + 7 Tage < heute = 2026-09-17).
+        var joinedAt = DateTimeOffset.UtcNow.AddDays(-2).ToString("o");
         var http = new FakeHttpClientFactory(request =>
         {
             if (request.RequestUri!.AbsolutePath.EndsWith("/guilds"))
             {
                 return FakeHttpClientFactory.Json($$"""[{"id":"{{GuildId}}","name":"Community"}]""");
             }
-            // Gerade eben beigetreten → Tenure (7 Tage) nicht erfüllt.
+            // Vor 2 Tagen beigetreten → Tenure (7 Tage) noch nicht erfüllt.
             return FakeHttpClientFactory.Json(
-                """{"roles":["role3"],"joined_at":"2026-09-10T00:00:00Z"}""");
+                $$"""{"roles":["role3"],"joined_at":"{{joinedAt}}"}""");
         });
         var svc = Build(ctx, http, minTenureDays: 7);
 
@@ -188,5 +191,33 @@ public class SetupAccessServiceTests
         Assert.Equal(0, result.Tier);
         Assert.True(result.IsPendingTenure);
         Assert.Null(result.RoleLabel);
+    }
+
+    [Fact]
+    public async Task ResolveSetupAccessAsync_tenureMet_keepsTier()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.SetupAccessRoleMappings.Add(new SetupAccessRoleMapping { Tier = 3, RoleId = "role3", Label = "T1" });
+        await ctx.Db.SaveChangesAsync();
+        // Gegenstück zu tenureNotMet: derselbe Pfad, nur mit erfüllter Frist — sonst fiele ein
+        // "Tier ist immer 0"-Rückfall nicht auf.
+        var joinedAt = DateTimeOffset.UtcNow.AddDays(-30).ToString("o");
+        var http = new FakeHttpClientFactory(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.EndsWith("/guilds"))
+            {
+                return FakeHttpClientFactory.Json($$"""[{"id":"{{GuildId}}","name":"Community"}]""");
+            }
+            return FakeHttpClientFactory.Json(
+                $$"""{"roles":["role3"],"joined_at":"{{joinedAt}}"}""");
+        });
+        var svc = Build(ctx, http, minTenureDays: 7);
+
+        var result = await svc.ResolveSetupAccessAsync("token");
+
+        Assert.True(result.Success);
+        Assert.Equal(3, result.Tier);
+        Assert.False(result.IsPendingTenure);
+        Assert.Equal("T1", result.RoleLabel);
     }
 }
