@@ -33,14 +33,24 @@ namespace Erdi_ERC.Services
         /// </summary>
         public async Task<DriverDetailViewModel?> GetHistoryAsync(IReadOnlyCollection<string> aliases, CancellationToken ct = default)
         {
-            var keyPart = string.Join("|", aliases
+            // Die normalisierte Liste ist zugleich Basis des Cache-Keys UND das Match-Set.
+            // Sie darf NICHT aus dem zusammengejointen Key zurückgeparst werden: Fahrernamen
+            // enthalten selbst das Trennzeichen ("ERC | Max"), ein Split zerlegt sie in
+            // Fragmente ("erc ", " max"), die nie auf eine Standings-/Finish-Zeile passen —
+            // das Profil bliebe leer, obwohl der Fahrer Ergebnisse hat.
+            var normalized = aliases
                 .Select(a => a.Trim())
                 .Where(a => a.Length > 0)
                 .Select(a => a.ToLowerInvariant())
                 .Distinct()
-                .OrderBy(a => a, StringComparer.Ordinal));
+                .OrderBy(a => a, StringComparer.Ordinal)
+                .ToList();
 
-            if (keyPart.Length == 0) return null;
+            if (normalized.Count == 0) return null;
+
+            // Längenpräfix je Eintrag: hält den Hash eindeutig, auch wenn ein Alias das
+            // Trennzeichen enthält ("ERC | Max" vs. "ERC" + "Max" sind so unterscheidbar).
+            var keyPart = string.Join("|", normalized.Select(a => a.Length + ":" + a));
 
             var cacheKey = CacheKeyPrefix + Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(keyPart))).ToLowerInvariant();
@@ -50,8 +60,7 @@ namespace Erdi_ERC.Services
                 return cached;
             }
 
-            var history = await BuildAsync(new HashSet<string>(
-                keyPart.Split('|'), StringComparer.OrdinalIgnoreCase), ct);
+            var history = await BuildAsync(new HashSet<string>(normalized, StringComparer.OrdinalIgnoreCase), ct);
 
             _cache.Set(cacheKey, history, new MemoryCacheEntryOptions
             {
