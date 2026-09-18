@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.StaticFiles;
@@ -92,6 +93,8 @@ builder.Services.AddScoped<ProfileHistoryService>();
 // Telemetrie-Ingest: per-Fahrer-API-Keys + Review-Inbox (Pending-Rennergebnisse).
 builder.Services.AddScoped<ITelemetryKeyService, TelemetryKeyService>();
 builder.Services.AddScoped<ITelemetryIngestService, TelemetryIngestService>();
+// Standings-Export: Fahrer- + Teamwertung als JSON für die ERCTelemetry-Overlays.
+builder.Services.AddScoped<IStandingsExportService, StandingsExportService>();
 builder.Services.AddScoped<IPendingRacePromotionService, PendingRacePromotionService>();
 // Singleton: teilt Cache + Dateizustand über alle Requests (Layout liest das Flag bei jedem Render).
 builder.Services.AddSingleton<ISiteSettingsService>(sp =>
@@ -1058,6 +1061,17 @@ app.MapGet("/api/telemetry/me", async (
         displayName = profile?.DisplayName,
     });
 }).AllowAnonymous();
+
+// GET /api/telemetry/standings — Fahrer- + Teamwertung aller aktiven Ligen als JSON.
+// Datenquelle der ERCTelemetry-Overlays (championship.html, grid.html): ersetzt das
+// HTML-Scrapen der ~85 Profil-/Team-Seiten durch einen einzigen Request. Öffentlich wie
+// die Standings-Seiten selbst; OutputCache 2 min, damit Overlays/Scraper nicht in die DB treten.
+app.MapGet("/api/telemetry/standings", async (
+    IStandingsExportService export,
+    CancellationToken ct) =>
+{
+    return Results.Ok(await export.HoleAsync(ct));
+}).AllowAnonymous().CacheOutput("public-2min");
 
 // ── Setups-API (App ↔ Website) ─────────────────────────────────────────────────
 // Track-Setups für die Telemetrie-App. Auth: Discord-Access-Token (Bearer) aus dem
