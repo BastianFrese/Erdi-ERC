@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -65,13 +66,7 @@ namespace Erdi_ERC.Controllers
                     if (!tagToProfile.TryGetValue(standing.Driver.Trim(), out var profile)) continue;
                     if (!seen.Add(profile.DiscordId)) continue;
 
-                    var aliases = profile.GamerTags
-                        .Select(t => t.GamerTag.Trim())
-                        .Where(s => s.Length > 0)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    if (!string.IsNullOrWhiteSpace(profile.DisplayName))
-                        aliases.Add(profile.DisplayName.Trim());
-                    aliases.Add(profile.DiscordName.Trim());
+                    var aliases = DriverAliasHelper.Build(profile);
 
                     int wins = 0, podiums = 0, fastest = 0, totalPoints = 0;
                     int? driverNumber = null;

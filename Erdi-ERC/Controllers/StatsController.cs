@@ -244,11 +244,7 @@ namespace Erdi_ERC.Controllers
                     if (!tagToProfile.TryGetValue(standing.Driver.Trim(), out var profile)) continue;
                     if (!seenInLeague.Add(profile.DiscordId)) continue;
 
-                    var aliases = profile.GamerTags
-                        .Select(t => t.GamerTag.Trim()).Where(s => s.Length > 0)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    if (!string.IsNullOrWhiteSpace(profile.DisplayName)) aliases.Add(profile.DisplayName.Trim());
-                    aliases.Add(profile.DiscordName.Trim());
+                    var aliases = DriverAliasHelper.Build(profile);
 
                     int wins = 0, podiums = 0, fastest = 0;
                     var races = new List<Models.DriverRaceEntry>();
@@ -438,10 +434,10 @@ namespace Erdi_ERC.Controllers
 
             var entries = profiles.Select(profile =>
             {
-                var names = profile.GamerTags.Select(t => t.GamerTag.Trim())
-                    .Append(profile.DisplayName?.Trim() ?? string.Empty)
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                // GamerTags + DisplayName + DiscordName — dieselbe Namensliste wie auf /fahrerkarten.
+                // Ohne den DiscordName zählten Finishes, die unter dem Discord-Namen eingetragen
+                // wurden, hier nicht mit (Prod-Befund 2026-09-17, gleiche Klasse wie das leere Profil).
+                var names = DriverAliasHelper.Build(profile);
 
                 var profileRaces = races.SelectMany(r => r.Finishes)
                     .Where(f => names.Contains(f.Driver.Trim()))
