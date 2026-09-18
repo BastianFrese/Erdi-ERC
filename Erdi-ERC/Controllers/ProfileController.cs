@@ -50,13 +50,12 @@ namespace Erdi_ERC.Controllers
             var profile = await _profiles.GetByDiscordIdAsync(discordId);
             if (profile is null) return NotFound();
 
-            // Aliase = alle Namen, unter denen der Fahrer in Standings/Finishes stehen kann.
-            // DiscordName gehört dazu (wie in StatsController.BuildDriverCardsAsync) — sonst
-            // hat ein Fahrer, dessen Ergebnisse unter dem Discord-Namen eingetragen wurden,
-            // auf der Fahrerkarte Stats, im Profil aber keine.
-            var aliases = profile.GamerTags.Select(t => t.GamerTag.Trim()).Where(s => s.Length > 0).ToList();
-            if (!string.IsNullOrWhiteSpace(profile.DisplayName)) aliases.Add(profile.DisplayName.Trim());
-            if (!string.IsNullOrWhiteSpace(profile.DiscordName)) aliases.Add(profile.DiscordName.Trim());
+            // Aliase = alle Namen, unter denen der Fahrer in Standings/Finishes stehen kann
+            // (GamerTags, DisplayName, DiscordName) — zentral im DriverAliasHelper, damit die
+            // Liste nicht pro Aufrufer auseinanderläuft. Ohne den DiscordName hat ein Fahrer,
+            // dessen Ergebnisse unter dem Discord-Namen eingetragen wurden, auf der Fahrerkarte
+            // Stats, im Profil aber keine.
+            var aliases = DriverAliasHelper.Build(profile);
 
             // Teure All-Ligen-Aggregation kommt gecacht aus dem ProfileHistoryService;
             // die View selbst bleibt live (user-spezifisches HTML).
