@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -38,6 +39,20 @@ namespace Erdi_ERC.Controllers
             _stats = stats;
             _staticCache = staticCache;
         }
+
+        /// <summary>
+        /// Maximale Länge der Begründung eines Stewarding-Dokuments. Muss zu
+        /// <c>LeaguePenalties.Reason</c> (varchar(1024)) und dem maxlength der Formulare passen.
+        /// </summary>
+        private const int MaxPenaltyReasonLength = 1024;
+
+        /// <summary>
+        /// Maximale Länge des Video-Links eines Events. Muss zu
+        /// <c>RealLifeEvent.YouTubeUrl</c> (varchar(512)) und dem maxlength der Formulare
+        /// passen: ohne diese Prüfung läuft ein zu langer POST in einen MySQL-Fehler (500)
+        /// statt in die freundliche Meldung — das maxlength im Formular gilt nur im Browser.
+        /// </summary>
+        private const int MaxVideoUrlLength = 512;
 
         /// <summary>
         /// Punkteabzug-Strafen fließen direkt in die abgeleitete Tabelle ein — nach jeder
@@ -117,19 +132,21 @@ namespace Erdi_ERC.Controllers
         [Authorize(Policy = "Admin.Community.Hub")]
         public async Task<IActionResult> SaveHighlightClip(string title, string url, string? category, string? raceLabel)
         {
-            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(url))
+            // Nur http(s): der Link steht öffentlich als href (siehe VideoEmbedHelper.SafeLinkOrNull).
+            var safeUrl = VideoEmbedHelper.SafeLinkOrNull(url);
+            if (string.IsNullOrWhiteSpace(title) || safeUrl is null)
             {
-                TempData["AdminMessage"] = "Titel und URL sind für Highlights erforderlich.";
+                TempData["AdminMessage"] = "Titel und ein vollständiger Link mit https:// sind für Highlights erforderlich.";
                 return RedirectToAction(nameof(Hub));
             }
 
             var submittedById = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var submittedByName = User.Identity?.Name ?? "Admin";
-            await _contentService.SaveHighlightClipAsync(title, url, category, raceLabel, submittedById, submittedByName);
+            await _contentService.SaveHighlightClipAsync(title, safeUrl, category, raceLabel, submittedById, submittedByName);
             await _webhookAuto.FireAsync(WebhookEvents.HighlightApproved, new()
             {
                 ["Title"]     = title,
-                ["Url"]       = url,
+                ["Url"]       = safeUrl,
                 ["Category"]  = category ?? "Highlight",
                 ["RaceLabel"] = raceLabel ?? "",
                 ["Author"]    = submittedByName,
@@ -149,9 +166,18 @@ namespace Erdi_ERC.Controllers
             return View("~/Views/Admin/Events.cshtml", events);
         }
 
+        /// <summary>
+        /// Legt ein Real-Life-Event an oder aktualisiert es. Der Video-Link ist optional; ist
+        /// er gesetzt, muss er ein Link eines bekannten Anbieters (YouTube oder Twitch) sein.
+        /// </summary>
+        /// <param name="videoUrl">
+        /// Video-Link des Events. Die Spalte heißt historisch <c>YouTubeUrl</c> und nimmt seit
+        /// 2026-09-25 auch Twitch-Clips und -VODs auf — erkannt über
+        /// <see cref="VideoEmbedHelper.DetectPlatform"/>.
+        /// </param>
         [HttpPost, ValidateAntiForgeryToken]
         [Authorize(Policy = "Admin.Community.Events")]
-        public async Task<IActionResult> SaveRealLifeEvent(int? id, string title, DateTime date, string? location, string? description, string? youTubeUrl, bool isUpcoming, IFormFile? image, bool removeImage = false)
+        public async Task<IActionResult> SaveRealLifeEvent(int? id, string title, DateTime date, string? location, string? description, string? videoUrl, bool isUpcoming, IFormFile? image, bool removeImage = false)
         {
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -159,26 +185,21 @@ namespace Erdi_ERC.Controllers
                 return RedirectToAction(nameof(Events));
             }
 
-            var normalizedYouTubeUrl = string.IsNullOrWhiteSpace(youTubeUrl) ? null : youTubeUrl.Trim();
-            Uri? parsedUrl = null;
-            if (!string.IsNullOrWhiteSpace(normalizedYouTubeUrl)
-                && !Uri.TryCreate(normalizedYouTubeUrl, UriKind.Absolute, out parsedUrl))
+            var normalizedVideoUrl = string.IsNullOrWhiteSpace(videoUrl) ? null : videoUrl.Trim();
+            if (normalizedVideoUrl is { Length: > MaxVideoUrlLength })
             {
-                TempData["AdminMessage"] = "Der YouTube-Link ist ungültig.";
+                TempData["AdminMessage"] = $"Der Video-Link ist zu lang (max. {MaxVideoUrlLength} Zeichen).";
                 return RedirectToAction(nameof(Events));
             }
 
-            if (normalizedYouTubeUrl is not null
-                && parsedUrl is not null
-                && !parsedUrl.Host.Contains("youtube.com", StringComparison.OrdinalIgnoreCase)
-                && !parsedUrl.Host.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
+            if (normalizedVideoUrl is not null && VideoEmbedHelper.DetectPlatform(normalizedVideoUrl) is null)
             {
-                TempData["AdminMessage"] = "Bitte nur YouTube-Links eintragen.";
+                TempData["AdminMessage"] = "Bitte nur YouTube- oder Twitch-Links eintragen — vollständige URL (http:// oder https://).";
                 return RedirectToAction(nameof(Events));
             }
 
             RealLifeEvent? entity = id.HasValue && id.Value > 0
-                ? await _db.RealLifeEvents.FindAsync(id.Value)
+                ? await _db.RealLifeEvents.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
                 : null;
             var isNew = entity is null;
 
@@ -192,7 +213,7 @@ namespace Erdi_ERC.Controllers
             entity.Date = date;
             entity.Location = location?.Trim() ?? "";
             entity.Description = description?.Trim() ?? "";
-            entity.YouTubeUrl = normalizedYouTubeUrl;
+            entity.YouTubeUrl = normalizedVideoUrl;
             entity.IsUpcoming = isUpcoming;
 
             if (removeImage && !string.IsNullOrEmpty(entity.ImageFileName))
@@ -215,7 +236,7 @@ namespace Erdi_ERC.Controllers
             await _db.SaveChangesAsync();
             if (isNew)
             {
-                await _audit.LogAsync("SaveRealLifeEvent", "RealLifeEvent", entity.Id.ToString(), $"Title={entity.Title}");
+                await _audit.LogAndSaveAsync("SaveRealLifeEvent", "RealLifeEvent", entity.Id.ToString(), $"Title={entity.Title}");
             }
 
             TempData["AdminMessage"] = "Event gespeichert.";
@@ -251,7 +272,7 @@ namespace Erdi_ERC.Controllers
 
             _db.RealLifeEvents.Remove(entity);
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("DeleteRealLifeEvent", "RealLifeEvent", id.ToString(), $"Title={entity.Title}");
+            await _audit.LogAndSaveAsync("DeleteRealLifeEvent", "RealLifeEvent", id.ToString(), $"Title={entity.Title}");
             TempData["AdminMessage"] = "Event gelöscht.";
             return RedirectToAction(nameof(Events));
         }
@@ -299,7 +320,7 @@ namespace Erdi_ERC.Controllers
             if (added > 0)
             {
                 await _db.SaveChangesAsync();
-                await _audit.LogAsync("AddEventImages", "RealLifeEvent", ev.Id.ToString(), $"Title={ev.Title}, Added={added}");
+                await _audit.LogAndSaveAsync("AddEventImages", "RealLifeEvent", ev.Id.ToString(), $"Title={ev.Title}, Added={added}");
                 TempData["AdminMessage"] = $"{added} Bild(er) hochgeladen.";
             }
             else
@@ -324,7 +345,7 @@ namespace Erdi_ERC.Controllers
             _mediaService.TryDeleteEventImage(image.FileName);
             _db.RealLifeEventImages.Remove(image);
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("DeleteEventImage", "RealLifeEventImage", imageId.ToString(), $"EventId={eventId}, File={image.FileName}");
+            await _audit.LogAndSaveAsync("DeleteEventImage", "RealLifeEventImage", imageId.ToString(), $"EventId={eventId}, File={image.FileName}");
             TempData["AdminMessage"] = "Bild gelöscht.";
             return RedirectToAction(nameof(Events));
         }
@@ -369,8 +390,12 @@ namespace Erdi_ERC.Controllers
                 return RedirectToAction(nameof(Giveaways));
             }
 
+            // AsTracking() ist hier zwingend: der DbContext läuft global mit
+            // NoTrackingWithIdentityResolution (Program.cs), FindAsync liefert daher eine
+            // detached Instanz — ohne Tracking würde SaveChangesAsync() beim Bearbeiten
+            // eines Giveaways stillschweigend nichts schreiben.
             Giveaway? entity = id.HasValue && id.Value > 0
-                ? await _db.Giveaways.FindAsync(id.Value)
+                ? await _db.Giveaways.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
                 : null;
             var isNew = entity is null;
 
@@ -383,14 +408,17 @@ namespace Erdi_ERC.Controllers
             entity.Title = title.Trim();
             entity.Description = description?.Trim() ?? "";
             entity.Prize = prize?.Trim() ?? "";
-            entity.StartAt = startAt;
-            entity.EndAt = endAt;
+            // datetime-local liefert lokale Wanduhrzeit — genau so bleibt sie stehen.
+            // (Keine UTC-Umrechnung: die Spalte wird projektweit als Wanduhrzeit gelesen,
+            // siehe Docs/Features/Zeitzonen-Konvention.md.)
+            entity.StartAt = DateTime.SpecifyKind(startAt, DateTimeKind.Unspecified);
+            entity.EndAt = DateTime.SpecifyKind(endAt, DateTimeKind.Unspecified);
             entity.Link = normalizedLink;
 
             await _db.SaveChangesAsync();
             if (isNew)
             {
-                await _audit.LogAsync("SaveGiveaway", "Giveaway", entity.Id.ToString(), $"Title={entity.Title}, End={entity.EndAt:O}");
+                await _audit.LogAndSaveAsync("SaveGiveaway", "Giveaway", entity.Id.ToString(), $"Title={entity.Title}, End={entity.EndAt:O}");
             }
 
             TempData["AdminMessage"] = "Giveaway gespeichert.";
@@ -410,7 +438,7 @@ namespace Erdi_ERC.Controllers
 
             _db.Giveaways.Remove(entity);
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("DeleteGiveaway", "Giveaway", id.ToString(), $"Title={entity.Title}");
+            await _audit.LogAndSaveAsync("DeleteGiveaway", "Giveaway", id.ToString(), $"Title={entity.Title}");
             TempData["AdminMessage"] = "Giveaway gelöscht.";
             return RedirectToAction(nameof(Giveaways));
         }
@@ -465,8 +493,12 @@ namespace Erdi_ERC.Controllers
                 return RedirectToAction(nameof(StreamSchedules));
             }
 
+            // AsTracking() ist hier zwingend: der DbContext läuft global mit
+            // NoTrackingWithIdentityResolution (Program.cs), FindAsync liefert daher eine
+            // detached Instanz — ohne Tracking würde SaveChangesAsync() beim Bearbeiten
+            // eines Stream-Termins stillschweigend nichts schreiben.
             StreamSchedule? entity = id.HasValue && id.Value > 0
-                ? await _db.StreamSchedules.FindAsync(id.Value)
+                ? await _db.StreamSchedules.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
                 : null;
 
             if (entity is null)
@@ -481,15 +513,20 @@ namespace Erdi_ERC.Controllers
             entity.IsRecurring = isRecurring;
             entity.DayOfWeek = isRecurring ? dayOfWeek : null;
             entity.TimeOfDay = isRecurring ? timeOfDay : null;
+            // Beide Zweige erzeugen Wanduhrzeit in Server-Lokalzeit (Kind=Unspecified).
+            // Vorher stand hier SpecifyKind(..., Utc) bzw. eine Rechnung mit DateTime.UtcNow:
+            // das Formular liefert aber lokale Zeit, dadurch lag der Termin im Sommer 2 h
+            // daneben und der wiederkehrende Stream rutschte auf den falschen Wochentag
+            // (siehe Docs/Features/Zeitzonen-Konvention.md).
             entity.StartAt = isRecurring
-                ? ComputeNextOccurrenceUtc(dayOfWeek!.Value, timeOfDay!.Value, DateTime.UtcNow)
-                : DateTime.SpecifyKind(startAt!.Value, DateTimeKind.Utc);
+                ? StreamScheduleMath.ComputeNextOccurrence(dayOfWeek!.Value, timeOfDay!.Value, DateTime.Now)
+                : DateTime.SpecifyKind(startAt!.Value, DateTimeKind.Unspecified);
             entity.DurationMinutes = Math.Max(1, durationMinutes);
             entity.Title = title.Trim();
             entity.Url = normalizedUrl;
 
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("SaveStreamSchedule", "StreamSchedule", entity.Id.ToString(), isRecurring
+            await _audit.LogAndSaveAsync("SaveStreamSchedule", "StreamSchedule", entity.Id.ToString(), isRecurring
                 ? $"Recurring={entity.DayOfWeek}@{entity.TimeOfDay}, Title={entity.Title}"
                 : $"StartAt={entity.StartAt:yyyy-MM-dd HH:mm}, Title={entity.Title}");
             TempData["AdminMessage"] = isRecurring ? "Wiederkehrender Stream gespeichert." : "Spontaner Stream gespeichert.";
@@ -497,7 +534,7 @@ namespace Erdi_ERC.Controllers
             {
                 ["Title"]   = entity.Title,
                 ["Url"]     = entity.Url ?? "",
-                ["StartAt"] = entity.StartAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"),
+                ["StartAt"] = entity.StartAt.ToString("dd.MM.yyyy HH:mm"),
             });
             return RedirectToAction(nameof(StreamSchedules));
         }
@@ -511,21 +548,9 @@ namespace Erdi_ERC.Controllers
 
             _db.StreamSchedules.Remove(entity);
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("DeleteStreamSchedule", "StreamSchedule", id.ToString(), $"Title={entity.Title}");
+            await _audit.LogAndSaveAsync("DeleteStreamSchedule", "StreamSchedule", id.ToString(), $"Title={entity.Title}");
             TempData["AdminMessage"] = "Stream-Termin gelöscht.";
             return RedirectToAction(nameof(StreamSchedules));
-        }
-
-        private static DateTime ComputeNextOccurrenceUtc(int dayOfWeek, TimeSpan timeOfDay, DateTime fromUtc)
-        {
-            var daysUntil = ((dayOfWeek - (int)fromUtc.DayOfWeek) + 7) % 7;
-            var candidate = DateTime.SpecifyKind(fromUtc.Date.AddDays(daysUntil).Add(timeOfDay), DateTimeKind.Utc);
-            if (candidate < fromUtc)
-            {
-                candidate = candidate.AddDays(7);
-            }
-
-            return candidate;
         }
 
         // ── Stewarding ────────────────────────────────────────────────────────────
@@ -651,6 +676,14 @@ namespace Erdi_ERC.Controllers
                 return RedirectToAction(nameof(Stewarding));
             }
 
+            // Spiegelt LeaguePenalties.Reason = varchar(1024): ohne diesen Guard wirft ein
+            // direkter POST mit mehr Zeichen einen MySQL-Truncation-Fehler (500) statt einer Meldung.
+            if (reason.Trim().Length > MaxPenaltyReasonLength)
+            {
+                TempData["AdminMessage"] = $"Die Begründung ist zu lang (max. {MaxPenaltyReasonLength} Zeichen).";
+                return RedirectToAction(nameof(Stewarding), new { leagueId = leagueId });
+            }
+
             // Server-side Guard: der eingetragene Fahrer MUSS in den DriverStandings
             // der gewaehlten Liga existieren. Verhindert, dass ein User per direktem
             // POST oder Browser-Manipulation einen Fahrer aus einer fremden Liga
@@ -673,8 +706,13 @@ namespace Erdi_ERC.Controllers
                 }
             }
 
+            // AsTracking() ist hier zwingend: der DbContext läuft global mit
+            // NoTrackingWithIdentityResolution (Program.cs), und FindAsync liefert eine
+            // detached Instanz, sobald die Entität nicht schon im ChangeTracker liegt —
+            // genau der Normalfall bei einem frischen Request. Ohne Tracking würde
+            // SaveChangesAsync() beim Update stillschweigend nichts schreiben.
             LeaguePenalty? entity = id.HasValue && id.Value > 0
-                ? await _db.LeaguePenalties.FindAsync(id.Value)
+                ? await _db.LeaguePenalties.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
                 : null;
 
             var isNew = entity is null;
@@ -719,7 +757,7 @@ namespace Erdi_ERC.Controllers
             }
 
             await _db.SaveChangesAsync();
-            await _audit.LogAsync(
+            await _audit.LogAndSaveAsync(
                 isNew ? "CreatePenalty" : "UpdatePenalty",
                 "LeaguePenalty",
                 entity.Id.ToString(),
@@ -741,7 +779,9 @@ namespace Erdi_ERC.Controllers
                     ["Date"]        = entity.Date.ToString("dd.MM.yyyy"),
                     ["Reason"]      = entity.Reason,
                 });
-            return RedirectToAction(nameof(Stewarding));
+            // leagueId mitgeben, damit der Liga-Filter im Formular nach dem Speichern
+            // nicht zurückspringt (wie auf den Fehlerpfaden oben).
+            return RedirectToAction(nameof(Stewarding), new { leagueId = entity.LeagueId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -758,7 +798,7 @@ namespace Erdi_ERC.Controllers
             var penaltyLeagueId = entity.LeagueId;
             _db.LeaguePenalties.Remove(entity);
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("DeletePenalty", "LeaguePenalty", id.ToString(),
+            await _audit.LogAndSaveAsync("DeletePenalty", "LeaguePenalty", id.ToString(),
                 $"League={entity.LeagueId}, Driver={entity.Driver}, Type={entity.PenaltyType}");
 
             // Entfernter Punkteabzug → Liga neu berechnen.
@@ -786,7 +826,7 @@ namespace Erdi_ERC.Controllers
             await _db.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE LeaguePenalties SET IsPublic = {newValue} WHERE Id = {id}");
 
-            await _audit.LogAsync("TogglePenaltyPublic", "LeaguePenalty", id.ToString(),
+            await _audit.LogAndSaveAsync("TogglePenaltyPublic", "LeaguePenalty", id.ToString(),
                 $"Before={before}, After={newValue}");
 
             TempData["AdminMessage"] = newValue ? "Strafe ist jetzt öffentlich." : "Strafe ist jetzt intern.";

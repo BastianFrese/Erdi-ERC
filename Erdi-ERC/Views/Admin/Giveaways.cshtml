@@ -3,7 +3,10 @@
     ViewData["Title"] = "Giveaways";
     ViewData["Kicker"] = "Community";
     ViewData["HeroTitle"] = "Giveaways";
-    var now = DateTime.UtcNow;
+    // StartAt/EndAt sind lokale Wanduhrzeit (aus dem Formular) → Vergleich gegen DateTime.Now.
+    // Mit UtcNow galten Giveaways im Sommer erst 2 h nach ihrem Start als "Läuft" (siehe
+    // Docs/Features/Zeitzonen-Konvention.md).
+    var now = DateTime.Now;
     var runningCount = Model.Count(x => x.StartAt <= now && x.EndAt >= now);
     var upcomingCount = Model.Count(x => x.StartAt > now);
     var pastCount = Model.Count - runningCount - upcomingCount;
@@ -132,7 +135,8 @@
                                     }
                                 </div>
                                 <div class="adm-item-row__meta">
-                                    <span><i class="bi bi-clock-history me-1"></i>@g.StartAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") &ndash; @g.EndAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    @* StartAt/EndAt sind Wanduhrzeit → roh anzeigen. ToLocalTime() verschob den Zeitraum um +2 h. *@
+                                    <span><i class="bi bi-clock-history me-1"></i>@g.StartAt.ToString("dd.MM.yyyy HH:mm") &ndash; @g.EndAt.ToString("dd.MM.yyyy HH:mm")</span>
                                     @if (!string.IsNullOrWhiteSpace(g.Prize))
                                     {
                                         <span><i class="bi bi-gift me-1"></i>@g.Prize</span>
@@ -182,11 +186,14 @@
                                     </div>
                                     <div class="col-md-2">
                                         <label class="adm-form-label">Start</label>
-                                        <input class="form-control form-control-sm" name="startAt" type="datetime-local" required value="@g.StartAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+                                        @* StartAt/EndAt sind lokale Wanduhrzeit aus dem Formular →
+                                           unverändert zurückgeben. ToLocalTime() verschob den Zeitraum
+                                           bei jedem Speichern um weitere +2 h. *@
+                                        <input class="form-control form-control-sm" name="startAt" type="datetime-local" required value="@g.StartAt.ToString("yyyy-MM-ddTHH:mm")" />
                                     </div>
                                     <div class="col-md-2">
                                         <label class="adm-form-label">Ende (Deadline)</label>
-                                        <input class="form-control form-control-sm" name="endAt" type="datetime-local" required value="@g.EndAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+                                        <input class="form-control form-control-sm" name="endAt" type="datetime-local" required value="@g.EndAt.ToString("yyyy-MM-ddTHH:mm")" />
                                     </div>
                                     <div class="col-md-6">
                                         <label class="adm-form-label">Teilnahme-Link</label>

@@ -222,9 +222,10 @@
                         </div>
                         <div class="col-12">
                             <label class="adm-check-label">
-                                @* Hidden field must come before the checkbox so checked box overrides it. *@
-                                <input type="hidden" name="isBetweenTwoDrivers" value="false" />
+                                @* Checkbox vor dem Hidden: der ModelBinder nimmt bei gleichem Namen den
+                                   ERSTEN Wert. Hidden-first wuerde den angehakten Wert immer ueberschreiben. *@
                                 <input class="adm-checkbox" type="checkbox" name="isBetweenTwoDrivers" value="true" id="f_between" />
+                                <input type="hidden" name="isBetweenTwoDrivers" value="false" />
                                 <span class="adm-check-text">
                                     <i class="bi bi-arrows-angle-expand me-1" style="color:#5b8cff;"></i>Vorfall zwischen 2 Fahrern
                                 </span>
@@ -236,14 +237,14 @@
                         </div>
                         <div class="col-12">
                             <label class="adm-form-label">Infringement + Reason <small class="text-muted">(Regelverstoß und Urteilsbegründung)</small> *</label>
-                            <textarea class="form-control form-control-sm" name="reason" id="f_reason" rows="5" placeholder="The Stewards heard from the driver of Car 16..." maxlength="4000" required></textarea>
+                            <textarea class="form-control form-control-sm" name="reason" id="f_reason" rows="5" placeholder="The Stewards heard from the driver of Car 16..." maxlength="1024" required></textarea>
                             <div style="font-size:.72rem;color:var(--ink-3);margin-top:.2rem;">Zeilenumbrüche werden als separate Absätze dargestellt.</div>
                         </div>
                         <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
                             <label class="adm-check-label">
-                                @* Hidden field ensures unchecked checkbox posts false, not nothing. *@
-                                <input type="hidden" name="isPublic" value="false" />
+                                @* Checkbox vor dem Hidden (siehe oben) — sonst ist isPublic immer false. *@
                                 <input class="adm-checkbox" type="checkbox" name="isPublic" value="true" id="f_public" checked />
+                                <input type="hidden" name="isPublic" value="false" />
                                 <span class="adm-check-text">
                                     <i class="bi bi-eye-fill me-1" style="color:#4caf6d;"></i>Sofort oeffentlich veroeffentlichen
                                 </span>
@@ -557,8 +558,8 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="adm-check-label">
-                                        <input type="hidden" name="isBetweenTwoDrivers" value="false" />
                                         <input class="adm-checkbox" type="checkbox" name="isBetweenTwoDrivers" value="true" @(p.IsBetweenTwoDrivers ? "checked" : "") />
+                                        <input type="hidden" name="isBetweenTwoDrivers" value="false" />
                                         <span class="adm-check-text">
                                             <i class="bi bi-arrows-angle-expand me-1" style="color:#5b8cff;"></i>Vorfall zwischen 2 Fahrern
                                         </span>
@@ -570,14 +571,15 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="adm-form-label">Infringement + Reason *</label>
-                                    <textarea class="form-control form-control-sm" name="reason" rows="4" required maxlength="4000">@p.Reason</textarea>
+                                    @* maxlength spiegelt die DB-Spalte (LeaguePenalties.Reason = varchar(1024)). *@
+                                    <textarea class="form-control form-control-sm" name="reason" rows="4" required maxlength="1024">@p.Reason</textarea>
                                 </div>
                                 <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
                                     <label class="adm-check-label">
-                                        @* Hidden field ensures unchecked checkbox posts false. *@
-                                        <input type="hidden" name="isPublic" value="false" />
+                                        @* Checkbox vor dem Hidden — sonst ist isPublic immer false. *@
                                         <input class="adm-checkbox" type="checkbox" name="isPublic" value="true"
                                                id="editPub-@p.Id" @(p.IsPublic ? "checked" : "") />
+                                        <input type="hidden" name="isPublic" value="false" />
                                         <span class="adm-check-text">
                                             <i class="bi bi-eye-fill me-1" style="color:#4caf6d;"></i>Oeffentlich
                                         </span>
