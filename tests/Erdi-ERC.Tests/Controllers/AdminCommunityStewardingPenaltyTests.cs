@@ -221,6 +221,72 @@ public class AdminCommunityStewardingPenaltyTests
         Assert.Equal(5, doc.DriverPointsTotal);
     }
 
+    /// <summary>
+    /// Regressionstest fuer den Silent-Write-Bug: existiert das Dokument nur in der DB
+    /// (frischer Context pro HTTP-Request — in Prod der Normalfall), liefert ein
+    /// FindAsync unter NoTrackingWithIdentityResolution eine detached Entität und
+    /// SaveChanges schreibt nichts. Der Controller muss den Update-Pfad daher tracken.
+    /// </summary>
+    [Fact]
+    public async Task SavePenalty_edit_persistsChangesWhenEntityWasNeverTrackedByRequestContext()
+    {
+        using var ctx = new SqliteTestContext();
+        SeedLeagueAndDriver(ctx, "l1", "Alpha");
+
+        // In einem FREMDEN Context anlegen, damit ctx.Db das Dokument nie getrackt hat.
+        var seedCtx = ctx.NewContext();
+        seedCtx.LeaguePenalties.Add(new LeaguePenalty
+        {
+            LeagueId = "l1",
+            Driver = "Alpha",
+            PenaltyType = "Zeitstrafe + Strafpunkte",
+            Points = 3,
+            Reason = "original",
+            Date = new DateTime(2026, 8, 1),
+            IsPublic = false,
+        });
+        await seedCtx.SaveChangesAsync();
+        var penaltyId = ctx.NewContext().LeaguePenalties.Single().Id;
+
+        var ctrl = BuildController(ctx);
+        var result = await ctrl.SavePenalty(
+            id: penaltyId, leagueId: "l1", date: new DateTime(2026, 8, 2),
+            driver: "Alpha", penaltyType: "Strafpunkte", points: 7,
+            raceTrack: "Imola", secondDriver: null, isBetweenTwoDrivers: true,
+            incident: "Kollision", reason: "geaenderte Begruendung", isPublic: true);
+
+        Assert.IsType<RedirectToActionResult>(result);
+
+        var edited = ctx.NewContext().LeaguePenalties.Single(p => p.Id == penaltyId);
+        Assert.Equal(7, edited.Points);
+        Assert.Equal("geaenderte Begruendung", edited.Reason);
+        Assert.Equal("Strafpunkte", edited.PenaltyType);
+        Assert.Equal("Imola", edited.RaceTrack);
+        Assert.True(edited.IsPublic);
+        Assert.True(edited.IsBetweenTwoDrivers);
+    }
+
+    /// <summary>
+    /// Die Begruendung liegt in einer varchar(1024)-Spalte. Ohne Guard wuerde ein laengerer
+    /// Wert einen MySQL-Truncation-Fehler werfen statt einer Meldung.
+    /// </summary>
+    [Fact]
+    public async Task SavePenalty_rejectsReasonLongerThanColumnLimit()
+    {
+        using var ctx = new SqliteTestContext();
+        SeedLeagueAndDriver(ctx, "l1", "Alpha");
+
+        var ctrl = BuildController(ctx);
+        var result = await ctrl.SavePenalty(
+            id: null, leagueId: "l1", date: new DateTime(2026, 8, 2),
+            driver: "Alpha", penaltyType: "Strafpunkte", points: 1,
+            raceTrack: null, secondDriver: null, isBetweenTwoDrivers: false,
+            incident: null, reason: new string('x', 1025), isPublic: false);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Empty(ctx.NewContext().LeaguePenalties);
+    }
+
     // ── Stubs ──────────────────────────────────────────────────────────────────
 
     private sealed class NullTempDataProvider : ITempDataProvider
