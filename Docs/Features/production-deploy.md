@@ -25,6 +25,25 @@ dotnet publish Erdi-ERC/Erdi-ERC.csproj -c Release -p:PublishProfile=FolderProfi
 dotnet publish Erdi-ERC/Erdi-ERC.csproj -c Release -p:PublishProfile=FolderProfile2
 ```
 
+`PublishUrl` aus dem Profil wirkt **nur in Visual Studio** (Rechtsklick → Publish). Auf der
+Kommandozeile legt `dotnet publish` das Output lokal unter
+`Erdi-ERC/bin/Release/net10.0/linux-x64/publish/` ab und rührt `T:\` nicht an — geprüft am
+2026-09-25: `T:\Erdi-ERC.dll` behielt seinen alten Zeitstempel, während das lokale Output
+frisch war. Vom Profil kommt auf dem Server nur `app.env` an (`AfterTargets="Publish"`,
+Ziel `$(PublishUrl)app.env`, mit `SkipUnchangedFiles`).
+
+### Von dort auf den Server kopieren (Schritt, der leicht fehlt)
+
+```powershell
+robocopy "C:\Users\basti\source\repos\Erdi-ERC\Erdi-ERC\bin\Release\net10.0\linux-x64\publish" "T:\" /E /NFL /NDL /NJH /NJS
+# danach auf dem Server:
+# systemctl restart erdi-erc
+```
+
+Kein `/PURGE`/`/MIR`: der Server-Ordner enthält Laufzeitdaten, die im Publish-Output nicht
+vorkommen (`data/`, `logs/`, `downloads/`-Uploads) — die dürfen nicht gelöscht werden.
+`DeleteExistingFiles=false` im Profil schützt sie ebenfalls.
+
 ## app.env-Mechanik
 
 Jedes Profil kopiert beim Publish automatisch das passende `app.env.{environment}.example` als `app.env` ins Publish-Output:
@@ -35,6 +54,14 @@ Y:\app.env                    ← aus app.env.development.example
 ```
 
 **`app.env` enthält `ASPNETCORE_ENVIRONMENT=Production` bzw. `=Development` plus ConnectionString + Discord-Credentials als Override.**
+
+> [!warning] Das Profil schreibt `app.env` **auf das Publish-Ziel**, nicht ins lokale Output:
+> `CopyAppEnvProduction` kopiert `app.env.production.example` (Platzhalter!) nach
+> `$(PublishUrl)app.env`. Eine Publish aus Visual Studio überschreibt damit `T:\app.env`.
+> Aktuell folgenlos — `T:\app.env` enthält ohnehin nur Platzhalter (Stand 23.08.2026), weil
+> Prod `EnvironmentFile=/etc/erdi-erc/secrets.env` nutzt. Wer per CLI publisht, lässt das
+> Profil weg (`-c Release -r linux-x64 --self-contained false`) oder prüft `T:\app.env`
+> hinterher.
 
 ## Server-Startbefehl (manuell, ohne systemd)
 
