@@ -189,8 +189,8 @@
                                             <div class="f1-timing-row__team" style="color:@teamColor;">@w.WinnerTeam</div>
                                         }
                                         <div class="f1-timing-row__meta">
-                                            @if (w.DriverPoints != null) { <span><i class="f1-icon" data-lucide="user"></i> @w.DriverPoints Pkt.</span> }
-                                            @if (w.TeamPoints != null)   { <span><i class="f1-icon" data-lucide="users"></i> @w.TeamPoints Pkt.</span> }
+                                            @if (w.DriverPoints != null) { <span><i class="f1-icon" data-lucide="user"></i> @PointsFormatHelper.Format(w.DriverPoints) Pkt.</span> }
+                                            @if (w.TeamPoints != null)   { <span><i class="f1-icon" data-lucide="users"></i> @PointsFormatHelper.Format(w.TeamPoints) Pkt.</span> }
                                         </div>
                                         @if (w.Track != null && w.Date != null)
                                         {
@@ -219,7 +219,7 @@
                                     <span class="f1-overall-chip__pos f1-pos-badge f1-pos-badge--p@(row.Position)">@row.Position</span>
                                     <span class="f1-overall-chip__bar" style="background:@row.PrimaryColor;"></span>
                                     <span class="f1-overall-chip__name">@row.DisplayName</span>
-                                    <span class="f1-overall-chip__pts"><strong>@row.Points</strong><span>Pkt.</span></span>
+                                    <span class="f1-overall-chip__pts"><strong>@PointsFormatHelper.Format(row.Points)</strong><span>Pkt.</span></span>
                                 </li>
                             }
                         </ol>
@@ -251,7 +251,8 @@
                                     <div class="f1-timing-row__reserve">@g.Description</div>
                                 }
                                 <div class="f1-timing-row__meta">
-                                    <span><i class="f1-icon" data-lucide="calendar-clock"></i> Endet @g.EndAt.ToLocalTime().ToString("dd.MM.")</span>
+                                    @* EndAt ist Wanduhrzeit aus dem Admin-Formular → roh anzeigen. *@
+                                    <span><i class="f1-icon" data-lucide="calendar-clock"></i> Endet @g.EndAt.ToString("dd.MM.")</span>
                                 </div>
                                 @if (!string.IsNullOrWhiteSpace(g.Link))
                                 {

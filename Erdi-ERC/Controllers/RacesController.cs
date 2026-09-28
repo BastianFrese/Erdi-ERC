@@ -36,7 +36,10 @@ namespace Erdi_ERC.Controllers
 
             foreach (var l in leagues)
             {
-                l.Standings = l.Standings.OrderBy(s => s.Position).ToList();
+                // Ersatzfahrer erst zeigen, wenn sie in dieser Liga wirklich gefahren sind
+                // (siehe ReserveDriverFilter) — sonst stünden sie ab der Kader-Aufnahme
+                // mit lauter DNS-Zellen in der Tabelle.
+                l.Standings = ReserveDriverFilter.VisibleStandings(l);
                 l.Races = l.Races.OrderBy(r => r.Date).ToList();
             }
 
@@ -151,7 +154,8 @@ namespace Erdi_ERC.Controllers
                     Position = f.Position,
                     Driver = f.Driver,
                     Team = RaceTeamHelper.ResolveTeamForRaceDriver(league.Standings, race, f.Driver) ?? "",
-                    Points = basePoints,
+                    // Abgebrochene Rennen vergeben nur einen Anteil (siehe RacePointsFactor).
+                    Points = RacePointsFactor.Apply(basePoints, race.PointsPercent),
                     RaceTimeMs = f.RaceTimeMs,
                     GapToLeaderMs = leaderMs.HasValue && f.RaceTimeMs.HasValue
                         ? Math.Max(0, f.RaceTimeMs.Value - leaderMs.Value)

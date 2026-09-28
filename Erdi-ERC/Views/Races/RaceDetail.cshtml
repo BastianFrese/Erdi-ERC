@@ -38,6 +38,12 @@
     if (raceIndex < 0) raceIndex = 0;
     var raceNumber   = raceIndex + 1;
     var raceTotal    = Math.Max(orderedRaces.Count, raceNumber);
+
+    // Abbruch-Badge: nur wenn der Faktor tatsächlich reduziert ist. Das Hero-Lead wird
+    // als HTML gerendert (siehe _F1PageHero), deshalb darf hier Markup stehen.
+    var pointsBadgeHtml = Model.Race.PointsPercent < RacePointsFactor.Full
+        ? $" · <span class=\"badge text-bg-warning text-dark\">{Model.Race.PointsPercent} % Punkte</span>"
+        : string.Empty;
 }
 
 @section Styles {
@@ -51,7 +57,7 @@
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
     Eyebrow   = $"{Model.League.Name} · Grand Prix",
     Title     = Model.Race.Track,
-    Lead      = $"Round <strong>{raceNumber}</strong> von {raceTotal} · {Model.Race.Date.ToString("dd. MMMM yyyy")}",
+    Lead      = $"Round <strong>{raceNumber}</strong> von {raceTotal} · {Model.Race.Date.ToString("dd. MMMM yyyy")}{pointsBadgeHtml}",
 
     Actions   = new() {
         new F1ButtonVm { Label="Zur Liga", Variant="primary", IconLucide="arrow-left", Href=Url.Action("LeagueResults", "Races", new { leagueId=Model.League.Id })! },
@@ -112,7 +118,7 @@
                             </span>
                             <span class="f1-podium-card__pts">
                                 <i class="f1-icon" data-lucide="coins"></i>
-                                @row.Points Pkt
+                                @PointsFormatHelper.Format(row.Points) Pkt
                             </span>
                         </div>
                     </div>
@@ -222,7 +228,7 @@
                                     @if (isDnf) { <text>—</text> }
                                     else { @(row.Position == 1 ? "Leader" : FormatGap(row.GapToLeaderMs)) }
                                 </td>
-                                <td class="text-tech fw-bold is-center">@row.Points</td>
+                                <td class="text-tech fw-bold is-center">@PointsFormatHelper.Format(row.Points)</td>
                             </tr>
                         }
                     </tbody>

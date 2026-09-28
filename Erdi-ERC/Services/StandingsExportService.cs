@@ -12,7 +12,7 @@ public sealed record StandingsExportLiga(string Key, string Name, int SortOrder)
 
 /// <summary>Saison-Bilanz eines Fahrers (feldkompatibel zum alten HTML-Scraper des Overlays).</summary>
 public sealed record StandingsExportSaison(
-    int Rennen, int Siege, int Podien, int Punkte, string? BestFinish, string? WinRate);
+    int Rennen, int Siege, int Podien, decimal Punkte, string? BestFinish, string? WinRate);
 
 /// <summary>
 /// Ein Fahrer einer Liga. Die Felder <c>Name/Ingame/Team/TeamLogo/Saison/Liga</c> sind
@@ -30,7 +30,7 @@ public sealed record StandingsExportFahrer(
 
 /// <summary>Echte Konstrukteurswertung einer Liga (Reserve/Gast-Logik via RaceTeamHelper).</summary>
 public sealed record StandingsExportTeam(
-    string Liga, string Team, int Position, int Punkte, int Siege, int Podien);
+    string Liga, string Team, int Position, decimal Punkte, int Siege, int Podien);
 
 /// <summary>Antwort von GET /api/telemetry/standings.</summary>
 public sealed record StandingsExport(
@@ -154,33 +154,42 @@ public class StandingsExportService : IStandingsExportService
             // Team-Auflösung pro Finish (Reserve/Gast-Logik), leere Auflösung → „Ohne Team",
             // Punkte aus der F1Scoring-Map. ComputeTeamPointsForLeague entfällt bewusst:
             // sie überspringt „Ohne Team", die Seite zählt es mit.
+            // Der „Ohne Team"-Bucket wird aber nur geführt, wenn er Punkte trägt
+            // (ConstructorTeamHelper) — sonst stünde im Export eine Zeile ohne Zahlen,
+            // die die Seite nicht mehr zeigt.
             var teamNames = liga.Standings
-                .Select(s => string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team.Trim())
+                .Select(s => ConstructorTeamHelper.LabelFor(s.Team))
+                // Immer Kandidat — sonst fielen Finishes ohne auflösbares Team aus dem Export,
+                // obwohl die Gesamtwertung sie mitzählt (siehe ConstructorTeamHelper).
+                .Append(ConstructorTeamHelper.NoTeamLabel)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             var teamZeilen = teamNames
                 .Select(teamName =>
                 {
+                    // Race mitführen: abgebrochene Rennen vergeben nur einen Anteil,
+                    // der Faktor steht aber am Rennen — ohne ihn weicht die Teamwertung
+                    // von der Fahrertabelle ab.
                     var allFinishes = liga.Races
                         .SelectMany(r => r.Finishes.Select(f => new { Finish = f, Race = r }))
                         .Where(x => string.Equals(
                             RaceTeamHelper.ResolveTeamForRaceDriver(liga.Standings, x.Race, x.Finish.Driver) ?? "Ohne Team",
                             teamName, StringComparison.OrdinalIgnoreCase))
-                        .Select(x => x.Finish)
                         .ToList();
 
-                    var punkte = 0;
-                    foreach (var f in allFinishes)
+                    var punkte = 0m;
+                    foreach (var x in allFinishes)
                     {
-                        if (f.Position <= 0) continue;
-                        var idx = f.Position - 1;
-                        if (idx < _f1PointMap.Length) punkte += _f1PointMap[idx];
+                        if (x.Finish.Position <= 0) continue;
+                        var idx = x.Finish.Position - 1;
+                        if (idx < _f1PointMap.Length)
+                            punkte += RacePointsFactor.Apply(_f1PointMap[idx], x.Race.PointsPercent);
                     }
 
-                    var p1 = allFinishes.Count(f => f.Position == 1);
-                    var p2 = allFinishes.Count(f => f.Position == 2);
-                    var p3 = allFinishes.Count(f => f.Position == 3);
+                    var p1 = allFinishes.Count(x => x.Finish.Position == 1);
+                    var p2 = allFinishes.Count(x => x.Finish.Position == 2);
+                    var p3 = allFinishes.Count(x => x.Finish.Position == 3);
 
                     return new
                     {
@@ -190,6 +199,7 @@ public class StandingsExportService : IStandingsExportService
                         Podien = p1 + p2 + p3
                     };
                 })
+                .Where(x => ConstructorTeamHelper.IsVisibleConstructor(x.Team, x.Punkte))
                 .OrderByDescending(x => x.Punkte)
                 .ThenByDescending(x => x.Siege)
                 .ThenBy(x => x.Team)

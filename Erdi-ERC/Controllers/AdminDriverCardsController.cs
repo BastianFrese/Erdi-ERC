@@ -68,7 +68,8 @@ namespace Erdi_ERC.Controllers
 
                     var aliases = DriverAliasHelper.Build(profile);
 
-                    int wins = 0, podiums = 0, fastest = 0, totalPoints = 0;
+                    int wins = 0, podiums = 0, fastest = 0;
+                    decimal totalPoints = 0;
                     int? driverNumber = null;
                     string? team = null;
                     var races = new List<DriverRaceEntry>();

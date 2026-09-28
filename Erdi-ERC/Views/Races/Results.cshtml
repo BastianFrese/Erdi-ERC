@@ -225,7 +225,7 @@ else
                                     }
                                 </td>
                                 <td class="text-tech text-center">@s.Wins</td>
-                                <td class="text-tech fw-bold text-center">@s.Points</td>
+                                <td class="text-tech fw-bold text-center">@PointsFormatHelper.Format(s.Points)</td>
                                 @foreach (var r in races)
                                 {
                                     var driverKey = s.Driver ?? string.Empty;

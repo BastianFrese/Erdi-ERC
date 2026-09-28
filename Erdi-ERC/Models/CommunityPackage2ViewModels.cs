@@ -7,7 +7,7 @@ namespace Erdi_ERC.Models
         public string PrimaryColor { get; set; } = "#e10600";
         public string SecondaryColor { get; set; } = "#ffffff";
         public int Drivers { get; set; }
-        public int Points { get; set; }
+        public decimal Points { get; set; }
         public int Wins { get; set; }
         public int Podiums { get; set; }
     }
@@ -21,7 +21,7 @@ namespace Erdi_ERC.Models
     {
         public string Driver { get; set; } = string.Empty;
         public string? DiscordId { get; set; }
-        public int Points { get; set; }
+        public decimal Points { get; set; }
         public int Wins { get; set; }
         public bool IsReserveDriver { get; set; }
         public string? ReserveForDriver { get; set; }
@@ -42,7 +42,7 @@ namespace Erdi_ERC.Models
         public string? CssKey { get; set; }
         public string PrimaryColor { get; set; } = "#e10600";
         public string SecondaryColor { get; set; } = "#ffffff";
-        public int TotalPoints { get; set; }
+        public decimal TotalPoints { get; set; }
         public int TotalWins { get; set; }
         public int TotalPodiums { get; set; }
         public List<TeamDriverCardViewModel> Drivers { get; set; } = new();
@@ -72,7 +72,7 @@ namespace Erdi_ERC.Models
         public string InputDevice { get; set; } = string.Empty;
         public string FavoriteTrack { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
-        public int Points { get; set; }
+        public decimal Points { get; set; }
         public int Wins { get; set; }
         public string PaceBucket { get; set; } = string.Empty;
         public string? ProfileDiscordId { get; set; }

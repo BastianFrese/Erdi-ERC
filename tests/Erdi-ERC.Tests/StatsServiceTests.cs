@@ -205,4 +205,129 @@ public class StatsServiceTests
         Assert.Equal(1, alice.Position);
         Assert.Equal(2, bob.Position);
     }
+
+    // ── Rennabbruch: Punkte-Faktor (50 % / 75 %) ────────────────────────────────
+
+    /// <summary>Rennen mit explizitem Punkte-Faktor (Rennabbruch) anlegen.</summary>
+    private static async Task AddRaceWithFactorAsync(
+        SqliteTestContext ctx, string leagueId, int pointsPercent, params (string Driver, int Position)[] finishes)
+    {
+        var race = new RaceResult
+        {
+            LeagueId = leagueId,
+            Date = DateTime.UtcNow,
+            Track = "Testbahn",
+            PointsPercent = pointsPercent
+        };
+        ctx.Db.RaceResults.Add(race);
+        await ctx.Db.SaveChangesAsync();
+
+        foreach (var (driver, position) in finishes)
+        {
+            ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = driver, Position = position });
+        }
+        await ctx.Db.SaveChangesAsync();
+    }
+
+    [Theory]
+    [InlineData(50, 12.5)]   // 50 % aus P1 (25)
+    [InlineData(75, 18.75)]  // 75 % aus P1 (25)
+    [InlineData(100, 25)]    // regulär
+    public async Task RebuildLeagueStandings_appliesRaceFactorToPoints(int pointsPercent, decimal expected)
+    {
+        // Arrange — abgebrochenes Rennen: Anteil der Grundpunkte, bewusst ohne Rundung
+        // (12,5 / 18,75 wie in der echten F1).
+        using var ctx = new SqliteTestContext();
+        await SeedLeagueAsync(ctx, "l1");
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Alpha" });
+        await ctx.Db.SaveChangesAsync();
+        await AddRaceWithFactorAsync(ctx, "l1", pointsPercent, ("Alpha", 1));
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert
+        await using var verify = ctx.NewContext();
+        var alpha = await verify.DriverStandings.SingleAsync(s => s.Driver == "Alpha");
+        Assert.Equal(expected, alpha.Points);
+    }
+
+    [Fact]
+    public async Task RebuildLeagueStandings_mixedFactors_countsEachRaceWithItsOwnFactor()
+    {
+        // Arrange — einmal abgebrochen (50 % → 12,5), einmal regulär (P2 → 21).
+        // Beweist, dass der Faktor pro Rennen greift und nicht saisonweit.
+        using var ctx = new SqliteTestContext();
+        await SeedLeagueAsync(ctx, "l1");
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Alpha", PointsAdjustment = -0.5m });
+        await ctx.Db.SaveChangesAsync();
+        await AddRaceWithFactorAsync(ctx, "l1", 50, ("Alpha", 1));
+        await AddRaceWithFactorAsync(ctx, "l1", 100, ("Alpha", 2));
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert — 12,5 + 21 − 0,5 Korrektur; die Korrektur bleibt dezimal erhalten.
+        await using var verify = ctx.NewContext();
+        var alpha = await verify.DriverStandings.SingleAsync(s => s.Driver == "Alpha");
+        Assert.Equal(33m, alpha.Points);
+    }
+
+    [Fact]
+    public async Task RebuildLeagueStandings_abortedRace_passesHalvedReservePointsToMain()
+    {
+        // Arrange — Reserve fährt ein Rennen mit 50 %: der Anteil (12,5) muss in
+        // ReservePointsForMain landen, nicht die vollen 25.
+        using var ctx = new SqliteTestContext();
+        await SeedLeagueAsync(ctx, "l1");
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Stamm" });
+        ctx.Db.DriverStandings.Add(new DriverStanding
+        {
+            LeagueId = "l1", Driver = "Reserve", IsReserveDriver = true, ReserveForDriver = "Stamm"
+        });
+        await ctx.Db.SaveChangesAsync();
+        await AddRaceWithFactorAsync(ctx, "l1", 50, ("Reserve", 1));
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert
+        await using var verify = ctx.NewContext();
+        var reserve = await verify.DriverStandings.SingleAsync(s => s.Driver == "Reserve");
+        Assert.Equal(1, reserve.ReserveStarts);
+        Assert.Equal(12.5m, reserve.ReservePointsForMain);
+    }
+
+    [Fact]
+    public async Task RebuildLeagueStandings_dropWorst_appliesFactorBeforeDroppingWorstResult()
+    {
+        // Arrange — Streichresultat-Reihenfolge: der Faktor muss VOR dem Sortieren
+        // greifen. Sonst würde das halbierte Rennen als "bestes" gezählt und
+        // stattdessen das 21-Punkte-Rennen gestrichen.
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "l1", Name = "l1", DropWorstResults = 1 });
+        await ctx.Db.SaveChangesAsync();
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "l1", Driver = "Alpha" });
+        await ctx.Db.SaveChangesAsync();
+
+        await AddRaceWithFactorAsync(ctx, "l1", 100, ("Alpha", 1)); // 25
+        await AddRaceWithFactorAsync(ctx, "l1", 100, ("Alpha", 2)); // 21
+        await AddRaceWithFactorAsync(ctx, "l1", 50, ("Alpha", 1));  // 12,5 ← Streicher
+
+        var service = new StatsService(ctx.Db, Microsoft.Extensions.Options.Options.Create(new Erdi_ERC.Options.F1ScoringOptions()));
+
+        // Act
+        await service.RebuildLeagueStandingsAsync("l1");
+
+        // Assert — 25 + 21, das halbierte Rennen fällt raus.
+        await using var verify = ctx.NewContext();
+        var alpha = await verify.DriverStandings.SingleAsync(s => s.Driver == "Alpha");
+        Assert.Equal(46m, alpha.Points);
+    }
 }

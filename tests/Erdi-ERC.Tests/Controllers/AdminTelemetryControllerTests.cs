@@ -206,6 +206,91 @@ public class AdminTelemetryControllerTests
     }
 
     [Fact]
+    public async Task Accept_withPointsFactor_persistsFactorAndHalvesStandings()
+    {
+        // Rennabbruch: Der Admin bestätigt im Review 50 % → das Rennen trägt den Faktor und
+        // die Tabelle bekommt Bruchteile (P1 = 12,5, P2 = 10,5) statt der vollen Punkte.
+        using var ctx = new SqliteTestContext();
+        var id = await SeedPendingAsync(ctx);
+        var ctrl = BuildController(ctx, out _);
+        AttachAdmin(ctrl);
+
+        var input = AcceptInput(id, TwoFinishes());
+        input.PointsPercent = 50;
+
+        var result = await ctrl.Accept(input);
+
+        Assert.IsType<RedirectToActionResult>(result);
+
+        await using var verify = ctx.NewContext();
+        var race = await verify.RaceResults.SingleAsync();
+        Assert.Equal(50, race.PointsPercent);
+
+        var points = await verify.DriverStandings
+            .Where(s => s.LeagueId == "pro")
+            .ToDictionaryAsync(s => s.Driver, s => s.Points);
+        Assert.Equal(12.5m, points["Max Mustermann"]);
+        Assert.Equal(10.5m, points["Anna Beispiel"]);
+    }
+
+    [Fact]
+    public async Task Accept_withManipulatedPointsFactor_fallsBackToFullPoints()
+    {
+        // Ein gefälschter Formularwert (33 %) darf nicht in die Tabelle: Normalize macht
+        // daraus „voll gewertet".
+        using var ctx = new SqliteTestContext();
+        var id = await SeedPendingAsync(ctx);
+        var ctrl = BuildController(ctx, out _);
+        AttachAdmin(ctrl);
+
+        var input = AcceptInput(id, TwoFinishes());
+        input.PointsPercent = 33;
+
+        await ctrl.Accept(input);
+
+        await using var verify = ctx.NewContext();
+        var race = await verify.RaceResults.SingleAsync();
+        Assert.Equal(100, race.PointsPercent);
+    }
+
+    [Fact]
+    public async Task Detail_prefillsSuggestedFactorFromReportedDistance()
+    {
+        // Der Payload des abgebrochenen Rennens trägt die Distanz → der Faktor wird
+        // vorbelegt (31 von 44 Runden = 70 % → 50 %), im Formular übersteuerbar.
+        using var ctx = new SqliteTestContext();
+        var id = await SeedPendingAsync(ctx);
+        await ctx.Db.PendingRaceResults
+            .Where(p => p.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.TotalLaps, 44)
+                .SetProperty(p => p.CompletedLaps, 31));
+
+        var ctrl = BuildController(ctx, out _);
+        AttachAdmin(ctrl);
+
+        var result = Assert.IsType<ViewResult>(await ctrl.Detail(id));
+        var vm = Assert.IsType<TelemetryDetailViewModel>(result.Model);
+        Assert.Equal(50, vm.SuggestedPointsPercent);
+        Assert.Equal(70, vm.CompletedPercent);
+    }
+
+    [Fact]
+    public async Task Detail_withoutDistance_suggestsFullPoints()
+    {
+        // Ohne Distanzangabe (Altdaten) bleibt es bei 100 % — kein stiller Punkteverlust.
+        using var ctx = new SqliteTestContext();
+        var id = await SeedPendingAsync(ctx);
+        var ctrl = BuildController(ctx, out _);
+        AttachAdmin(ctrl);
+
+        var result = Assert.IsType<ViewResult>(await ctrl.Detail(id));
+        var vm = Assert.IsType<TelemetryDetailViewModel>(result.Model);
+        Assert.Equal(100, vm.SuggestedPointsPercent);
+        Assert.Null(vm.CompletedPercent);
+    }
+
+    [Fact]
     public async Task Accept_withoutLeague_returnsErrorMessage_andCreatesNoRace()
     {
         using var ctx = new SqliteTestContext();
@@ -235,7 +320,11 @@ public class AdminTelemetryControllerTests
         await ctrl.Accept(input);
 
         var race = await ctx.NewContext().RaceResults.SingleAsync();
-        Assert.InRange(race.Date, DateTime.UtcNow.AddMinutes(-5), DateTime.UtcNow.AddMinutes(5));
+        // RaceResult.Date ist Wanduhrzeit (Server-Lokalzeit), nicht UTC: das Formularfeld
+        // ist ein datetime-local und die Spalte wird überall sonst genauso befüllt. Der
+        // Fallback muss deshalb DateTime.Now verwenden — mit UtcNow trüge dieselbe Spalte
+        // zwei Semantiken (siehe Docs/Features/Zeitzonen-Konvention.md).
+        Assert.InRange(race.Date, DateTime.Now.AddMinutes(-5), DateTime.Now.AddMinutes(5));
         Assert.NotEqual(default, race.Date);
     }
 

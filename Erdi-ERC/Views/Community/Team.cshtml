@@ -25,7 +25,7 @@
     <partial name="_F1StatTile" model="@(new F1StatTileVm {
         IconLucide = "coins",
         Label      = "Punkte",
-        Value      = Model.TotalPoints.ToString(),
+        Value      = PointsFormatHelper.Format(Model.TotalPoints),
         Sub        = "Gesamtpunkte des Teams"
     })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm {
@@ -69,7 +69,7 @@
                                 <div class="text-mute small">@(driver.IsReserveDriver ? $"Reserve für {driver.ReserveForDriver}" : "Stammfahrer")</div>
                             </div>
                             <div class="text-end">
-                                <div class="fw-bold">@driver.Points Pkt.</div>
+                                <div class="fw-bold">@PointsFormatHelper.Format(driver.Points) Pkt.</div>
                                 <div class="text-mute small">@driver.Wins Siege</div>
                             </div>
                         </div>

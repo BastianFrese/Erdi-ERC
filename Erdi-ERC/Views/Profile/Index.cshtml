@@ -103,7 +103,7 @@
     <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "trophy",     Label = "Siege",        Value = Model.Wins.ToString(),        Sub = $"{winRate}% Win-Rate" })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "medal",      Label = "Podien",       Value = Model.Podiums.ToString() })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "zap",        Label = "Fastest Laps", Value = Model.FastestLaps.ToString() })" />
-    <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "circle-dot", Label = "Punkte",       Value = Model.TotalPoints.ToString() })" />
+    <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "circle-dot", Label = "Punkte",       Value = PointsFormatHelper.Format(Model.TotalPoints) })" />
 </div>
 
 <div class="row g-4 reveal">

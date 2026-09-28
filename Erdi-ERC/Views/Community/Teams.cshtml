@@ -29,7 +29,7 @@
         IconLucide = "trophy",
         Label      = "Top Team",
         Value      = topTeam?.TeamName ?? "—",
-        Sub        = topTeam != null ? $"{topTeam.Points} Punkte" : "Noch keine Daten"
+        Sub        = topTeam != null ? $"{PointsFormatHelper.Format(topTeam.Points)} Punkte" : "Noch keine Daten"
     })" />
 </div>
 
@@ -64,7 +64,7 @@
                                 <div class="community-stat-grid">
                                     <div class="community-stat-tile">
                                         <div class="community-stat-tile__label">Punkte</div>
-                                        <div class="community-stat-tile__value">@team.Points</div>
+                                        <div class="community-stat-tile__value">@PointsFormatHelper.Format(team.Points)</div>
                                     </div>
                                     <div class="community-stat-tile">
                                         <div class="community-stat-tile__label">Siege</div>

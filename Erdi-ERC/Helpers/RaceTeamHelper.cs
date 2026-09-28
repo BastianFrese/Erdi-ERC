@@ -63,7 +63,7 @@ namespace Erdi_ERC.Helpers
             return null;
         }
 
-        public static int? ComputeTeamPointsForLeague(League league, string? teamName)
+        public static decimal? ComputeTeamPointsForLeague(League league, string? teamName)
         {
             int[] legacyMap = { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0 };
             return ComputeTeamPointsForLeague(league, teamName, legacyMap);
@@ -75,13 +75,13 @@ namespace Erdi_ERC.Helpers
         /// verwenden und die Map aus <c>IOptions&lt;F1ScoringOptions&gt;</c> injizieren — sonst
         /// weicht die Liga-Wertung von der Razor-Tabelle und der Gesamtwertung ab.
         /// </summary>
-        public static int? ComputeTeamPointsForLeague(League league, string? teamName, int[] pointMap)
+        public static decimal? ComputeTeamPointsForLeague(League league, string? teamName, int[] pointMap)
         {
             if (string.IsNullOrWhiteSpace(teamName)) return null;
             if (pointMap is null || pointMap.Length == 0) return null;
 
             var normalizedTeam = teamName.Trim();
-            var total = 0;
+            var total = 0m;
 
             // Ein Lookup pro Liga statt linearer Standings-Scan pro Finish (O(finishes) statt O(finishes × standings)).
             var lookup = new RaceTeamLookup(league.Standings);
@@ -99,7 +99,8 @@ namespace Erdi_ERC.Helpers
                     var idx = finish.Position - 1;
                     if (idx >= 0 && idx < pointMap.Length)
                     {
-                        total += pointMap[idx];
+                        // Abgebrochene Rennen vergeben nur einen Anteil (siehe RacePointsFactor).
+                        total += RacePointsFactor.Apply(pointMap[idx], race.PointsPercent);
                     }
                 }
             }

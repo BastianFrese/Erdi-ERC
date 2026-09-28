@@ -37,6 +37,19 @@ public sealed class RaceCsvParseResult
     /// (Minimum über <c>bestLapMs</c> der klassifizierten Fahrer). Spiel-Export liefert null.
     /// </summary>
     public string? FastestLapDriver { get; init; }
+
+    /// <summary>
+    /// Soll-Distanz der Session aus der <c>totalLaps</c>-Spalte (ERDi-Telemetrie-Export).
+    /// <c>null</c> beim Spiel-Export oder wenn die Spalte fehlt/0 ist → keine
+    /// Rennabbruch-Ableitung, das Rennen gilt als voll gewertet.
+    /// </summary>
+    public int? TotalLaps { get; init; }
+
+    /// <summary>
+    /// Gefahrene Runden des weitesten <b>gewerteten</b> Fahrers (Maximum über <c>numLaps</c>,
+    /// DNF-Zeilen zählen nicht). Nur beim ERDi-Telemetrie-Export, sonst <c>null</c>.
+    /// </summary>
+    public int? CompletedLaps { get; init; }
 }
 
 /// <summary>
@@ -269,14 +282,16 @@ public static class RaceCsvParser
         "Invalid", "Inactive", "Active",
     };
 
-    /// <summary>Spalten-Indizes des Telemetrie-Exports (Default = Exporter-Reihenfolge).</summary>
+    /// <summary>Spalten-Indizes des Telemetrie-Exports (Default = Exporter-Reihenfolge).
+    /// <see cref="TotalLaps"/> hat bewusst kein Default-Index: die Spalte ist neu und wird
+    /// per Kopfzeile gefunden; ohne Kopfzeile bleibt sie <c>-1</c> (unbekannt).</summary>
     private sealed record TelemetryColumns(
         int Position, int Name, int Team, int RaceNumber, int NumLaps, int GridPosition,
         int Points, int ResultStatus, int BestLapMs, int TotalRaceSeconds, int PenaltiesTime,
-        int NumPenalties);
+        int NumPenalties, int TotalLaps = -1);
 
     private static TelemetryColumns DefaultTelemetryColumns()
-        => new(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        => new(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, -1);
 
     /// <summary>
     /// Erkennt den ERDi-Telemetrie-Export: 1) Kopfzeile mit dem eindeutigen Token
@@ -338,6 +353,7 @@ public static class RaceCsvParser
                 case "totalraceseconds": columns = columns with { TotalRaceSeconds = i }; break;
                 case "penaltiestime": columns = columns with { PenaltiesTime = i }; break;
                 case "numpenalties": columns = columns with { NumPenalties = i }; break;
+                case "totallaps": columns = columns with { TotalLaps = i }; break;
             }
         }
 
@@ -351,6 +367,12 @@ public static class RaceCsvParser
 
         string? fastestLapDriver = null;
         long fastestLapMs = long.MaxValue;
+
+        // Distanz für die Rennabbruch-Ableitung: Soll-Runden aus der Session-Spalte (auf jeder
+        // Zeile identisch → erster positiver Wert gewinnt), gefahrene Runden als Maximum über
+        // die gewerteten Fahrer (DNF-Zeilen haben keine sinnvolle Rundenzahl).
+        int? totalLaps = null;
+        int? completedLaps = null;
 
         foreach (var rawLine in lines)
         {
@@ -408,6 +430,21 @@ public static class RaceCsvParser
                 fastestLapDriver = driver;
             }
 
+            if (totalLaps is null
+                && int.TryParse(Field(fields, columns.TotalLaps), NumberStyles.Integer,
+                    CultureInfo.InvariantCulture, out var lapCount) && lapCount > 0)
+            {
+                totalLaps = lapCount;
+            }
+
+            if (!isDnf
+                && int.TryParse(Field(fields, columns.NumLaps), NumberStyles.Integer,
+                    CultureInfo.InvariantCulture, out var drivenLaps) && drivenLaps > 0
+                && (completedLaps is null || drivenLaps > completedLaps))
+            {
+                completedLaps = drivenLaps;
+            }
+
             entries.Add(new RaceCsvEntry(position, driver, team, totalMs, isDnf, null, quali));
         }
 
@@ -416,6 +453,8 @@ public static class RaceCsvParser
             Entries = entries,
             SkippedLines = skipped,
             FastestLapDriver = fastestLapDriver,
+            TotalLaps = totalLaps,
+            CompletedLaps = completedLaps,
         };
     }
 

@@ -1,3 +1,4 @@
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Erdi_ERC.Tests.Infrastructure;
@@ -85,6 +86,59 @@ public class TelemetryIngestServiceTests
         var audit = await verify.AdminAuditLogs.SingleOrDefaultAsync(a => a.Action == "TelemetryResultReceived");
         Assert.NotNull(audit);
         Assert.Contains("ProLiga", audit!.Details);
+    }
+
+    [Fact]
+    public async Task Ingest_payloadWithDistance_persistsLapsForFactorDerivation()
+    {
+        // Die App meldet Soll-Distanz (totalLaps) und gefahrene Runden (numLaps), damit der
+        // Review-Dialog den Rennabbruch-Faktor vorbelegen kann — die Rohdaten werden am
+        // Pending gespeichert, nicht der fertige Faktor (Regel bleibt nachträglich änderbar).
+        using var ctx = new SqliteTestContext();
+        var key = await SeedSenderAsync(ctx);
+
+        var json = """
+            {
+              "track": "Spa",
+              "league": "ProLiga",
+              "totalLaps": 44,
+              "finishes": [
+                { "position": 1, "driver": "Max Mustermann", "numLaps": 31 },
+                { "position": 2, "driver": "Anna Beispiel", "numLaps": 30 },
+                { "position": 0, "driver": "Ausfall", "numLaps": 12, "dnf": true }
+              ]
+            }
+            """;
+
+        var svc = Build(ctx, out _);
+        var result = await svc.IngestAsync(json, key);
+        Assert.True(result.IsSuccess);
+
+        await using var verify = ctx.NewContext();
+        var pending = await verify.PendingRaceResults.SingleAsync();
+        Assert.Equal(44, pending.TotalLaps);
+        Assert.Equal(31, pending.CompletedLaps); // DNF-Zeile (12 Runden) zählt nicht
+        Assert.Equal(RacePointsFactor.Half,
+            RacePointsFactor.DeriveFromDistance(pending.TotalLaps, pending.CompletedLaps)); // 70 %
+    }
+
+    [Fact]
+    public async Task Ingest_payloadWithoutDistance_leavesLapsNull()
+    {
+        // Alte App-Versionen senden die Distanz nicht → keine Ableitung, Rennen gilt als voll.
+        using var ctx = new SqliteTestContext();
+        var key = await SeedSenderAsync(ctx);
+
+        var svc = Build(ctx, out _);
+        var result = await svc.IngestAsync(Payload("ProLiga", TwoDrivers()), key);
+        Assert.True(result.IsSuccess);
+
+        await using var verify = ctx.NewContext();
+        var pending = await verify.PendingRaceResults.SingleAsync();
+        Assert.Null(pending.TotalLaps);
+        Assert.Null(pending.CompletedLaps);
+        Assert.Equal(RacePointsFactor.Full,
+            RacePointsFactor.DeriveFromDistance(pending.TotalLaps, pending.CompletedLaps));
     }
 
     [Theory]

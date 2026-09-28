@@ -19,11 +19,24 @@ namespace Erdi_ERC.Services
     /// Punkte gehen pro Rennen an das Team, für das der Fahrer in genau diesem Rennen
     /// angetreten ist (über <see cref="RaceTeamHelper.ResolveTeamForRaceDriver"/>) — kein
     /// "Heimteam-Override", damit Cross-Team-Einsätze (z.B. Gaststarter) sauber zählen.
+    ///
+    /// Fahrer ohne auflösbares Team laufen als „Ohne Team" in einem eigenen Bucket mit.
+    /// Das ist dieselbe Regel wie auf der Ligaseite und im Overlay-Export (siehe
+    /// <see cref="ConstructorTeamHelper"/>) — sonst zeigen zwei öffentliche Tabellen für
+    /// dieselben Rennen unterschiedliche Summen.
     /// </summary>
     public class OverallConstructorsService
     {
         private const string CacheKey = "overall-constructors:v1";
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
+
+        /// <summary>
+        /// Schlüssel des „Ohne Team"-Buckets. Bewusst eigener Wert: der Bucket ist kein
+        /// F1-Team, und der Fallback <c>"unknown"</c> würde ihn mit echten unbekannten
+        /// Teamnamen zusammenwerfen. Der Schlüssel landet in HTML-Ids
+        /// (<c>Views/Races/Constructors.cshtml</c>), muss also ohne Leerzeichen auskommen.
+        /// </summary>
+        private const string NoTeamCssKey = "no-team";
 
         private readonly AppDbContext _db;
         private readonly IMemoryCache _cache;
@@ -102,18 +115,23 @@ namespace Erdi_ERC.Services
                     {
                         var resolvedTeamName = RaceTeamHelper.ResolveTeamForRaceDriver(
                             lookup, race, finish.Driver);
-                        if (string.IsNullOrWhiteSpace(resolvedTeamName))
-                        {
-                            continue;
-                        }
 
-                        var f1Team = F1TeamsHelper.GetTeamByName(resolvedTeamName);
-                        var cssKey = f1Team?.CssKey ?? "unknown";
-                        var displayName = f1Team?.Name ?? resolvedTeamName.Trim();
+                        // Leere Auflösung früher: stillschweigend verworfen. Die Ligaseite
+                        // zählt diese Punkte aber mit — seit dem Fix laufen sie auch hier
+                        // als „Ohne Team" mit, statt aus der Gesamtwertung zu verschwinden.
+                        var teamName = ConstructorTeamHelper.LabelFor(resolvedTeamName);
+                        var isNoTeamBucket = ConstructorTeamHelper.IsNoTeamBucket(teamName);
+
+                        var f1Team = isNoTeamBucket ? null : F1TeamsHelper.GetTeamByName(teamName);
+                        var cssKey = isNoTeamBucket ? NoTeamCssKey : (f1Team?.CssKey ?? "unknown");
+                        var displayName = f1Team?.Name ?? teamName;
                         var primaryColor = f1Team?.PrimaryColor ?? "#888888";
                         var secondaryColor = f1Team?.SecondaryColor ?? "#222222";
 
-                        var points = SafePoints(finish.Position);
+                        // Abgebrochene Rennen vergeben nur einen Anteil (siehe RacePointsFactor);
+                        // der Faktor muss auch hier greifen, sonst weicht die Gesamtwertung
+                        // von den Liga-Teamwertungen ab.
+                        var points = SafePoints(finish.Position, race.PointsPercent);
                         if (points <= 0)
                         {
                             continue;
@@ -130,6 +148,8 @@ namespace Erdi_ERC.Services
                 }
             }
 
+            // Kein IsVisibleConstructor-Filter nötig (anders als auf der Ligaseite): ein Bucket
+            // entsteht hier erst durch ein Finish mit Punkten, kann also gar nicht bei 0 stehen.
             return buckets.Values
                 .OrderByDescending(b => b.Points)
                 .ThenByDescending(b => b.Wins)
@@ -140,10 +160,11 @@ namespace Erdi_ERC.Services
                 .ToList();
         }
 
-        private int SafePoints(int position)
+        private decimal SafePoints(int position, int pointsPercent)
         {
             var idx = position - 1;
-            return idx >= 0 && idx < _pointMap.Length ? _pointMap[idx] : 0;
+            var basePoints = idx >= 0 && idx < _pointMap.Length ? _pointMap[idx] : 0;
+            return RacePointsFactor.Apply(basePoints, pointsPercent);
         }
 
         private sealed class TeamBucket
@@ -152,7 +173,7 @@ namespace Erdi_ERC.Services
             public string DisplayName { get; }
             public string PrimaryColor { get; }
             public string SecondaryColor { get; }
-            public int Points { get; private set; }
+            public decimal Points { get; private set; }
             public int Wins { get; private set; }
             public int SecondPlaces { get; private set; }
             public int ThirdPlaces { get; private set; }
@@ -170,7 +191,7 @@ namespace Erdi_ERC.Services
                 SecondaryColor = secondaryColor;
             }
 
-            public void AddRace(string leagueId, int points, int position)
+            public void AddRace(string leagueId, decimal points, int position)
             {
                 Points += points;
                 Events++;
@@ -228,12 +249,12 @@ namespace Erdi_ERC.Services
 
         private sealed class LeagueAggregate
         {
-            public int Points { get; private set; }
+            public decimal Points { get; private set; }
             public int Events { get; private set; }
             public int Wins { get; private set; }
             public int BestPosition { get; private set; } = int.MaxValue;
 
-            public void Add(int points, int position)
+            public void Add(decimal points, int position)
             {
                 Points += points;
                 Events++;

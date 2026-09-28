@@ -5,13 +5,17 @@ namespace Erdi_ERC.Services;
 /// <summary>
 /// Ein einzelner Fahrer aus dem Telemetrie-Payload. <see cref="Position"/> ist
 /// 1-basiert für Zielankünfte und 0 für DNF (gleiche Semantik wie <see cref="RaceFinish.Position"/>).
+/// <para><see cref="NumLaps"/> ist die gefahrene Rundenzahl der Session (App-Feld <c>numLaps</c>)
+/// und dient nur der Ableitung des Punkte-Faktors bei Rennabbruch — null, wenn die App sie
+/// nicht mitschickt (ältere Builds, Zeitrennen).</para>
 /// </summary>
 public sealed record ParsedTelemetryFinish(
     int Position,
     string Driver,
     bool IsDnf,
     long? RaceTimeMs,
-    int? QualifyingPosition);
+    int? QualifyingPosition,
+    int? NumLaps = null);
 
 /// <summary>
 /// Kanonisch geparstes Telemetrie-Rennergebnis. Noch DB-frei — erst der
@@ -30,6 +34,12 @@ public sealed class ParsedTelemetryResult
 
     public string? Season { get; init; }
     public string? FastestLap { get; init; }
+
+    /// <summary>Soll-Distanz der Session in Runden (App-Feld <c>totalLaps</c>). Basis der
+    /// Faktor-Ableitung zusammen mit den gefahrenen Runden der Fahrer; null bei Zeitrennen
+    /// oder älteren App-Builds → der Review bleibt bei 100 %.</summary>
+    public int? TotalLaps { get; init; }
+
     public List<ParsedTelemetryFinish> Finishes { get; init; } = new();
     public List<ParsedTelemetryAssignment> ReserveAssignments { get; init; } = new();
     public List<ParsedTelemetryAssignment> GuestAssignments { get; init; } = new();
@@ -95,6 +105,7 @@ public static class TelemetryRaceParser
                 League = ReadOptionalString(root, "league"),
                 Season = ReadOptionalString(root, "season"),
                 FastestLap = ReadOptionalString(root, "fastestLap"),
+                TotalLaps = ReadOptionalPositiveInt(root, "totalLaps"),
             };
 
             var error = TryReadDate(root, out var date);
@@ -135,6 +146,18 @@ public static class TelemetryRaceParser
 
         var value = el.GetString()?.Trim();
         return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    /// <summary>Positive Ganzzahl oder null. Ungültige Werte werden still verworfen statt den
+    /// Import abzulehnen — die Distanz ist nur ein Vorschlag für den Punkte-Faktor.</summary>
+    private static int? ReadOptionalPositiveInt(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var el) || el.ValueKind != JsonValueKind.Number)
+        {
+            return null;
+        }
+
+        return el.TryGetInt32(out var value) && value > 0 ? value : null;
     }
 
     private static string? TryReadDate(JsonElement root, out DateTime? date)
@@ -271,7 +294,8 @@ public static class TelemetryRaceParser
             Driver: driver,
             IsDnf: isDnf,
             RaceTimeMs: raceTimeMs,
-            QualifyingPosition: qualifyingPosition);
+            QualifyingPosition: qualifyingPosition,
+            NumLaps: ReadOptionalPositiveInt(item, "numLaps"));
         return null;
     }
 

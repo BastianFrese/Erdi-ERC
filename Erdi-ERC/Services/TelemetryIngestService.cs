@@ -108,6 +108,14 @@ public class TelemetryIngestService : ITelemetryIngestService
             SenderDiscordId = senderKey!.DiscordId,
             Status = (int)PendingRaceStatus.Pending,
             ReceivedAt = DateTime.UtcNow,
+            // Distanz für die Faktor-Ableitung: die Soll-Runden kommen direkt aus dem Payload,
+            // die gefahrenen Runden aus dem weitesten gewerteten Fahrer (DNF-Zeilen haben
+            // keine sinnvolle Rundenzahl). Beides optional — fehlt es, bleibt es bei 100 %.
+            TotalLaps = result.TotalLaps,
+            CompletedLaps = result.Finishes
+                .Where(f => !f.IsDnf)
+                .Select(f => f.NumLaps)
+                .Max(),
         };
 
         // Fastest-Lap-Flag: Der Payload nennt optional den Namen des schnellsten Fahrers

@@ -782,13 +782,15 @@ namespace Erdi_ERC.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
-                    b.Property<int>("Points")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Points")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
 
-                    b.Property<int>("PointsAdjustment")
+                    b.Property<decimal>("PointsAdjustment")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<int>("Position")
                         .HasColumnType("int");
@@ -797,8 +799,9 @@ namespace Erdi_ERC.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
-                    b.Property<int>("ReservePointsForMain")
-                        .HasColumnType("int");
+                    b.Property<decimal>("ReservePointsForMain")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
 
                     b.Property<int>("ReserveStarts")
                         .HasColumnType("int");
@@ -1043,6 +1046,9 @@ namespace Erdi_ERC.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CompletedLaps")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("DecidedAt")
                         .HasColumnType("datetime(6)");
 
@@ -1089,6 +1095,9 @@ namespace Erdi_ERC.Migrations
                         .HasColumnType("varchar(128)");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TotalLaps")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -1377,6 +1386,11 @@ namespace Erdi_ERC.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
+
+                    b.Property<int>("PointsPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(100);
 
                     b.Property<string>("Season")
                         .HasMaxLength(32)

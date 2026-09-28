@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +35,7 @@ public interface IPendingRacePromotionService
         IReadOnlyList<PendingRaceFinishEdit> editedFinishes,
         string? fastestLapDriver,
         string? actorDiscordId,
+        int pointsPercent = RacePointsFactor.Full,
         CancellationToken ct = default);
 
     /// <summary>Lehnt einen Pending-Entwurf ab (Status=Rejected, optionale Note). Idempotent.</summary>
@@ -74,6 +76,7 @@ public class PendingRacePromotionService : IPendingRacePromotionService
         IReadOnlyList<PendingRaceFinishEdit> editedFinishes,
         string? fastestLapDriver,
         string? actorDiscordId,
+        int pointsPercent = RacePointsFactor.Full,
         CancellationToken ct = default)
     {
         var pending = await _db.PendingRaceResults
@@ -129,6 +132,9 @@ public class PendingRacePromotionService : IPendingRacePromotionService
             Season = string.IsNullOrWhiteSpace(season) ? league.CurrentSeason : season!.Trim(),
             Winner = string.Empty,
             FastestLap = fastestLap ?? string.Empty,
+            // Faktor aus dem Review-Dialog (vorbelegt aus der Distanz). Normalize fängt
+            // manipulierte Werte ab, statt sie in die Tabelle zu schreiben.
+            PointsPercent = RacePointsFactor.Normalize(pointsPercent),
         };
 
         // Transaktion: Rennen + Standings-Rebuild + Pending-Status atomar — eine

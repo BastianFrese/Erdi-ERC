@@ -214,7 +214,7 @@ else
                 <div class="erc-stat"><span class="erc-stat__val">@Model?.Wins</span><span class="erc-stat__lbl">Siege</span></div>
                 <div class="erc-stat"><span class="erc-stat__val">@Model?.Podiums</span><span class="erc-stat__lbl">Podien</span></div>
                 <div class="erc-stat"><span class="erc-stat__val">@bestFinish</span><span class="erc-stat__lbl">Best&nbsp;Finish</span></div>
-                <div class="erc-stat"><span class="erc-stat__val">@Model?.TotalPoints</span><span class="erc-stat__lbl">Punkte</span></div>
+                <div class="erc-stat"><span class="erc-stat__val">@PointsFormatHelper.Format(Model?.TotalPoints)</span><span class="erc-stat__lbl">Punkte</span></div>
                 <div class="erc-stat"><span class="erc-stat__val">@(winRate)%</span><span class="erc-stat__lbl">Win-Rate</span></div>
             </div>
 

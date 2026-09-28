@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -129,6 +130,9 @@ public class AdminTelemetryController : Controller
                 .ToListAsync(HttpContext.RequestAborted),
             // Reserven/Gäste stammen aus dem Roh-Payload (Reprozessierung für die Anzeige).
             Parsed = TelemetryRaceParser.Parse(pending.SourcePayload).Result,
+            // Faktor-Vorschlag aus der gemeldeten Distanz; ohne Distanzangabe bleibt es bei 100 %.
+            SuggestedPointsPercent = RacePointsFactor.DeriveFromDistance(pending.TotalLaps, pending.CompletedLaps),
+            CompletedPercent = RacePointsFactor.PercentCompleted(pending.TotalLaps, pending.CompletedLaps),
         };
 
         return View("~/Views/Admin/Telemetry/Detail.cshtml", vm);
@@ -157,12 +161,15 @@ public class AdminTelemetryController : Controller
             .ToList();
 
         // Datums-Feld geleert (datetime-local liefert dann default) → auf „jetzt" ausweichen,
-        // damit RaceResult.Date nie auf 0001-01-01 fällt.
-        var date = input.Date == default(DateTime) ? DateTime.UtcNow : input.Date;
+        // damit RaceResult.Date nie auf 0001-01-01 fällt. DateTime.Now (nicht UtcNow), weil
+        // RaceResult.Date projektweit Wanduhrzeit ist — sonst trüge dieselbe Spalte zwei
+        // Semantiken (siehe Docs/Features/Zeitzonen-Konvention.md).
+        var date = input.Date == default(DateTime) ? DateTime.Now : input.Date;
 
         var result = await _promotion.PromoteAsync(
             input.PendingId, input.LeagueId, input.Track, date, input.Season,
-            finishes, input.FastestLapDriver, admin, HttpContext.RequestAborted);
+            finishes, input.FastestLapDriver, admin,
+            RacePointsFactor.Normalize(input.PointsPercent), HttpContext.RequestAborted);
 
         TempData["AdminMessage"] = result.Ok
             ? $"Ergebnis als Rennen übernommen (Race #{result.RaceResultId}). Tabellen neu berechnet."

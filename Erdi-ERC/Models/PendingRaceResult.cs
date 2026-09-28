@@ -36,6 +36,17 @@ public class PendingRaceResult
     [MaxLength(128)]
     public string? SourceLeague { get; set; }
 
+    /// <summary>Soll-Runden der Session aus dem Payload. Null = App hat keine geschickt
+    /// (alte Version, Zeitrennen) — dann bleibt der Punkte-Faktor bei 100 %.</summary>
+    public int? TotalLaps { get; set; }
+
+    /// <summary>Vom Führenden tatsächlich absolvierte Runden aus dem Payload. Zusammen mit
+    /// <see cref="TotalLaps"/> ergibt das die gefahrene Quote (siehe
+    /// <see cref="Erdi_ERC.Helpers.RacePointsFactor.DeriveFromDistance"/>).
+    /// Bewusst Rohdaten statt eines fertigen Faktors — so wirkt eine spätere Regeländerung
+    /// auch auf bereits eingegangene Entwürfe.</summary>
+    public int? CompletedLaps { get; set; }
+
     /// <summary>Fahrer-Profil (DiscordId) des Key-Inhabers, der das Ergebnis gesendet hat.</summary>
     [MaxLength(32)]
     public string? SenderDiscordId { get; set; }

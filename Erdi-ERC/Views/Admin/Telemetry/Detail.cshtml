@@ -115,6 +115,27 @@
                                    value="@(pending.SourceSeason ?? "")" maxlength="32"
                                    placeholder="leer = Liga-Saison" />
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="pointsPercent">Punkte-Faktor</label>
+                            <select id="pointsPercent" name="PointsPercent" class="adm-form-select">
+                                @foreach (var percent in RacePointsFactor.AllowedPercents)
+                                {
+                                    <option value="@percent" selected="@(percent == Model.SuggestedPointsPercent ? "selected" : null)">
+                                        @percent % Punkte@(percent == Model.SuggestedPointsPercent ? " (abgeleitet)" : "")
+                                    </option>
+                                }
+                            </select>
+                            <div class="form-text">
+                                @if (Model.CompletedPercent.HasValue)
+                                {
+                                    <text>Aus dem Payload abgeleitet: @pending.CompletedLaps / @pending.TotalLaps Runden (@Model.CompletedPercent %) — bitte prüfen, bei Bedarf übersteuern.</text>
+                                }
+                                else
+                                {
+                                    <text>Keine Distanz im Payload — Annahme: voll gewertet.</text>
+                                }
+                            </div>
+                        </div>
                         <div class="col-12">
                             <label class="form-label" for="fastestLapDriver">Schnellste Runde (Fahrer)</label>
                             <input type="text" id="fastestLapDriver" name="FastestLapDriver" class="adm-form-input"

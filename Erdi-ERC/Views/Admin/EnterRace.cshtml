@@ -147,13 +147,24 @@
                 <input type="hidden" name="fastestLapDriver" value="@fastestLapPrefill" />
 
                 <div class="row g-3 mb-4">
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         <label class="form-label">Datum & Uhrzeit</label>
                         <input class="form-control" type="datetime-local" name="date" required value="@(isEdit ? existing!.Date.ToString("yyyy-MM-ddTHH:mm") : DateTime.Now.ToString("yyyy-MM-ddTHH:mm"))" />
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         <label class="form-label">Strecke</label>
                         <input class="form-control" type="text" name="track" required placeholder="z. B. Australien" value="@(isEdit ? existing!.Track : "")" />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label">Punkte-Faktor</label>
+                        @{ var prefillPercent = isEdit ? existing!.PointsPercent : RacePointsFactor.Full; }
+                        <select class="form-select" name="pointsPercent" title="Bei abgebrochenen Rennen nur einen Teil der Punkte vergeben">
+                            @foreach (var percent in RacePointsFactor.AllowedPercents)
+                            {
+                                <option value="@percent" selected="@(percent == prefillPercent ? "selected" : null)">@percent % Punkte</option>
+                            }
+                        </select>
+                        <div class="form-text">100 % = regulär gewertet. 50 % / 75 % bei Rennabbruch — die Tabelle zeigt dann Bruchteile (50 % aus 25 = 12,5).</div>
                     </div>
                 </div>
 
@@ -917,6 +928,19 @@
                     const fastestLapInput = form.querySelector('input[name="fastestLapDriver"]');
                     if (fastestLapInput) fastestLapInput.value = data.fastestLapDriver || '';
 
+                    // Rennabbruch: der Telemetrie-Export führt totalLaps/numLaps mit → Faktor
+                    // vorbelegen. Nur wenn eine Distanz vorliegt (sonst bliebe eine bewusste
+                    // Auswahl des Admins nicht stehen) und nur bei echter Verkürzung als Hinweis.
+                    const pointsSelect = form.querySelector('select[name="pointsPercent"]');
+                    let pointsNote = null;
+                    if (pointsSelect && data.totalLaps != null && data.suggestedPointsPercent != null) {
+                        pointsSelect.value = String(data.suggestedPointsPercent);
+                        if (data.suggestedPointsPercent < 100) {
+                            pointsNote = `Punkte-Faktor ${data.suggestedPointsPercent} %`
+                                + ` (${data.completedLaps} / ${data.totalLaps} Runden)`;
+                        }
+                    }
+
                     const parts = [
                         `${data.entries.length} Zeilen übernommen`,
                         `${filled} Fahrer zugeordnet`,
@@ -924,7 +948,8 @@
                         qualiCount > 0 ? `${qualiCount} Quali gesetzt` : null,
                         data.fastestLapDriver ? `Schnellste Runde: ${data.fastestLapDriver}` : null,
                         lappedCount > 0 ? `${lappedCount} überrundet` : null,
-                        dnfCount > 0 ? `${dnfCount} DNF erkannt` : null
+                        dnfCount > 0 ? `${dnfCount} DNF erkannt` : null,
+                        pointsNote
                     ].filter(Boolean);
                     setRaceCsvStatus(parts.join(' · '), needsDriver > 0 ? 'warn' : '');
                 } catch {
