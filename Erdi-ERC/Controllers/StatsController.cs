@@ -476,7 +476,8 @@ namespace Erdi_ERC.Controllers
         {
             public string DisplayName { get; set; } = string.Empty;
             public string LastTeam { get; set; } = string.Empty;
-            public int TotalPoints { get; set; }
+            /// <summary>Summe über alle Saisons. Dezimal, weil abgebrochene Rennen Bruchteile vergeben.</summary>
+            public decimal TotalPoints { get; set; }
             public int Entries { get; set; }
             public HashSet<string> Seasons { get; } = new(StringComparer.OrdinalIgnoreCase);
         }
@@ -521,7 +522,7 @@ namespace Erdi_ERC.Controllers
                         continue;
                     }
 
-                    var points = pointsCol < row.Count ? ParseIntCell(row[pointsCol]) : 0;
+                    var points = pointsCol < row.Count ? ParseDecimalCell(row[pointsCol]) : 0m;
                     var team = teamCol >= 0 && teamCol < row.Count
                         ? (row[teamCol] ?? string.Empty).Trim()
                         : string.Empty;
@@ -588,7 +589,7 @@ namespace Erdi_ERC.Controllers
                 {
                     rank.ToString(),
                     item.DisplayName,
-                    item.TotalPoints.ToString(),
+                    PointsFormatHelper.Format(item.TotalPoints),
                     item.Seasons.Count.ToString(),
                     item.LastTeam
                 });
@@ -619,27 +620,12 @@ namespace Erdi_ERC.Controllers
             return -1;
         }
 
-        private static int ParseIntCell(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return 0;
-            }
-
-            var trimmed = value.Trim();
-            if (int.TryParse(trimmed, out var direct))
-            {
-                return direct;
-            }
-
-            if (int.TryParse(trimmed, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.GetCultureInfo("de-DE"), out var de))
-            {
-                return de;
-            }
-
-            var onlyNumber = new string(trimmed.Where(c => char.IsDigit(c) || c == '-' || c == '+').ToArray());
-            return int.TryParse(onlyNumber, out var cleaned) ? cleaned : 0;
-        }
+        /// <summary>
+        /// Liest einen Punkte-Wert aus einer Tabellenzelle. Delegiert an
+        /// <see cref="PointsFormatHelper.Parse"/>, damit Zell-Parsing und Formular-Parsing
+        /// dieselbe Regel haben („12,5" und „12.5" → 12,5).
+        /// </summary>
+        private static decimal ParseDecimalCell(string? value) => PointsFormatHelper.Parse(value);
 
         private async Task<List<EwigeListeSheetViewModel>> BuildLiveEwigeSheetsAsync()
         {
@@ -751,7 +737,7 @@ namespace Erdi_ERC.Controllers
                     };
 
                     cells.AddRange(row.RaceValues);
-                    cells.Add(row.Points.ToString());
+                    cells.Add(PointsFormatHelper.Format(row.Points));
                     cells.Add(row.Podiums.ToString());
                     cells.Add(row.Wins.ToString());
                     driverSheet.Rows.Add(cells);
@@ -759,8 +745,11 @@ namespace Erdi_ERC.Controllers
 
                 result.Add(driverSheet);
 
+                // „Ohne Team" wird hier nicht geführt: der Finish-Filter unten verlangt ein
+                // nicht-leeres Team, die Zeile hätte also nie Zahlen (siehe ConstructorTeamHelper).
                 var teamNames = standings
-                    .Select(s => string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team.Trim())
+                    .Select(s => ConstructorTeamHelper.LabelFor(s.Team))
+                    .Where(t => !ConstructorTeamHelper.IsNoTeamBucket(t))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .OrderBy(x => x)
                     .ToList();
@@ -836,7 +825,7 @@ namespace Erdi_ERC.Controllers
                 {
                     var cells = new List<string> { row.Team };
                     cells.AddRange(row.RaceValues);
-                    cells.Add(row.Points.ToString());
+                    cells.Add(PointsFormatHelper.Format(row.Points));
                     cells.Add(row.Podiums.ToString());
                     cells.Add(row.Wins.ToString());
                     teamSheet.Rows.Add(cells);

@@ -82,15 +82,16 @@ namespace Erdi_ERC.Models
         public string Driver { get; set; } = string.Empty;
         public string Team { get; set; } = string.Empty;
         public int? DriverNumber { get; set; }
-        public int Points { get; set; }
+        /// <summary>Dezimal, weil abgebrochene Rennen Bruchteile vergeben (50 % aus 25 = 12,5).</summary>
+        public decimal Points { get; set; }
         public int Wins { get; set; }
         /// <summary>Manueller Punkte-Bonus/-Malus, der bei jeder Neuberechnung erhalten bleibt
         /// und auf die aus den Rennen abgeleiteten Punkte addiert wird (z.B. Strafpunkte).</summary>
-        public int PointsAdjustment { get; set; }
+        public decimal PointsAdjustment { get; set; }
         public bool IsReserveDriver { get; set; }
         public string? ReserveForDriver { get; set; }
         public int ReserveStarts { get; set; }
-        public int ReservePointsForMain { get; set; }
+        public decimal ReservePointsForMain { get; set; }
     }
 
     public class RaceResult
@@ -105,6 +106,11 @@ namespace Erdi_ERC.Models
         /// <summary>Saison-Label (z.B. "2026"). Null = nicht zugeordnet. Steuert die
         /// saison-bezogene Tabellen-Berechnung, wenn die Liga eine aktuelle Saison gesetzt hat.</summary>
         public string? Season { get; set; }
+
+        /// <summary>Punkte-Faktor in Prozent, weil das Rennen abgebrochen wurde.
+        /// Erlaubt sind 100 (voll), 75 und 50 — siehe <see cref="Erdi_ERC.Helpers.RacePointsFactor"/>.
+        /// Bestandsrennen laufen über den Default 100 unverändert weiter.</summary>
+        public int PointsPercent { get; set; } = 100;
 
         public List<RaceFinish> Finishes { get; set; } = new();
         public List<RaceReserveAssignment> ReserveAssignments { get; set; } = new();
@@ -227,7 +233,8 @@ namespace Erdi_ERC.Models
         public int Position { get; set; }
         public string Driver { get; set; } = string.Empty;
         public string Team { get; set; } = string.Empty;
-        public int Points { get; set; }
+        /// <summary>Dezimal, weil abgebrochene Rennen Bruchteile vergeben (12,5).</summary>
+        public decimal Points { get; set; }
         public int? RaceTimeMs { get; set; }
         public int? GapToLeaderMs { get; set; }
         public bool FastestLap { get; set; }
@@ -243,7 +250,7 @@ namespace Erdi_ERC.Models
         public int? DriverNumber { get; set; }
         public bool IsReserveDriver { get; set; }
         public string? ReserveForDriver { get; set; }
-        public int TotalPoints { get; set; }
+        public decimal TotalPoints { get; set; }
         public int Wins { get; set; }
         public int Podiums { get; set; }
         public int FastestLaps { get; set; }
@@ -326,7 +333,7 @@ namespace Erdi_ERC.Models
         public string DisplayName { get; set; } = string.Empty;
         public string PrimaryColor { get; set; } = "#888888";
         public string SecondaryColor { get; set; } = "#222222";
-        public int Points { get; set; }
+        public decimal Points { get; set; }
         public int Wins { get; set; }
         public int SecondPlaces { get; set; }
         public int ThirdPlaces { get; set; }
@@ -343,7 +350,7 @@ namespace Erdi_ERC.Models
     public class OverallConstructorLeagueBreakdown
     {
         public string LeagueId { get; set; } = string.Empty;
-        public int Points { get; set; }
+        public decimal Points { get; set; }
         public int Events { get; set; }
         public int Wins { get; set; }
         public int BestPosition { get; set; }

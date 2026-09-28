@@ -454,7 +454,7 @@ namespace Erdi_ERC.Controllers
                 entity.Driver = name;
                 entity.Team = (team?.ElementAtOrDefault(i) ?? string.Empty).Trim();
                 entity.DriverNumber = ParseInt(driverNumber?.ElementAtOrDefault(i));
-                entity.PointsAdjustment = ParseInt(pointsAdjustment?.ElementAtOrDefault(i)) ?? 0;
+                entity.PointsAdjustment = ParsePoints(pointsAdjustment?.ElementAtOrDefault(i));
                 entity.IsReserveDriver = isReserve;
                 entity.ReserveForDriver = isReserve && reserveFor.Length > 0 ? reserveFor : null;
             }
@@ -512,6 +512,12 @@ namespace Erdi_ERC.Controllers
         private static int? ParseInt(string? raw)
             => int.TryParse((raw ?? string.Empty).Trim(), out var v) ? v : null;
 
+        /// <summary>
+        /// Punkte-Anpassung aus dem Formular. Dezimal, weil abgebrochene Rennen Bruchteile
+        /// vergeben — <c>int.TryParse</c> verwarf „12.5" hier stillschweigend zu 0.
+        /// </summary>
+        private static decimal ParsePoints(string? raw) => PointsFormatHelper.Parse(raw);
+
         // ---- Race Entry ----
         [HttpGet]
         public async Task<IActionResult> EnterRace(string leagueId)
@@ -533,7 +539,8 @@ namespace Erdi_ERC.Controllers
             string[]? positions, string[]? raceTimes, string[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
             GuestAssignmentInput[]? guestAssignments = null,
-            string[]? qualiPositions = null)
+            string[]? qualiPositions = null,
+            int pointsPercent = RacePointsFactor.Full)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(track))
             {
@@ -556,6 +563,9 @@ namespace Erdi_ERC.Controllers
                 Track = track.Trim(),
                 FastestLap = fastestLapDriver?.Trim() ?? string.Empty,
                 Winner = string.Empty,
+                // Punkte-Faktor bei Rennabbruch (100/75/50); Normalize fängt jeden
+                // manipulierten Formularwert ab, statt ihn zu übernehmen.
+                PointsPercent = RacePointsFactor.Normalize(pointsPercent),
                 // Neues Rennen automatisch der aktuellen Saison der Liga zuordnen (falls gesetzt).
                 Season = string.IsNullOrWhiteSpace(league.CurrentSeason) ? null : league.CurrentSeason
             };
@@ -617,7 +627,8 @@ namespace Erdi_ERC.Controllers
             string[]? positions, string[]? raceTimes, string[]? penaltySeconds,
             string[]? dnfDrivers, string[]? reserveDrivers, string[]? reserveMainDrivers,
             GuestAssignmentInput[]? guestAssignments = null,
-            string[]? qualiPositions = null)
+            string[]? qualiPositions = null,
+            int pointsPercent = RacePointsFactor.Full)
         {
             if (string.IsNullOrWhiteSpace(leagueId) || string.IsNullOrWhiteSpace(track))
             {
@@ -647,6 +658,7 @@ namespace Erdi_ERC.Controllers
 
             race.Date = date;
             race.Track = track.Trim();
+            race.PointsPercent = RacePointsFactor.Normalize(pointsPercent);
             var resolvedGuests = await ApplyRaceEntriesAsync(race, fastestLapDriver, positions, raceTimes, penaltySeconds, dnfDrivers, reserveDrivers, reserveMainDrivers, guestAssignments, qualiPositions);
 
             await _db.SaveChangesAsync();
@@ -701,6 +713,12 @@ namespace Erdi_ERC.Controllers
                     }),
                 skippedLines = result.SkippedLines,
                 fastestLapDriver = result.FastestLapDriver,
+                // Distanz → Faktor-Vorschlag für den Rennabbruch (Regel liegt zentral in
+                // RacePointsFactor, damit CSV-Pfad und Telemetrie-Pfad identisch ableiten).
+                totalLaps = result.TotalLaps,
+                completedLaps = result.CompletedLaps,
+                suggestedPointsPercent = RacePointsFactor.DeriveFromDistance(result.TotalLaps, result.CompletedLaps),
+                completedPercent = RacePointsFactor.PercentCompleted(result.TotalLaps, result.CompletedLaps),
                 error = result.Error
             });
         }
@@ -918,7 +936,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveRace(int rowId, string leagueId, DateTime date, string track, string? winner = null, string? fastestLap = null)
+        public async Task<IActionResult> SaveRace(int rowId, string leagueId, DateTime date, string track, string? winner = null, string? fastestLap = null, int pointsPercent = RacePointsFactor.Full)
         {
             var race = await _db.RaceResults.AsTracking().FirstOrDefaultAsync(x => x.RowId == rowId);
             if (race is null) return NotFound();
@@ -926,6 +944,7 @@ namespace Erdi_ERC.Controllers
             race.Track = track?.Trim() ?? race.Track;
             race.Winner = string.IsNullOrWhiteSpace(winner) ? race.Winner : winner.Trim();
             race.FastestLap = fastestLap?.Trim() ?? string.Empty;
+            race.PointsPercent = RacePointsFactor.Normalize(pointsPercent);
             await _db.SaveChangesAsync();
             await RecalculateAsync(leagueId);
             await _audit.LogAsync("SaveRace", "RaceResult", rowId.ToString(), $"League={leagueId}, Track={race.Track}, Winner={race.Winner}");
@@ -955,7 +974,8 @@ namespace Erdi_ERC.Controllers
                     Track = race.Track,
                     Winner = race.Winner,
                     FastestLap = race.FastestLap,
-                    Season = race.Season
+                    Season = race.Season,
+                    PointsPercent = race.PointsPercent
                 },
                 Finishes = race.Finishes
                     .Select(f => new RaceFinishSnapshot
@@ -1030,7 +1050,10 @@ namespace Erdi_ERC.Controllers
                 Track = payload.Race.Track,
                 Winner = payload.Race.Winner,
                 FastestLap = payload.Race.FastestLap,
-                Season = payload.Race.Season
+                Season = payload.Race.Season,
+                // Normalize: Snapshots von vor diesem Feld haben den Default 100 (siehe
+                // RaceResultSnapshot), ein manipulierter Wert darf nicht durchrutschen.
+                PointsPercent = RacePointsFactor.Normalize(payload.Race.PointsPercent)
             };
             _db.RaceResults.Add(restored);
             await _db.SaveChangesAsync();

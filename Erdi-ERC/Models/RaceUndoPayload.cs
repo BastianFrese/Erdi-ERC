@@ -16,6 +16,11 @@ namespace Erdi_ERC.Models
         public string Winner { get; set; } = string.Empty;
         public string FastestLap { get; set; } = string.Empty;
         public string? Season { get; set; }
+
+        /// <summary>Initializer ist Pflicht: Snapshots, die vor diesem Feld geschrieben wurden,
+        /// haben den Wert nicht im JSON — ohne Default würde der Restore 0 % setzen und dem
+        /// wiederhergestellten Rennen alle Punkte nehmen.</summary>
+        public int PointsPercent { get; set; } = 100;
     }
 
     public class RaceFinishSnapshot

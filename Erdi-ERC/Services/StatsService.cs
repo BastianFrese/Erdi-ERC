@@ -113,7 +113,8 @@ namespace Erdi_ERC.Services
 
             // Punkte je Fahrer pro Rennen sammeln, damit Streichresultate (Drop-Scores)
             // nach der vollständigen Saison angewendet werden können.
-            var racePointsByStanding = new Dictionary<DriverStanding, List<int>>();
+            // Dezimal, weil abgebrochene Rennen Bruchteile vergeben (12,5 / 18,75).
+            var racePointsByStanding = new Dictionary<DriverStanding, List<decimal>>();
 
             // Positions-Zähler für den F1-Tiebreaker (meiste 1. Plätze, dann 2., dann 3., …).
             // Keyed über den Namen des aufgelösten Standings (gleiche Attribution wie
@@ -165,7 +166,12 @@ namespace Erdi_ERC.Services
                     }
 
                     var pointsIndex = finish.Position - 1;
-                    var points = pointsIndex >= 0 && pointsIndex < _pointMap.Length ? _pointMap[pointsIndex] : 0;
+                    var basePoints = pointsIndex >= 0 && pointsIndex < _pointMap.Length ? _pointMap[pointsIndex] : 0;
+
+                    // Abgebrochene Rennen vergeben nur einen Anteil (50 % aus 25 = 12,5).
+                    // Der Faktor muss HIER greifen — vor der Reserve-Weitergabe und vor
+                    // raceScores.Add, sonst verschieben sich Streichresultate und Reserve-Punkte.
+                    var points = RacePointsFactor.Apply(basePoints, race.PointsPercent);
 
                     if (!string.IsNullOrWhiteSpace(mappedMainDriver))
                     {
@@ -175,7 +181,7 @@ namespace Erdi_ERC.Services
 
                     if (!racePointsByStanding.TryGetValue(standing, out var raceScores))
                     {
-                        raceScores = new List<int>();
+                        raceScores = new List<decimal>();
                         racePointsByStanding[standing] = raceScores;
                     }
                     raceScores.Add(points);

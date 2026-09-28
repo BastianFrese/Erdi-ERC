@@ -36,6 +36,11 @@ public sealed class TelemetryAcceptInput
     public string Track { get; set; } = string.Empty;
     public string? Season { get; set; }
     public string? FastestLapDriver { get; set; }
+
+    /// <summary>Punkte-Faktor bei Rennabbruch (100/75/50). Vorbelegt aus der Distanz,
+    /// im Formular übersteuerbar.</summary>
+    public int PointsPercent { get; set; } = Erdi_ERC.Helpers.RacePointsFactor.Full;
+
     public List<PendingRaceFinishInput> Finishes { get; set; } = new();
 }
 
@@ -57,4 +62,12 @@ public sealed class TelemetryDetailViewModel
     /// (der Pending hält diese bewusst nicht als eigene Tabellen).
     /// </summary>
     public Erdi_ERC.Services.ParsedTelemetryResult? Parsed { get; set; }
+
+    /// <summary>Aus der Distanz abgeleiteter Faktor-Vorschlag (100/75/50) für die
+    /// Vorbelegung des Punkte-Selects. 100, wenn keine Distanz vorliegt.</summary>
+    public int SuggestedPointsPercent { get; set; } = Erdi_ERC.Helpers.RacePointsFactor.Full;
+
+    /// <summary>Gefahrene Quote in Prozent für die Anzeige („31 / 44 Runden (70 %)"),
+    /// oder null ohne Distanzangabe.</summary>
+    public int? CompletedPercent { get; set; }
 }

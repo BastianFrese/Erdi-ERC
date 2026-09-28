@@ -46,7 +46,7 @@
                     <div class="f1-constructors-podium__step f1-constructors-podium__step--p@(row.Position)" style="--team-color:@row.PrimaryColor;">
                         <div class="f1-constructors-podium__rank">P@(row.Position)</div>
                         <div class="f1-constructors-podium__name">@row.DisplayName</div>
-                        <div class="f1-constructors-podium__pts"><strong>@row.Points</strong> <span>Pkt.</span></div>
+                        <div class="f1-constructors-podium__pts"><strong>@PointsFormatHelper.Format(row.Points)</strong> <span>Pkt.</span></div>
                         <div class="f1-constructors-podium__meta">@row.Wins Sieg · @row.Podiums Podest</div>
                     </div>
                 }
@@ -104,7 +104,7 @@
                                     </button>
                                 </div>
                             </td>
-                            <td class="col-num"><strong>@row.Points</strong></td>
+                            <td class="col-num"><strong>@PointsFormatHelper.Format(row.Points)</strong></td>
                             <td class="col-num">@row.Wins / @row.SecondPlaces / @row.ThirdPlaces</td>
                             <td class="col-num">@row.Top5</td>
                             <td class="col-num">@row.Top10</td>
@@ -125,7 +125,7 @@
                                                     <span class="f1-constructors-breakdown__league">
                                                         @(leagueById.TryGetValue(line.LeagueId, out var n) ? n : line.LeagueId)
                                                     </span>
-                                                    <span class="f1-constructors-breakdown__pkt"><strong>@line.Points</strong> Pkt.</span>
+                                                    <span class="f1-constructors-breakdown__pkt"><strong>@PointsFormatHelper.Format(line.Points)</strong> Pkt.</span>
                                                     <span class="f1-constructors-breakdown__meta">
                                                         @line.Events Rennen · @line.Wins Siege@(line.BestPosition > 0 ? $" · Best P{line.BestPosition}" : "")
                                                     </span>

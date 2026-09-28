@@ -120,7 +120,7 @@
     <partial name="_F1StatTile" model="@(new F1StatTileVm {
         IconLucide = "star",
         Label      = "Punkte",
-        Value      = Model.TotalPoints.ToString(),
+        Value      = PointsFormatHelper.Format(Model.TotalPoints),
         Sub        = $"Gesamt · {Model.Races.Count} Rennen"
     })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm {

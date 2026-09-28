@@ -397,4 +397,78 @@ public class RaceCsvParserTests
         Assert.Equal(2, result.Entries[0].QualifyingPosition);
         Assert.False(result.Entries[1].IsDnf);
     }
+
+    // ── Rennabbruch: Distanz für die Faktor-Ableitung ───────────────────────────
+
+    [Fact]
+    public void Parse_TelemetrySample_ReportsDrivenLapsButNoTargetDistance()
+    {
+        // Der heutige Exporter führt numLaps, aber (noch) keine Soll-Distanz mit.
+        // Es darf deshalb KEINE Verkürzung abgeleitet werden — das Rennen bleibt voll.
+        var result = RaceCsvParser.Parse(TelemetrySample);
+
+        Assert.Equal(36, result.CompletedLaps); // Maximum der gewerteten Fahrer
+        Assert.Null(result.TotalLaps);          // Spalte fehlt in diesem Export
+        Assert.Equal(Erdi_ERC.Helpers.RacePointsFactor.Full,
+            Erdi_ERC.Helpers.RacePointsFactor.DeriveFromDistance(result.TotalLaps, result.CompletedLaps));
+    }
+
+    [Fact]
+    public void Parse_TelemetryWithTotalLapsColumn_ReportsBothDistances()
+    {
+        // Abgebrochenes Rennen: 31 von 44 Runden → 50 % (F1-analoge Schwelle).
+        var result = RaceCsvParser.Parse("""
+            position;name;team;raceNumber;numLaps;gridPosition;points;resultStatus;bestLapMs;totalRaceSeconds;penaltiesTime;numPenalties;totalLaps
+            1;Alice;McLaren;81;31;1;25;Finished;90123;1800.5;0;0;44
+            2;Bob;Mercedes;1;31;3;18;Finished;91234;1811.0;0;0;44
+            3;Carol;Ferrari;55;28;2;15;DidNotFinish;93000;1500.0;0;0;44
+            """);
+
+        Assert.Equal(44, result.TotalLaps);
+        Assert.Equal(31, result.CompletedLaps); // Carols 28 Runden zählen nicht (DNF)
+        Assert.Equal(Erdi_ERC.Helpers.RacePointsFactor.Half,
+            Erdi_ERC.Helpers.RacePointsFactor.DeriveFromDistance(result.TotalLaps, result.CompletedLaps));
+    }
+
+    [Fact]
+    public void Parse_TelemetryWithTotalLapsColumn_HeaderOrderDoesNotMatter()
+    {
+        // Die Spalten werden über die Kopfzeile gemappt — totalLaps darf überall stehen.
+        var result = RaceCsvParser.Parse("""
+            totalLaps;position;name;team;raceNumber;numLaps;gridPosition;points;resultStatus;bestLapMs;totalRaceSeconds;penaltiesTime;numPenalties
+            44;1;Alice;McLaren;81;44;1;25;Finished;90123;3600.5;0;0
+            44;2;Bob;Mercedes;1;33;3;18;Finished;91234;3700.0;0;0
+            """);
+
+        Assert.Equal(44, result.TotalLaps);
+        Assert.Equal(44, result.CompletedLaps);
+        Assert.Equal(Erdi_ERC.Helpers.RacePointsFactor.Full,
+            Erdi_ERC.Helpers.RacePointsFactor.DeriveFromDistance(result.TotalLaps, result.CompletedLaps));
+    }
+
+    [Fact]
+    public void Parse_TelemetryWithZeroTotalLaps_ReportsNoTargetDistance()
+    {
+        // Zeitrennen/Replays schreiben 0 als Soll-Distanz → keine Ableitung (keine 0-Runden-Quote).
+        var result = RaceCsvParser.Parse("""
+            position;name;team;raceNumber;numLaps;gridPosition;points;resultStatus;bestLapMs;totalRaceSeconds;penaltiesTime;numPenalties;totalLaps
+            1;Alice;McLaren;81;20;1;25;Finished;90123;1800.5;0;0;0
+            2;Bob;Mercedes;1;19;3;18;Finished;91234;1811.0;0;0;0
+            """);
+
+        Assert.Null(result.TotalLaps);
+        Assert.Equal(20, result.CompletedLaps);
+        Assert.Equal(Erdi_ERC.Helpers.RacePointsFactor.Full,
+            Erdi_ERC.Helpers.RacePointsFactor.DeriveFromDistance(result.TotalLaps, result.CompletedLaps));
+    }
+
+    [Fact]
+    public void Parse_GameExport_HasNoLapDistance()
+    {
+        // Der F1-Spiel-Export kennt keine Runden-Spalte → manuelle Faktor-Wahl bleibt.
+        var result = RaceCsvParser.Parse(UserSample);
+
+        Assert.Null(result.TotalLaps);
+        Assert.Null(result.CompletedLaps);
+    }
 }

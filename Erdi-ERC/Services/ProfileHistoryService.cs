@@ -83,7 +83,8 @@ namespace Erdi_ERC.Services
                 .ToListAsync(ct);
 
             var races = new List<DriverRaceEntry>();
-            int wins = 0, podiums = 0, fastest = 0, totalPoints = 0;
+            int wins = 0, podiums = 0, fastest = 0;
+            decimal totalPoints = 0;
             string? team = null;
             int? driverNumber = null;
 

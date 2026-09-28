@@ -11,11 +11,16 @@
     {
         var resolved = RaceTeamHelper.ResolveTeamForRaceDriver(
             Model.League.Standings, race, driver);
-        return string.IsNullOrWhiteSpace(resolved) ? "Ohne Team" : resolved;
+        return ConstructorTeamHelper.LabelFor(resolved);
     }
 
+    // „Ohne Team" ist immer ein Kandidat: Finishes ohne auflösbares Team (Fahrer nicht im
+    // Kader, Gast ohne Zuordnung) dürfen nicht stillschweigend aus der Wertung fallen.
+    // Sichtbar wird die Zeile nur, wenn dort Punkte liegen (ConstructorTeamHelper) — und
+    // die Gesamtwertung zählt dieselben Finishes, sonst weichen beide Tabellen ab.
     var allTeamNames = Model.League.Standings
-        .Select(s => string.IsNullOrWhiteSpace(s.Team) ? "Ohne Team" : s.Team.Trim())
+        .Select(s => ConstructorTeamHelper.LabelFor(s.Team))
+        .Append(ConstructorTeamHelper.NoTeamLabel)
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
 
@@ -50,9 +55,13 @@
         {
             var finishes = finishStatsByTeam.TryGetValue(team, out var fs) ? fs : new List<Erdi_ERC.Models.RaceFinish>();
             var validFinishes = finishes.Where(f => f.Position > 0).ToList();
+            // Faktor je Rennen: abgebrochene Rennen vergeben nur einen Anteil
+            // (siehe RacePointsFactor) — dieselbe Regel wie in der Fahrertabelle.
             var points = Model.Races.Sum(r => r.Finishes
                 .Where(f => f.Position > 0 && ResolveTeamForRaceDriver(r, f.Driver).Equals(team, StringComparison.OrdinalIgnoreCase))
-                .Sum(f => f.Position >= 1 && f.Position <= pointMap.Length ? pointMap[f.Position - 1] : 0));
+                .Sum(f => RacePointsFactor.Apply(
+                    f.Position >= 1 && f.Position <= pointMap.Length ? pointMap[f.Position - 1] : 0,
+                    r.PointsPercent)));
 
             return new
             {
@@ -76,6 +85,9 @@
                 Events = raceIdsByTeam.TryGetValue(team, out var races) ? races.Count : 0
             };
         })
+        // „Ohne Team" nur führen, wenn dort Punkte liegen: der Bucket entsteht sonst für
+        // jede teamlose Standings-Zeile (auch mit 0 Punkten) und trägt nichts zur Wertung bei.
+        .Where(x => ConstructorTeamHelper.IsVisibleConstructor(x.Team, x.Points))
         .OrderByDescending(x => x.Points)
         .ThenByDescending(x => x.P1)
         .ThenByDescending(x => x.P2)
@@ -187,6 +199,11 @@
                         }
                         <div class="f1-race-card__footer">
                             <span class="f1-race-card__time">@race.Date.ToString("HH:mm")</span>
+                            @if (race.PointsPercent < RacePointsFactor.Full)
+                            {
+                                <span class="badge text-bg-warning text-dark"
+                                      title="Rennen abgebrochen — es werden nur @race.PointsPercent % der Punkte vergeben">@race.PointsPercent % Punkte</span>
+                            }
                             <a class="f1-race-card__link" href="@detailUrl">
                                 Details
                                 <i class="f1-icon" data-lucide="arrow-right" style="width:12px;height:12px;"></i>
@@ -276,9 +293,9 @@
                                         </div>
                                     }
                                 </td>
-                                <td class="text-tech fw-bold is-center">@row.Points</td>
+                                <td class="text-tech fw-bold is-center">@PointsFormatHelper.Format(row.Points)</td>
                                 <td class="text-mono is-center" style="font-size:.8rem; color: var(--ink-4);">
-                                    @(i == 0 ? "—" : $"+{leaderPoints - row.Points}")
+                                    @(i == 0 ? "—" : $"+{PointsFormatHelper.Format(leaderPoints - row.Points)}")
                                 </td>
                                 <td class="text-tech is-center">@row.P1</td>
                                 <td class="text-tech is-center">@row.P2</td>

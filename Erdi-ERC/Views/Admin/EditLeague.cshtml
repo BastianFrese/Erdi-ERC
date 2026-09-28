@@ -79,7 +79,8 @@
                                 @foreach (var undo in recentRaceUndos)
                                 {
                                     <tr>
-                                        <td>@undo.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        @* CreatedAt der Undo-Einträge ist UTC (DateTime.UtcNow). *@
+                                        <td>@undo.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                                         <td>#@undo.OriginalRaceId</td>
                                         <td>@undo.Actor</td>
                                         <td class="text-end">
@@ -351,8 +352,8 @@
                                     </select>
                                 </td>
                                 <td class="text-center fw-semibold">@s.Wins</td>
-                                <td class="text-center fw-semibold">@s.Points</td>
-                                <td><input class="form-control form-control-sm" type="number" name="pointsAdjustment" value="@s.PointsAdjustment" title="+/- Punkte" /></td>
+                                <td class="text-center fw-semibold">@PointsFormatHelper.Format(s.Points)</td>
+                                <td><input class="form-control form-control-sm" type="number" step="0.01" name="pointsAdjustment" value="@PointsFormatHelper.FormatForInput(s.PointsAdjustment)" title="+/- Punkte" /></td>
                                 <td class="text-center"><input class="form-check-input" type="checkbox" name="deleteRowIds" value="@s.RowId" title="Zum Löschen markieren" /></td>
                             </tr>
                         }
@@ -387,7 +388,7 @@
                             </td>
                             <td class="text-center text-muted">–</td>
                             <td class="text-center text-muted">–</td>
-                            <td><input class="form-control form-control-sm" type="number" name="pointsAdjustment" value="0" /></td>
+                            <td><input class="form-control form-control-sm" type="number" step="0.01" name="pointsAdjustment" value="0" /></td>
                             <td class="text-center text-muted">–</td>
                         </tr>
                     </tbody>
@@ -498,6 +499,7 @@
                         <th>Strecke</th>
                         <th>Sieger</th>
                         <th>Schnellste Runde</th>
+                        <th style="width:120px">Punkte</th>
                         <th>Reserve-Einsätze</th>
                         <th style="width:140px"></th>
                     </tr>
@@ -516,6 +518,20 @@
                             <td><input class="form-control form-control-sm" name="track" value="@r.Track" form="@f" required /></td>
                             <td><input class="form-control form-control-sm" name="winner" value="@r.Winner" form="@f" /></td>
                             <td><input class="form-control form-control-sm" name="fastestLap" value="@r.FastestLap" form="@f" /></td>
+                            <td>
+                                <select class="form-select form-select-sm @(r.PointsPercent < RacePointsFactor.Full ? "border-warning" : "")"
+                                        name="pointsPercent" form="@f"
+                                        title="Punkte-Faktor bei Rennabbruch">
+                                    @foreach (var percent in RacePointsFactor.AllowedPercents)
+                                    {
+                                        <option value="@percent" selected="@(percent == r.PointsPercent ? "selected" : null)">@percent %</option>
+                                    }
+                                </select>
+                                @if (r.PointsPercent < RacePointsFactor.Full)
+                                {
+                                    <span class="badge text-bg-warning text-dark mt-1" title="Rennen abgebrochen — es werden nur @r.PointsPercent % der Punkte vergeben">@r.PointsPercent % Punkte</span>
+                                }
+                            </td>
                             <td>
                                 @if (reserveAssignments.Count == 0)
                                 {

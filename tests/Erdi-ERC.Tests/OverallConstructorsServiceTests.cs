@@ -86,14 +86,30 @@ public class OverallConstructorsServiceTests
         Assert.Equal(25, RaceTeamHelper.ComputeTeamPointsForLeague(league, "Mercedes"));
     }
 
+    [Fact]
+    public void RaceTeamHelper_ComputeTeamPointsForLeague_appliesRaceFactor()
+    {
+        // Abgebrochenes Rennen (50 %): das Team erbt den halbierten Fahrer-Anteil.
+        var ctx = new SqliteTestContext();
+        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1));
+        SetRaceFactor(ctx, "pro", 50);
+
+        var league = ctx.Db.Leagues
+            .Include(l => l.Races).ThenInclude(r => r.Finishes)
+            .Include(l => l.Standings)
+            .Single();
+
+        Assert.Equal(12.5m, RaceTeamHelper.ComputeTeamPointsForLeague(league, "Mercedes"));
+    }
+
     // ---- OverallConstructorsService ---------------------------------------------------------
 
     [Fact]
     public async Task ComputeAsync_aggregatesAcrossLeagues_usingCssKey()
     {
         var ctx = new SqliteTestContext();
-        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1), ("Beta", 2));
-        AddLeagueWithRace(ctx, "am",  "Gamma", "mercedes", ("Delta", 1), ("Gamma", 2));
+        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1));
+        AddLeagueWithRace(ctx, "am",  "Gamma", "mercedes", ("Gamma", 2));
 
         var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
@@ -165,8 +181,8 @@ public class OverallConstructorsServiceTests
     public async Task ComputeAsync_ranksByPointsThenDisplayName()
     {
         var ctx = new SqliteTestContext();
-        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1), ("Beta", 2));
-        AddLeagueWithRace(ctx, "am",  "Gamma", "Ferrari",  ("Gamma", 1), ("Delta", 2));
+        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1));
+        AddLeagueWithRace(ctx, "am",  "Gamma", "Ferrari",  ("Gamma", 1));
 
         var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
         var rows = await service.ComputeAsync();
@@ -202,8 +218,10 @@ public class OverallConstructorsServiceTests
         // Wenn der Betreiber in F1ScoringOptions eine kleinere Skala (z.B. Top-3)
         // konfiguriert, muss die Aggregation entsprechend niedrigere Punkte liefern.
         var ctx = new SqliteTestContext();
-        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes",
-            ("Alpha", 1), ("Beta", 2), ("Gamma", 3), ("Delta", 4));
+        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1));
+        // Zweiter punktender Fahrer mit eigenem Team in derselben Liga: er darf Mercedes
+        // nichts geben und prüft zugleich die untere Map-Stufe (P2 → 6).
+        AddLeagueWithRace(ctx, "pro", "Beta", "Ferrari", ("Beta", 2));
 
         var customScoring = Microsoft.Extensions.Options.Options.Create(new F1ScoringOptions
         {
@@ -212,10 +230,11 @@ public class OverallConstructorsServiceTests
         var service = new OverallConstructorsService(ctx.Db, NewCache(), customScoring);
         var rows = await service.ComputeAsync();
 
-        var mercedes = rows.Single();
-        Assert.Equal(10, mercedes.Points); // nur P1 (10), Beta P2 (6) zählt nicht für Mercedes
+        var mercedes = rows.Single(r => r.CssKey == "mercedes");
+        Assert.Equal(10, mercedes.Points); // nur P1 (10) — Beta P2 (6) gehört zu Ferrari
         Assert.Equal(1, mercedes.Wins);
         Assert.Equal(1, mercedes.Events);
+        Assert.Equal(6, rows.Single(r => r.CssKey == "ferrari").Points);
     }
 
     [Fact]
@@ -263,6 +282,77 @@ public class OverallConstructorsServiceTests
         Assert.Equal(1, ferrari.LeaguesRaced);
     }
 
+    // ---- „Ohne Team"-Bucket: gleiche Regel wie Ligaseite und Overlay-Export ----------------
+
+    [Fact]
+    public async Task ComputeAsync_teamlessDriverWithPoints_countsTowardsNoTeamRow()
+    {
+        // Fahrer ohne Team im Kader wird P2 → 21 Punkte. Diese Punkte wurden hier früher
+        // verworfen, während die Ligaseite sie im „Ohne Team"-Bucket mitzählte — dieselben
+        // Rennen, zwei Summen. Jetzt trägt der Bucket sie hier genauso.
+        var ctx = new SqliteTestContext();
+        AddLeagueWithRace(ctx, "pro", "Teamloser", string.Empty, ("Teamloser", 2));
+
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
+        var rows = await service.ComputeAsync();
+
+        var noTeam = Assert.Single(rows);
+        Assert.Equal("Ohne Team", noTeam.DisplayName);
+        Assert.Equal("no-team", noTeam.CssKey); // eigener Schlüssel, landet in HTML-Ids der Tabelle
+        Assert.Equal(21, noTeam.Points);
+    }
+
+    [Fact]
+    public async Task ComputeAsync_unknownTeamName_doesNotMergeIntoNoTeamBucket()
+    {
+        // „Phantom Racing" steht nicht in F1TeamsHelper und landet deshalb auf dem
+        // Fallback-Schlüssel "unknown". Der „Ohne Team"-Bucket darf nicht dort hineinlaufen,
+        // sonst würden die Punkte zweier verschiedener Konstrukteure addiert.
+        var ctx = new SqliteTestContext();
+        AddLeagueWithRace(ctx, "pro", "Phantomfahrer", "Phantom Racing",
+            ("Phantomfahrer", 1), ("Teamloser", 2));
+
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
+        var rows = await service.ComputeAsync();
+
+        Assert.Equal(2, rows.Count);
+        Assert.Equal("Phantom Racing", rows.Single(r => r.CssKey == "unknown").DisplayName);
+        Assert.Equal(25, rows.Single(r => r.CssKey == "unknown").Points);
+        Assert.Equal(21, rows.Single(r => r.CssKey == "no-team").Points);
+    }
+
+    [Fact]
+    public async Task ComputeAsync_scorelessFinishesWithoutTeam_createNoRow()
+    {
+        // P17 liegt außerhalb der Punkteränge (die Map punktet bis P15) — ein Bucket ohne
+        // Punkte darf die Tabelle nicht füllen (ConstructorTeamHelper.IsVisibleConstructor).
+        var ctx = new SqliteTestContext();
+        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1), ("Gast", 17));
+
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
+        var rows = await service.ComputeAsync();
+
+        Assert.Equal("Mercedes", Assert.Single(rows).DisplayName);
+    }
+
+    [Fact]
+    public async Task ComputeAsync_appliesRaceFactorPerLeague()
+    {
+        // Liga "pro" wurde abgebrochen (50 % → 12,5), Liga "am" lief regulär (P2 → 21).
+        // Die Konstrukteurswertung muss mit der Fahrertabelle übereinstimmen.
+        var ctx = new SqliteTestContext();
+        AddLeagueWithRace(ctx, "pro", "Alpha", "Mercedes", ("Alpha", 1));
+        AddLeagueWithRace(ctx, "am", "Gamma", "mercedes", ("Gamma", 2));
+        SetRaceFactor(ctx, "pro", 50);
+
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
+        var rows = await service.ComputeAsync();
+
+        var mercedes = Assert.Single(rows);
+        Assert.Equal(33.5m, mercedes.Points); // 12,5 + 21
+        Assert.Equal("mercedes", mercedes.CssKey);
+    }
+
     // ---- Helpers ----------------------------------------------------------------------
 
     private static void AddLeagueWithRace(
@@ -292,5 +382,15 @@ public class OverallConstructorsServiceTests
             ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = d, Position = p });
         }
         ctx.Db.SaveChanges();
+    }
+
+    /// <summary>Setzt den Punkte-Faktor (Rennabbruch) auf alle Rennen einer Liga.
+    /// <c>ExecuteUpdate</c>, weil der Test-Kontext (wie die App) NoTracking-Default hat —
+    /// eine Mutation an einer gelesenen Entität würde sonst still verpuffen.</summary>
+    private static void SetRaceFactor(SqliteTestContext ctx, string leagueId, int pointsPercent)
+    {
+        ctx.Db.RaceResults
+            .Where(r => r.LeagueId == leagueId)
+            .ExecuteUpdate(s => s.SetProperty(r => r.PointsPercent, pointsPercent));
     }
 }

@@ -650,7 +650,11 @@ namespace Erdi_ERC.Controllers
                 .Select(x => new
                 {
                     Team = ResolveTeamForExport(league, x.Race, x.Finish.Driver),
-                    Position = x.Finish.Position
+                    Position = x.Finish.Position,
+                    // Faktor je Rennen: abgebrochene Rennen vergeben nur einen Anteil
+                    // (siehe RacePointsFactor) — sonst weicht das Archiv-Excel von der
+                    // Teamwertung auf der Seite ab.
+                    x.Race.PointsPercent
                 })
                 .Where(x => !string.IsNullOrWhiteSpace(x.Team))
                 .GroupBy(x => x.Team, StringComparer.OrdinalIgnoreCase)
@@ -662,9 +666,10 @@ namespace Erdi_ERC.Controllers
                     Punkte = g.Sum(x =>
                     {
                         var idx = x.Position - 1;
-                        return idx >= 0 && idx < 15
+                        var basePoints = idx >= 0 && idx < 15
                             ? new[] { 25, 21, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1 }[idx]
                             : 0;
+                        return RacePointsFactor.Apply(basePoints, x.PointsPercent);
                     })
                 })
                 .OrderByDescending(x => x.Punkte)

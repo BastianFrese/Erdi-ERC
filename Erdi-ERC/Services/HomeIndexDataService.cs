@@ -14,7 +14,7 @@ namespace Erdi_ERC.Services
     public sealed record HomeLeaguePreview(string Id, string Name, string? Description, int Drivers, HomeLeagueNextEvent? NextEvent);
     public sealed record HomeLastWinner(
         string Id, string Name, string? Winner, string? Track, DateTime? Date,
-        int? DriverPoints, string? WinnerTeam, int? TeamPoints,
+        decimal? DriverPoints, string? WinnerTeam, decimal? TeamPoints,
         bool IsReserveWinner, string? ReserveForDriver, string? ReserveForInRace,
         bool IsGuestWinner, string? GuestForMain);
 
@@ -99,10 +99,14 @@ namespace Erdi_ERC.Services
                 .Where(s => currentLeagueIds.Contains(s.LeagueId) && !string.IsNullOrWhiteSpace(s.Driver))
                 .CountAsync(ct);
             var raceCount = await _db.RaceResults.CountAsync(ct);
-            var upcomingCount = await _db.RaceWeekendLegs.CountAsync(l => l.Date >= DateTime.UtcNow.Date, ct);
+            // RaceWeekendLeg.Date ist Wanduhrzeit (aus dem Admin-Kalender) → in Lokalzeit
+            // vergleichen. Vorher stand hier UtcNow, während weiter unten dieselbe Spalte
+            // gegen DateTime.Today geprüft wurde: Zähler und Liste konnten um einen Tag
+            // auseinanderlaufen (siehe Docs/Features/Zeitzonen-Konvention.md).
+            var upcomingCount = await _db.RaceWeekendLegs.CountAsync(l => l.Date >= DateTime.Today, ct);
 
             var nextUpcomingEvent = await _db.RaceWeekendLegs
-                .Where(l => l.Date >= DateTime.UtcNow)
+                .Where(l => l.Date >= DateTime.Now)
                 .OrderBy(l => l.Date)
                 .Select(l => new HomeNextEvent(
                     l.Weekend!.Track,
@@ -136,8 +140,11 @@ namespace Erdi_ERC.Services
 
             // Laufende Giveaways (Zeitraum-basiert): nur StartAt ≤ jetzt ≤ EndAt,
             // nächste Deadline zuerst. Vergangene tauchen gar nicht erst auf.
+            // StartAt/EndAt sind Wanduhrzeit aus dem Admin-Formular → Vergleich in
+            // Lokalzeit; mit UtcNow wurde das Giveaway im Sommer erst 2 h nach seinem
+            // Start aktiv (und lief entsprechend 2 h zu lange).
             var activeGiveaways = await _db.Giveaways
-                .Where(x => x.StartAt <= DateTime.UtcNow && x.EndAt >= DateTime.UtcNow)
+                .Where(x => x.StartAt <= DateTime.Now && x.EndAt >= DateTime.Now)
                 .OrderBy(x => x.EndAt)
                 .ToListAsync(ct);
 

@@ -92,7 +92,11 @@ namespace Erdi_ERC.Data
                 b.Property(x => x.Driver).HasMaxLength(128).IsRequired();
                 b.Property(x => x.Team).HasMaxLength(128);
                 b.Property(x => x.ReserveForDriver).HasMaxLength(128);
-                b.Property(x => x.PointsAdjustment).HasDefaultValue(0);
+                // Punkte sind dezimal, weil abgebrochene Rennen Bruchteile vergeben (12,5 / 18,75).
+                // Ohne explizite Präzision legt MariaDB decimal(65,30) an.
+                b.Property(x => x.Points).HasPrecision(9, 2);
+                b.Property(x => x.PointsAdjustment).HasPrecision(9, 2).HasDefaultValue(0m);
+                b.Property(x => x.ReservePointsForMain).HasPrecision(9, 2);
                 // Hot-Query: Layout-Service & viele Controller filtern auf (LeagueId, Driver).
                 b.HasIndex(x => new { x.LeagueId, x.Driver });
                 b.HasIndex(x => new { x.LeagueId, x.DriverNumber }).IsUnique();
@@ -107,6 +111,8 @@ namespace Erdi_ERC.Data
                 b.Property(x => x.Winner).HasMaxLength(128);
                 b.Property(x => x.FastestLap).HasMaxLength(128);
                 b.Property(x => x.Season).HasMaxLength(32);
+                // Abbruch-Faktor: Bestandsrennen laufen über den Default 100 unverändert weiter.
+                b.Property(x => x.PointsPercent).HasDefaultValue(100);
                 // Hot-Queries: Latest-Race (Layout), LeagueResults, AllRaces – alle filtern auf LeagueId und sortieren nach Date.
                 b.HasIndex(x => new { x.LeagueId, x.Date });
                 b.HasIndex(x => x.Date);
