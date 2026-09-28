@@ -67,7 +67,9 @@
                         @foreach (var log in Model)
                         {
                             <tr style="border-top:1px solid var(--stroke-1);">
-                                <td class="px-3" style="color:var(--ink-3);white-space:nowrap;font-family:var(--ff-mono,monospace);font-size:.78rem;">@log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                @* CreatedAt wird mit DateTime.UtcNow geschrieben → lokalisieren.
+                                   (Andere Admin-Seiten tun das bereits; hier stand die UTC-Zeit.) *@
+                                <td class="px-3" style="color:var(--ink-3);white-space:nowrap;font-family:var(--ff-mono,monospace);font-size:.78rem;">@log.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
                                 <td style="font-weight:600;">@log.Actor</td>
                                 <td>
                                     <span style="display:inline-flex;align-items:center;padding:.15rem .55rem;border-radius:999px;border:1px solid var(--stroke-1);background:rgba(255,255,255,.05);font-family:var(--ff-tech);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;">

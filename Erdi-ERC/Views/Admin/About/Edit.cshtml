@@ -538,8 +538,9 @@
             @if (!isNew)
             {
                 <div style="margin-top:.75rem;padding:.65rem 1rem;background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);font-size:.65rem;color:var(--ink-4);display:flex;flex-direction:column;gap:.2rem;">
-                    <div><i class="bi bi-clock-history"></i> Erstellt: @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
-                    <div><i class="bi bi-pencil"></i> Zuletzt bearb.: @Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                    @* CreatedAt/UpdatedAt sind UTC (DateTime.UtcNow) → in Lokalzeit anzeigen. *@
+                    <div><i class="bi bi-clock-history"></i> Erstellt: @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                    <div><i class="bi bi-pencil"></i> Zuletzt bearb.: @Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
                     @if (!string.IsNullOrEmpty(Model.LastEditedBy))
                     {
                         <div><i class="bi bi-person"></i> von @Model.LastEditedBy</div>

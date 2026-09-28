@@ -43,7 +43,10 @@ public class LayoutDataServiceTests
         ctx.Db.StreamSchedules.Add(new StreamSchedule
         {
             Title = "Test Stream",
-            StartAt = DateTime.UtcNow.AddMinutes(-10),
+            // StartAt ist Wanduhrzeit (Server-Lokalzeit) — der Stream läuft seit 10 Minuten
+            // und ist damit der aktive Stream. Mit UtcNow geseedet lag der Wert im Sommer
+            // 2 h in der Vergangenheit und galt nicht mehr als laufend.
+            StartAt = DateTime.Now.AddMinutes(-10),
             DurationMinutes = 120
         });
         ctx.Db.TrackSetups.Add(new TrackSetup

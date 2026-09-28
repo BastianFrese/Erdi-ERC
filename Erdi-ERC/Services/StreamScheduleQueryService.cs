@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -6,9 +7,13 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Erdi_ERC.Services
 {
     /// <summary>
-    /// Vereinheitlichte Stream-Schedule-Abfrage. Vergleicht gegen UTC, damit
-    /// Sommer-/Winterzeit-Wechsel keine Drift verursachen und damit Home und
-    /// Admin denselben Termin liefern.
+    /// Vereinheitlichte Stream-Schedule-Abfrage — Home und Admin bekommen denselben Termin.
+    ///
+    /// Alle Vergleiche laufen in SERVER-LOKALZEIT: <c>StreamSchedule.StartAt</c> wird aus
+    /// dem Admin-Formular als lokale Wanduhrzeit gespeichert (siehe
+    /// Docs/Features/Zeitzonen-Konvention.md). Der frühere Vergleich gegen
+    /// <c>DateTime.UtcNow</c> hielt einen Stream im Sommer 2 h zu lange für "kommend"
+    /// und Home/Admin zeigten denselben Termin unterschiedlich an.
     /// </summary>
     public sealed class StreamScheduleQueryService : IStreamScheduleQueryService
     {
@@ -48,15 +53,15 @@ namespace Erdi_ERC.Services
             var schedules = await _db.StreamSchedules.AsNoTracking().ToListAsync(cancellationToken);
             if (schedules.Count == 0) return null;
 
-            // Alle Zeitpunkte werden als UTC behandelt (DB-Storage, Server-Vergleich).
-            var nowUtc = DateTime.UtcNow;
+            // "Jetzt" in Server-Lokalzeit — die Spalte enthält Wanduhrzeit, kein UTC.
+            var nowLocal = DateTime.Now;
 
             return schedules
                 .Select(x =>
                 {
                     var nextStart = x.IsRecurring && x.DayOfWeek.HasValue && x.TimeOfDay.HasValue
-                        ? ComputeNextOccurrenceUtc(x.DayOfWeek.Value, x.TimeOfDay.Value, nowUtc)
-                        : DateTime.SpecifyKind(x.StartAt, DateTimeKind.Utc);
+                        ? StreamScheduleMath.ComputeNextOccurrence(x.DayOfWeek.Value, x.TimeOfDay.Value, nowLocal)
+                        : x.StartAt;
 
                     return new StreamSchedule
                     {
@@ -71,24 +76,9 @@ namespace Erdi_ERC.Services
                         CreatedAt = x.CreatedAt
                     };
                 })
-                .Where(x => x.StartAt >= nowUtc)
+                .Where(x => x.StartAt >= nowLocal)
                 .OrderBy(x => x.StartAt)
                 .FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Berechnet den nächsten UTC-Termin eines wiederkehrenden Streams.
-        /// Liegt der heutige Termin in der Vergangenheit, wird 7 Tage addiert.
-        /// </summary>
-        private static DateTime ComputeNextOccurrenceUtc(int dayOfWeek, TimeSpan timeOfDay, DateTime fromUtc)
-        {
-            var daysUntil = ((dayOfWeek - (int)fromUtc.DayOfWeek) + 7) % 7;
-            var candidate = DateTime.SpecifyKind(fromUtc.Date.AddDays(daysUntil).Add(timeOfDay), DateTimeKind.Utc);
-            if (candidate < fromUtc)
-            {
-                candidate = candidate.AddDays(7);
-            }
-            return candidate;
         }
     }
 }

@@ -149,8 +149,11 @@
                         <div class="adm-stream-card">
                             <div class="adm-stream-card__title">@nextStream.Title</div>
                             <div class="adm-stream-card__meta">
-                                <span><i class="bi bi-calendar3 me-1"></i>@nextStream.StartAt.ToLocalTime().ToString("ddd, dd.MM.yyyy")</span>
-                                <span><i class="bi bi-clock me-1"></i>@nextStream.StartAt.ToLocalTime().ToString("HH:mm") Uhr</span>
+                                @* StartAt ist Wanduhrzeit → roh anzeigen. Mit ToLocalTime() stand hier
+                                   +2 h, während die Startseite denselben Termin roh (also richtig)
+                                   ausgab — Home und Admin widersprachen sich. *@
+                                <span><i class="bi bi-calendar3 me-1"></i>@nextStream.StartAt.ToString("ddd, dd.MM.yyyy")</span>
+                                <span><i class="bi bi-clock me-1"></i>@nextStream.StartAt.ToString("HH:mm") Uhr</span>
                                 <span><i class="bi bi-stopwatch me-1"></i>@nextStream.DurationMinutes min</span>
                             </div>
                             @if (!string.IsNullOrWhiteSpace(nextStream.Url))

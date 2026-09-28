@@ -99,8 +99,11 @@ namespace Erdi_ERC.Services
         {
             try
             {
-                // UtcNow konsistent zur Speicherung in AdminCommunityController (UtcNow für recurring).
-                var now = DateTime.UtcNow;
+                // Server-Lokalzeit: StreamSchedule.StartAt wird als lokale Wanduhrzeit
+                // gespeichert (Admin-Formular, siehe Docs/Features/Zeitzonen-Konvention.md).
+                // Mit DateTime.UtcNow erschien das "Live jetzt"-Banner im Sommer erst 2 h
+                // nach Streamstart und blieb entsprechend 2 h zu lange stehen.
+                var now = DateTime.Now;
                 var candidates = await _db.StreamSchedules
                     .AsNoTracking()
                     .Where(s => s.StartAt <= now)

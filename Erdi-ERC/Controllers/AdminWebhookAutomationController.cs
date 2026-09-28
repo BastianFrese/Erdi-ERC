@@ -62,7 +62,9 @@ namespace Erdi_ERC.Controllers
             {
                 ["Title"] = "Erdi10 Live · Main Division 1",
                 ["Url"] = "https://twitch.tv/erdi10",
-                ["StartAt"] = DateTime.UtcNow.AddDays(1).ToString("dd.MM.yyyy HH:mm")
+                // Platzhalter-Vorschau im Admin: dieselbe Wanduhrzeit-Semantik wie der
+                // echte Stream-Termin (siehe Docs/Features/Zeitzonen-Konvention.md).
+                ["StartAt"] = DateTime.Now.AddDays(1).ToString("dd.MM.yyyy HH:mm")
             },
             [WebhookEvents.HighlightApproved] = new()
             {
