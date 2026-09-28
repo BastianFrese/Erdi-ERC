@@ -755,6 +755,12 @@
                     version: Number(editorConfig?.PayloadVersion) || 2,
                     source: editorConfig?.PayloadSource || 'f1-ingame-style-editor-v2',
                     strategy: strategyInput?.value || null,
+                    // trackKey/lengthKey/strategyPlan werden von applyPayloadToEditor() beim
+                    // Bearbeiten wieder ausgelesen — ohne sie hier gingen die F1-Strategie
+                    // (Strecke, Distanz, generierter Plan) beim Speichern verloren.
+                    trackKey: f1TrackSelect?.value || null,
+                    lengthKey: f1LengthSelect?.value || null,
+                    strategyPlan: f1PlanText?.value || null,
                     categories: {}
                 };
 
