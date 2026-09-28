@@ -1,5 +1,6 @@
 ---
 datum: 2026-08-16
+aktualisiert: 2026-09-28
 tags: [doku, deploy, produktion, dev-staging]
 status: [erledigt]
 ---
@@ -36,13 +37,86 @@ Ziel `$(PublishUrl)app.env`, mit `SkipUnchangedFiles`).
 
 ```powershell
 robocopy "C:\Users\basti\source\repos\Erdi-ERC\Erdi-ERC\bin\Release\net10.0\linux-x64\publish" "T:\" /E /NFL /NDL /NJH /NJS
-# danach auf dem Server:
+# NICHT sofort restarten: erst prüfen, ob die Migration auf der Ziel-DB steht.
+# Der Copy selbst ist unkritisch (der laufende Prozess hält seine DLLs im Speicher).
+# Siehe "Schema muss VOR dem Restart stehen".
+# Danach auf dem Server:
 # systemctl restart erdi-erc
 ```
 
 Kein `/PURGE`/`/MIR`: der Server-Ordner enthält Laufzeitdaten, die im Publish-Output nicht
 vorkommen (`data/`, `logs/`, `downloads/`-Uploads) — die dürfen nicht gelöscht werden.
 `DeleteExistingFiles=false` im Profil schützt sie ebenfalls.
+
+## Schema muss VOR dem Restart stehen
+
+> [!danger] Der Staging-Copy allein ist unkritisch — der **Restart** ist der Punkt, an dem
+> Code und Schema zusammenpassen müssen. Am 2026-09-28 hat ein Restart mit neuem Code gegen
+> ein altes Schema **12 Minuten Totalausfall** verursacht (21:32:56–21:44:20).
+
+Warum das tückisch ist: der laufende Prozess hält seine DLLs im Speicher, ein Copy nach `T:\`
+ändert also nichts. Erst der Restart lädt den neuen Code, und wenn der Spalten erwartet, die
+es noch nicht gibt, bricht **jede** Seite, die sie liest:
+
+```
+System.InvalidCastException: Unable to cast object of type 'System.Int32' to type 'System.Decimal'.
+   at MySqlConnector.Core.Row.GetDecimal(...)
+```
+dazu `Unknown column '<alias>.<NeueSpalte>'`. Betroffen sind nur die Seiten, die die Spalte
+lesen — Startseite, Statistik- und Rennergebnisseiten — während statische Dateien und der
+Login unauffällig weiterlaufen.
+
+> [!warning] **`/health/live` und `/health/ready` bleiben dabei grün.**
+> `live` ist DB-frei, `ready` prüft nur die Verbindung, nicht das Schema. Ein grüner
+> Health-Check beweist hier **nichts** — es muss eine echte inhaltslesende Seite abgerufen
+> werden (z. B. `/`, `/Races/AllRaces`).
+
+### Vor dem Restart: welche Migrationen fehlen?
+
+1. **Was der Build mitbringt** — die letzte Migration im Assembly bzw.:
+   ```bash
+   ASPNETCORE_ENVIRONMENT=Development dotnet ef migrations list --project Erdi-ERC/Erdi-ERC.csproj --startup-project Erdi-ERC/Erdi-ERC.csproj
+   ```
+   (`ASPNETCORE_ENVIRONMENT=Development` ist **Pflicht**, siehe
+   [[project-migration-safety-aug2026]] — ohne sie trifft der Design-Time-Factory die Live-DB.)
+2. **Was die Ziel-DB schon hat:**
+   ```sql
+   SELECT MigrationId FROM __EFMigrationsHistory ORDER BY MigrationId DESC LIMIT 5;
+   ```
+   Die neueste Zeile muss die letzte Migration des Builds sein.
+3. **Falls nicht: erst migrieren, dann restarten.** Ist die Migration nachgezogen, während der
+   neue Code schon läuft, ist **kein weiterer Restart nötig** — der Prozess hat den Code
+   bereits, die Seiten kommen sofort zurück (nur `HomeIndexDataService` hat einen 60-s-Cache).
+
+### Werkzeug (ohne MySQL-Client, ohne SSH)
+
+`T:\` = `\\192.168.100.7\app` ist eingebunden, und `T:\appsettings.Production.json` enthält den
+Prod-Connection-String (`Server=192.168.100.51;Database=erdierc`). Damit ist die Prüfung vom
+Dev-Rechner aus möglich:
+
+- **SQL-Runner** `%TEMP%\erc\proddb.cs` (liest den Connection-String aus `T:\`, maskiert das
+  Passwort, **bricht ab, wenn `SELECT DATABASE()` nicht `erdierc` ist**). Das Sicherheitsnetz
+  nie entfernen — `db.cs` zeigt auf `erditest`, eine Verwechslung wäre still. Liegt im Temp
+  und ist damit flüchtig; nachbauen nach dem `db.cs`-Muster
+  ([[feedback_dev_db_access_without_mysql_client]]).
+- **Logs:** `T:\logs\erdi-erc-YYYYMMDD.log` (Serilog, tagesweise, vollständige Stacktraces).
+  `Application started` / `Hosting environment:` markieren jeden Restart.
+- **Läuft der neue Build?** Über einen Feature-Diskriminator im Response-Header, z. B.
+  `curl -s -o /dev/null -D - https://erdi-erc.de/ | grep -i content-security-policy`.
+  Generell gilt: ein Commit, der einen Header ändert, ist der zuverlässigste Build-Indikator
+  von außen.
+
+### Deploy-Checkliste (Prod)
+
+- [ ] Lokaler Build grün, Tests grün.
+- [ ] Migration ist auf `erditest` angewendet und dort verifiziert.
+- [ ] Publish + robocopy nach `T:\` (ohne `/PURGE`).
+- [ ] `T:\appsettings.json` / `appsettings.Production.json` / `app.env` unverändert (Zeitstempel prüfen).
+- [ ] **`__EFMigrationsHistory` gegen die letzte Migration des Builds abgeglichen** (s. o.).
+- [ ] Bei Bedarf migriert — Rollback-Referenz vorher notiert (Spaltentypen + Defaults aus `information_schema`).
+- [ ] Erst jetzt `systemctl restart erdi-erc`.
+- [ ] Live-Check mit einer **inhaltslesenden** Seite: `/`, `/Races/AllRaces`, `/Stats/EwigeListe` → 200, kein Redirect auf `/Home/Error`.
+- [ ] Fehlerfreiheit im Log bestätigen: `T:\logs\erdi-erc-<heute>.log` nach dem Restart-Zeitpunkt.
 
 ## app.env-Mechanik
 
@@ -105,3 +179,5 @@ exec dotnet /var/www/app/Erdi-ERC.dll
 - `Erdi-ERC/app.env.production.example`
 - `Erdi-ERC/app.env.development.example`
 - [[project-migration-safety-aug2026]] — `db.Database.Migrate()` läuft nur in `IsDevelopment()`, also nie auf Production-Server.
+- [[project_prod_deploy_workflow_sep2026]] — verifizierter Ablauf inkl. Vorfall vom 2026-09-28.
+- [[feedback_prod_diagnostics_without_ssh]] — Logs auf `T:\logs`, Prod-SQL-Runner, Build-Diskriminator.
