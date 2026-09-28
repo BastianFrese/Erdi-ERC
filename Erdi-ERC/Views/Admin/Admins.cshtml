@@ -109,7 +109,8 @@
                                     </span>
                                 }
                                 <code class="adm-admin-row__id">@admin.DiscordId</code>
-                                <span class="adm-admin-row__since">seit @admin.AddedAt.ToString("dd.MM.yyyy")</span>
+                                @* AddedAt = DateTime.UtcNow → in Lokalzeit anzeigen. *@
+                                <span class="adm-admin-row__since">seit @admin.AddedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
                             </div>
                             <div class="adm-admin-row__actions">
                                 <button class="btn btn-xs btn-outline-secondary"

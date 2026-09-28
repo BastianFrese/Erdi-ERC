@@ -253,8 +253,10 @@
                             <div class="adm-item-row__body">
                                 <span class="adm-item-row__title">@item.Title</span>
                                 <div class="adm-item-row__meta">
-                                    <span><i class="bi bi-calendar3 me-1"></i>@item.StartAt.ToLocalTime().ToString("ddd, dd.MM.yyyy")</span>
-                                    <span><i class="bi bi-clock me-1"></i>@item.StartAt.ToLocalTime().ToString("HH:mm") Uhr</span>
+                                    @* StartAt ist Wanduhrzeit (Admin-Formular) — keine Umrechnung.
+                                       ToLocalTime() hätte den Wert um +2 h verschoben. *@
+                                    <span><i class="bi bi-calendar3 me-1"></i>@item.StartAt.ToString("ddd, dd.MM.yyyy")</span>
+                                    <span><i class="bi bi-clock me-1"></i>@item.StartAt.ToString("HH:mm") Uhr</span>
                                     <span><i class="bi bi-stopwatch me-1"></i>@item.DurationMinutes Min.</span>
                                     @if (!string.IsNullOrWhiteSpace(item.Url))
                                     {
@@ -285,7 +287,10 @@
                                 <input type="hidden" name="isRecurring" value="false" />
                                 <div class="col-md-3">
                                     <label class="adm-form-label">Start</label>
-                                    <input class="form-control form-control-sm" type="datetime-local" name="startAt" required value="@item.StartAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+                                    @* Rohwert zurück ins datetime-local: der Wert ist bereits
+                                       lokale Wanduhrzeit. Mit ToLocalTime() wanderte der Termin
+                                       bei jedem Speichern um weitere +2 h nach hinten. *@
+                                    <input class="form-control form-control-sm" type="datetime-local" name="startAt" required value="@item.StartAt.ToString("yyyy-MM-ddTHH:mm")" />
                                 </div>
                                 <div class="col-md-2">
                                     <label class="adm-form-label">Dauer (Min.)</label>
