@@ -79,8 +79,13 @@ namespace Erdi_ERC.Controllers
             }
             catch { formGameYear = null; }
 
+            // AsTracking() ist hier zwingend: der DbContext läuft global mit
+            // NoTrackingWithIdentityResolution (Program.cs) und FindAsync liefert eine
+            // detached Instanz, sobald die Entität nicht schon im ChangeTracker liegt —
+            // genau der Normalfall beim frischen Request. Ohne Tracking würde
+            // SaveChangesAsync() beim Bearbeiten stillschweigend nichts schreiben.
             TrackSetup? entity = id.HasValue && id.Value > 0
-                ? await _db.TrackSetups.FindAsync(id.Value)
+                ? await _db.TrackSetups.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
                 : null;
 
             if (entity is null)
@@ -101,7 +106,7 @@ namespace Erdi_ERC.Controllers
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("SaveTrackSetup", "TrackSetup", entity.Id.ToString(), $"Track={entity.Track}, Tier={entity.RequiredAccessTier}, GameYear={entity.GameYear}");
+            await _audit.LogAndSaveAsync("SaveTrackSetup", "TrackSetup", entity.Id.ToString(), $"Track={entity.Track}, Tier={entity.RequiredAccessTier}, GameYear={entity.GameYear}");
 
             TempData["AdminMessage"] = $"Setup gespeichert. Spieljahr: {(entity.GameYear ?? "(leer)")}";
             return RedirectToAction(nameof(TrackSetups));
@@ -115,7 +120,7 @@ namespace Erdi_ERC.Controllers
             {
                 _db.TrackSetups.Remove(setup);
                 await _db.SaveChangesAsync();
-                await _audit.LogAsync("DeleteTrackSetup", "TrackSetup", id.ToString(), $"Track={setup.Track}");
+                await _audit.LogAndSaveAsync("DeleteTrackSetup", "TrackSetup", id.ToString(), $"Track={setup.Track}");
                 TempData["AdminMessage"] = "Setup gelöscht.";
             }
 
@@ -137,8 +142,10 @@ namespace Erdi_ERC.Controllers
                 return RedirectToAction(nameof(TrackSetups));
             }
 
+            // Wie in SaveTrackSetup: FindAsync liefert unter dem globalen NoTracking-Default
+            // eine detached Instanz → das Bearbeiten eines bestehenden Mappings lief ins Leere.
             SetupAccessRoleMapping? entity = id.HasValue && id.Value > 0
-                ? await _db.SetupAccessRoleMappings.FindAsync(id.Value)
+                ? await _db.SetupAccessRoleMappings.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
                 : null;
 
             if (entity is null)
@@ -152,7 +159,7 @@ namespace Erdi_ERC.Controllers
             entity.Label = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
 
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("SaveSetupAccessRoleMapping", "SetupAccessRoleMapping", entity.Id.ToString(), $"Tier={tier}, RoleId={roleId}");
+            await _audit.LogAndSaveAsync("SaveSetupAccessRoleMapping", "SetupAccessRoleMapping", entity.Id.ToString(), $"Tier={tier}, RoleId={roleId}");
             TempData["AdminMessage"] = "Role-Mapping gespeichert.";
             return RedirectToAction(nameof(TrackSetups));
         }
@@ -165,7 +172,7 @@ namespace Erdi_ERC.Controllers
             {
                 _db.SetupAccessRoleMappings.Remove(mapping);
                 await _db.SaveChangesAsync();
-                await _audit.LogAsync("DeleteSetupAccessRoleMapping", "SetupAccessRoleMapping", id.ToString(), $"Tier={mapping.Tier}");
+                await _audit.LogAndSaveAsync("DeleteSetupAccessRoleMapping", "SetupAccessRoleMapping", id.ToString(), $"Tier={mapping.Tier}");
                 TempData["AdminMessage"] = "Mapping gelöscht.";
             }
 
@@ -191,7 +198,7 @@ namespace Erdi_ERC.Controllers
             profile.ManualSetupTier = tier;
             profile.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("GrantSetupAccess", "DriverProfile", discordId, $"ManualTier={tier}, User={profile.DiscordName}");
+            await _audit.LogAndSaveAsync("GrantSetupAccess", "DriverProfile", discordId, $"ManualTier={tier}, User={profile.DiscordName}");
             TempData["AdminMessage"] = $"Setup-Zugang Tier {tier} an {profile.DiscordName} vergeben. Der User muss sich neu einloggen.";
             return RedirectToAction(nameof(TrackSetups));
         }
@@ -209,7 +216,7 @@ namespace Erdi_ERC.Controllers
             profile.ManualSetupTier = null;
             profile.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("RevokeSetupAccess", "DriverProfile", discordId, $"ManualTier entfernt, User={profile.DiscordName}");
+            await _audit.LogAndSaveAsync("RevokeSetupAccess", "DriverProfile", discordId, $"ManualTier entfernt, User={profile.DiscordName}");
             TempData["AdminMessage"] = $"Manueller Setup-Zugang von {profile.DiscordName} entzogen. Der User muss sich neu einloggen.";
             return RedirectToAction(nameof(TrackSetups));
         }
@@ -238,7 +245,7 @@ namespace Erdi_ERC.Controllers
                 CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
-            await _audit.LogAsync("BlockSetupUser", "SetupBlockedUser", discordId, $"Reason={reason}");
+            await _audit.LogAndSaveAsync("BlockSetupUser", "SetupBlockedUser", discordId, $"Reason={reason}");
             TempData["AdminMessage"] = $"Discord-ID {discordId} wird von Setups ausgeschlossen.";
             return RedirectToAction(nameof(TrackSetups));
         }
@@ -251,7 +258,7 @@ namespace Erdi_ERC.Controllers
             {
                 _db.SetupBlockedUsers.Remove(entry);
                 await _db.SaveChangesAsync();
-                await _audit.LogAsync("UnblockSetupUser", "SetupBlockedUser", discordId!, "Sperre aufgehoben");
+                await _audit.LogAndSaveAsync("UnblockSetupUser", "SetupBlockedUser", discordId!, "Sperre aufgehoben");
             }
             TempData["AdminMessage"] = $"Sperre für {discordId} aufgehoben.";
             return RedirectToAction(nameof(TrackSetups));
