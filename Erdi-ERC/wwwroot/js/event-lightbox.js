@@ -48,6 +48,14 @@
 
     function open(index) {
       show(index);
+      // Overlay an <body> portieren: <main> trägt .page-transition mit
+      // will-change:opacity,transform,filter (10-f1-quickwins.css) und ist damit
+      // Containing-Block für position:fixed — das Overlay hinge sonst an <main>
+      // statt am Viewport und würde beim Scrollen mitwandern. Gleiches Muster wie
+      // das Portal-Menü in site.js.
+      if (lightbox.parentElement !== document.body) {
+        document.body.appendChild(lightbox);
+      }
       lightbox.hidden = false;
       document.body.style.overflow = 'hidden';
     }

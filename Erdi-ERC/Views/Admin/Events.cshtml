@@ -1,10 +1,12 @@
 @model List<Erdi_ERC.Models.RealLifeEvent>
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = "Real-Life Events";
     ViewData["Kicker"] = "Community";
     ViewData["HeroTitle"] = "Real-Life Events";
     var upcomingCount = Model.Count(x => x.IsUpcoming);
     var pastCount     = Model.Count - upcomingCount;
+    // Die Spalte heißt historisch YouTubeUrl, enthält aber jeden Video-Link (siehe VideoEmbedHelper).
     var videoCount    = Model.Count(x => !string.IsNullOrWhiteSpace(x.YouTubeUrl));
     var imageCount    = Model.Sum(x => x.Images?.Count ?? 0) + Model.Count(x => !string.IsNullOrWhiteSpace(x.ImageFileName));
 }
@@ -78,8 +80,8 @@
                     <input class="form-control form-control-sm" name="image" type="file" accept="image/*" />
                 </div>
                 <div class="col-md-4">
-                    <label class="adm-form-label">YouTube-Link (optional)</label>
-                    <input class="form-control form-control-sm" name="youTubeUrl" maxlength="512" placeholder="https://www.youtube.com/watch?v=…" />
+                    <label class="adm-form-label">Video-Link (optional)</label>
+                    <input class="form-control form-control-sm" name="videoUrl" maxlength="512" placeholder="YouTube-Video oder Twitch-Clip" />
                 </div>
                 <div class="col-12">
                     <label class="adm-form-label">Beschreibung</label>
@@ -157,7 +159,22 @@
                                     }
                                     @if (!string.IsNullOrWhiteSpace(ev.YouTubeUrl))
                                     {
-                                        <a href="@ev.YouTubeUrl" target="_blank" rel="noopener" style="color:#ff0000;font-size:.78rem;"><i class="bi bi-youtube me-1"></i>Video</a>
+                                        @* Icon nach Anbieter — der Link bleibt auch sichtbar, wenn er
+                                           nicht einbettbar ist (z. B. eine Kanal-URL). *@
+                                        var platform = VideoEmbedHelper.DetectPlatform(ev.YouTubeUrl);
+                                        var icon = platform switch
+                                        {
+                                            VideoPlatform.Twitch => "bi-twitch",
+                                            VideoPlatform.YouTube => "bi-youtube",
+                                            _ => "bi-camera-video"
+                                        };
+                                        var color = platform switch
+                                        {
+                                            VideoPlatform.Twitch => "#9146ff",
+                                            VideoPlatform.YouTube => "#ff0000",
+                                            _ => "var(--ink-3)"
+                                        };
+                                        <a href="@ev.YouTubeUrl" target="_blank" rel="noopener" style="color:@color;font-size:.78rem;"><i class="bi @icon me-1"></i>Video</a>
                                     }
                                 </div>
                                 @if (!string.IsNullOrWhiteSpace(ev.Description))
@@ -220,8 +237,8 @@
                                         }
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="adm-form-label">YouTube-Link</label>
-                                        <input class="form-control form-control-sm" name="youTubeUrl" maxlength="512" value="@ev.YouTubeUrl" placeholder="https://www.youtube.com/watch?v=…" />
+                                        <label class="adm-form-label">Video-Link (YouTube oder Twitch)</label>
+                                        <input class="form-control form-control-sm" name="videoUrl" maxlength="512" value="@ev.YouTubeUrl" placeholder="YouTube-Video oder Twitch-Clip" />
                                     </div>
                                     <div class="col-12">
                                         <label class="adm-form-label">Beschreibung</label>
