@@ -4,7 +4,10 @@
 @using Erdi_ERC.Services
 @{
     ViewData["Title"] = "Erdi10 · F1 26 Racing Hub";
-    var host = Context.Request.Host.Host;
+    // Host für die Twitch-Player unten. Der Wert kommt aus dem Host-Header und wird deshalb
+    // über VideoEmbedHelper normalisiert; ist er unbrauchbar, wird kein Player gerendert
+    // (Twitch zeigt bei falschem parent ohnehin nur einen Fehlerkasten).
+    var host = VideoEmbedHelper.NormalizedHostOrNull(Context.Request.Host.Host);
     var upcomingLegsByLeague = (ViewBag.UpcomingLegsByLeague as Dictionary<string, List<RaceWeekendLeg>>)
                                 ?? new Dictionary<string, List<RaceWeekendLeg>>();
 
@@ -352,16 +355,19 @@
                         Kanal <i class="bi bi-box-arrow-up-right"></i>
                     </a>
                 </div>
-                <div class="ratio ratio-16x9">
-                    <iframe src="https://player.twitch.tv/?channel=@Model.TwitchChannel&parent=@host&parent=localhost&muted=true"
-                            allowfullscreen
-                            title="Twitch Live Stream von @Model.TwitchChannel"></iframe>
-                </div>
-                <div style="height:clamp(340px,45vh,520px); border-top:1px solid var(--stroke-1);">
-                    <iframe src="https://www.twitch.tv/embed/@Model.TwitchChannel/chat?parent=@host&parent=localhost&darkpopout"
-                            title="Twitch Chat von @Model.TwitchChannel"
-                            style="width:100%;height:100%;border:0;"></iframe>
-                </div>
+                @if (host is not null)
+                {
+                    <div class="ratio ratio-16x9">
+                        <iframe src="https://player.twitch.tv/?channel=@Model.TwitchChannel&parent=@host&parent=localhost&muted=true"
+                                allowfullscreen
+                                title="Twitch Live Stream von @Model.TwitchChannel"></iframe>
+                    </div>
+                    <div style="height:clamp(340px,45vh,520px); border-top:1px solid var(--stroke-1);">
+                        <iframe src="https://www.twitch.tv/embed/@Model.TwitchChannel/chat?parent=@host&parent=localhost&darkpopout"
+                                title="Twitch Chat von @Model.TwitchChannel"
+                                style="width:100%;height:100%;border:0;"></iframe>
+                    </div>
+                }
                 <div class="f1-twitch-card__footer">
                     Wenn @@@Model.TwitchChannel offline ist, zeigt der Player einen Offline-Screen.
                 </div>

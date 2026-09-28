@@ -21,6 +21,10 @@ namespace Erdi_ERC.Controllers
         public async Task<IActionResult> Events()
         {
             var events = await _db.RealLifeEvents
+                // Ohne Include bleibt ev.Images leer: die Timeline zeigt dann nur das Cover,
+                // Events ohne Cover gar kein Vorschaubild — und die Lightbox hätte keine
+                // weiteren Bilder zum Durchblättern.
+                .Include(e => e.Images.OrderBy(i => i.UploadedAt))
                 .OrderByDescending(e => e.IsUpcoming)
                 .ThenBy(e => e.IsUpcoming ? e.Date : DateTime.MaxValue)
                 .ThenByDescending(e => e.Date)
@@ -298,6 +302,16 @@ namespace Erdi_ERC.Controllers
 
             var normalizedTitle = title?.Trim() ?? string.Empty;
             var normalizedUrl = url?.Trim() ?? string.Empty;
+
+            // Nur http(s) annehmen: der Link steht auf der öffentlichen Highlights-Seite als
+            // href. Ein `javascript:`-Link wäre dort Stored XSS für jeden Besucher, der
+            // „Clip öffnen" anklickt — und Einträge sind sofort öffentlich (IsApproved = true).
+            if (!string.IsNullOrWhiteSpace(normalizedUrl) && VideoEmbedHelper.SafeLinkOrNull(normalizedUrl) is null)
+            {
+                TempData["HighlightMessage"] = "Bitte einen vollständigen Link mit https:// eintragen.";
+                return RedirectToAction(nameof(Highlights));
+            }
+
             if (!string.IsNullOrWhiteSpace(normalizedTitle) && !string.IsNullOrWhiteSpace(normalizedUrl))
             {
                 _db.RaceHighlightClips.Add(new RaceHighlightClip

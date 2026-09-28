@@ -1,5 +1,6 @@
 using AspNet.Security.OAuth.Discord;
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Erdi_ERC.Services;
@@ -781,7 +782,12 @@ app.Use(async (context, next) =>
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
             "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
             "connect-src 'self' https:; " +
-            "frame-src 'self' https://player.twitch.tv https://www.twitch.tv https://embed.twitch.tv https://discord.com https://www.youtube.com https://www.youtube-nocookie.com; " +
+            // frame-src kommt aus VideoEmbedHelper.FrameSrcDirective(): dort stehen die Hosts,
+            // auf denen der Helper Video-Embeds baut, plus die festen Embeds der Views.
+            // clips.twitch.tv fehlte hier schon einmal — der Browser blockiert dann jedes
+            // Clip-iframe still, ohne Fehler im App-Log. Die Tests prüfen beide Seiten
+            // gegeneinander, damit Helper und CSP nicht wieder auseinanderlaufen.
+            "frame-src " + VideoEmbedHelper.FrameSrcDirective() + "; " +
             "form-action 'self' https://discord.com; " +
             "frame-ancestors 'self'; " +
             "upgrade-insecure-requests;";

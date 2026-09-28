@@ -1,6 +1,10 @@
 @model Erdi_ERC.Models.HighlightsPageViewModel
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = "Highlights";
+
+    // Der Host der Anfrage wird als Twitch-parent gebraucht (VideoEmbedHelper).
+    var requestHost = Context.Request.Host.Host;
 }
 
 @section Styles {
@@ -35,6 +39,10 @@
         })" />
 
         <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.25rem;box-shadow:var(--sh-2);">
+            @if (TempData["HighlightMessage"] is string highlightMessage)
+            {
+                <div class="alert alert-warning mb-3" role="alert">@highlightMessage</div>
+            }
             <form asp-action="SubmitHighlight" method="post" class="row g-2">
                 @Html.AntiForgeryToken()
                 <div class="col-md-4"><input class="form-control" name="title"      maxlength="160" placeholder="Titel"                    required /></div>
@@ -71,6 +79,10 @@
         <div class="row g-3">
             @foreach (var clip in Model.Highlights)
             {
+                // Eingesendete Links sind Twitch-Clips oder YouTube-Videos; nur bekannte
+                // Anbieter werden eingebettet, alles andere bleibt ein Link nach außen.
+                var video = VideoEmbedHelper.Resolve(clip.Url, requestHost);
+
                 <div class="col-md-6 col-xl-4">
                     <article class="community-card h-100">
                         <div class="community-card__body d-flex flex-column gap-2">
@@ -83,11 +95,22 @@
                             {
                                 <div class="text-mute small">@clip.RaceLabel</div>
                             }
+                            @if (video is { } embed)
+                            {
+                                <div class="ratio ratio-16x9">
+                                    <iframe src="@embed.Url" title="@VideoEmbedHelper.DisplayName(embed.Platform)-Clip: @clip.Title" allowfullscreen loading="lazy"></iframe>
+                                </div>
+                            }
                             <div class="community-card__text text-mute small mt-auto">Von @clip.SubmittedByName</div>
-                            <a class="f1-btn f1-btn--ghost" href="@clip.Url" target="_blank" rel="noopener">
-                                Clip öffnen
-                                <i class="f1-icon" data-lucide="external-link" style="width:13px;height:13px;"></i>
-                            </a>
+                            @* Nur http(s) verlinken: der Link kommt von Nutzern, und ältere
+                               Einträge in der DB können alles enthalten. *@
+                            @if (VideoEmbedHelper.SafeLinkOrNull(clip.Url) is { } clipLink)
+                            {
+                                <a class="f1-btn f1-btn--ghost" href="@clipLink" target="_blank" rel="noopener">
+                                    Clip öffnen
+                                    <i class="f1-icon" data-lucide="external-link" style="width:13px;height:13px;"></i>
+                                </a>
+                            }
                         </div>
                     </article>
                 </div>

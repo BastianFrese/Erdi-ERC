@@ -1,4 +1,5 @@
 @model List<Erdi_ERC.Models.RealLifeEvent>
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = "Real-Life Events";
     Layout = "_Layout";
@@ -8,22 +9,8 @@
     var nextUpcoming  = upcoming.OrderBy(e => e.Date).FirstOrDefault();
     var timelineEvents = Model.OrderByDescending(e => e.Date).ToList();
 
-    static string? ToEmbedUrl(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
-        if (uri.Host.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
-        {
-            var v = uri.AbsolutePath.Trim('/');
-            return string.IsNullOrWhiteSpace(v) ? null : $"https://www.youtube.com/embed/{v}";
-        }
-        if (uri.Host.Contains("youtube.com", StringComparison.OrdinalIgnoreCase))
-        {
-            if (uri.AbsolutePath.StartsWith("/embed/", StringComparison.OrdinalIgnoreCase)) return url;
-            var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-            if (q.TryGetValue("v", out var v) && !string.IsNullOrWhiteSpace(v)) return $"https://www.youtube.com/embed/{v.ToString()}";
-        }
-        return null;
-    }
+    // Der Host der Anfrage wird als Twitch-parent gebraucht (VideoEmbedHelper).
+    var requestHost = Context.Request.Host.Host;
 }
 
 @section Styles {
@@ -90,13 +77,25 @@ else
         <div class="event-timeline f1-stagger">
             @foreach (var ev in timelineEvents)
             {
-                var embedUrl = ToEmbedUrl(ev.YouTubeUrl);
+                var video = VideoEmbedHelper.Resolve(ev.YouTubeUrl, requestHost);
                 var previewImage = !string.IsNullOrWhiteSpace(ev.ImageFileName)
                     ? $"/uploads/events/{ev.ImageFileName}"
                     : (ev.Images.FirstOrDefault() is { } galleryImage ? $"/uploads/events/{galleryImage.FileName}" : null);
                 var hasPreviewImage = !string.IsNullOrWhiteSpace(previewImage);
 
-                <article class="event-timeline__item">
+                // Galerie des Events: Cover zuerst, dann die Uploads — dieselbe Reihenfolge
+                // wie auf der Detailseite. Index 0 ist dadurch immer genau das Bild, das in
+                // der Timeline als Vorschau hängt (Cover bzw. erstes Galerie-Bild).
+                var galleryImages = new List<string>();
+                if (!string.IsNullOrWhiteSpace(ev.ImageFileName)) galleryImages.Add(ev.ImageFileName);
+                galleryImages.AddRange(ev.Images.Select(i => i.FileName));
+                var galleryJson = galleryImages.Count == 0
+                    ? "[]"
+                    : "[" + string.Join(",", galleryImages.Select(f => "\"/uploads/events/" + f + "\"")) + "]";
+
+                <article class="event-timeline__item"
+                         data-event-gallery
+                         data-images="@galleryJson">
                     <div class="event-timeline__rail">
                         <div class="event-timeline__date">
                             <span class="event-timeline__date-day">@ev.Date.ToString("dd.MM.")</span>
@@ -110,16 +109,23 @@ else
                             @if (hasPreviewImage)
                             {
                                 <div class="event-timeline__cover">
-                                    @{
-                                        var previewPic = new PictureVm {
-                                            Src = @previewImage,
-                                            Alt = @ev.Title,
-                                            Loading = "lazy",
-                                            Decoding = "async",
-                                            Sizes = "(max-width: 768px) 100vw, 320px"
-                                        };
-                                    }
-                                    <partial name="_Picture" model="previewPic" />
+                                    @* Echtes <button> statt role="button": damit lässt sich das Bild
+                                       auch per Tastatur vergrößern (Enter/Space), ohne Extra-JS. *@
+                                    <button type="button"
+                                            class="event-timeline__cover-btn"
+                                            data-gallery-index="0"
+                                            aria-label="@(ev.Title) vergrößern">
+                                        @{
+                                            var previewPic = new PictureVm {
+                                                Src = @previewImage,
+                                                Alt = @ev.Title,
+                                                Loading = "lazy",
+                                                Decoding = "async",
+                                                Sizes = "(max-width: 768px) 100vw, 320px"
+                                            };
+                                        }
+                                        <partial name="_Picture" model="previewPic" />
+                                    </button>
                                 </div>
                             }
 
@@ -147,11 +153,22 @@ else
 
                                 <p class="text-mute mb-3">@ev.Description</p>
 
-                                @if (!string.IsNullOrWhiteSpace(embedUrl))
+                                @if (video is { } embed)
                                 {
                                     <div class="ratio ratio-16x9 event-timeline__media mb-3" style="max-width:400px;">
-                                        <iframe src="@embedUrl" title="YouTube Video zu @ev.Title" allowfullscreen loading="lazy"></iframe>
+                                        <iframe src="@embed.Url" title="@VideoEmbedHelper.DisplayName(embed.Platform)-Video zu @ev.Title" allowfullscreen loading="lazy"></iframe>
                                     </div>
+                                }
+                                else if (VideoEmbedHelper.SafeLinkOrNull(ev.YouTubeUrl) is { } videoLink
+                                         && VideoEmbedHelper.DetectPlatform(videoLink) is { } platform)
+                                {
+                                    @* Bekannter Anbieter, aber nicht einbettbar (z. B. eine Kanal-URL):
+                                       dieselbe Ausgabe wie auf der Detailseite — der Link darf nicht
+                                       verschwinden, nur weil kein Player daraus wird. *@
+                                    <a class="f1-btn f1-btn--ghost mb-3" href="@videoLink" target="_blank" rel="noopener">
+                                        Video auf @VideoEmbedHelper.DisplayName(platform) ansehen
+                                        <i class="f1-icon" data-lucide="external-link" style="width:14px;height:14px;"></i>
+                                    </a>
                                 }
 
                                 <a class="f1-btn f1-btn--ghost" asp-controller="Community" asp-action="EventDetail" asp-route-id="@ev.Id">
@@ -161,6 +178,24 @@ else
                             </div>
                         </div>
                     </div>
+
+                    @if (galleryImages.Count > 0)
+                    {
+                        @* Overlay liegt als Geschwister der Card (nicht darin): .event-timeline__card
+                           hat backdrop-filter + overflow:hidden, das wäre ein Containing-Block für
+                           position:fixed. Die Lightbox portiert das Overlay beim Öffnen ohnehin an
+                           <body> (event-lightbox.js). *@
+                        <div class="event-lightbox" data-lightbox hidden aria-modal="true" role="dialog"
+                             aria-label="Galerie zu @(ev.Title)">
+                            <button type="button" class="event-lightbox__close" data-lightbox-close aria-label="Schließen">×</button>
+                            @if (galleryImages.Count > 1)
+                            {
+                                <button type="button" class="event-lightbox__nav event-lightbox__nav--prev" data-lightbox-prev aria-label="Vorheriges Bild">‹</button>
+                                <button type="button" class="event-lightbox__nav event-lightbox__nav--next" data-lightbox-next aria-label="Nächstes Bild">›</button>
+                            }
+                            <img class="event-lightbox__img" data-lightbox-img alt="" />
+                        </div>
+                    }
                 </article>
             }
         </div>
@@ -168,6 +203,8 @@ else
 }
 
 @section Scripts {
+    @* Lightbox für die Timeline-Cover (Markup oben: data-event-gallery / data-lightbox). *@
+    <script src="~/js/event-lightbox.min.js" asp-append-version="true"></script>
     <script>
         (() => {
             const el = document.getElementById('nextEventCountdown');

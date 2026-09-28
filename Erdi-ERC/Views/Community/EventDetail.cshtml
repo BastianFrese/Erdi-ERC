@@ -1,4 +1,5 @@
 @model Erdi_ERC.Models.RealLifeEvent
+@using Erdi_ERC.Helpers
 @{
     ViewData["Title"] = Model.Title;
     Layout = "_Layout";
@@ -7,29 +8,18 @@
     if (!string.IsNullOrEmpty(Model.ImageFileName)) allImages.Add(Model.ImageFileName);
     allImages.AddRange(Model.Images.Select(i => i.FileName));
 
-    string? embedUrl = null;
-    if (!string.IsNullOrWhiteSpace(Model.YouTubeUrl) && Uri.TryCreate(Model.YouTubeUrl, UriKind.Absolute, out var uri))
-    {
-        if (uri.Host.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
-        {
-            var v = uri.AbsolutePath.Trim('/');
-            embedUrl = string.IsNullOrWhiteSpace(v) ? null : $"https://www.youtube.com/embed/{v}";
-        }
-        else if (uri.Host.Contains("youtube.com", StringComparison.OrdinalIgnoreCase))
-        {
-            if (uri.AbsolutePath.StartsWith("/embed/", StringComparison.OrdinalIgnoreCase)) embedUrl = Model.YouTubeUrl;
-            else
-            {
-                var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-                if (q.TryGetValue("v", out var v) && !string.IsNullOrWhiteSpace(v)) embedUrl = $"https://www.youtube.com/embed/{v.ToString()}";
-            }
-        }
-    }
+    // Video-Link (YouTube oder Twitch-Clip/VOD) → iframe-URL. Die Umwandlung liegt in
+    // VideoEmbedHelper, damit sie getestet ist; die Twitch-Variante braucht den Host der
+    // Anfrage als parent-Parameter.
+    var video = VideoEmbedHelper.Resolve(Model.YouTubeUrl, Context.Request.Host.Host);
 
+    // Der Lead ist bewusst HTML (Icons) und wird im Hero mit Html.Raw ausgegeben — die
+    // dynamischen Anteile müssen deshalb encodiert werden, sonst ist der Ortsname ein
+    // HTML-Sink für jeden, der die Event-Policy hat.
     var dateFmt  = Model.Date.ToString("dd. MMMM yyyy", new System.Globalization.CultureInfo("de-DE"));
     var eventLead = $"<i class=\"bi bi-calendar3\" style=\"margin-right:.35rem;\"></i>{dateFmt}";
     if (!string.IsNullOrWhiteSpace(Model.Location))
-        eventLead += $" &nbsp;·&nbsp; <i class=\"bi bi-geo-alt-fill\" style=\"color:var(--sig-cyan);margin-right:.2rem;\"></i>{Model.Location}";
+        eventLead += $" &nbsp;·&nbsp; <i class=\"bi bi-geo-alt-fill\" style=\"color:var(--sig-cyan);margin-right:.2rem;\"></i>{System.Net.WebUtility.HtmlEncode(Model.Location)}";
 }
 
 @section Styles {
@@ -127,11 +117,22 @@
 
     <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;box-shadow:var(--sh-2);">
         <p style="color:var(--ink-2);line-height:1.7;margin-bottom:0;">@Model.Description</p>
-        @if (!string.IsNullOrWhiteSpace(embedUrl))
+        @if (video is { } embed)
         {
             <div class="ratio ratio-16x9 mt-4" style="max-width:720px;margin-left:auto;margin-right:auto;">
-                <iframe src="@embedUrl" title="YouTube Video zu @Model.Title" allowfullscreen loading="lazy"></iframe>
+                <iframe src="@embed.Url" title="@VideoEmbedHelper.DisplayName(embed.Platform)-Video zu @Model.Title" allowfullscreen loading="lazy"></iframe>
             </div>
+        }
+        else if (VideoEmbedHelper.SafeLinkOrNull(Model.YouTubeUrl) is { } videoLink
+                 && VideoEmbedHelper.DetectPlatform(videoLink) is { } platform)
+        {
+            @* Bekannter Anbieter, aber nicht einbettbar (z. B. eine Kanal-URL): der Link darf
+               nicht verschwinden, nur weil kein Player daraus wird. SafeLinkOrNull, weil auch
+               ein alter Eintrag in der DB schon ein `javascript:` enthalten kann. *@
+            <a class="f1-btn f1-btn--ghost mt-4" href="@videoLink" target="_blank" rel="noopener">
+                Video auf @VideoEmbedHelper.DisplayName(platform) ansehen
+                <i class="f1-icon" data-lucide="external-link" style="width:14px;height:14px;"></i>
+            </a>
         }
     </div>
 </section>

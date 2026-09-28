@@ -1407,6 +1407,33 @@ display:block;
 object-fit:cover;
 object-position:center;
 }
+/* Cover ist klickbar und öffnet die Lightbox (wwwroot/js/event-lightbox.js).
+Buttons bringen Default-Border/Padding mit, daher hier zurückgesetzt. */
+.event-timeline__cover-btn {
+flex:1 1 auto;
+min-width:0;
+display:flex;
+margin:0;
+padding:0;
+border:0;
+background:none;
+cursor:zoom-in;
+position:relative;
+overflow:hidden;
+}
+.event-timeline__cover-btn:focus-visible {
+outline:2px solid var(--accent);
+outline-offset:-3px;
+}
+.event-timeline__cover-btn img {
+transition:transform .45s var(--t-slow), filter .45s ease;
+}
+@media (hover:hover) {
+.event-timeline__cover-btn:hover img {
+transform:scale(1.045);
+filter:brightness(1.07);
+}
+}
 .event-timeline__content {
 padding:1rem 1.1rem;
 }
