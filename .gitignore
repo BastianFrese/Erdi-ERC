@@ -34,11 +34,14 @@ logs/
 Thumbs.db
 
 # --- Sensitive config (NIE einchecken!) ---
-# appsettings.Production.json wird BEWUSST eingecheckt + gepublished,
-# Secrets dort daher NUR in einem privaten Repo eintragen!
-# appsettings.Development.json enthält Discord-Secrets, Webhook-URL und Dev-DB-Passwort
+# appsettings.json und appsettings.*.json werden NICHT eingecheckt.
+# Secrets ausschliesslich ueber Umgebungsvariablen bzw. dotnet user-secrets setzen;
+# eingecheckt sind nur die "*.example.json"-Vorlagen ohne Werte.
+# appsettings.Development.json enthaelt Discord-Secrets, Webhook-URL und Dev-DB-Passwort
 # und wird lokal gehalten.
+appsettings.json
 appsettings.Development.json
+appsettings.Production.json
 appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
