@@ -26,14 +26,15 @@
 .strip__nav a { white-space: nowrap; }
 
 @media (max-width: 991.98px) {
-    /* Der Streifen war schon wischbar, man sah es nur nicht. is-scrollable und
-       is-at-end setzt site.js: der weiche Rand erscheint nur, wenn es wirklich
-       etwas zu wischen gibt, und verschwindet am Ende wieder. */
+    /* Kein weicher Rand mehr an der Reihe.
+       Er war als mask-image gebaut und wurde gesetzt, BEVOR die Navigation
+       umverteilt (site.js) — danach nie neu geprueft. Der Rand konnte also
+       stehenbleiben, obwohl gar nichts mehr zu wischen war. Ausserdem ist
+       mask-image das heikelste CSS an dieser Stelle: ein Browser, der es anders
+       auslegt, blendet Inhalt aus statt ihn nur zu daempfen.
+       Mit dem Umverteilen gibt es ohnehin fast nichts mehr zu wischen; wo doch,
+       wischt es sich wie vorher. */
     .strip__nav { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-    .strip__nav.is-scrollable {
-        mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent);
-    }
-    .strip__nav.is-scrollable.is-at-end { mask-image: none; }
 
     /* Der Musikspieler lag als Streifen unten links und stiess an den Rand.
        WICHTIG: bottom muss auf auto. Die Grundregel setzt

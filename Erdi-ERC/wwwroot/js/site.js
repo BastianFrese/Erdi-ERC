@@ -206,16 +206,6 @@
     const reihe = document.querySelector('.strip__nav');
     if (!reihe) return;
 
-    const aktualisiere = () => {
-        const scrollbar = reihe.scrollWidth - reihe.clientWidth > 2;
-        const amEnde = reihe.scrollLeft + reihe.clientWidth >= reihe.scrollWidth - 2;
-        reihe.classList.toggle('is-scrollable', scrollbar);
-        reihe.classList.toggle('is-at-end', scrollbar && amEnde);
-    };
-
-    reihe.addEventListener('scroll', aktualisiere, { passive: true });
-    window.addEventListener('resize', aktualisiere, { passive: true });
-
     const aktiv = reihe.querySelector('a.active');
     if (aktiv && reihe.scrollWidth > reihe.clientWidth) {
         // scrollIntoView blockweise waere zu weit: die Reihe soll nur seitlich
@@ -224,7 +214,6 @@
         reihe.scrollLeft = Math.max(0, ziel);
     }
 
-    aktualisiere();
 })();
 
 /* ---------------------------------------------------------------------------
@@ -351,6 +340,17 @@
             if (belegt > platz) wandern.push(a);
         }
         if (!wandern.length) return;
+
+        // Nie alles umhaengen. Eine Reihe, in der nur noch der Knopf steht, ist
+        // keine Navigation mehr — genau das war auf einem Screenshot zu sehen,
+        // und der Zustand darf gar nicht erst entstehen. Ist der Platz zu knapp,
+        // bleiben die ersten zwei stehen und der Rest wandert; die Reihe wischt
+        // dann wie vorher.
+        const mindestensInDerReihe = 2;
+        if (hauptpunkte.length - wandern.length < mindestensInDerReihe) {
+            wandern.length = 0;
+            for (let i = mindestensInDerReihe; i < hauptpunkte.length; i++) wandern.push(hauptpunkte[i]);
+        }
 
         for (const a of wandern) a.setAttribute('data-verschoben', '');
         liste.prepend(...wandern);
