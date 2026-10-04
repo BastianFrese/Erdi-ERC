@@ -39,9 +39,7 @@
 }
 .f1-constructors-hero__title-em {
     background: linear-gradient(90deg, var(--accent-1, #f59e0b), var(--accent-2, #38bdf8));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--ink);
 }
 .f1-constructors-hero__subtitle {
     color: var(--ink-3, #cbd5e1);

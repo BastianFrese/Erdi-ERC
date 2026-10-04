@@ -89,10 +89,11 @@
   font-style: italic;
   letter-spacing: .06em;
   background: linear-gradient(160deg, #b07020 0%, #f0cc5a 38%, #ffe898 56%, #c88a2a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  
+  
+  
   filter: drop-shadow(0 0 8px rgba(210,150,30,.4));
+    color: var(--ink);
 }
 .erc-brand__sub {
   font-size: 7.5px;
@@ -371,10 +372,11 @@
   letter-spacing: -.04em;
   line-height: 1;
   background: linear-gradient(160deg, #b07020 0%, #f0cc5a 36%, #ffe898 55%, #c88a2a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  
+  
+  
   filter: drop-shadow(0 6px 26px rgba(210,150,30,.32));
+    color: var(--ink);
 }
 
 /* Name band */

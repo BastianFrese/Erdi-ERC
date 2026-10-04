@@ -485,9 +485,7 @@
 .f1-stat__value {
     font: 800 clamp(2rem, 3.6vw, 2.8rem)/1 var(--ff-tech);
     letter-spacing: -.01em;
-    -webkit-background-clip: text;
-            background-clip: text;
-    color: transparent;
+    color: var(--ink);
 }
 .f1-stat__sub {
     margin-top: .55rem;

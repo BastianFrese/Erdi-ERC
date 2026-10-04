@@ -20,7 +20,9 @@
 .ico-cyan   { color:var(--sig-cyan); filter:drop-shadow(0 0 6px color-mix(in srgb, var(--wet) 55%, transparent)); }
 .ico-amber  { color:var(--sig-amber); filter:drop-shadow(0 0 6px color-mix(in srgb, var(--slow) 45%, transparent)); }
 .ico-green  { color:var(--sig-green); filter:drop-shadow(0 0 6px color-mix(in srgb, var(--best) 45%, transparent)); }
-.ico-chrome { background:var(--g-chrome); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.ico-chrome {
+    color: var(--ink);
+}
 .ico-lg { font-size:1.35rem; } .ico-xl { font-size:1.85rem; } .ico-2xl { font-size:2.6rem; }
 
 .hero {

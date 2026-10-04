@@ -151,6 +151,40 @@ public class DesignContractTests
     // --- Nichts darf dauerhaft unsichtbar sein ----------------------------
 
     /// <summary>
+    /// Verlaufs-Textfuellung: Schrift wird durchsichtig gestellt und der Verlauf
+    /// scheint durch sie hindurch. Faellt der Verlauf weg, bleibt durchsichtige
+    /// Schrift ohne Inhalt — unsichtbarer Text, und nichts meldet es.
+    ///
+    /// Genau das ist beim Umbau passiert: die Gradient-Tokens wurden auf `none`
+    /// gesetzt (die Spec verbietet Verlaeufe als Dekoration), aber die
+    /// background-clip-Regeln blieben stehen. Die Kachelwerte auf drei Seiten
+    /// standen danach im DOM und waren durchsichtig.
+    ///
+    /// Die Spec schliesst Verlaufs-Dekoration aus, also ist die Technik selbst
+    /// verboten — nicht nur ihr fehlender Verlauf.
+    /// </summary>
+    [Fact]
+    public void Keine_Verlaufs_Textfuellung()
+    {
+        var treffer = new List<string>();
+        foreach (var datei in AlleCssDateien())
+        {
+            var text = Regex.Replace(Lies(datei), @"/\*.*?\*/", "", RegexOptions.Singleline);
+            foreach (Match m in Regex.Matches(text, @"(?<sel>[^{}]*)\{(?<body>[^{}]*)\}"))
+            {
+                var rumpf = m.Groups["body"].Value;
+                var clip = Regex.IsMatch(rumpf, @"(-webkit-)?background-clip\s*:\s*text", RegexOptions.IgnoreCase);
+                var durchsichtig = Regex.IsMatch(rumpf, @"(-webkit-)?text-fill-color\s*:\s*transparent", RegexOptions.IgnoreCase);
+                if (clip || durchsichtig)
+                    treffer.Add($"{Path.GetFileName(datei)}: '{m.Groups["sel"].Value.Trim()}'");
+            }
+        }
+        Assert.True(treffer.Count == 0,
+            "Verlaufs-Textfuellung — ohne Verlauf bleibt der Text unsichtbar:\n  " +
+            string.Join("\n  ", treffer));
+    }
+
+    /// <summary>
     /// Der Layout-Test oben sieht nur die beiden Hüllen. Eine Fremdanfrage kann aber
     /// aus jeder View kommen — genau das war der Fall: die Ergebnisseite lud ihr
     /// Bahrain-Fähnchen von flagcdn.com, obwohl 45 Flaggen lokal liegen. Deshalb

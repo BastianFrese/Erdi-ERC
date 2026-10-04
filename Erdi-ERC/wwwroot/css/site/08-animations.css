@@ -15,8 +15,9 @@
 @keyframes shine { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
 .shine {
     background-size:200% 100%;
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+      
     animation:shine 4s linear infinite;
+    color: var(--ink);
 }
 
 @keyframes telemetry-pan {

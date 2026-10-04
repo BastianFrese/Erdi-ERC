@@ -1323,7 +1323,9 @@ color:var(--ink); font-size:1.15rem;
 .ico-cyan   { color:var(--sig-cyan); filter:drop-shadow(0 0 6px color-mix(in srgb, var(--wet) 55%, transparent)); }
 .ico-amber  { color:var(--sig-amber); filter:drop-shadow(0 0 6px color-mix(in srgb, var(--slow) 45%, transparent)); }
 .ico-green  { color:var(--sig-green); filter:drop-shadow(0 0 6px color-mix(in srgb, var(--best) 45%, transparent)); }
-.ico-chrome { background:var(--g-chrome); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.ico-chrome {
+color: var(--ink);
+}
 .ico-lg { font-size:1.35rem; } .ico-xl { font-size:1.85rem; } .ico-2xl { font-size:2.6rem; }
 .hero {
 position:relative;
@@ -2079,8 +2081,7 @@ color:var(--accent); margin-bottom:.55rem;
 font-family:var(--ff-tech);
 margin:0; line-height:1; font-weight:800;
 font-size:clamp(1.6rem, 2.4vw, 2.4rem);
-background:var(--g-text-1);
--webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+color: var(--ink);
 }
 .admin-page-subtitle {
 margin:.7rem 0 0; max-width:64ch;
@@ -2193,7 +2194,7 @@ content:""; position:absolute; left:0; right:0; bottom:0; height:1px; opacity:.5
 }
 .setup-admin-head h2 {
 font-family:var(--ff-tech); font-weight:800; margin:0;
-background:var(--g-text-1); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+color: var(--ink);
 }
 .setup-admin-status-grid {
 display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:1rem;
@@ -3269,8 +3270,8 @@ Inhalt DAUERHAFT unsichtbar; das ist beim Umbau auf 31 Seiten passiert.
 @keyframes shine { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
 .shine {
 background-size:200% 100%;
--webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
 animation:shine 4s linear infinite;
+color: var(--ink);
 }
 @keyframes telemetry-pan {
 0% { transform:translateX(0); }
