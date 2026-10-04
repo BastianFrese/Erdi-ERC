@@ -54,7 +54,7 @@
 
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = $"{Model.League.Name} · Grand Prix",
+    Eyebrow   = Model.League.Name,
     Title     = Model.Race.Track,
     Lead      = $"Round <strong>{raceNumber}</strong> von {raceTotal} · {Model.Race.Date.ToString("dd. MMMM yyyy")}{pointsBadgeHtml}",
 
