@@ -208,8 +208,6 @@
                                     <!-- Rennen -->
                                     <div class="tab-pane fade show active" id="races-@league.Id">
                                         <div class="f1-results-card">
-                                            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
-                                            <div class="f1-results-card__corner" aria-hidden="true"></div>
                                             <div class="table-responsive">
                                                 <table class="f1-results-table">
                                                     <colgroup>
@@ -258,7 +256,7 @@
                                                                 : null;
                                                             var raceDetailUrl = Url.Action("RaceDetail", "Races", new { leagueId = league.Id, raceId = r.RowId });
                                                             <tr class="f1-hub-race-row"
-                                                                style="box-shadow: inset 3px 0 0 @rowColor;"
+                                                                style=""
                                                                 onclick="window.location.href='@raceDetailUrl'">
                                                                 <td class="text-mono" style="font-size:.8rem;">@r.Date.ToString("dd.MM.yyyy")</td>
                                                                 <td class="fw-semibold">@r.Track</td>

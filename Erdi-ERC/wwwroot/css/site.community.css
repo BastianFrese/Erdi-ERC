@@ -16,7 +16,7 @@
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-4);
     background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
-    box-shadow: var(--sh-1);
+
 }
 
 .community-kpi-card {
@@ -54,7 +54,7 @@
 .community-card:hover {
     transform: translateY(-2px);
     border-color: var(--stroke-2);
-    box-shadow: var(--sh-2);
+
 }
 
 .community-card__body,

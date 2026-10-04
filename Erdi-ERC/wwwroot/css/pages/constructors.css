@@ -13,7 +13,7 @@
     border-radius: var(--r-3, 12px);
     background: linear-gradient(135deg, var(--surface-1, #161821) 0%, var(--surface-2, #1c1f2c) 100%);
     border: 1px solid var(--stroke-1, #2a2e3a);
-    box-shadow: var(--sh-2, 0 4px 12px rgba(0,0,0,.35));
+
     margin-bottom: 1.25rem;
 }
 @media (max-width: 767.98px) {
@@ -62,7 +62,7 @@
     border-radius: var(--r-2, 8px);
     padding: .65rem .7rem;
     text-align: center;
-    box-shadow: 0 0 22px -10px var(--team-color, transparent);
+
 }
 .f1-constructors-podium__step--p1 {
     padding-bottom: 1.1rem;
@@ -112,7 +112,7 @@
     background: var(--surface-1, #161821);
     border: 1px solid var(--stroke-1, #2a2e3a);
     border-radius: var(--r-3, 12px);
-    box-shadow: var(--sh-2, 0 4px 12px rgba(0,0,0,.25));
+
 }
 .f1-card--constructors .f1-card__head {
     display: flex;
@@ -182,7 +182,7 @@
 .f1-pos-badge--p1 {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     border-color: #f59e0b;
-    box-shadow: 0 0 12px -3px #f59e0b;
+
 }
 .f1-pos-badge--p2 {
     background: linear-gradient(135deg, #cbd5e1, #64748b);
@@ -286,7 +286,7 @@
 .f1-constructors-hero--compact:hover {
     transform: translateY(-2px);
     border-color: var(--accent-2, #38bdf8);
-    box-shadow: 0 10px 28px -14px rgba(56,189,248,.5);
+
 }
 .f1-constructors-hero__cta {
     font: 700 .72rem/1.4 var(--ff-tech, "Inter", sans-serif);

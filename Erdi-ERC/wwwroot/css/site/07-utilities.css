@@ -18,7 +18,7 @@
 
 /* Fruehre ein Leuchtschatten. Schatten sind gestrichen — die Klasse bleibt
    als Durchreiche, damit ihre Verwendungen im Markup nichts kaputt machen. */
-.glow-accent { box-shadow:none; }
+.glow-accent { }
 
 .gap-tight > * + * { margin-top:.4rem; }
 .gap-loose > * + * { margin-top:1.2rem; }

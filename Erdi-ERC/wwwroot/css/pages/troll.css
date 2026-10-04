@@ -9,7 +9,7 @@
     background: var(--surface-1, #11141b);
     border: 1px solid var(--stroke-1, rgba(255, 255, 255, .08));
     border-radius: var(--r-3, 18px);
-    box-shadow: var(--sh-2, 0 20px 60px rgba(0, 0, 0, .45));
+
     padding: clamp(1.5rem, 4vw, 2.75rem);
     text-align: center;
     overflow: hidden;
@@ -183,12 +183,12 @@
     background: radial-gradient(circle at 50% 35%, #ff4136, #b5160c);
     color: #fff; font: 800 1.3rem var(--ff-heading, sans-serif);
     letter-spacing: .08em; cursor: pointer;
-    box-shadow: 0 8px 0 #7a0f08, 0 12px 24px rgba(0, 0, 0, .4);
+
     transition: transform .06s, box-shadow .06s;
 }
 .troll-red__btn:hover { transform: translateY(-1px); }
 .troll-red__btn.is-pressed, .troll-red__btn:active {
-    transform: translateY(6px); box-shadow: 0 2px 0 #7a0f08, 0 4px 10px rgba(0, 0, 0, .4);
+    transform: translateY(6px);
 }
 .troll-red__btn:disabled { filter: grayscale(.5); cursor: default; }
 

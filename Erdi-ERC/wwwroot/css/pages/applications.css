@@ -32,7 +32,7 @@
     top: 0; left: 0; right: 0;
     height: 2px;
     background: var(--telemetry-stripe, linear-gradient(90deg, var(--sig-cyan), var(--accent-2), var(--sig-magenta)));
-    box-shadow: 0 0 14px rgba(225,6,0,.45);
+
     z-index: 1;
     pointer-events: none;
 }
@@ -267,7 +267,7 @@
 .app-league-card input:checked + .app-league-card__body {
     border-color: color-mix(in srgb, var(--accent) 65%, var(--stroke-1));
     background: var(--accent-soft);
-    box-shadow: 0 0 0 3px var(--accent-soft);
+
 }
 .app-league-card input:focus-visible + .app-league-card__body {
     outline: 2px solid var(--accent);
@@ -376,19 +376,19 @@
 }
 .app-submit-card__icon--ok {
     background: rgba(76,175,109,.10);
-    box-shadow: 0 0 24px rgba(76,175,109,.25);
+
 }
 .app-submit-card__icon--wait {
     background: rgba(232,169,61,.10);
-    box-shadow: 0 0 24px rgba(232,169,61,.25);
+
 }
 .app-submit-card__icon--info {
     background: rgba(109,156,196,.10);
-    box-shadow: 0 0 24px rgba(109,156,196,.25);
+
 }
 .app-submit-card__icon--send {
     background: rgba(88,183,201,.10);
-    box-shadow: 0 0 24px rgba(88,183,201,.25);
+
 }
 .app-submit-card__title {
     font-family: var(--ff-tech);

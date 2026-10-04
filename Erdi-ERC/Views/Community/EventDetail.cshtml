@@ -48,7 +48,7 @@
         })" />
 
         <div class="event-detail-gallery-card"
-             style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);"
+             style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;"
              data-event-gallery
              data-images="@string.Join(",", allImages.Select(f => $"\"/uploads/events/{f}\""))">
             <div class="event-detail-gallery-hero-wrap"
@@ -114,7 +114,7 @@
         Title = "Bericht"
     })" />
 
-    <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;box-shadow:var(--sh-2);">
+    <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;">
         <p style="color:var(--ink-2);line-height:1.7;margin-bottom:0;">@Model.Description</p>
         @if (video is { } embed)
         {

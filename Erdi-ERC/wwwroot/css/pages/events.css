@@ -16,7 +16,7 @@
     border: 1px solid var(--stroke-1);
     border-left: 4px solid var(--sig-cyan);
     border-radius: var(--r-3);
-    box-shadow: var(--sh-2), 0 0 30px -12px rgba(88,183,201,.15);
+
     overflow: hidden;
 }
 .f1-next-event__badge { flex-shrink: 0; }

@@ -34,7 +34,7 @@
 .no-chamfer {
     clip-path:none;
     border-radius:8px;
-    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 18px 40px -24px rgba(0,0,0,.9);
+
 }
 .no-chamfer::before { display:none; }
 .card-header,.card-footer {
@@ -75,7 +75,7 @@
 .btn-primary {
     --btn-bg:linear-gradient(180deg, color-mix(in srgb, var(--accent-2) 90%, #fff 10%), var(--accent));
     --btn-bd:rgba(255,255,255,.16);
-    box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 10px 24px -10px var(--accent-glow), 0 0 0 1px var(--accent-soft);
+
     text-transform:uppercase;
     letter-spacing:.04em;
     font-family:var(--ff-tech);
@@ -83,7 +83,7 @@
 }
 .btn-primary:hover {
     filter:brightness(1.1);
-    box-shadow:0 1px 0 rgba(255,255,255,.24) inset, 0 16px 28px -10px var(--accent-glow), 0 0 0 1px var(--accent);
+
 }
 
 .btn-secondary, .btn-outline-secondary, .btn-outline-light, .btn-outline-primary {
@@ -99,24 +99,24 @@
     --btn-bg:linear-gradient(180deg,#4be07a,#1aa84a);
     --btn-bd:rgba(255,255,255,.14); --btn-fg:#04140a;
     font-weight:700;
-    box-shadow:0 10px 24px -10px rgba(76,175,109,.55), 0 0 0 1px rgba(76,175,109,.25);
+
 }
 .btn-warning {
     --btn-bg:linear-gradient(180deg,#ffd24a,#e8a93d);
     --btn-bd:rgba(255,255,255,.14); --btn-fg:#1a1305;
     font-weight:700;
-    box-shadow:0 10px 24px -10px rgba(232,169,61,.55);
+
 }
 .btn-danger {
     --btn-bg:linear-gradient(180deg,#ff5b5b,#c81f1f);
     --btn-bd:rgba(255,255,255,.14);
-    box-shadow:0 10px 24px -10px var(--accent-glow);
+
 }
 .btn-info {
     --btn-bg:linear-gradient(180deg,#5be3ff,#1aa3c8);
     --btn-bd:rgba(255,255,255,.14); --btn-fg:#04141a;
     font-weight:700;
-    box-shadow:0 10px 24px -10px rgba(88,183,201,.5);
+
 }
 .btn-ghost {
     --btn-bg:transparent; --btn-bd:transparent;
@@ -226,7 +226,7 @@ select option:focus,
     border:1px solid var(--stroke-1);
     border-radius:12px;
     background:linear-gradient(180deg, #111722, #0c111b);
-    box-shadow:0 24px 45px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04);
+
 }
 .erdi-select__menu--portal {
     position:fixed;
@@ -348,7 +348,7 @@ select option:focus,
     background:var(--surface-2)!important;
     border:1px solid var(--stroke-1)!important;
     border-radius:14px!important;
-    box-shadow:0 30px 60px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04);
+
     padding:.4rem!important;
     margin-top:.4rem!important;
 }
@@ -379,7 +379,7 @@ select option:focus,
     background:var(--surface-2)!important;
     border:1px solid var(--stroke-1)!important;
     border-radius:18px!important;
-    box-shadow:0 40px 80px -20px rgba(0,0,0,.85);
+
     color:var(--ink);
 }
 .modal-header,.modal-footer { border-color:var(--stroke-1)!important; padding:1rem 1.25rem; }
@@ -404,7 +404,7 @@ select option:focus,
     -webkit-text-fill-color:#fff!important;
     font-weight:600; padding:1rem 1.1rem!important;
     display:flex; align-items:center; gap:.7rem;
-    box-shadow:none!important;
+
 }
 .accordion-button:not(.collapsed) {
     background:var(--accent-soft)!important;
@@ -428,7 +428,7 @@ select option:focus,
 .nav-tabs .nav-link.active {
     color:#fff!important;
     border-bottom-color:var(--accent)!important;
-    box-shadow:0 2px 0 var(--accent-glow);
+
 }
 .nav-pills { gap:.4rem; }
 .nav-pills .nav-link {
@@ -443,7 +443,7 @@ select option:focus,
 .nav-pills .nav-link.active {
     background:var(--g-accent)!important; color:#fff!important;
     border-color:rgba(255,255,255,.14)!important;
-    box-shadow:0 8px 20px -8px var(--accent-glow);
+
 }
 
 .pagination { gap:.25rem; }
@@ -457,7 +457,7 @@ select option:focus,
     font-size:.85rem;
 }
 .page-link:hover { background:var(--accent-soft)!important; color:#fff!important; border-color:var(--accent)!important; }
-.page-item.active .page-link { background:var(--g-accent)!important; color:#fff!important; border-color:var(--accent)!important; box-shadow:0 8px 20px -8px var(--accent-glow); }
+.page-item.active .page-link { background:var(--g-accent)!important; color:#fff!important; border-color:var(--accent)!important; }
 .page-item.disabled .page-link { background:rgba(255,255,255,.02)!important; color:var(--ink-4)!important; }
 
 .progress {
@@ -467,4 +467,4 @@ select option:focus,
     height:.55rem;
     overflow:hidden;
 }
-.progress-bar { background:var(--g-accent)!important; box-shadow:0 0 12px var(--accent-glow); }
+.progress-bar { background:var(--g-accent)!important; }

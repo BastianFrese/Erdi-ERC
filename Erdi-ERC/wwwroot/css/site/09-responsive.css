@@ -50,7 +50,7 @@
         border:1px solid var(--stroke-1);
         border-radius:14px;
         padding:1rem;
-        box-shadow:var(--sh-3);
+
         max-height:calc(100vh - 90px);
         overflow-y:auto;
     }
@@ -74,7 +74,7 @@
         float:none;
         width:100%;
         margin:.5rem 0 0!important;
-        box-shadow:none;
+
         background:rgba(0,0,0,.25)!important;
         border-color:var(--stroke-1);
         border-radius:12px;

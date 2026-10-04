@@ -36,23 +36,6 @@
     0%   { transform: translateX(-4%); opacity: .25; }
     100% { transform: translateX(4%);  opacity: .55; }
 }
-
-/* Telemetrie-Strip oben */
-.f1-hero__telemetry {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--telemetry-stripe);
-    z-index: 1;
-}
-.f1-hero__telemetry::after {
-    content: "";
-    position: absolute;
-    top: 0; bottom: 0;
-    left: -20%;
-    width: 20%;
-    animation: f1HudSweep 3.6s linear infinite;
-}
 @keyframes f1HudSweep {
     0%   { left: -20%; }
     100% { left: 120%; }

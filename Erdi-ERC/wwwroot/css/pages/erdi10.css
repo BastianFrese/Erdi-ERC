@@ -41,7 +41,7 @@
     border: 1px solid var(--stroke-1);
     border-left: 5px solid var(--winner-color, var(--accent));
     border-radius: var(--r-3);
-    box-shadow: var(--sh-2), 0 0 40px -15px var(--winner-color, transparent);
+
     overflow: hidden;
 }
 .f1-winner-card__trophy {
@@ -152,7 +152,7 @@
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-3);
     overflow: hidden;
-    box-shadow: var(--sh-2);
+
     height: 100%;
 }
 .f1-hub-card__tabs-bar {
@@ -196,7 +196,7 @@
     color: var(--sig-cyan);
     border-color: rgba(88,183,201,.4);
     border-bottom-color: var(--surface-1);
-    box-shadow: 0 0 10px rgba(88,183,201,.1);
+
     margin-bottom: -1px;
 }
 
@@ -260,7 +260,7 @@
     border-radius: var(--r-3);
     overflow: hidden;
     background: var(--surface-1);
-    box-shadow: var(--sh-2);
+
     height: 100%;
     display: flex;
     flex-direction: column;

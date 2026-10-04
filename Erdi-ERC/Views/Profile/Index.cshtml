@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
     <style>
-        .profile-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
+        .profile-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden; }
         .profile-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
         .profile-card__body { padding:1.25rem; }
     </style>
@@ -411,8 +411,7 @@
             <div class="profile-card__body p-0">
                 @if (Model.Races.Any())
                 {
-                    <div class="f1-results-card" style="box-shadow:none;border:none;border-radius:0;">
-                        <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+                    <div class="f1-results-card" style="border:none;border-radius:0;">
                         <div class="table-responsive">
                             <table class="f1-results-table profile-race-table">
                                 <thead>

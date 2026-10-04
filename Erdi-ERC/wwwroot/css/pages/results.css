@@ -99,29 +99,7 @@
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-3);
     overflow: hidden;
-    box-shadow: var(--sh-2);
-}
-.f1-results-card__telemetry {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--telemetry-stripe);
-    box-shadow: 0 0 12px rgba(225,6,0,.4);
-    z-index: 2;
-    pointer-events: none;
-}
-.f1-results-card__corner {
-    position: absolute;
-    top: 10px; right: 10px;
-    width: 78px;
-    height: 16px;
-    background: repeating-linear-gradient(45deg, var(--ink) 0 6px, transparent 6px 12px),
-                repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.06) 6px 12px);
-    opacity: .35;
-    transform: skewX(-18deg);
-    border-left: 2px solid var(--accent);
-    pointer-events: none;
-    z-index: 2;
+
 }
 .f1-results-card .table-responsive {
     padding: 0;
@@ -209,5 +187,4 @@
     .f1-filter-bar__label { padding-right: .45rem; }
     .f1-filter-bar__input,
     .f1-filter-bar__select { flex-basis: 100%; max-width: 100%; }
-    .f1-results-card__corner { display: none; }
 }
