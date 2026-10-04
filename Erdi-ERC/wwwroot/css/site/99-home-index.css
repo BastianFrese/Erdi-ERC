@@ -179,6 +179,34 @@
 /* =====================================================================
    WINNER-SLIDESHOW (Timing-Board-Look) -- behaelt JS-Hooks
    ===================================================================== */
+/* Die Infotafeln (Letzte Sieger, Constructors Top 3, Giveaway) liegen unter
+   dem Hero-Rahmen statt in seiner rechten Spalte. Dort bildeten sie mit dem
+   Logo die laengste Spalte: der Rahmen war 904 px hoch, die linke Spalte
+   endete bei 489 px — 303 px standen leer.
+
+   auto-fit statt fester Spaltenzahl: bei einer, zwei oder drei Tafeln teilen
+   sie sich die Breite gleichmaessig. Mit col-lg-4 waeren bei zwei Tafeln zwei
+   Drittel belegt und ein Drittel leer — genau die Luecke, um die es hier ging.
+
+   display steht hier und nicht als d-none d-lg-grid im Markup: die
+   Bootstrap-Datei ist auf die im Markup benutzten Klassen gekuerzt, und
+   d-lg-grid stand beim Kuerzen in keiner View — die Regel fehlt dort, die
+   Reihe waere still unsichtbar geblieben. */
+.f1-info-row {
+    display: none;
+}
+@media (min-width: 992px) {
+    .f1-info-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-bottom: 3rem;
+    }
+}
+/* Die Tafeln waren auf 440 px gedeckelt, weil die Spalte 522 px breit war.
+   In der Reihe sollen sie ihre Spur fuellen, sonst bleibt rechts ein Rest. */
+.f1-info-row .f1-timing-card { max-width: none; }
+
 .f1-timing-card {
     position: relative;
     width: 100%;

@@ -559,6 +559,58 @@ public class DesignContractTests
         }
     }
 
+    /// <summary>
+    /// Keine View darf eine Bootstrap-Klasse benutzen, die beim Kuerzen weggefallen ist.
+    ///
+    /// 00-bootstrap.css enthaelt nur die Klassen, die im Markup vorkamen, plus die
+    /// Zustandsklassen aus dem Purge-Skript. Schreibt jemand spaeter eine weitere
+    /// Bootstrap-Klasse ins Markup, fehlt die Regel — und zwar lautlos: das Element
+    /// steht da, sieht nur falsch aus. Kein Fehler, keine Warnung.
+    ///
+    /// Genau das ist passiert: die neue Infotafel-Reihe trug "d-none d-lg-grid".
+    /// d-lg-grid stand beim Kuerzen in keiner View, war also nicht in der gekuerzten
+    /// Datei; "d-none" gewann, und die ganze Reihe blieb unsichtbar.
+    /// </summary>
+    [Fact]
+    public void Keine_View_Benutzt_Eine_Weggekuerzte_Bootstrap_Klasse()
+    {
+        var voll = Path.Combine(WwwRoot, "lib", "bootstrap", "dist", "css", "bootstrap.min.css");
+        if (!File.Exists(voll)) return;   // Bootstrap-Quelle entfernt — nichts zu vergleichen
+
+        var vollKlassen = CssKlassen(Lies(voll));
+        var gekuerzt = CssKlassen(Lies(Path.Combine(WwwRoot, "css", "site", "00-bootstrap.css")));
+
+        // Was wir selbst gestalten, ist erlaubt, auch wenn der Name zufaellig auch
+        // in Bootstrap vorkommt.
+        var eigene = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var datei in AlleCssDateien())
+            if (!Path.GetFileName(datei).Equals("00-bootstrap.css", StringComparison.OrdinalIgnoreCase))
+                eigene.UnionWith(CssKlassen(Lies(datei)));
+
+        var treffer = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var view in Directory.EnumerateFiles(Path.Combine(RepoRoot, "Erdi-ERC", "Views"),
+                                                     "*.cshtml", SearchOption.AllDirectories))
+            foreach (var token in MarkupKlassen(Lies(view)))
+                if (vollKlassen.Contains(token) && !gekuerzt.Contains(token) && !eigene.Contains(token))
+                    treffer.TryAdd(token, Path.GetRelativePath(RepoRoot, view));
+
+        Assert.True(treffer.Count == 0,
+            "Bootstrap-Klasse benutzt, aber beim Kuerzen entfernt — das Element bleibt ungestaltet:\n  " +
+            string.Join("\n  ", treffer.Select(kv => $"{kv.Key}  (z. B. {kv.Value})")));
+    }
+
+    private static HashSet<string> CssKlassen(string css) =>
+        Regex.Matches(css, @"\.(-?[_a-zA-Z][_a-zA-Z0-9-]*)")
+             .Select(m => m.Groups[1].Value)
+             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Klassennamen aus class="…" im Markup, ohne Razor-Ausdruecke.</summary>
+    private static IEnumerable<string> MarkupKlassen(string markup) =>
+        Regex.Matches(markup, @"class=""([^""]*)""")
+             .SelectMany(m => m.Groups[1].Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+             .Where(t => !t.Contains('@') && !t.Contains('<') && !t.Contains('{'))
+             .Distinct(StringComparer.OrdinalIgnoreCase);
+
     [Theory]
     [InlineData("flagcdn.com")]
     [InlineData("cdn.jsdelivr.net")]

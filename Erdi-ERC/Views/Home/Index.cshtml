@@ -107,6 +107,27 @@
                 <partial name="_Picture" model="heroPic" />
             </div>
 
+        </div>
+    </div>
+
+    @* Broadcast-Ticker am unteren Rand *@
+</section>
+
+@* ============== INFO-TAFELN ==============
+   Die drei Tafeln standen in der rechten Hero-Spalte. Mit dem Logo
+   bildeten sie die laengste Spalte: der Rahmen war 904 px hoch, die
+   linke Spalte endete bei 489 px — 303 px davon standen leer. Jetzt
+   liegen sie in einer eigenen Reihe und teilen sich die Breite.
+   d-none d-lg-grid haelt die Sichtbarkeit wie bisher: sie sassen in
+   der rechten Hero-Spalte (d-none d-lg-flex) und waren unter 992 px
+   ausgeblendet. *@
+@if (lastWinnerItems.Count > 0 || overallTop3.Count > 0 || activeGiveaways.Any())
+{
+    @* Kein d-none d-lg-grid hier: die Bootstrap-Datei ist auf die im Markup
+       benutzten Klassen gekuerzt, und d-lg-grid stand beim Kuerzen in keiner
+       View — die Regel fehlt also. Sichtbarkeit und Raster stehen deshalb in
+       99-home-index.css bei .f1-info-row. *@
+    <section class="f1-info-row">
             @if (lastWinnerItems.Count > 0)
             {
                 <div class="f1-timing-card js-winner-slideshow" aria-live="polite">
@@ -236,11 +257,9 @@
                     </div>
                 }
             }
-        </div>
-    </div>
+    </section>
+}
 
-    @* Broadcast-Ticker am unteren Rand *@
-</section>
 
 @* ============== TELEMETRIE · STATS ============== *@
 <div class="f1-rc-bar reveal">Race Control&ensp;Live Telemetry</div>
