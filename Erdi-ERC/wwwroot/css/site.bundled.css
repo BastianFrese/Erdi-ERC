@@ -3700,6 +3700,31 @@ gap: 3px;
 width: 8px;
 height: 8px;
 border-radius: 50%;
+/* Unbeleuchtete Fassung. Die Farbe fehlte hier seit dem Umbau: die alten
+Regeln waren radialer Verlauf plus Leuchtschatten, und beides ist im
+System gestrichen — die Farbe ist dabei mitgegangen, uebrig blieben fuenf
+farblose Kreise. Die Ampel war danach leer. */
+background: var(--kerb);
+border: 1px solid var(--rule);
+}
+/* Zustaende — flach statt Verlauf.
+Ein Startlicht ist die Signalfarbe in ihrer eigentlichen Bedeutung, genau
+dafuer sind Rot, Gelb und Gruen im System reserviert. Die Zustaende kommen
+aus dem Markup (data-state) und werden derzeit nicht weitergeschaltet:
+die Pille steht auf "ready". */
+.race-lights-pill[data-state="ready"] .race-lights-pill__lamp,
+.race-lights-pill[data-state="red"]   .race-lights-pill__lamp {
+background: var(--flag);
+border-color: var(--flag);
+}
+.race-lights-pill[data-state="sc"] .race-lights-pill__lamp,
+.race-lights-pill[data-state="formation"] .race-lights-pill__lamp:nth-child(-n+3) {
+background: var(--slow);
+border-color: var(--slow);
+}
+.race-lights-pill[data-state="green"] .race-lights-pill__lamp {
+background: var(--best);
+border-color: var(--best);
 }
 /* ---------------------------------------------------------------------
 8) TELEMETRY TOPBAR (animated EKG-style line)
