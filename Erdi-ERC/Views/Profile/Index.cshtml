@@ -482,7 +482,7 @@ else
             const loadLib = () => new Promise((resolve, reject) => {
                 if (window.htmlToImage) { resolve(window.htmlToImage); return; }
                 const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+                s.src = '/lib/html-to-image/html-to-image.js';
                 s.onload = () => resolve(window.htmlToImage);
                 s.onerror = () => reject(new Error('Bild-Bibliothek konnte nicht geladen werden.'));
                 document.head.appendChild(s);

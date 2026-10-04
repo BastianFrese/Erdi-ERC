@@ -139,7 +139,6 @@
         <link rel="preload" as="image" href="~/images/ERCLogoHighRes1.png" fetchpriority="high">
     }
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt (inkl. Minify zu site.bundled.min.css). *@
     <link rel="stylesheet" href="~/css/site.bundled.min.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)

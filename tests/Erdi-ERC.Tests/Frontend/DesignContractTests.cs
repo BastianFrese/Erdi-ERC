@@ -151,6 +151,50 @@ public class DesignContractTests
     // --- Nichts darf dauerhaft unsichtbar sein ----------------------------
 
     /// <summary>
+    /// Der Layout-Test oben sieht nur die beiden Hüllen. Eine Fremdanfrage kann aber
+    /// aus jeder View kommen — genau das war der Fall: die Ergebnisseite lud ihr
+    /// Bahrain-Fähnchen von flagcdn.com, obwohl 45 Flaggen lokal liegen. Deshalb
+    /// hier ALLE Views.
+    /// </summary>
+    [Theory]
+    [InlineData("flagcdn.com")]
+    [InlineData("cdn.jsdelivr.net")]
+    [InlineData("unpkg.com")]
+    [InlineData("fonts.googleapis.com")]
+    [InlineData("fonts.gstatic.com")]
+    public void Keine_Fremdanfrage_Aus_Einer_View(string host)
+    {
+        var treffer = new List<string>();
+        foreach (var view in Directory.EnumerateFiles(Path.Combine(RepoRoot, "Erdi-ERC", "Views"),
+                                                      "*.cshtml", SearchOption.AllDirectories))
+        {
+            if (Lies(view).Contains(host, StringComparison.OrdinalIgnoreCase))
+                treffer.Add(Path.GetFileName(view));
+        }
+        Assert.True(treffer.Count == 0, $"{host} wird aus diesen Views geladen: {string.Join(", ", treffer)}");
+    }
+
+    /// <summary>
+    /// Bilder gehoeren ins eigene wwwroot. Ein <img> mit fremder Quelle ist eine
+    /// Anfrage an Dritte, die im Netzwerk-Panel als Fremd-Origin auftaucht — und
+    /// damit genau das, was das Performance-Budget ausschliesst.
+    /// </summary>
+    [Fact]
+    public void Bilder_Kommen_Nicht_Von_Fremden_Hosts()
+    {
+        var treffer = new List<string>();
+        foreach (var view in Directory.EnumerateFiles(Path.Combine(RepoRoot, "Erdi-ERC", "Views"),
+                                                      "*.cshtml", SearchOption.AllDirectories))
+        {
+            foreach (Match m in Regex.Matches(Lies(view), @"<img\b[^>]*?\bsrc\s*=\s*""(?<u>https?://[^""]+)""",
+                                              RegexOptions.IgnoreCase))
+                treffer.Add($"{Path.GetFileName(view)}: {m.Groups["u"].Value}");
+        }
+        Assert.True(treffer.Count == 0,
+            "Bilder von fremden Hosts:\n  " + string.Join("\n  ", treffer));
+    }
+
+    /// <summary>
     /// Ein Einblende-Zustand (opacity &lt; 1) ohne das JS, das ihn wieder aufhebt,
     /// macht den Inhalt DAUERHAFT unsichtbar. Genau das ist beim Umbau passiert:
     /// der IntersectionObserver flog raus, die .reveal-Regel blieb. Der Fehler ist

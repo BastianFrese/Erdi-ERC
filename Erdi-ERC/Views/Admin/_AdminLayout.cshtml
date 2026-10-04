@@ -72,8 +72,7 @@
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
     @* Schriften kommen selbst gehostet aus 01-tokens.css (@font-face auf /fonts/).
        Bootstrap Icons folgen in Task 12 selbst gehostet und beschnitten. *@
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/site.bundled.min.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="adm-body">
@@ -124,7 +123,7 @@
                             : "adm-nav-link";
                     }
                     <a class="@telemetryNavClass" asp-controller="AdminTelemetry" asp-action="Index">
-                        <i class="bi bi-radio"></i> Telemetrie
+                        <i class="bi bi-broadcast"></i> Telemetrie
                     </a>
                 </div>
             }
