@@ -44,6 +44,30 @@ robocopy "C:\Users\basti\source\repos\Erdi-ERC\Erdi-ERC\bin\Release\net10.0\linu
 # systemctl restart erdi-erc
 ```
 
+> [!danger] **Erst stoppen, dann kopieren — sonst stirbt der laufende Prozess.**
+> Am 04.10. zweimal gemessen: ein `robocopy` über den **laufenden** Dienst beendet
+> ihn. Der Prozess überschreibt seine eigene Haupt-DLL (`Erdi-ERC.dll`), die er
+> geladen hat; beim nächsten Zugriff auf eine Seite daraus ist er weg.
+>
+> | Kopie | Prozess tot | wieder da | Fenster |
+> |---|---|---|---|
+> | 07:16 | ~07:16 (keine Abschiedszeile im Log) | 07:19:14 | ~3 min |
+> | 08:47 | ~08:47:2x | 08:47:43 | ~22 s |
+>
+> `Restart=always` mit `RestartSec=10` holt ihn zurück, aber **bis dahin ist die
+> Seite weg** — nach außen ein 502. Der Satz weiter unten („Der Copy selbst ist
+> unkritisch, der laufende Prozess hält seine DLLs im Speicher") gilt für
+> Laufzeitdaten, **nicht** für die Haupt-DLL.
+>
+> Sicherer Weg:
+> ```bash
+> sudo systemctl stop erdi-erc
+> # kopieren (robocopy / scp / tar)
+> sudo systemctl start erdi-erc
+> ```
+> Das Ausfallfenster ist dann eine Sache von Sekunden statt Minuten, und es ist
+> geplant statt zufällig.
+
 Kein `/PURGE`/`/MIR`: der Server-Ordner enthält Laufzeitdaten, die im Publish-Output nicht
 vorkommen (`data/`, `logs/`, `downloads/`-Uploads) — die dürfen nicht gelöscht werden.
 `DeleteExistingFiles=false` im Profil schützt sie ebenfalls.
