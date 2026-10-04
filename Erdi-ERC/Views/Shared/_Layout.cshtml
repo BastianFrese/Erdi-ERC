@@ -120,6 +120,10 @@
     @* ---------- PWA ---------- *@
     <link rel="manifest" href="~/site.webmanifest" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    @* Die apple-Variante ist die einzige, die iOS liest; Chrome meldet sie als
+       veraltet und will die Standardform. Beide stehen lassen — sie schliessen
+       sich nicht aus, und eine davon allein laesst jeweils eine Plattform weg. *@
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Erdi's Racing Community" />
 
