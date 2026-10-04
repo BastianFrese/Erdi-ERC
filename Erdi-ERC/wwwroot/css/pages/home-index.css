@@ -1033,3 +1033,18 @@
    allein — und es sind vier Kaesten und vier Mittelpunkte weniger.
    ===================================================================== */
 .f1-rc-bar { display: none; }
+
+/* =====================================================================
+   DAS LOGO HOERT AUF ZU SCHREIEN
+   Es ist ein glaenzendes 3D-Rendering mit Rennwagen — die einzige
+   dreidimensionale, glaenzende Flaeche in einer flachen, hartkantigen
+   Gestalt. Als alles andere noch rot und gruen war, ging es unter; jetzt
+   ist es das Lauteste der Seite. Das Markenzeichen bleibt, aber es tritt
+   zurueck: kleiner, ohne Dreh-Effekt, leicht abgesenkt. Die Ueberschrift
+   fuehrt.
+   ===================================================================== */
+.f1-hero__brand-logo {
+    max-width: 176px;
+    opacity: .92;
+}
+.f1-hero__brand-logo:hover { transform: none; }

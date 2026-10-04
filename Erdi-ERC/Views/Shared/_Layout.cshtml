@@ -136,7 +136,7 @@
     @* LCP-Preload: Hero-Logo ist nur auf Pages relevant, die es above-the-fold zeigen (via ViewData["PreloadHero"]="hero"). Sonst wuerde jede Page 247 KB vorladen. *@
     @if ((ViewData["PreloadHero"] as string) == "hero")
     {
-        <link rel="preload" as="image" href="~/images/ERCLogoHighRes1.png" fetchpriority="high">
+        <link rel="preload" as="image" href="~/images/ERCLogo.webp" fetchpriority="high">
     }
 
     @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt (inkl. Minify zu site.bundled.min.css). *@
