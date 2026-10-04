@@ -1,0 +1,39 @@
+@model Erdi_ERC.Models.UiComponents.TowerVm
+@*
+    Turm — die Top N der Meisterschaft als feste linke Spalte auf jeder
+    oeffentlichen Seite.
+
+    Bewusst eine echte <table> mit th scope: die Daten sind tabellarisch, und
+    eine Vorlesehilfe soll Zeile und Spalte ansagen koennen. Die Teamfarbe steht
+    als --team im Inline-Stil der Zeile, weil der Turm mehrere Teams gleichzeitig
+    zeigt — der body-Kontext kann das nicht leisten.
+*@
+@if (Model.Rows.Count == 0)
+{
+    <p class="tower__empty">Noch keine Wertung — die Saison hat nicht begonnen.</p>
+}
+else
+{
+    <table class="tower">
+        <caption>@Model.Title</caption>
+        <thead>
+            <tr>
+                <th scope="col" class="tower__col-pos">P</th>
+                <th scope="col" class="tower__col-team"><span class="visually-hidden">Team</span></th>
+                <th scope="col" class="tower__col-name">Fahrer</th>
+                <th scope="col" class="tower__col-pts">Pkt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr style="--team: var(--team-@r.TeamKey, var(--ink-2));">
+                    <td class="tower__pos">@r.Pos</td>
+                    <td class="tower__team" title="@r.TeamName"></td>
+                    <td class="tower__name" title="@r.TeamName">@DriverNameHelper.Display(r.DriverName)</td>
+                    <td class="tower__pts">@PointsFormatHelper.Format(r.Points)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

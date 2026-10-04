@@ -1,6 +1,7 @@
 using Erdi_ERC.Data;
 using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
+using Erdi_ERC.Models.UiComponents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -12,7 +13,8 @@ namespace Erdi_ERC.Services
     /// </summary>
     public sealed class LayoutDataService : ILayoutDataService
     {
-        private const string CacheKey = "layout-data:v1";
+        private const string CacheKey = "layout-data:v2";
+        private const int TowerZeilen = 10;
         private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
         private static readonly LayoutData EmptyData = new(
@@ -22,7 +24,8 @@ namespace Erdi_ERC.Services
             WinnerCarPrimaryDark: "#7a0300",
             WinnerCarSecondary: "#ffffff",
             ActiveStream: null,
-            LatestSetupActivityUtc: null);
+            LatestSetupActivityUtc: null,
+            Tower: new TowerVm("Meisterschaft", null));
 
         private readonly AppDbContext _db;
         private readonly IMemoryCache _cache;
@@ -73,7 +76,8 @@ namespace Erdi_ERC.Services
                 WinnerCarPrimaryDark: primaryDark,
                 WinnerCarSecondary: secondary,
                 ActiveStream: activeStream,
-                LatestSetupActivityUtc: latestSetupActivity);
+                LatestSetupActivityUtc: latestSetupActivity,
+                Tower: await LoadTowerAsync(ct));
         }
 
         private async Task<RaceResult?> LoadLatestRaceAsync(CancellationToken ct)
@@ -217,6 +221,66 @@ namespace Erdi_ERC.Services
             }
 
             return (team.PrimaryColor, Shade(team.PrimaryColor, 0.25), Shade(team.PrimaryColor, -0.55), team.SecondaryColor);
+        }
+
+        /// <summary>
+        /// Die Top-N der ersten aktiven Liga fuer den Turm.
+        ///
+        /// Welche Liga "die" Meisterschaft ist, entscheidet die Datenlage, nicht ein
+        /// hartcodierter Name: die erste nicht archivierte Liga nach SortOrder. Damit
+        /// zeigt der Turm dieselben Zahlen wie die Ergebnisseite dieser Liga.
+        ///
+        /// Faengt alle Fehler ab und liefert dann einen leeren Turm. Der Turm ist
+        /// Beiwerk — er darf nie eine Seite zum Absturz bringen, und er steht auf jeder.
+        /// </summary>
+        private async Task<TowerVm> LoadTowerAsync(CancellationToken ct)
+        {
+            try
+            {
+                var liga = await _db.Leagues
+                    .AsNoTracking()
+                    .Where(l => !l.IsArchived)
+                    .OrderBy(l => l.SortOrder)
+                    .ThenBy(l => l.Name)
+                    .Select(l => new { l.Id, l.Name })
+                    .FirstOrDefaultAsync(ct);
+
+                if (liga is null)
+                {
+                    return new TowerVm("Meisterschaft", null);
+                }
+
+                var roh = await _db.DriverStandings
+                    .AsNoTracking()
+                    .Where(s => s.LeagueId == liga.Id)
+                    .OrderBy(s => s.Position)
+                    .Take(TowerZeilen)
+                    .Select(s => new { s.Position, s.Driver, s.Team, s.Points })
+                    .ToListAsync(ct);
+
+                var zeilen = roh
+                    .Select(s => new TowerRowVm(
+                        s.Position,
+                        s.Driver,
+                        // Teamfarbe je Zeile: der Turm zeigt mehrere Teams gleichzeitig,
+                        // der body-Kontext kann das nicht leisten.
+                        // Dieselbe Kette wie auf der Ergebnisseite: erst ueber den
+                        // Fahrernamen (exakter Treffer, deshalb OHNE Clantag), dann
+                        // ueber den Teamnamen. Bei Community-Fahrern greift die zweite
+                        // Stufe — der Fahrername steht nicht in der F1-Liste.
+                        F1TeamsHelper.GetCssKeyForDriver(DriverNameHelper.Display(s.Driver))
+                            ?? F1TeamsHelper.GetTeamByName(s.Team)?.CssKey
+                            ?? "unknown",
+                        s.Team,
+                        s.Points))
+                    .ToArray();
+
+                return new TowerVm($"{liga.Name} · Meisterschaft", zeilen, TowerZeilen);
+            }
+            catch
+            {
+                return new TowerVm("Meisterschaft", null);
+            }
         }
 
         private static string Shade(string hex, double factor)

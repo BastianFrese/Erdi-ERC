@@ -1,4 +1,5 @@
 using Erdi_ERC.Models;
+using Erdi_ERC.Models.UiComponents;
 
 namespace Erdi_ERC.Services
 {
@@ -14,5 +15,7 @@ namespace Erdi_ERC.Services
         string WinnerCarPrimaryDark,
         string WinnerCarSecondary,
         StreamSchedule? ActiveStream,
-        DateTime? LatestSetupActivityUtc);
+        DateTime? LatestSetupActivityUtc,
+        /// <summary>Top-N der ersten aktiven Liga. Nie null; bei leerer Wertung ohne Zeilen.</summary>
+        TowerVm Tower);
 }

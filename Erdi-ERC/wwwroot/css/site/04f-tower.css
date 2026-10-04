@@ -33,14 +33,26 @@
 }
 .tower tbody tr:hover { background: var(--tarmac); }
 
-.tower__pos { width: 2.25rem; color: var(--ink-2); font-weight: 700; }
-.tower__team { width: 3px; padding: 0; border-bottom: 1px solid var(--rule); }
+/* Spaltenbreiten gehoeren an die KOPFZEILE: bei table-layout:fixed liest der
+   Browser die Breiten aus der ersten Zeile. Standen sie nur an den td-Klassen,
+   teilte er den Rest gleichmaessig auf — der 3px-Teambalken wurde 75px breit
+   und schnitt den Fahrernamen ab. */
+.tower__col-pos  { width: 2.25rem; }
+/* Spezifischer als ".tower th { padding }" — sonst bleiben links und rechts
+   8px Polsterung stehen und der 4px-Balken wird 16px breit. */
+.tower th.tower__col-team, .tower td.tower__team { width: 4px; padding: 0; }
+.tower__col-pts  { width: 4rem; text-align: right; }
+
+.tower__pos { color: var(--ink-2); font-weight: 700; }
+/* Der Balken je Zeile. Die Farbe kommt als --team aus dem Inline-Stil der Zeile,
+   weil der Turm mehrere Teams gleichzeitig zeigt. Ohne background waere er unsichtbar. */
+.tower__team { padding: 0; border-bottom: 1px solid var(--rule); background: var(--team); }
 .tower__name {
     font-family: var(--ff); font-weight: 600; font-size: var(--fs-s);
     letter-spacing: .02em; text-transform: uppercase;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.tower__pts { width: 4rem; text-align: right; color: var(--ink); font-weight: 700; }
+.tower__pts { text-align: right; color: var(--ink); font-weight: 700; }
 .tower__gap { text-align: right; color: var(--ink-2); }
 
 /* Eigene Zeile hervorheben — der Teamfarben-Verlauf aus der Spec. */
