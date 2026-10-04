@@ -54,10 +54,20 @@
     width: clamp(46px, 8vw, 78px);
     height: clamp(46px, 8vw, 78px);
     border-radius: 50%;
+    /* Unbeleuchtete Fassung. Die Farbe fehlte hier seit dem Umbau: die alten
+       Regeln waren radialer Verlauf plus Leuchtschatten, und beides ist im
+       System gestrichen — die Farbe ist dabei mitgegangen. Die Lade-Sequenz
+       lief danach zwar richtig durch, zeigte aber fuenf leere Ringe statt
+       aufleuchtender Lampen. */
+    background: var(--kerb);
     border: 2px solid var(--rule);
-    transition: background 120ms ease, box-shadow 200ms ease, transform 200ms ease;
+    transition: background 120ms ease, transform 200ms ease;
 }
+/* Zundet: Rot, flach. Ein Startlicht ist die Signalfarbe in ihrer eigentlichen
+   Bedeutung — genau dafuer sind Rot und Gruen im System reserviert. */
 .race-lights__lamp.is-on {
+    background: var(--flag);
+    border-color: var(--flag);
     transform: translateZ(0) scale(1.02);
 }
 .race-lights__label {
@@ -68,6 +78,11 @@
     text-transform: uppercase;
 }
 .race-lights.is-go .race-lights__rig { background: transparent; border-color: transparent; }
+/* Lichter aus: alle fuenf gruen. */
+.race-lights.is-go .race-lights__lamp {
+    background: var(--best);
+    border-color: var(--best);
+}
 .race-lights.is-go .race-lights__label { color: var(--best); }
 
 @media (prefers-reduced-motion: reduce) {
