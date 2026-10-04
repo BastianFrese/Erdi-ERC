@@ -498,8 +498,6 @@ background:var(--surface-1);
 border:1px solid color-mix(in srgb, var(--accent) 26%, var(--stroke-1));
 border-radius:0;
 clip-path:var(--clip-chamfer);
-backdrop-filter:blur(6px) saturate(120%);
--webkit-backdrop-filter:blur(6px) saturate(120%);
 color:var(--ink);
 overflow:hidden;
 transition:transform var(--t-base), border-color var(--t-base), background-color var(--t-base);
@@ -551,8 +549,6 @@ font-size:.7rem;
 letter-spacing:.11em;
 text-transform:uppercase;
 text-decoration:none; cursor:pointer;
-backdrop-filter:blur(10px) saturate(160%);
--webkit-backdrop-filter:blur(10px) saturate(160%);
 transition:transform var(--t-fast), box-shadow var(--t-base), background var(--t-base), color var(--t-base), border-color var(--t-base), filter var(--t-base);
 }
 .btn:hover { transform:translateY(-1px); }
@@ -755,8 +751,6 @@ border:1px solid var(--stroke-1);
 border-radius:0;
 clip-path:var(--clip-chamfer-sm);
 overflow:hidden;
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 background-image:linear-gradient(180deg, rgba(255,255,255,.02), transparent), var(--f1-grid);
 }
 .table thead th {
@@ -808,8 +802,6 @@ background:var(--surface-1);
 border:1px solid var(--stroke-1);
 border-left:3px solid var(--sig-cyan);
 border-radius:var(--r-3);
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 color:var(--ink);
 font-size:.92rem;
 }
@@ -829,8 +821,6 @@ font-size:1.2rem; line-height:1; color:var(--sig-cyan); flex:none; margin-top:.0
 background:var(--surface-2)!important;
 border:1px solid var(--stroke-1)!important;
 border-radius:14px!important;
-backdrop-filter:var(--glass-blur);
--webkit-backdrop-filter:var(--glass-blur);
 box-shadow:0 30px 60px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04);
 padding:.4rem!important;
 margin-top:.4rem!important;
@@ -861,8 +851,6 @@ color:#fff!important;
 background:var(--surface-2)!important;
 border:1px solid var(--stroke-1)!important;
 border-radius:18px!important;
-backdrop-filter:blur(28px) saturate(200%);
--webkit-backdrop-filter:blur(28px) saturate(200%);
 box-shadow:0 40px 80px -20px rgba(0,0,0,.85);
 color:var(--ink);
 }
@@ -876,8 +864,6 @@ border:1px solid var(--stroke-1)!important;
 border-radius:var(--r-3)!important;
 margin-bottom:.7rem;
 overflow:hidden;
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 }
 .accordion-item .accordion-header,
 .accordion-item .accordion-header * {
@@ -922,7 +908,6 @@ border-radius:12px!important;
 color:var(--ink-2)!important;
 font-weight:600; font-size:.82rem;
 padding:.45rem .9rem!important;
-backdrop-filter:blur(10px);
 }
 .nav-pills .nav-link:hover { color:#fff!important; border-color:var(--accent)!important; }
 .nav-pills .nav-link.active {
@@ -952,6 +937,122 @@ overflow:hidden;
 }
 .progress-bar { background:var(--g-accent)!important; box-shadow:0 0 12px var(--accent-glow); }
 /* =====================================================================
+04f · TURM UND DATENKODIERUNGEN
+Das tragende Bauteil: eine Zeile ist ein Fahrer, kein Karteikaertchen.
+Liegt im Bundle NACH 04-components.css, damit diese Regeln gewinnen.
+===================================================================== */
+/* --- Der Turm --- */
+.tower {
+width: 100%;
+border-collapse: collapse;
+/* fixed ist Pflicht: ohne festes Tabellenlayout ignoriert der Browser
+max-width in der Namensspalte und der Text laeuft ueber. */
+table-layout: fixed;
+font-family: var(--ff-cond);
+}
+.tower caption {
+text-align: left; padding: 0 0 var(--sp-2);
+font-family: var(--ff); font-size: var(--fs-xs); font-weight: 700;
+letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+}
+.tower th {
+padding: var(--sp-2);
+font-family: var(--ff); font-size: var(--fs-xs); font-weight: 600;
+letter-spacing: .1em; text-transform: uppercase;
+color: var(--ink-3); text-align: left;
+border-bottom: 1px solid var(--rule-strong);
+}
+.tower td {
+padding: var(--sp-2);
+border-bottom: 1px solid var(--rule);
+font-variant-numeric: var(--num);
+height: 2.25rem;                 /* feste Zeilenhoehe -> kein CLS */
+}
+.tower tbody tr:hover { background: var(--tarmac); }
+.tower__pos { width: 2.25rem; color: var(--ink-3); font-weight: 700; }
+.tower__team { width: 3px; padding: 0; border-bottom: 1px solid var(--rule); }
+.tower__name {
+font-family: var(--ff); font-weight: 600; font-size: var(--fs-s);
+letter-spacing: .02em; text-transform: uppercase;
+white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tower__pts { width: 4rem; text-align: right; color: var(--ink); font-weight: 700; }
+.tower__gap { text-align: right; color: var(--ink-2); }
+/* Eigene Zeile hervorheben — der Teamfarben-Verlauf aus der Spec. */
+.tower__row--self {
+background: linear-gradient(90deg, color-mix(in srgb, var(--team) 14%, transparent), transparent 70%);
+}
+/* --- Sektorzeiten: Farbe UND Glyphe, nie Farbe allein --- */
+.sector { display: inline-flex; align-items: center; gap: 2px; }
+.sector__seg { width: 12px; height: 8px; background: var(--kerb); }
+.sector__seg--fast { background: var(--fast); }
+.sector__seg--best { background: var(--best); }
+.sector__seg--slow { background: var(--slow); }
+.sector__glyph { font-size: .7em; line-height: 1; color: var(--ink-3); }
+/* --- Reifenmischung --- */
+.compound {
+display: inline-flex; align-items: center; justify-content: center;
+width: 1.35rem; height: 1.35rem;
+font-family: var(--ff); font-size: .62rem; font-weight: 700; letter-spacing: 0;
+border: 1.5px solid var(--ink-3); border-radius: 50%;
+color: var(--ink); background: transparent;
+}
+.compound--soft   { border-color: var(--flag); color: var(--flag); }
+.compound--medium { border-color: var(--slow); color: var(--slow); }
+.compound--hard   { border-color: var(--ink);  color: var(--ink); }
+.compound--inter  { border-color: var(--best); color: var(--best); }
+.compound--wet    { border-color: var(--wet);  color: var(--wet); }
+/* --- Zeitdifferenz --- */
+.delta { font-variant-numeric: var(--num); color: var(--ink-2); }
+.delta--lead { color: var(--ink); font-weight: 700; }
+.delta--loss { color: var(--ink-2); }
+/* --- Streckenstatus --- */
+.flagstate {
+display: inline-flex; align-items: center; gap: var(--sp-2);
+font-family: var(--ff); font-size: var(--fs-xs); font-weight: 700;
+letter-spacing: .12em; text-transform: uppercase;
+padding: 2px var(--sp-2); border: 1px solid var(--ink-3); color: var(--ink-2);
+}
+.flagstate--green   { border-color: var(--best); color: var(--best); }
+.flagstate--yellow  { border-color: var(--slow); color: var(--slow); }
+.flagstate--red     { border-color: var(--flag); color: var(--flag); }
+.flagstate--chequer { border-color: var(--ink);  color: var(--ink); }
+/* --- Dichte Datentabelle --- */
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--fs-s); }
+.data-table th {
+padding: var(--sp-2); text-align: left;
+font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+color: var(--ink-3); border-bottom: 1px solid var(--rule-strong);
+position: sticky; top: 56px; background: var(--track);   /* klebt unter dem Streifen */
+z-index: 2;
+}
+.data-table td { padding: var(--sp-2); border-bottom: 1px solid var(--rule); font-variant-numeric: var(--num); }
+.data-table tbody tr:hover { background: var(--tarmac); }
+/* --- Panel: harter Kasten mit Kopfzeile --- */
+.panel { background: var(--tarmac); border: 1px solid var(--rule); border-radius: var(--r-2); }
+.panel__head {
+display: flex; align-items: center; gap: var(--sp-3);
+padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--rule);
+}
+.panel__head-title {
+font-family: var(--ff-cond); font-size: var(--fs-s); font-weight: 600;
+letter-spacing: .1em; text-transform: uppercase;
+}
+.panel__body { padding: var(--sp-4); }
+/* --- Sektionstrennung: Hairline plus Farbtick, keine Karte --- */
+.section { margin: var(--sp-7) 0; }
+.section-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.section-head__bar { width: 3px; height: 1.1em; background: var(--team); flex: none; }
+.section-head__title {
+margin: 0; font-family: var(--ff-cond); font-size: var(--fs-l); font-weight: 600;
+letter-spacing: .06em; text-transform: uppercase;
+}
+/* --- Leere Datenmengen duerfen nicht kollabieren --- */
+.tower__empty, .data-table__empty {
+padding: var(--sp-6) var(--sp-4); text-align: left;
+color: var(--ink-2); border: 1px dashed var(--rule); border-radius: var(--r-2);
+}
+/* =====================================================================
 05 · F1 MODULES
 ===================================================================== */
 .icon-chip {
@@ -962,8 +1063,6 @@ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))
 border:1px solid var(--stroke-1);
 box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 6px 14px -6px rgba(0,0,0,.5);
 color:#fff; font-size:1.15rem;
-backdrop-filter:blur(14px) saturate(160%);
--webkit-backdrop-filter:blur(14px) saturate(160%);
 }
 .icon-chip.is-accent { color:var(--accent); border-color:var(--accent-soft); box-shadow:0 0 0 1px var(--accent-soft), 0 0 24px -6px var(--accent-glow); }
 .icon-chip.is-cyan   { color:var(--sig-cyan); border-color:rgba(88,183,201,.3); box-shadow:0 0 24px -6px rgba(88,183,201,.5); }
@@ -1034,8 +1133,6 @@ background:var(--surface-1);
 border:1px solid var(--stroke-1);
 border-radius:var(--r-3);
 margin-bottom:1rem;
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 }
 .toolbar > .spacer { flex:1; }
 .stat-grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); }
@@ -1045,8 +1142,6 @@ padding:1.05rem 1.1rem;
 background:var(--surface-1);
 border:1px solid color-mix(in srgb, var(--accent) 28%, var(--stroke-1));
 border-radius:10px;
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 overflow:hidden;
 transition:transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base);
 background-image:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)), var(--f1-grid);
@@ -1078,8 +1173,6 @@ padding:.85rem;
 background:var(--surface-1);
 border:1px solid var(--stroke-1);
 border-radius:var(--r-3);
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 }
 .driver-tile__pos { font-family:var(--ff-tech); font-size:1.4rem; font-weight:900; color:var(--ink-3); min-width:2.2ch; text-align:center; }
 .driver-tile__pos.is-1 { color:var(--gold); }
@@ -1112,8 +1205,6 @@ background:var(--surface-1);
 border:1px solid var(--stroke-1);
 border-radius:var(--r-4);
 overflow:hidden;
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 transition:transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
 }
 .setup-card:hover { transform:translateY(-3px); box-shadow:var(--sh-3); border-color:var(--stroke-2); }
@@ -1172,8 +1263,6 @@ padding:1rem;
 background:var(--surface-1);
 border:1px solid var(--stroke-1);
 border-radius:var(--r-3);
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 transition:transform var(--t-base), box-shadow var(--t-base);
 background-image:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)), var(--f1-grid);
 }
@@ -1285,8 +1374,6 @@ background:linear-gradient(180deg, var(--surface-2), var(--surface-1));
 border:1px solid var(--stroke-1);
 border-radius:var(--r-3);
 overflow:hidden;
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 }
 .event-timeline__layout {
 display:grid;
@@ -1477,8 +1564,6 @@ position:fixed;
 inset:0;
 z-index:10000;
 background:rgba(2,4,8,.92);
-backdrop-filter:blur(14px);
--webkit-backdrop-filter:blur(14px);
 display:flex;
 align-items:center;
 justify-content:center;
@@ -1777,8 +1862,6 @@ radial-gradient(60% 80% at 0% 0%, var(--accent-soft), transparent 60%),
 radial-gradient(50% 70% at 100% 0%, rgba(88,183,201,.10), transparent 60%),
 linear-gradient(160deg, var(--surface-2), var(--surface-1));
 box-shadow:var(--sh-2);
-backdrop-filter:var(--glass-blur-sm);
--webkit-backdrop-filter:var(--glass-blur-sm);
 position:relative;
 overflow:hidden;
 }
@@ -2237,8 +2320,6 @@ grid-template-columns:1fr;
 position:fixed; inset:0; display:none; align-items:center; justify-content:center;
 padding:24px;
 background:rgba(5,8,16,.86);
-backdrop-filter:blur(12px) saturate(140%);
--webkit-backdrop-filter:blur(12px) saturate(140%);
 z-index:2000;
 }
 .intro-overlay__card {
@@ -2498,7 +2579,6 @@ display:flex; align-items:center; gap:.75rem;
 padding:0 1.25rem; height:52px; flex-shrink:0;
 border-bottom:1px solid var(--stroke-1);
 background:rgba(10,12,18,.88);
-backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
 position:sticky; top:0; z-index:100;
 }
 .adm-topbar__toggle {
@@ -2554,7 +2634,6 @@ margin-bottom:1rem;
 .adm-sidebar-overlay {
 display:none; position:fixed; inset:0;
 background:rgba(0,0,0,.55); z-index:199;
-backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
 }
 .adm-sidebar-overlay.is-visible { display:block; }
 /* ---- Responsive ---- */
@@ -3000,19 +3079,28 @@ display:flex; align-items:center; justify-content:center;
 /* =====================================================================
 07 · UTILITIES
 ===================================================================== */
-.text-accent { color:var(--accent)!important; }
-.text-cyan   { color:var(--sig-cyan)!important; }
-.text-amber  { color:var(--sig-amber)!important; }
-.text-green  { color:var(--sig-green)!important; }
+.text-accent { color:var(--team)!important; }
+.text-cyan   { color:var(--wet)!important; }
+.text-amber  { color:var(--slow)!important; }
+.text-green  { color:var(--best)!important; }
 .text-mute   { color:var(--ink-3)!important; }
-.text-mono   { font-family:var(--ff-mono)!important; }
-.text-tech   { font-family:var(--ff-tech)!important; letter-spacing:.05em; }
-.surface-glass { background:var(--surface-1); border:1px solid var(--stroke-1); border-radius:var(--r-3); backdrop-filter:var(--glass-blur-sm); -webkit-backdrop-filter:var(--glass-blur-sm); }
-.glow-accent { box-shadow:0 0 24px -6px var(--accent-glow); }
+.text-mono   { font-family:var(--ff)!important; font-variant-numeric:var(--num); }
+.text-tech   { font-family:var(--ff-cond)!important; letter-spacing:.05em; }
+/* Fruehre eine Glasflaeche. Die Spec verbietet Glas; die Klasse bleibt als
+normale Flaeche erhalten, damit ihre Verwendungen nicht ins Leere laufen. */
+.surface-glass {
+background:var(--tarmac); border:1px solid var(--rule);
+border-radius:var(--r-2);
+}
+/* Fruehre ein Leuchtschatten. Schatten sind gestrichen — die Klasse bleibt
+als Durchreiche, damit ihre Verwendungen im Markup nichts kaputt machen. */
+.glow-accent { box-shadow:none; }
 .gap-tight > * + * { margin-top:.4rem; }
 .gap-loose > * + * { margin-top:1.2rem; }
-.divider { height:1px; background:var(--stroke-1); margin:1rem 0; }
-:focus-visible { outline:none; box-shadow:0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); border-radius:8px; }
+.divider { height:1px; background:var(--rule); margin:1rem 0; }
+/* Der globale Fokusring steht genau einmal, in 02-base.css. Die fruehre
+Doppeldefinition hier (outline:none plus eigener box-shadow) ist entfernt —
+zwei Regeln mit gleicher Spezifitaet sind ein Wettlauf, den niemand gewinnen soll. */
 /* =====================================================================
 08 · ANIMATIONS
 ===================================================================== */
@@ -3138,8 +3226,6 @@ border:1px solid var(--stroke-1);
 border-radius:14px;
 padding:1rem;
 box-shadow:var(--sh-3);
-backdrop-filter:var(--glass-blur);
--webkit-backdrop-filter:var(--glass-blur);
 max-height:calc(100vh - 90px);
 overflow-y:auto;
 }
@@ -3954,7 +4040,6 @@ background: #fff; box-shadow: 0 0 10px #fff;
 .shortcut-overlay {
 position: fixed; inset: 0;
 background: rgba(6,7,10,.78);
-backdrop-filter: blur(8px);
 display: none;
 align-items: center; justify-content: center;
 z-index: 1080;
@@ -4226,7 +4311,6 @@ padding:1rem;
 .setup-intro::before {
 content:"";position:absolute;inset:0;
 background:rgba(5,8,14,.72);
--webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
 animation:setupIntroFade .35s ease both;
 }
 body.setup-intro-lock { overflow:hidden; }

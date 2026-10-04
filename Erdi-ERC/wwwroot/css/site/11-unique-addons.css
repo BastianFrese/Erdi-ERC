@@ -260,7 +260,6 @@ body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(-
 .shortcut-overlay {
     position: fixed; inset: 0;
     background: rgba(6,7,10,.78);
-    backdrop-filter: blur(8px);
     display: none;
     align-items: center; justify-content: center;
     z-index: 1080;

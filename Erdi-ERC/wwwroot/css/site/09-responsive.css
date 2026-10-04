@@ -51,8 +51,6 @@
         border-radius:14px;
         padding:1rem;
         box-shadow:var(--sh-3);
-        backdrop-filter:var(--glass-blur);
-        -webkit-backdrop-filter:var(--glass-blur);
         max-height:calc(100vh - 90px);
         overflow-y:auto;
     }

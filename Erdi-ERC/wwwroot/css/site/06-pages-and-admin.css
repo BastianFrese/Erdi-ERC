@@ -45,8 +45,6 @@
         radial-gradient(50% 70% at 100% 0%, rgba(88,183,201,.10), transparent 60%),
         linear-gradient(160deg, var(--surface-2), var(--surface-1));
     box-shadow:var(--sh-2);
-    backdrop-filter:var(--glass-blur-sm);
-    -webkit-backdrop-filter:var(--glass-blur-sm);
     position:relative;
     overflow:hidden;
 }
@@ -527,8 +525,6 @@
     position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     padding:24px;
     background:rgba(5,8,16,.86);
-    backdrop-filter:blur(12px) saturate(140%);
-    -webkit-backdrop-filter:blur(12px) saturate(140%);
     z-index:2000;
 }
 .intro-overlay__card {
@@ -796,7 +792,6 @@
     padding:0 1.25rem; height:52px; flex-shrink:0;
     border-bottom:1px solid var(--stroke-1);
     background:rgba(10,12,18,.88);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
     position:sticky; top:0; z-index:100;
 }
 .adm-topbar__toggle {
@@ -855,7 +850,6 @@
 .adm-sidebar-overlay {
     display:none; position:fixed; inset:0;
     background:rgba(0,0,0,.55); z-index:199;
-    backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
 }
 .adm-sidebar-overlay.is-visible { display:block; }
 

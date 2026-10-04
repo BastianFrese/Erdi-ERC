@@ -273,7 +273,6 @@
 .setup-intro::before {
     content:"";position:absolute;inset:0;
     background:rgba(5,8,14,.72);
-    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
     animation:setupIntroFade .35s ease both;
 }
 body.setup-intro-lock { overflow:hidden; }
