@@ -87,3 +87,6 @@ bindefinitivamarbeiten.txt
 Erdi-ERC/TestPdfExtraction.csproj
 Erdi-ERC/log.txt
 Erdi-ERC/bindefinitivamarbeiten.txt
+
+# Superpowers-Workspace (Ledger, Briefs, Logs je Plan)
+.superpowers/

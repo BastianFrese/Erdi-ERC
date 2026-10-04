@@ -86,7 +86,7 @@
                 document.addEventListener('DOMContentLoaded', function () {
                     var m = document.querySelector('meta[name="theme-color"]');
                     if (m) m.setAttribute('content',
-                        document.documentElement.getAttribute('data-theme') === 'light' ? '#ffffff' : '#06070a');
+                        document.documentElement.getAttribute('data-theme') === 'light' ? '#ffffff' : '#0B0C0E');
                 });
             } catch (e) { /* Private Mode -> dunkel (Default) */ }
         })();
@@ -101,7 +101,7 @@
     }
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#06070a" />
+    <meta name="theme-color" content="#0B0C0E" />
     <title>@ViewData["Title"] · Erdi's Racing Community</title>
     <meta name="description" content="@_ogDescription" />
 
@@ -128,14 +128,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" asp-append-version="true" />
     <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" asp-append-version="true" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    @* Non-blocking: media="print" + onload Trick. Browser holt das CSS, parst es aber ohne Render-Block. Fallback <noscript> fuer User ohne JS. *@
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></noscript>
+    @* Schriften kommen selbst gehostet aus 01-tokens.css (@font-face auf /fonts/).
+       Kein Fremd-Origin mehr: kein preconnect, kein media="print"-Trick, kein noscript.
+       Bootstrap Icons folgen in Task 12 ebenfalls selbst gehostet und beschnitten;
+       bis dahin bleiben die bi-Glyphen leer. *@
 
     @* LCP-Preload: Hero-Logo ist nur auf Pages relevant, die es above-the-fold zeigen (via ViewData["PreloadHero"]="hero"). Sonst wuerde jede Page 247 KB vorladen. *@
     @if ((ViewData["PreloadHero"] as string) == "hero")

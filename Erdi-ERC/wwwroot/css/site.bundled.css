@@ -1,88 +1,234 @@
 /* =====================================================================
-01 · TOKENS
+01 · TOKENS  —  „Race Control"
+Einzige Quelle fuer Farbe, Schrift, Skala und Abstaende.
+===================================================================== */
+/* --- Schriften, selbst gehostet, nur latin-Subset ---------------------
+Saira ist ein Variable Font (wght 100..900) — eine Datei deckt alle
+benutzten Gewichte ab. Saira Semi Condensed liefert Google nur als
+getrennte Einzelgewichte; es wird deshalb genau eines geladen (600),
+und alle --ff-cond-Stellen stehen auf 600. Zusammen zwei Dateien.
+ponytail: nur latin (U+0000-00FF). Namen mit türkischen oder polnischen
+Diakritika (ğ ş ł) fallen auf die Systemschrift zurück. Upgrade-Pfad:
+latin-ext dazuladen — kostet zwei weitere Dateien, deshalb bewusst nicht. */
+@font-face {
+font-family: 'Saira';
+src: url('/fonts/saira-latin.woff2') format('woff2');
+font-weight: 100 900;
+font-style: normal;
+font-display: swap;
+unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+font-family: 'Saira Semi Condensed';
+src: url('/fonts/saira-semi-condensed-latin.woff2') format('woff2');
+font-weight: 600;
+font-style: normal;
+font-display: swap;
+unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+U+2212, U+2215, U+FEFF, U+FFFD;
+}
+:root {
+/* --- Grundflaeche: neutral-kuehl, kein Blaustich --- */
+--track: #0B0C0E;
+--tarmac: #14171B;
+--kerb: #202630;
+--rule: rgba(255, 255, 255, .10);
+--rule-strong: rgba(255, 255, 255, .22);
+--ink: #F2F4F7;
+--ink-2: rgba(242, 244, 247, .68);
+--ink-3: rgba(242, 244, 247, .38);
+/* --- Signalfarben: jede bedeutet genau eine Sache --- */
+--fast: #B24BF3;   /* schnellste Runde / schnellster Sektor */
+--best: #00D26A;   /* persoenliche Bestzeit, DRS offen      */
+--slow: #FFD100;   /* langsamer, Vorsicht, Medium            */
+--flag: #E10600;   /* Ligafarbe, rote Flagge, Soft           */
+--wet:  #3B8BEA;   /* Inter, Wet, blaue Flagge               */
+/* --- Teamfarbe: Zuordnung Fahrer -> Team, nicht Stimmung --- */
+--team: var(--flag);
+--team-2: #FFFFFF;
+/* --- Schrift: eine Familie, zwei Schnitte --- */
+--ff: 'Saira', 'Segoe UI', system-ui, sans-serif;
+--ff-cond: 'Saira Semi Condensed', 'Saira', system-ui, sans-serif;
+--num: tabular-nums;
+/* --- Skala ~1.25 --- */
+--fs-xs: .75rem;
+--fs-s: .875rem;
+--fs-m: 1rem;
+--fs-l: 1.25rem;
+--fs-xl: 1.75rem;
+--fs-2xl: clamp(1.75rem, 3vw, 2.5rem);
+--fs-3xl: clamp(2.25rem, 5vw, 3.5rem);
+/* --- Abstaende --- */
+--sp-1: .25rem; --sp-2: .5rem;  --sp-3: .75rem; --sp-4: 1rem;
+--sp-5: 1.5rem; --sp-6: 2rem;   --sp-7: 3rem;   --sp-8: 4rem;
+/* --- Kanten: hart, kein Radius-Feuerwerk --- */
+--r-1: 2px;
+--r-2: 3px;
+/* --- Bewegung --- */
+--t-fast: 120ms cubic-bezier(.4, 0, .2, 1);
+--t-base: 220ms cubic-bezier(.22, 1, .36, 1);
+/* --- Layout --- */
+--rail: 288px;
+--gutter: clamp(1rem, 2.4vw, 2rem);
+}
+/* --- Tageslicht-Variante: dieselben Namen, andere Werte --- */
+[data-theme="light"] {
+--track: #F4F5F7;
+--tarmac: #FFFFFF;
+--kerb: #E4E7EC;
+--rule: rgba(11, 12, 14, .12);
+--rule-strong: rgba(11, 12, 14, .28);
+--ink: #0B0C0E;
+--ink-2: rgba(11, 12, 14, .72);
+--ink-3: rgba(11, 12, 14, .42);
+--fast: #7A28B8;
+--best: #0A8F4B;
+--slow: #B07A00;
+--flag: #C00500;
+--wet:  #1F63B0;
+--team-2: #FFFFFF;
+}
+/* --- Teamfarben -------------------------------------------------------
+Zwei Ebenen:
+1. `body.team-<key>` setzt --team / --team-2 fuer die GANZE Seite
+(Meister-Akzent im Streifen, Fahrerzeile).
+2. `--team-<key>` als eigenstaendige Variable, damit der Turm MEHRERE
+Teams gleichzeitig einfaerben kann — dort reicht der body-Kontext nicht.
+Die Signalfarben werden hier nie ueberschrieben; Teamfarbe ist Zuordnung,
+nicht Stimmung. */
+body.team-redbull     { --team:#3671C6; --team-2:#CC1E4A; }
+body.team-mercedes    { --team:#00D2BE; --team-2:#C0C0C0; }
+body.team-ferrari     { --team:#E8002D; --team-2:#FFFFFF; }
+body.team-mclaren     { --team:#FF8000; --team-2:#000000; }
+body.team-astonmartin { --team:#229971; --team-2:#CEDC00; }
+body.team-alpine      { --team:#FF87BC; --team-2:#0093CC; }
+body.team-williams    { --team:#64C4FF; --team-2:#FFFFFF; }
+body.team-haas        { --team:#B6BABD; --team-2:#E8002D; }
+body.team-racingbulls,
+body.team-rb          { --team:#6692FF; --team-2:#CC1E4A; }
+body.team-sauber,
+body.team-kicksauber,
+body.team-audi        { --team:#8A9597; --team-2:#FFFFFF; }
+/* Cadillac ist #000000 — als Balken und Verlauf unsichtbar.
+Rueckfall auf die Tertiaerfarbe; die Sekundaerfarbe bleibt als Zusatz. */
+body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
+:root {
+--team-redbull:#3671C6;      --team-redbull-2:#CC1E4A;
+--team-mercedes:#00D2BE;     --team-mercedes-2:#C0C0C0;
+--team-ferrari:#E8002D;      --team-ferrari-2:#FFFFFF;
+--team-mclaren:#FF8000;      --team-mclaren-2:#000000;
+--team-astonmartin:#229971;  --team-astonmartin-2:#CEDC00;
+--team-alpine:#FF87BC;       --team-alpine-2:#0093CC;
+--team-williams:#64C4FF;     --team-williams-2:#FFFFFF;
+--team-haas:#B6BABD;         --team-haas-2:#E8002D;
+--team-racingbulls:#6692FF;  --team-racingbulls-2:#CC1E4A;
+--team-audi:#8A9597;         --team-audi-2:#FFFFFF;
+/* Cadillac: siehe oben — nie #000000 als Balkenfarbe ausliefern. */
+--team-cadillac:#B6BABD;     --team-cadillac-2:#FFFFFF;
+--team-unknown:var(--ink-2); --team-unknown-2:var(--ink-3);
+}
+/* =====================================================================
+KOMPATIBILITAET
+Die Ebenen 02–11 benutzen noch die alten Token-Namen. Statt sie hier
+zu loeschen und die Seite bis Task 7 kaputt zu lassen, werden die alten
+Namen auf die neuen Werte gezeigt. Damit zieht die neue Palette sofort
+durch alle Ebenen, ohne dass eine davon angefasst werden muss.
+Schatten und Glas werden dabei auf `none` gesetzt: das ist der Design-
+Schnitt der Spec (flach, hartkantig) und wirkt damit ab Task 2.
+Dieser Block verschwindet in Task 12, wenn 02–11 auf die neuen Namen
+umgestellt sind. Bis dahin: nichts hier ergaenzen.
 ===================================================================== */
 :root {
---bg-0:#030407;
---bg-1:#07090f;
---bg-2:#0d1119;
---surface-1:rgba(12,16,24,.86);
---surface-2:rgba(16,21,31,.92);
---surface-3:rgba(24,30,44,.96);
---stroke-1:rgba(255,255,255,.12);
---stroke-2:rgba(255,255,255,.2);
---stroke-3:rgba(255,255,255,.3);
---ink:#f4f6fb;
---ink-2:rgba(244,246,251,.74);
---ink-3:rgba(244,246,251,.52);
---ink-4:rgba(244,246,251,.34);
---accent:#e10600;
---accent-2:#ff3b2f;
---accent-soft:rgba(225,6,0,.18);
---accent-glow:rgba(225,6,0,.55);
-/* Signalfarben — bewusst entsättigt ("Broadcast-Calm"): Neon gebrochen,
-Rot/Amber bleiben die einzigen lauten Farben, alles andere matt. */
---sig-cyan:#58b7c9;
---sig-amber:#e8a93d;
---sig-green:#4caf6d;
---sig-magenta:#9d6ec4;
---sig-blue:#6d9cc4;
---sig-red:#e05252;
---gold:#ffd24a;
---silver:#d4d8e0;
---bronze:#d68a4a;
---ff-display:'Inter','Segoe UI',system-ui,sans-serif;
---ff-tech:'Orbitron','Inter',system-ui,sans-serif;
---ff-body:'Inter','Segoe UI',system-ui,sans-serif;
---ff-mono:'JetBrains Mono','Cascadia Code',Consolas,monospace;
---r-1:4px;
---r-2:6px;
---r-3:8px;
---r-4:10px;
---r-5:12px;
---r-pill:999px;
---s-1:.25rem; --s-2:.5rem; --s-3:.75rem; --s-4:1rem;
---s-5:1.25rem; --s-6:1.5rem; --s-7:2rem; --s-8:3rem; --s-9:4rem;
---t-fast:120ms cubic-bezier(.4,0,.2,1);
---t-base:220ms cubic-bezier(.22,1,.36,1);
---t-slow:480ms cubic-bezier(.22,1,.36,1);
---sh-1:0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px -8px rgba(0,0,0,.5);
---sh-2:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 60px -20px rgba(0,0,0,.65), 0 6px 18px -8px rgba(0,0,0,.45);
---sh-3:0 1px 0 rgba(255,255,255,.06) inset, 0 30px 80px -24px rgba(0,0,0,.75), 0 0 0 1px var(--stroke-1);
---g-aurora:
-radial-gradient(55% 75% at 50% 0%, rgba(225,6,0,.10), transparent 65%);
---g-chrome:linear-gradient(180deg,#f6f8ff 0%,#cfd6e4 45%,#7d8699 55%,#cfd6e4 100%);
---g-text-1:linear-gradient(180deg,#ffffff 0%,#c8cdd8 100%);
---g-text-2:linear-gradient(180deg,#ffffff 0%,#9aa3b6 100%);
---g-accent:linear-gradient(180deg,var(--accent-2),var(--accent));
---glass-blur:blur(10px) saturate(135%);
---glass-blur-sm:blur(6px) saturate(120%);
-}
-body.team-redbull       { --accent:#3671C6; --accent-2:#5b8fe0; --accent-soft:rgba(54,113,198,.20); --accent-glow:rgba(54,113,198,.55); }
-body.team-mercedes      { --accent:#00D2BE; --accent-2:#3ce6d6; --accent-soft:rgba(0,210,190,.20);  --accent-glow:rgba(0,210,190,.55); }
-body.team-ferrari       { --accent:#E8002D; --accent-2:#ff3357; --accent-soft:rgba(232,0,45,.20);   --accent-glow:rgba(232,0,45,.55); }
-body.team-mclaren       { --accent:#FF8000; --accent-2:#ffa133; --accent-soft:rgba(255,128,0,.20);  --accent-glow:rgba(255,128,0,.55); }
-body.team-astonmartin   { --accent:#229971; --accent-2:#3ec494; --accent-soft:rgba(34,153,113,.20); --accent-glow:rgba(34,153,113,.55); }
-body.team-alpine        { --accent:#FF87BC; --accent-2:#ffaecf; --accent-soft:rgba(255,135,188,.22);--accent-glow:rgba(255,135,188,.55); }
-body.team-williams      { --accent:#64C4FF; --accent-2:#8fd5ff; --accent-soft:rgba(100,196,255,.22);--accent-glow:rgba(100,196,255,.55); }
-body.team-haas          { --accent:#B6BABD; --accent-2:#d4d7d9; --accent-soft:rgba(182,186,189,.22);--accent-glow:rgba(182,186,189,.45); }
-body.team-racingbulls,
-body.team-rb            { --accent:#6692FF; --accent-2:#90b0ff; --accent-soft:rgba(102,146,255,.22);--accent-glow:rgba(102,146,255,.55); }
-body.team-sauber,
-body.team-kicksauber    { --accent:#52E252; --accent-2:#7feb7f; --accent-soft:rgba(82,226,82,.22); --accent-glow:rgba(82,226,82,.50); }
-:root {
---f1-red:var(--accent); --f1-red-dark:var(--accent); --f1-red-glow:var(--accent-glow);
---f1-accent-yellow:var(--sig-amber); --f1-accent-green:var(--sig-green); --f1-accent-cyan:var(--sig-cyan);
---f1-bg:var(--bg-0); --f1-bg-2:var(--bg-1);
---f1-surface:var(--surface-1); --f1-surface-strong:var(--surface-2);
---f1-border:var(--stroke-1); --f1-border-strong:var(--stroke-3);
---f1-text:var(--ink); --f1-text-muted:var(--ink-2); --f1-silver:var(--silver);
---radius-sm:var(--r-1); --radius-md:var(--r-2); --radius-lg:var(--r-3); --radius-xl:var(--r-4);
---shadow-sm:var(--sh-1); --shadow-md:var(--sh-1); --shadow-lg:var(--sh-2); --shadow-glow-red:0 0 0 1px var(--accent-soft);
---tr-fast:var(--t-fast); --tr-base:var(--t-base); --tr-slow:var(--t-slow);
---panel-bg:var(--surface-1); --carbon:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px);
---f1-grid:repeating-linear-gradient(90deg, transparent 0 34px, rgba(255,255,255,.018) 34px 35px);
---f1-checker:repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 6px, transparent 6px 12px);
---f1-telemetry:linear-gradient(90deg, var(--accent-2), var(--accent));
+/* Flaechen */
+--bg-0: var(--track);
+--bg-1: var(--tarmac);
+--bg-2: var(--kerb);
+--surface-1: var(--tarmac);
+--surface-2: var(--tarmac);
+--surface-3: var(--kerb);
+--stroke-1: var(--rule);
+--stroke-2: var(--rule-strong);
+--stroke-3: var(--rule-strong);
+--ink-4: var(--ink-3);
+/* Akzent */
+--accent: var(--team);
+--accent-2: var(--team);
+--accent-soft: color-mix(in srgb, var(--team) 18%, transparent);
+--accent-glow: color-mix(in srgb, var(--team) 45%, transparent);
+/* Signale */
+--sig-cyan: var(--wet);
+--sig-amber: var(--slow);
+--sig-green: var(--best);
+--sig-magenta: var(--fast);
+--sig-blue: var(--wet);
+--sig-red: var(--flag);
+/* Podest */
+--gold: #FFD24A;
+--silver: #D4D8E0;
+--bronze: #D68A4A;
+/* Schrift */
+--ff-display: var(--ff);
+--ff-body: var(--ff);
+--ff-tech: var(--ff-cond);
+--ff-mono: var(--ff);
+/* Radien */
+--r-3: var(--r-2);
+--r-4: var(--r-2);
+--r-5: var(--r-2);
+--r-pill: 999px;
+/* Abstaende */
+--s-1: var(--sp-1); --s-2: var(--sp-2); --s-3: var(--sp-3); --s-4: var(--sp-4);
+--s-5: var(--sp-5); --s-6: var(--sp-6); --s-7: var(--sp-7); --s-8: var(--sp-8);
+--s-9: var(--sp-8);
+/* Bewegung */
+--t-slow: var(--t-base);
+/* Schatten: alle aus. Die Spec verbietet Schattendekoration. */
+--sh-1: none;
+--sh-2: none;
+--sh-3: none;
+/* Verlaeufe und Textur: aus. */
+--g-aurora: none;
+--g-chrome: none;
+--g-text-1: none;
+--g-text-2: none;
+--g-accent: none;
+--glass-blur: none;
+--glass-blur-sm: none;
+--carbon: none;
+--f1-grid: none;
+--f1-checker: none;
+--f1-telemetry: linear-gradient(90deg, var(--team), var(--team));
+/* F1-Aliase (12-tokens-f1.css aufgeloest) */
+--f1-red: var(--team);
+--f1-red-dark: var(--team);
+--f1-red-glow: var(--accent-glow);
+--f1-accent-yellow: var(--slow);
+--f1-accent-green: var(--best);
+--f1-accent-cyan: var(--wet);
+--f1-bg: var(--track);
+--f1-bg-2: var(--tarmac);
+--f1-surface: var(--tarmac);
+--f1-surface-strong: var(--tarmac);
+--f1-border: var(--rule);
+--f1-border-strong: var(--rule-strong);
+--f1-text: var(--ink);
+--f1-text-muted: var(--ink-2);
+--f1-silver: var(--silver);
+--radius-sm: var(--r-1);
+--radius-md: var(--r-2);
+--radius-lg: var(--r-2);
+--radius-xl: var(--r-2);
+--shadow-sm: none;
+--shadow-md: none;
+--shadow-lg: none;
+--shadow-glow-red: none;
+--tr-fast: var(--t-fast);
+--tr-base: var(--t-base);
+--tr-slow: var(--t-base);
+--panel-bg: var(--tarmac);
 }
 /* =====================================================================
 02 · RESET & BASE
@@ -4082,302 +4228,6 @@ font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: #fff;
 .rivalry-spark__dot.is-w { background: linear-gradient(135deg, #1ed760, #0aa84a); }
 .rivalry-spark__dot.is-l { background: linear-gradient(135deg, #ff4d4f, #c62828); }
 .rivalry-spark__dot.is-d { background: linear-gradient(135deg, #b0b6c0, #6b7280); }
-/* =====================================================================
-12 · F1 / SIM-RACING DESIGN-EXTENSION (additiv)
-Erweitert 01-tokens.css um Broadcast-, Telemetrie- und Liverie-Tokens.
-Bestehende Variablen werden NICHT ueberschrieben.
-===================================================================== */
-:root {
-/* Broadcast / Asphalt-Backdrops */
---asphalt-0:#04050a;
---asphalt-1:#080a12;
---asphalt-2:#0d111c;
---carbon-fine:repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 1px, transparent 1px 4px);
---carbon-coarse:repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 8px);
---grid-fine:repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px),
-repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px);
---scanline:repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 3px);
-/* Sektor-Farben (iRacing/F1-TV-Stil) — Semantik bleibt, Ton mattiert */
---sector-purple:#9d6ec4;
---sector-green:#4caf6d;
---sector-yellow:#dcc24f;
---sector-red:#d9534f;
-/* Brake-Glow / Speed-Lines */
---brake-glow:0 0 24px var(--accent-glow), 0 0 6px rgba(255,255,255,.18);
---speed-line:linear-gradient(90deg, transparent 0%, var(--accent-2) 40%, var(--accent) 65%, transparent 100%);
-/* Telemetrie-Farbverlauf — einfarbig im Akzent statt 3-Farb-Regenbogen */
---telemetry-stripe:linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 100%);
---telemetry-stripe-soft:linear-gradient(90deg, rgba(255,59,47,.22) 0%, var(--accent-soft) 100%);
-/* Motion-Easings (F1-Vokabular) */
---ease-launch:cubic-bezier(.16,.84,.34,1);
---ease-overtake:cubic-bezier(.7,0,.2,1);
---ease-brake:cubic-bezier(.42,0,1,1);
---t-launch:520ms var(--ease-launch);
---t-overtake:340ms var(--ease-overtake);
-/* Z-Layer */
---z-bg:0;
---z-content:10;
---z-sticky:50;
---z-overlay:90;
---z-modal:100;
-/* Chamfer / Clip-Paths fuer angeschnittene Ecken (Broadcast-Look) */
---clip-chamfer:polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
---clip-chamfer-sm:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
---clip-chamfer-lg:polygon(22px 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%, 0 22px);
-/* Type-Scale-Erweiterung */
---fs-display:clamp(2.6rem, 6vw, 5.2rem);
---fs-display-xl:clamp(3.4rem, 8vw, 7rem);
---fs-eyebrow:.72rem;
---letter-track:.28em;
-}
-/* =====================================================================
-13 · TOKENS — LIGHT & MINIMAL THEME
-Aktiv per <html data-theme="light"> (gesetzt von theme-toggle.min.js
-+ Inline-Pre-Paint-Script im Layout, Key: localStorage "erc.theme.v1").
-Design-Idee: gleiches Layout, aber hell & schlicht — Weiss/Hellgrau,
-ein Akzent (F1-Rot), flache Karten ohne Broadcast-Deko (Chamfer,
-Telemetrie-Streifen, Glas-Blur, Carbon, Scanlines, Gradients).
-BEKANNTE RESTE (bewusst deferred, nicht Teil von v1):
-- Hex-Literale in wwwroot/css/pages/*.css (14 Page-CSS-Dateien)
-- driver-card.css (Fahrerkarte ist eigenes Dark-Layout)
-- SVG-Rennauto im Race-Lights-Overlay (_Layout, bewusst cineastisch dunkel)
-- Inline-Styles mit Hex-Werten in einzelnen Views (v.a. Admin)
-===================================================================== */
-html[data-theme="light"] {
-/* Flächen: opak (das Dark-Theme rechnet mit Alpha-über-Dunkel) */
---bg-0:#ffffff;
---bg-1:#f7f8fa;
---bg-2:#eef1f5;
---surface-1:#ffffff;
---surface-2:#fafbfc;
---surface-3:#f4f6f8;
---stroke-1:#e3e7ec;
---stroke-2:#d2d8e0;
---stroke-3:#bcc4cf;
---ink:#15191f;
---ink-2:#4a5260;
---ink-3:#6b7480;
---ink-4:#98a1ac;
---accent:#e10600;
---accent-2:#c00500;
---accent-soft:rgba(225,6,0,.10);
---accent-glow:rgba(225,6,0,.25);
-/* Signalfarben: abgedunkelt fuer Weiss (>= 4.5:1) */
---sig-cyan:#00779e;
---sig-amber:#9a6100;
---sig-green:#0b8a3c;
---sig-magenta:#8a33c4;
---sig-blue:#1a6fd4;
---sig-red:#c9382f;
---gold:#a8781a;
---silver:#8b929c;
---bronze:#a5652c;
-/* Schatten: statt Inset-Glanz nur dezente Drops */
---sh-1:0 1px 2px rgba(16,24,40,.06);
---sh-2:0 2px 6px rgba(16,24,40,.06), 0 8px 24px -12px rgba(16,24,40,.14);
---sh-3:0 2px 6px rgba(16,24,40,.06), 0 18px 48px -20px rgba(16,24,40,.20);
-/* Deko killen — ausschliesslich via Tokens */
---g-aurora:none;
---g-chrome:#d9dee6;
---g-text-1:var(--ink);
---g-text-2:var(--ink-2);
---g-accent:var(--accent);
---glass-blur:none;
---glass-blur-sm:none;
---f1-checker:repeating-linear-gradient(45deg, rgba(21,25,31,.06) 0 6px, transparent 6px 12px);
---f1-grid:repeating-linear-gradient(90deg, transparent 0 34px, rgba(21,25,31,.06) 34px 35px);
---carbon:none;
---f1-telemetry:var(--accent);
---telemetry-stripe:var(--accent);
---telemetry-stripe-soft:var(--accent-soft);
---asphalt-0:#ffffff;
---asphalt-1:#f7f8fa;
---asphalt-2:#eef1f5;
---carbon-fine:none;
---carbon-coarse:none;
---grid-fine:none;
---scanline:none;
---brake-glow:none;
---sector-purple:#7a3bb5;
---sector-green:#0b8a3c;
---sector-yellow:#b39000;
---sector-red:#c9382f;
-/* Cockpit-Topbar (Tokens aus 03-layout.css) → helle Konsole */
---cabin-panel-1:#ffffff;
---cabin-panel-2:#fafbfc;
---cabin-bezel:#d2d8e0;
---cabin-cap-1:#ffffff;
---cabin-cap-2:#eef1f5;
---cabin-cap-edge:#d2d8e0;
---cabin-legend:#15191f;
---cabin-legend-dim:#6b7480;
---led-red:#e10600;
---led-red-deep:#c00500;
-}
-/* Team-Accents, die auf Weiss Kontrast verlieren */
-html[data-theme="light"] body.team-haas        { --accent:#5f6468; --accent-2:#4a4f53; --accent-soft:rgba(95,100,104,.14); --accent-glow:rgba(95,100,104,.30); }
-html[data-theme="light"] body.team-sauber,
-html[data-theme="light"] body.team-kicksauber  { --accent:#0b8a3c; --accent-2:#0a7a35; --accent-soft:rgba(11,138,60,.14);  --accent-glow:rgba(11,138,60,.30); }
-html[data-theme="light"] body.team-williams    { --accent:#0f78c2; --accent-2:#0d66a5; --accent-soft:rgba(15,120,194,.14); --accent-glow:rgba(15,120,194,.30); }
-html[data-theme="light"] body.team-alpine      { --accent:#d6457f; --accent-2:#b93a6c; --accent-soft:rgba(214,69,127,.16); --accent-glow:rgba(214,69,127,.30); }
-/* ── Gezielte Overrides (nicht token-getrieben) ─────────────────────────── */
-/* Body-Backdrop: flach, ohne Gradients/Grid/Scanline */
-html[data-theme="light"] body {
-background:var(--bg-1);
-background-image:none;
-background-attachment:scroll;
-}
-html[data-theme="light"] body::before,
-html[data-theme="light"] body::after {
-content:none;
-background-image:none;
-animation:none;
-opacity:0;
-}
-/* 02-base.css hardcodiert Weiß für Links */
-html[data-theme="light"] a { color:var(--ink); }
-html[data-theme="light"] a:hover { color:var(--accent); }
-/* Cockpit-Topbar: flache helle Pille statt Glas-Konsole */
-html[data-theme="light"] .topbar {
-background:rgba(247,248,250,.9);
-backdrop-filter:none;
--webkit-backdrop-filter:none;
-}
-html[data-theme="light"] .topbar .navbar {
-background:var(--surface-1);
-border:1px solid var(--cabin-bezel);
-box-shadow:var(--sh-1), var(--cabin-team-glow, 0 0 #0000);
-}
-html[data-theme="light"] .topbar .navbar::before,
-html[data-theme="light"] .topbar .navbar::after { content:none; }
-/* Navbar-/Dropdown-Look ist dark-codiert → Bootstrap-Variablen umstellen */
-html[data-theme="light"] .navbar { --bs-navbar-color:var(--ink-2); --bs-navbar-hover-color:var(--ink); --bs-navbar-active-color:var(--accent); }
-html[data-theme="light"] .navbar-dark .navbar-toggler { border-color:var(--stroke-2); }
-html[data-theme="light"] .navbar-dark .navbar-toggler-icon {
-background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%2315191f' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-}
-html[data-theme="light"] .dropdown-menu-dark,
-html[data-theme="light"] .navbar-dark .dropdown-menu {
---bs-dropdown-bg:var(--surface-1);
---bs-dropdown-border-color:var(--stroke-1);
---bs-dropdown-link-color:var(--ink);
---bs-dropdown-link-hover-color:var(--ink);
---bs-dropdown-link-hover-bg:var(--accent-soft);
---bs-dropdown-link-active-color:#fff;
---bs-dropdown-link-active-bg:var(--accent);
-background-color:var(--surface-1);
-border:1px solid var(--stroke-1);
-box-shadow:var(--sh-2);
-}
-html[data-theme="light"] code,
-html[data-theme="light"] kbd {
-background:var(--bg-2);
-color:var(--sig-cyan);
-}
-html[data-theme="light"] .text-white { color:var(--ink) !important; }
-html[data-theme="light"] .border-light { border-color:var(--stroke-1) !important; }
-html[data-theme="light"] ::-webkit-scrollbar-thumb { background:rgba(21,25,31,.18); background-clip:padding-box; }
-html[data-theme="light"] hr { background:linear-gradient(90deg, transparent, var(--stroke-2), transparent); }
-/* Theme-Toggle-Button passt sich den Ghost-Buttons der Navbar an */
-html[data-theme="light"] #ercThemeToggle { color:var(--ink-2); line-height:1; }
-#ercThemeToggle { font-size:1.05rem; line-height:1; }
-#ercThemeToggle:hover { color:var(--accent); }
-/* ── Admin-Shell (reduziert — adm-Seiten haben eigene Reste) ────────────── */
-html[data-theme="light"] .adm-body { background:var(--bg-1); color:var(--ink); }
-html[data-theme="light"] .adm-sidebar,
-html[data-theme="light"] .adm-topbar { background:var(--surface-1); border-color:var(--stroke-1); color:var(--ink); }
-html[data-theme="light"] .adm-nav-link { color:var(--ink-2); }
-html[data-theme="light"] .adm-nav-link:hover,
-html[data-theme="light"] .adm-nav-link.is-active { color:var(--ink); background:var(--accent-soft); }
-/* =====================================================================
-RUNDE 2 (visueller Verifikations-Pass):
-Buttons / Formulare / Cockpit-Tasten / Footer / Hero
-===================================================================== */
-/* 04-components.css defaultet .btn auf weißes --btn-fg → auf Weiss unlesbar.
-Gefüllte Varianten (Primary/Danger/Success/Warning/Info) behalten ihre Farbe. */
-html[data-theme="light"] .btn { --btn-fg:var(--ink); }
-html[data-theme="light"] .btn:not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-warning):not(.btn-info):not(.btn-dark):not(.btn-light) {
---btn-bg:rgba(21,25,31,.04);
-}
-html[data-theme="light"] .btn.btn-primary,
-html[data-theme="light"] .btn.btn-danger,
-html[data-theme="light"] .btn.btn-dark { --btn-fg:#fff; }
-html[data-theme="light"] .btn:not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-warning):not(.btn-info):not(.btn-dark):not(.btn-light):hover {
-background:rgba(21,25,31,.07);
-border-color:var(--stroke-3);
-}
-html[data-theme="light"] .btn-ghost:hover { color:var(--ink)!important; }
-/* Form-Controls erzwingen Weiß + Transparenz → helle Felder */
-html[data-theme="light"] .form-control,
-html[data-theme="light"] .form-select,
-html[data-theme="light"] .input-group-text {
-background:#fff!important;
-border-color:var(--stroke-2)!important;
-color:var(--ink)!important;
-}
-html[data-theme="light"] select,
-html[data-theme="light"] select.form-select {
-background-color:#fff!important;
-color:var(--ink)!important;
-color-scheme:light;
-}
-html[data-theme="light"] select option,
-html[data-theme="light"] select optgroup,
-html[data-theme="light"] .form-select option,
-html[data-theme="light"] .form-select optgroup {
-background-color:#fff!important;
-color:var(--ink)!important;
-}
-/* Cockpit-Tasten (03-layout.css hardcodiert dunklen Klavierlack) → flache helle Tasten */
-html[data-theme="light"] .topbar .navbar .nav-link {
-color:var(--ink-2)!important;
-text-shadow:none;
-border:1px solid var(--cabin-cap-edge);
-background:linear-gradient(180deg, #ffffff, #eef1f5 72%);
-box-shadow:0 1px 2px rgba(16,24,40,.08);
-}
-html[data-theme="light"] .topbar .navbar .nav-link:hover {
-color:var(--ink)!important;
-background:linear-gradient(180deg, #ffffff, #e3e7ec 72%);
-box-shadow:0 2px 5px rgba(16,24,40,.12);
-}
-html[data-theme="light"] .topbar .navbar .nav-link.active {
-color:var(--accent)!important;
-text-shadow:none;
-background:linear-gradient(180deg, #ffffff, #fdeceb 80%);
-border-color:#f2b8b5;
-box-shadow:0 2px 5px rgba(225,6,0,.15);
-}
-html[data-theme="light"] .nav-ico { color:var(--ink-2); filter:none; }
-html[data-theme="light"] .navbar .nav-link.active .nav-ico { color:var(--accent); filter:none; }
-html[data-theme="light"] .navbar-auth-user { background:rgba(21,25,31,.04); color:var(--ink-2); }
-html[data-theme="light"] .navbar-brand { color:var(--ink)!important; }
-/* Footer: helle Leiste statt dunklem Gradient */
-html[data-theme="light"] .footer {
-background:var(--surface-1);
-backdrop-filter:none;
--webkit-backdrop-filter:none;
-border-top:1px solid var(--stroke-1);
-}
-/* Hero: animierter Akzent-Stripe (page-CSS) → im Minimal-Design aus */
-html[data-theme="light"] .f1-hero::before { display:none; }
-html[data-theme="light"] .f1-hero__lead strong { color:var(--ink)!important; }
-html[data-theme="light"] .f1-hero__telemetry { box-shadow:none; }
-/* Page-CSS-Reste mit hoher Sichtbarkeit (Ergebnis-Tabellen/Filter) */
-html[data-theme="light"] .f1-filter-bar__input,
-html[data-theme="light"] .f1-filter-bar__select { background:#fff; }
-html[data-theme="light"] .f1-filter-bar__input:focus,
-html[data-theme="light"] .f1-filter-bar__select:focus { background:#fff; }
-html[data-theme="light"] .f1-filter-bar__reset:hover {
-color:var(--ink);
-background:rgba(21,25,31,.07);
-}
-html[data-theme="light"] .f1-results-table thead th,
-html[data-theme="light"] .f1-ewige-table thead th {
-background:var(--surface-3);
-color:var(--ink-2);
-}
-html[data-theme="light"] .f1-results-card__telemetry { box-shadow:none; }
 .setup-card {
 display: flex;
 flex-direction: column;
