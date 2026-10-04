@@ -187,7 +187,34 @@
                 <a class="@IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">Events</a>
                 <a class="@IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">Kalender</a>
                 <a class="@IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">Bewerbung</a>
+                @* Die Neben-Seiten lagen frueher in Bootstrap-Aufklappmenues der
+                   alten Navigationsleiste. Der flache Streifen traegt sieben
+                   Hauptziele; der Rest haengt hier. aria-expanded beschreibt
+                   einen reinen Aufklapper — kein role="menu": das verlangt
+                   Pfeiltasten-Navigation, und hier fuehrt Tab durch die Links. *@
+                <button type="button" class="strip__more-btn" id="moreBtn"
+                        aria-expanded="false" aria-controls="morePanel">
+                    Mehr<i class="f1-icon" data-lucide="chevron-down" aria-hidden="true"></i>
+                </button>
             </nav>
+            @* Ausserhalb der Navigation: die Reihe hat overflow-x:auto (sie wischt
+               seitlich) und wuerde ein Panel darin abschneiden. .strip ist sticky
+               und damit positioniert — das Panel haengt an seinem unteren Rand. *@
+            <div class="strip__more-panel" id="morePanel">
+                <div class="strip__more-inner">
+                    <a class="@IsActive("Stats", "EwigeListe")" asp-controller="Stats" asp-action="EwigeListe">Ewige Liste</a>
+                    <a class="@IsActive("Stats", "HallOfFame")" asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a>
+                    <a class="@IsActive("Stats", "DriverLevels")" asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel&nbsp;/&nbsp;XP</a>
+                    <a class="@IsActive("Community", "Teams", "Team")" asp-controller="Community" asp-action="Teams">Teams</a>
+                    <a class="@IsActive("Community", "ReserveExchange")" asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-B&ouml;rse</a>
+                    <a class="@IsActive("Community", "CommunityVotes")" asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a>
+                    <a class="@IsActive("Community", "Highlights", "CommunityNews")" asp-controller="Community" asp-action="Highlights">Highlights</a>
+                    <a class="@IsActive("Home", "Stewarding", "StewardingDoc")" asp-controller="Home" asp-action="Stewarding">Stewarding</a>
+                    <a class="@IsActive("Home", "Faq")" asp-controller="Home" asp-action="Faq">FAQ</a>
+                    <a href="/about/erdi10">Über mich</a>
+                    <a class="@IsActive("Home", "Regelwerk")" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a>
+                </div>
+            </div>
             <div class="strip__status">
                 @if (_activeStream != null)
                 {
@@ -246,17 +273,11 @@
             </div>
 
             <ul class="footer__links">
-                <li><a asp-controller="Stats" asp-action="EwigeListe">Ewige Liste</a></li>
-                <li><a asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a></li>
-                <li><a asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel&nbsp;/&nbsp;XP</a></li>
-                <li><a asp-controller="Community" asp-action="Teams">Teams</a></li>
-                <li><a asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-B&ouml;rse</a></li>
-                <li><a asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a></li>
-                <li><a asp-controller="Community" asp-action="Highlights">Highlights</a></li>
-                <li><a asp-controller="Home" asp-action="Stewarding">Stewarding</a></li>
-                <li><a asp-controller="Home" asp-action="Faq">FAQ</a></li>
-                <li><a href="/about/erdi10">&Uuml;ber mich</a></li>
-                <li><a asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
+                @* Die Inhaltsseiten (Ewige Liste, Teams, Fahrerlevel …) stehen jetzt
+                   im "Mehr"-Aufklapper der Navigation: im Footer waren sie nur
+                   erreichbar, wenn man ganz nach unten scrollt — auf dem Handy
+                   bei langen Seiten praktisch gar nicht. Hier bleiben die Shops,
+                   das Rechtliche und die Zugaenge, die es nur angemeldet gibt. *@
                 <li><a href="https://mozaracing.com/?ref=erdi10" target="_blank" rel="noopener">MOZA Racing</a></li>
                 <li><a href="https://www.instant-gaming.com/?igr=Erdi10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
                 <li><a href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>

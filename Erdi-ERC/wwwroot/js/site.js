@@ -265,3 +265,36 @@
         if (ereignis.key === 'Escape' && hinweis.classList.contains('is-open')) schliessen();
     });
 })();
+
+/* ---------------------------------------------------------------------------
+   Aufklapper "Mehr" in der Navigation.
+
+   Reiner Aufklapper, kein Menue im Sinne von role="menu": das verlangt
+   Pfeiltasten-Navigation und Fokusverwaltung. Hier fuehrt Tab durch die Links,
+   Escape schliesst und setzt den Fokus auf den Knopf zurueck, ein Klick
+   daneben schliesst ebenfalls. aria-expanded am Knopf beschreibt den Zustand.
+   --------------------------------------------------------------------------- */
+(function () {
+    const knopf = document.getElementById('moreBtn');
+    const panel = document.getElementById('morePanel');
+    if (!knopf || !panel) return;
+
+    const setzen = (offen) => {
+        panel.classList.toggle('is-open', offen);
+        knopf.setAttribute('aria-expanded', offen ? 'true' : 'false');
+    };
+
+    knopf.addEventListener('click', () => setzen(!panel.classList.contains('is-open')));
+
+    document.addEventListener('click', (ereignis) => {
+        if (!panel.classList.contains('is-open')) return;
+        if (panel.contains(ereignis.target) || knopf.contains(ereignis.target)) return;
+        setzen(false);
+    });
+
+    document.addEventListener('keydown', (ereignis) => {
+        if (ereignis.key !== 'Escape' || !panel.classList.contains('is-open')) return;
+        setzen(false);
+        knopf.focus();
+    });
+})();

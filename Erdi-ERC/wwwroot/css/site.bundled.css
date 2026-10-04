@@ -682,6 +682,124 @@ transition: color var(--t-fast), box-shadow var(--t-fast);
 display: flex; align-items: center; gap: var(--sp-3);
 margin-left: auto; white-space: nowrap;
 }
+/* --- "Mehr": Aufklapper für die Neben-Seiten ---------------------------
+Steht in der Navigationsreihe, das Panel selbst liegt ausserhalb (die Reihe
+hat overflow-x:auto und wuerde es abschneiden). Verankert ist es am Streifen,
+der als sticky positioniert ist.
+Die Oeffnung ist eine Startaufstellung: der Balken oben faehrt wie eine
+Sektorlinie von links durch, danach fahren die Eintraege nacheinander von
+links ein — dieselbe Kurve, die das System fuer Ueberholvorgaenge benutzt
+(cubic-bezier(.7,0,.2,1)). Alles zusammen unter einer halben Sekunde. */
+.strip__more-btn {
+display: inline-flex; align-items: center; gap: .3rem;
+background: none; border: 0; padding: var(--sp-1) 0; cursor: pointer;
+font-size: var(--fs-s); font-weight: 600;
+letter-spacing: .06em; text-transform: uppercase;
+color: var(--ink-2);
+transition: color var(--t-fast);
+/* Klebt am rechten Rand der wischbaren Reihe. Ohne das liegt der Knopf auf
+dem Handy hinter dem sechsten Link und ist nur durch Wischen zu finden —
+gemessen bei 360, 390 und 414 px jeweils ausserhalb des Bildes (668-730).
+position: sticky wirkt nur im Scrollbereich; am Rechner steht er einfach
+am Ende der Reihe. */
+position: sticky; right: 0;
+background: var(--track);
+margin-left: .5rem;
+}
+/* Weicher Uebergang: der Link, der unter dem Knopf durchlaeuft, soll nicht
+hart abgeschnitten werden. */
+.strip__more-btn::before {
+content: ""; position: absolute;
+left: -.9rem; top: 0; bottom: 0; width: .9rem;
+background: linear-gradient(90deg, transparent, var(--track));
+pointer-events: none;
+}
+.strip__more-btn:hover { color: var(--ink); }
+.strip__more-btn .f1-icon { transition: transform .22s cubic-bezier(.7, 0, .2, 1); }
+.strip__more-btn[aria-expanded="true"] { color: var(--ink); }
+.strip__more-btn[aria-expanded="true"] .f1-icon { transform: rotate(180deg); }
+.strip__more-panel {
+position: absolute;
+top: 100%; right: var(--gutter);
+z-index: 1050;                       /* ueber dem Streifen (1040) */
+width: min(560px, calc(100vw - 2 * var(--gutter)));
+display: none;
+padding: .85rem 1rem 1rem;
+background: var(--tarmac);
+border: 1px solid var(--rule);
+border-radius: var(--r-3);
+transform-origin: top right;
+}
+.strip__more-panel.is-open {
+display: block;
+animation: moreDrop .18s cubic-bezier(.7, 0, .2, 1) both;
+}
+/* Sektorlinie: laeuft einmal von links nach rechts durch. */
+.strip__more-panel::before {
+content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+background: var(--accent);
+transform-origin: left center;
+}
+.strip__more-panel.is-open::before {
+animation: moreSweep .42s cubic-bezier(.7, 0, .2, 1) both;
+}
+.strip__more-inner {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+gap: .1rem .6rem;
+margin-top: .35rem;
+}
+.strip__more-inner a {
+padding: .42rem .55rem;
+border-radius: var(--r-1);
+color: var(--ink-2); text-decoration: none;
+transition: color var(--t-fast), background var(--t-fast);
+}
+.strip__more-inner a:hover,
+.strip__more-inner a:focus-visible { color: var(--ink); background: var(--rule); }
+.strip__more-inner a.active { color: var(--accent); }
+/* Startaufstellung: jeder Eintrag faehrt versetzt ein. */
+.strip__more-panel.is-open .strip__more-inner a {
+animation: moreSlot .26s ease-out both;
+}
+.strip__more-panel.is-open .strip__more-inner a:nth-child(1)  { animation-delay: .04s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(2)  { animation-delay: .07s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(3)  { animation-delay: .10s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(4)  { animation-delay: .13s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(5)  { animation-delay: .16s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(6)  { animation-delay: .19s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(7)  { animation-delay: .22s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(8)  { animation-delay: .25s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(9)  { animation-delay: .28s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(10) { animation-delay: .31s; }
+.strip__more-panel.is-open .strip__more-inner a:nth-child(11) { animation-delay: .34s; }
+@keyframes moreDrop {
+from { transform: translateY(-.5rem) scaleY(.96); }
+to   { transform: none; }
+}
+@keyframes moreSweep {
+from { transform: scaleX(0); }
+to   { transform: scaleX(1); }
+}
+@keyframes moreSlot {
+from { transform: translateX(-.5rem); }
+to   { transform: none; }
+}
+/* KEINE Deckkraft in den Keyframes — mit Absicht.
+Mit opacity:0 im Startbild haengt die Sichtbarkeit daran, dass die Animation
+auch durchlaeuft. Bleibt sie stehen (Bild nicht gezeichnet, Skriptfehler,
+Sonderfall im Browser), ist der Inhalt unsichtbar und niemand merkt es. Das
+ist in diesem Projekt schon zweimal passiert (Verlaufs-Textfuellung, Staffel-
+Einblendung). Bewegung ohne Deckkraft hat einen harmlosen Fehlerfall: das
+Element steht dann etwas versetzt, aber sichtbar. */
+/* Wer Bewegung abstellt, bekommt den Aufklapper sofort und vollstaendig: die
+Verzoegerungen muessen mit weg, sonst blieben die Eintraege bis zu 340 ms
+unsichtbar — sichtbar erst nach dem Ende, nicht waehrend. */
+@media (prefers-reduced-motion: reduce) {
+.strip__more-panel.is-open,
+.strip__more-panel.is-open::before,
+.strip__more-panel.is-open .strip__more-inner a { animation-delay: 0s !important; }
+}
 .strip__status a { color: var(--ink-2); text-decoration: none; font-size: var(--fs-s); }
 .strip__status a:hover { color: var(--ink); }
 .live-dot {
