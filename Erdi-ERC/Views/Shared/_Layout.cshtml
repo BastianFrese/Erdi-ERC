@@ -252,167 +252,65 @@
         <div class="race-lights__label" id="raceStartLabel">Lights out…</div>
     </div>
 
-    <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
-
-    @* ---------- TOPBAR ---------- *@
-    <header class="topbar" id="mainNav">
-        <nav class="navbar navbar-expand-xl navbar-dark">
-            <div class="app-shell-container d-flex align-items-center w-100">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark" aria-hidden="true">R</span>
-                    <span class="brand-word">Erdi&#x27;s&nbsp;Racing&nbsp;Community</span>
+    @* ---------- BROADCAST-STREIFEN ----------
+       Duenn und hartkantig statt der frueheren Glas-Pille. Die Untermenues der alten
+       Navbar (Liga, Partner, Mehr) sind in den Footer gewandert — ein Broadcast-Streifen
+       hat keine Untermenues. *@
+    <header class="strip" id="mainNav">
+        <div class="app-shell-container">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <span class="strip__kicker">Erdi&#x27;s Racing Community</span>
+            </a>
+            <nav class="strip__nav" aria-label="Hauptnavigation">
+                <a class="@IsActive("Stats", "Erdi10")" asp-controller="Stats" asp-action="Erdi10">Racing Hub</a>
+                <a class="@IsActive("Races", "Results", "LeagueResults")" asp-controller="Races" asp-action="Results">Ergebnisse</a>
+                <a class="@IsActive("Races", "AllRaces", "RaceDetail")" asp-controller="Races" asp-action="AllRaces">Rennen</a>
+                <a class="@IsActive("Setups", "TrackSetups")" asp-controller="Setups" asp-action="TrackSetups">
+                    Setups
+                    @if (_latestSetupActivityIso != null)
+                    {
+                        <span class="nav-alert-badge" id="setupNewsBadge"
+                              data-latest="@_latestSetupActivityIso"
+                              data-on-setups="@(_isOnSetupsPage ? "true" : "false")"
+                              hidden role="status" aria-label="Neue Setups verf&uuml;gbar">!</span>
+                    }
                 </a>
+                <a class="@IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">Events</a>
+                <a class="@IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">Kalender</a>
+                <a class="@IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">Bewerbung</a>
+            </nav>
+            <div class="strip__status">
                 @if (_activeStream != null)
                 {
                     <a href="@(_activeStream.Url ?? "https://twitch.tv/erdi10")" target="_blank" rel="noopener"
-                       class="live-race-pill ms-2 text-decoration-none" title="@_activeStream.Title">
-                        <span class="live-race-pill__dot"></span>
-                        <span>Live</span>
+                       title="@_activeStream.Title" class="d-flex align-items-center gap-2">
+                        <span class="live-dot" aria-hidden="true"></span><span>Live</span>
                     </a>
                 }
-                <button class="navbar-toggler ms-auto" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#mainNavbarCollapse"
-                        aria-controls="mainNavbarCollapse" aria-expanded="false" aria-label="Navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <button type="button" id="ercThemeToggle" class="btn btn-sm btn-ghost"
+                        aria-label="Design umschalten (hell/dunkel)" aria-pressed="false"
+                        title="Design umschalten">
+                    <i class="bi bi-sun" aria-hidden="true"></i>
                 </button>
-
-                <div class="navbar-collapse collapse" id="mainNavbarCollapse">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Stats", "Erdi10")" asp-controller="Stats" asp-action="Erdi10">
-                                <i class="bi bi-speedometer2 nav-ico" aria-hidden="true"></i>Racing&nbsp;Hub
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @((IsActive("Races", "Results", "LeagueResults") == "active" || IsActive("Races", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="#" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-flag-fill nav-ico" aria-hidden="true"></i>ERC Liga
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="racesDropdown">
-                                <li><a class="dropdown-item" asp-controller="Races" asp-action="Results"><i class="bi bi-trophy-fill me-2"></i>Results</a></li>
-                                <li><a class="dropdown-item" asp-controller="Races" asp-action="AllRaces"><i class="bi bi-flag-fill me-2"></i>Alle Rennen</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Setups", "TrackSetups")" asp-controller="Setups" asp-action="TrackSetups">
-                                <i class="bi bi-sliders2 nav-ico" aria-hidden="true"></i>Setups
-                                @if (_latestSetupActivityIso != null)
-                                {
-                                    <span class="nav-alert-badge" id="setupNewsBadge"
-                                          data-latest="@_latestSetupActivityIso"
-                                          data-on-setups="@(_isOnSetupsPage ? "true" : "false")"
-                                          hidden role="status" aria-label="Neue Setups verfügbar">!</span>
-                                }
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">
-                                <i class="bi bi-calendar2-event-fill nav-ico" aria-hidden="true"></i>Events
-                            </a>
-                        </li>
-@*                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Community", "CommunityNews")" asp-controller="Community" asp-action="CommunityNews">
-                                <i class="bi bi-megaphone-fill nav-ico" aria-hidden="true"></i>News
-                            </a>
-                        </li> *@
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">
-                                <i class="bi bi-calendar-check-fill nav-ico" aria-hidden="true"></i>Kalender
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">
-                                <i class="bi bi-clipboard2-check nav-ico" aria-hidden="true"></i>Bewerbung
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="partnerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-stars nav-ico" aria-hidden="true"></i>Partner
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="partnerDropdown">
-                                <li><a class="dropdown-item" href="https://mozaracing.com/?ref=erdi10" target="_blank" rel="noopener">MOZA Racing</a></li>
-                                <li><a class="dropdown-item" href="https://www.instant-gaming.com/?igr=Erdi10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-grid-3x3-gap-fill nav-ico" aria-hidden="true"></i>Mehr
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="moreDropdown">
-                                <li><a class="dropdown-item" asp-controller="Stats" asp-action="EwigeListe" data-race-lights="force" data-race-lights-text="Hall of Fame · Lights out…" data-race-lights-go="WELCOME TO THE HALL OF FAME">Ewige Liste</a></li><li><a class="dropdown-item" asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="Teams">Teams</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-Börse</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="Highlights">Highlights</a></li><li><a class="dropdown-item" asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel / XP</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Stewarding">Stewarding</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Faq">FAQ</a></li>
-                                <li><a class="dropdown-item" href="/about/erdi10">Über mich</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Impressum">Impressum</a></li>
-                                @if (User.Identity?.IsAuthenticated == true)
-                                {
-                                    <li><a class="dropdown-item" asp-controller="Application" asp-action="MyApplication"><i class="bi bi-clipboard2-check me-1"></i>Meine Bewerbungen</a></li>
-                                }
-                                @if (SiteSettings.IsAppDownloadEnabled())
-                                {
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" asp-controller="Home" asp-action="DownloadApp"><i class="bi bi-download me-1"></i>App herunterladen</a></li>
-                                }
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
-                                <li><a class="dropdown-item" href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener">Erdi10 Shop</a></li>
-                                @if (User.HasClaim("erdi:admin", "true"))
-                                {
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item fw-semibold" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i> Admin Dashboard</a></li>
-                                }
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <ul class="navbar-nav navbar-nav--auth align-items-lg-center gap-2">
-                        <li class="nav-item">
-                            <button type="button" id="ercThemeToggle" class="btn btn-sm btn-ghost"
-                                    aria-label="Design umschalten (hell/dunkel)" aria-pressed="false"
-                                    title="Design umschalten">
-                                <i class="bi bi-sun" aria-hidden="true"></i>
-                            </button>
-                        </li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="navbar-auth-user navbar-auth-user--link"
-                                   asp-controller="Profile" asp-action="Index"
-                                   title="@User.Identity!.Name – Profil öffnen">
-                                    <span class="live-dot" aria-hidden="true"></span>
-                                    <span class="navbar-auth-user__name">@User.Identity!.Name</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-ghost">
-                                        <i class="bi bi-box-arrow-right"></i>Logout
-                                    </button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">
-                                    <i class="bi bi-discord"></i>Login
-                                </a>
-                            </li>
-                        }
-                    </ul>
-
-                    @* Trennstrich + "F1"-Logo am rechten Pillen-Rand (Desktop) *@
-                    <div class="nav-f1-badge d-none d-xl-flex" aria-hidden="true">
-                        <span class="nav-f1-badge__divider"></span>
-                        <span class="nav-f1-badge__logo">F1</span>
-                    </div>
-                </div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Profile" asp-action="Index"
+                       title="@User.Identity!.Name &ndash; Profil &ouml;ffnen">@User.Identity!.Name</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-ghost">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">Login</a>
+                }
             </div>
-        </nav>
+        </div>
     </header>
 
     @* ---------- MAIN ---------- *@
-    <main role="main" id="appMain" class="page-transition is-entering">
+    <main role="main" id="appMain" class="page">
         <div class="app-shell-container">
             @RenderBody()
         </div>
@@ -421,21 +319,54 @@
     @* ---------- BODY-LEVEL OVERLAYS (außerhalb von main, damit position:fixed korrekt am Viewport bleibt) ---------- *@
     @await RenderSectionAsync("BodyOverlays", required: false)
 
-    @* ---------- FOOTER ---------- *@
+    @* ---------- FOOTER ----------
+       Traegt seit dem Umbau auch die Navigation, die frueher in den Untermenues der
+       Navbar hing (Liga, Partner, Mehr). Ein Broadcast-Streifen hat keine Untermenues,
+       die Wege zu den Nebenseiten muessen aber erreichbar bleiben. *@
     <footer class="footer">
-        <div class="app-shell-container d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <span><i class="bi bi-c-circle me-1"></i>@DateTime.UtcNow.Year &middot; Erdi's&nbsp;Racing&nbsp;Community</span>
-            <span class="d-none d-md-inline text-mute text-tech" style="font-size:.7rem;letter-spacing:.22em;">F1 26 · SIM RACING LEAGUE</span>
-            <span class="d-flex align-items-center flex-wrap gap-3">
-                <a asp-controller="Home" asp-action="Privacy">Datenschutz</a>
-                <a asp-controller="Home" asp-action="Impressum">Impressum</a>
-                <span class="d-flex align-items-center gap-2">
-                    <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" aria-label="Twitch" title="Twitch"><i class="bi bi-twitch"></i></a>
-                    <a href="https://www.youtube.com/@@PzudemK" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube"><i class="bi bi-youtube"></i></a>
-                    <a href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><i class="bi bi-instagram"></i></a>
-                    <a href="https://open.spotify.com/intl-de/artist/4VaOsXeYI0DNmfkPhP40L9" target="_blank" rel="noopener" aria-label="Spotify" title="Spotify"><i class="bi bi-spotify"></i></a>
+        <div class="app-shell-container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <span>@DateTime.UtcNow.Year &middot; Erdi&#x27;s Racing Community</span>
+                <span class="d-none d-md-inline" style="letter-spacing:.22em;">F1 26 &middot; SIM RACING LEAGUE</span>
+                <span class="d-flex align-items-center gap-3">
+                    <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" title="Twitch">Twitch</a>
+                    <a href="https://www.youtube.com/@@PzudemK" target="_blank" rel="noopener" title="YouTube">YouTube</a>
+                    <a href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener" title="Instagram">Instagram</a>
+                    <a href="https://open.spotify.com/intl-de/artist/4VaOsXeYI0DNmfkPhP40L9" target="_blank" rel="noopener" title="Spotify">Spotify</a>
                 </span>
-            </span>
+            </div>
+
+            <ul class="footer__links">
+                <li><a asp-controller="Stats" asp-action="EwigeListe">Ewige Liste</a></li>
+                <li><a asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a></li>
+                <li><a asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel&nbsp;/&nbsp;XP</a></li>
+                <li><a asp-controller="Community" asp-action="Teams">Teams</a></li>
+                <li><a asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-B&ouml;rse</a></li>
+                <li><a asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a></li>
+                <li><a asp-controller="Community" asp-action="Highlights">Highlights</a></li>
+                <li><a asp-controller="Home" asp-action="Stewarding">Stewarding</a></li>
+                <li><a asp-controller="Home" asp-action="Faq">FAQ</a></li>
+                <li><a href="/about/erdi10">&Uuml;ber mich</a></li>
+                <li><a asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
+                <li><a href="https://mozaracing.com/?ref=erdi10" target="_blank" rel="noopener">MOZA Racing</a></li>
+                <li><a href="https://www.instant-gaming.com/?igr=Erdi10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
+                <li><a href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
+                <li><a href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener">Erdi10 Shop</a></li>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <li><a asp-controller="Application" asp-action="MyApplication">Meine Bewerbungen</a></li>
+                }
+                @if (SiteSettings.IsAppDownloadEnabled())
+                {
+                    <li><a asp-controller="Home" asp-action="DownloadApp">App herunterladen</a></li>
+                }
+                @if (User.HasClaim("erdi:admin", "true"))
+                {
+                    <li><a asp-controller="Admin" asp-action="Index">Admin Dashboard</a></li>
+                }
+                <li><a asp-controller="Home" asp-action="Privacy">Datenschutz</a></li>
+                <li><a asp-controller="Home" asp-action="Impressum">Impressum</a></li>
+            </ul>
         </div>
     </footer>
 

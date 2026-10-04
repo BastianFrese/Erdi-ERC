@@ -1,438 +1,168 @@
 /* =====================================================================
    03 · LAYOUT SHELL
+   Broadcast-Streifen, Inhaltsspalte, Footer, Musik-Streifen.
+   Die komplette Cockpit-Fassung (Glas-Reflex, Carbon, Alu-Trim,
+   Ambientelicht, Hamburger-Animation) ist hier ersetzt.
    ===================================================================== */
 .app-shell, .app-shell-container {
-    width:100%;
-    max-width:none;
-    margin:0;
-    padding-left:clamp(1rem, 2.4vw, 2rem);
-    padding-right:clamp(1rem, 2.4vw, 2rem);
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
 }
 
-/* ── TOPBAR: schwebende "schwarze Pille" ──────────────────────────────────
-   Die Sticky-Leiste selbst ist nur ein transparenter, leicht milchiger Streifen;
-   die eigentliche Pille sitzt auf dem inneren .navbar-Element. */
-.topbar {
-    position:sticky; top:0; z-index:1040;
-    padding:.6rem 0;
-    background:linear-gradient(180deg, rgba(6,8,12,.82), rgba(6,8,12,.5));
-    backdrop-filter:blur(8px) saturate(125%);
-    -webkit-backdrop-filter:blur(8px) saturate(125%);
-    transition:padding var(--t-base);
+/* --- Broadcast-Streifen: duenn, hartkantig, sticky --- */
+.strip {
+    position: sticky; top: 0; z-index: 1040;
+    display: flex; align-items: center; gap: var(--sp-4);
+    min-height: 56px;
+    padding: var(--sp-2) 0;
+    background: var(--track);
+    border-bottom: 1px solid var(--rule);
 }
-.topbar.is-scrolled { padding:.4rem 0; }
+/* Teamfarben-Verlauf hinter dem Streifen — Zuordnung Fahrer->Team, nicht Stimmung.
+   Als Pseudo-Element statt als eigenes Div: ein Div mit z-index:-1 wuerde hinter den
+   undurchsichtigen Streifen-Hintergrund fallen und unsichtbar bleiben. */
+.strip::before {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--team) 12%, transparent), transparent);
+}
+.strip .app-shell-container { position: relative; z-index: 1; display: flex; align-items: center; gap: var(--sp-4); }
 
-/* ── Cockpit-Tokens (alles hier zentral steuerbar) ─────────────────────── */
-:root {
-    --cabin-panel-1:#161719;   /* Konsole oben */
-    --cabin-panel-2:#0a0a0b;   /* Konsole unten (Carbon dunkel, aus Vorlage) */
-    --cabin-bezel:#2c2e33;     /* Metall-Bezel/Rahmen */
-    --cabin-cap-1:#202125;     /* Tastenkappe oben (Lichtseite) */
-    --cabin-cap-2:#121316;     /* Tastenkappe unten */
-    --cabin-cap-edge:#2a2c31;  /* Kappen-Rand */
-    --cabin-legend:#dde4ee;    /* hinterleuchtete Legende (kühles Weiß) */
-    --cabin-legend-dim:#aeb6c1;/* Legende inaktiv (hinterleuchtet) */
-    --led-red:#ff1e10;         /* LED an (aus Vorlage) */
-    --led-red-deep:#e10600;    /* F1-Rot */
+.strip__kicker {
+    font-family: var(--ff-cond); font-size: var(--fs-s); font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3); white-space: nowrap;
 }
+.strip__nav { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-left: var(--sp-5); }
+.strip__nav a {
+    font-size: var(--fs-s); font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-2); text-decoration: none;
+    padding: var(--sp-1) 0;
+    box-shadow: inset 0 -2px 0 transparent;
+    transition: color var(--t-fast), box-shadow var(--t-fast);
+}
+.strip__nav a:hover { color: var(--ink); }
+.strip__nav a.active { color: var(--ink); box-shadow: inset 0 -2px 0 var(--team); }
 
-/* Mittelkonsole: Klavierlack-/Glas-Touchpanel mit Alu-Trim & rotem Ambientelicht */
-.topbar .navbar {
-    position:relative;
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.015) 18%, transparent 46%),  /* Glas-Reflex oben */
-        var(--carbon),
-        linear-gradient(180deg, #1a1c20, #0a0b0d 72%);
-    border:1.5px solid var(--cabin-bezel);
-    border-radius:16px;                 /* Mobile: gerundete Karte; Desktop unten -> 999px */
-    padding:.45rem .7rem;
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.16) inset,         /* Alu-Lichtkante oben */
-        0 0 0 1px rgba(255,255,255,.03) inset,        /* gefräste Innenkante */
-        0 -11px 22px -12px rgba(225,6,0,.20) inset,   /* rotes Ambientelicht von unten */
-        0 -2px 6px rgba(0,0,0,.6) inset,
-        0 0 0 1px rgba(0,0,0,.55),
-        0 16px 34px -16px rgba(0,0,0,.9),
-        var(--cabin-team-glow, 0 0 #0000);          /* Team-Farb-Halo (nur bei body.team-*) */
-    transition:box-shadow var(--t-base), border-color var(--t-base);
+.strip__status {
+    display: flex; align-items: center; gap: var(--sp-3);
+    margin-left: auto; white-space: nowrap;
 }
-/* Gebürstete Alu-Trimlinie oben + rote Ambiente-Leiste unten (Interieur-Beleuchtung) */
-.topbar .navbar::before {
-    content:""; position:absolute; left:28px; right:28px; top:2px; height:1px;
-    pointer-events:none; z-index:2;
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
-}
-.topbar .navbar::after {
-    content:""; position:absolute; left:30px; right:30px; bottom:3px; height:2px;
-    pointer-events:none; z-index:2; border-radius:2px;
-    background:linear-gradient(90deg, transparent 2%, var(--led-red) 50%, transparent 98%);
-    opacity:.55;
-    box-shadow:0 0 12px rgba(225,6,0,.55);
-}
-.topbar.is-scrolled .navbar {
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.18) inset,
-        0 0 0 1px rgba(255,255,255,.04) inset,
-        0 -11px 22px -12px rgba(225,6,0,.22) inset,
-        0 -2px 6px rgba(0,0,0,.65) inset,
-        0 0 0 1px rgba(0,0,0,.6),
-        0 20px 38px -14px rgba(0,0,0,.94),
-        var(--cabin-team-glow, 0 0 #0000);
-    border-color:#3a3d43;
-}
-.navbar-dark .navbar-toggler { border:1px solid var(--stroke-1)!important; border-radius:10px!important; width:44px; height:44px; padding:0; }
-.navbar-toggler:focus { box-shadow:0 0 0 3px var(--accent-soft)!important; }
+.strip__status a { color: var(--ink-2); text-decoration: none; font-size: var(--fs-s); }
+.strip__status a:hover { color: var(--ink); }
 
-/* ── Mobile Hamburger (Cockpit-Stil, animiert zu X) ────────────────────── */
-.navbar-toggler {
-    display:inline-flex; align-items:center; justify-content:center;
-}
-.navbar-toggler-icon,
-.navbar-toggler-icon::before,
-.navbar-toggler-icon::after {
-    display:block;
-    transition:transform 220ms cubic-bezier(.22,1,.36,1), top 220ms 120ms, background 120ms 120ms;
-}
-.navbar-toggler-icon {
-    position:relative;
-    width:22px; height:2px;
-    background:currentColor;
-    border-radius:2px;
-}
-.navbar-toggler-icon::before,
-.navbar-toggler-icon::after {
-    content:""; position:absolute; left:0; width:100%; height:2px; border-radius:2px; background:currentColor;
-}
-.navbar-toggler-icon::before { top:-7px; }
-.navbar-toggler-icon::after { top:7px; }
-/* Schließen: Balken zuerst in die Mitte schieben, dann rotieren */
-.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
-    background:transparent;
-    transition-delay:120ms, 120ms, 0ms;
-}
-.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before,
-.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
-    top:0;
-    transition-delay:0ms, 120ms, 0ms;
-}
-.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
-    transform:rotate(45deg);
-}
-.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
-    transform:rotate(-45deg);
-}
-
-.navbar-brand {
-    display:inline-flex; align-items:center; gap:.5rem!important;
-    margin-right:.4rem!important;
-    color:#fff!important;
-    font-family:var(--ff-tech); font-weight:900;
-    letter-spacing:.16em; text-transform:uppercase;
-    font-size:.8rem;
-    flex-shrink:0;
-}
-/* "R"-Emblem auf gefräster Metall-Tastenplatte (wie Lenkrad-Mittelemblem) */
-.brand-mark {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:36px; height:36px; border-radius:10px;
-    background:linear-gradient(180deg, var(--cabin-cap-1), var(--cabin-cap-2));
-    border:1px solid var(--cabin-cap-edge);
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.10) inset,
-        0 -2px 4px rgba(0,0,0,.55) inset,
-        0 0 12px rgba(225,6,0,.22) inset,   /* roter Backlight hinter dem R */
-        0 1px 2px rgba(0,0,0,.6);
-    font-family:var(--ff-tech); font-style:italic; font-weight:900;
-    font-size:1.25rem; line-height:1;
-    color:#e10600;
-    text-shadow:0 0 10px rgba(225,6,0,.6);
-}
-.brand-word { white-space:nowrap; }
-.navbar-brand::after {
-    content:""; display:inline-block; width:6px; height:6px; border-radius:50%;
-    background:var(--sig-green); box-shadow:0 0 10px var(--sig-green); margin-left:.5rem;
-    animation:brand-pulse 2.4s ease-in-out infinite;
-}
-@keyframes brand-pulse { 0%,100%{opacity:.5;transform:scale(.9);} 50%{opacity:1;transform:scale(1.15);} }
-
-/* Tastencluster: kleiner Abstand zwischen den Tasten (links); Auth behält gap-2 */
-.topbar .navbar-nav { gap:4px; }
-
-/* Nav-Items = geprägte, hinterleuchtete Cockpit-Tasten.
-   Inaktiv: gedimmte Legende. Aktiv: weiße Legende + rote LED + roter Backlight. */
-.navbar .nav-link {
-    position:relative;
-    display:inline-flex; align-items:center;
-    color:var(--cabin-legend-dim)!important;
-    text-shadow:0 0 6px rgba(190,200,214,.22);              /* dezent hinterleuchtete Legende (auch inaktiv) */
-    font-weight:700; font-size:.66rem; letter-spacing:.06em;
-    text-transform:uppercase;
-    padding:.45rem .6rem!important;
-    border:1px solid #2c2f35;
-    border-radius:9px;
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 38%),  /* scharfer Klavierlack-Glanz */
-        linear-gradient(180deg, #191b20, #0b0c10 72%);                            /* dunkler Klavierlack */
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.08) inset,    /* Glanzkante oben */
-        0 -3px 6px rgba(0,0,0,.55) inset,        /* Vertiefung unten */
-        0 2px 5px rgba(0,0,0,.6);                /* Außenschatten = erhabene Taste */
-    transition:color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
-    white-space:nowrap;
-}
-.navbar .nav-link:hover {
-    color:#fff!important;
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.11), transparent 44%),
-        linear-gradient(180deg, #34373e, #1d1f26 70%);
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.14) inset,
-        0 -3px 6px rgba(0,0,0,.55) inset,
-        0 3px 8px rgba(0,0,0,.6),
-        0 0 0 1px rgba(255,255,255,.06);
-}
-/* haptisches Eindrücken beim Klick */
-.navbar .nav-link:active {
-    transform:translateY(1px);
-    box-shadow:
-        0 2px 6px rgba(0,0,0,.6) inset,
-        0 1px 0 rgba(255,255,255,.05) inset;
-}
-.navbar .nav-link.active {
-    color:#fff!important;
-    text-shadow:0 0 8px rgba(225,6,0,.5);                    /* hinterleuchtete Legende */
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.06), transparent 44%),
-        linear-gradient(180deg, #2a151a, #15090c 72%);       /* glänzende, rot-beleuchtete Taste */
-    box-shadow:
-        0 -10px 16px -8px rgba(225,6,0,.7) inset,            /* roter Backlight von unten = engaged */
-        0 1px 0 rgba(255,255,255,.08) inset,
-        0 0 16px rgba(225,6,0,.3),                           /* Außenschein */
-        0 2px 4px rgba(0,0,0,.55);
-}
-/* rote Status-LED (oben links) an der eingerasteten Taste */
-.navbar .nav-link.active::before {
-    content:""; position:absolute; top:5px; left:6px;
-    width:6px; height:6px; border-radius:50%;
-    background:radial-gradient(circle at 35% 32%, #fff 0 16%, #ff8a7e 30%, var(--led-red) 62%, #6e0b05 100%);
-    box-shadow:
-        0 0 0 1.5px rgba(0,0,0,.55),    /* dunkler Fassungsring (eingelassen) */
-        0 0 5px var(--led-red),
-        0 0 11px rgba(225,6,0,.75);
-}
-
-.nav-ico {
-    display:inline-block; margin-right:.45rem;
-    font-size:1rem; color:var(--cabin-legend); opacity:.95;
-    filter:drop-shadow(0 0 4px rgba(190,205,225,.28));   /* hinterleuchtetes Icon (auch inaktiv) */
-    transition:transform var(--t-base), opacity var(--t-base), color var(--t-base), filter var(--t-base);
-}
-.navbar .nav-link:hover .nav-ico { opacity:1; transform:translateY(-1px); }
-.navbar .nav-link.active .nav-ico { opacity:1; color:#fff; filter:drop-shadow(0 0 5px rgba(225,6,0,.55)); }
-
-/* "F1"-Logo + Trennrille am rechten Konsolenrand */
-.nav-f1-badge { align-items:center; gap:.7rem; margin-left:.35rem; flex-shrink:0; }
-.nav-f1-badge__divider {
-    width:2px; height:26px; border-radius:2px;
-    background:linear-gradient(180deg, #000, #34373d 50%, #000);
-    box-shadow:1px 0 0 rgba(255,255,255,.04);
-}
-.nav-f1-badge__logo {
-    font-family:var(--ff-tech); font-style:italic; font-weight:900;
-    font-size:1.1rem; letter-spacing:.01em; line-height:1;
-    color:#e10600; text-shadow:0 0 14px rgba(225,6,0,.5);
-}
-
-/* Login = roter "Engine-Start"-Knopf (geprägt, mit rotem Schein) */
-.topbar .navbar .btn-primary {
-    border-radius:10px;
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.18) inset,
-        0 -2px 5px rgba(0,0,0,.35) inset,
-        0 0 14px rgba(225,6,0,.35),
-        0 2px 6px rgba(0,0,0,.5);
-}
-.topbar .navbar .btn-primary:hover {
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.22) inset,
-        0 -2px 5px rgba(0,0,0,.4) inset,
-        0 0 20px rgba(225,6,0,.5),
-        0 2px 8px rgba(0,0,0,.55);
-}
-.topbar .navbar .btn-primary:active { transform:translateY(1px); }
-
-/* Desktop (>=1200px / navbar-expand-xl): 999px-Konsole; linkes Cluster = Tastenbank */
-@media (min-width:1200px) {
-    .topbar .navbar { height:60px; border-radius:20px; padding:0 .5rem; flex-wrap:nowrap; }
-    /* Distinkte, glänzende Backlit-Tasten mit kleinen Fugen (Konsolen-Tasten) */
-    .topbar .navbar-nav.me-auto { gap:5px; }
-    .topbar .navbar .nav-link {
-        flex-direction:column; justify-content:center; gap:3px;
-        padding:.34rem .66rem!important;
-        font-size:.58rem; letter-spacing:.05em;
-        border-radius:10px;
-    }
-    .topbar .navbar .nav-link .nav-ico { display:block; margin:0; font-size:1.1rem; }
-    /* Dropdown-Caret oben rechts; Status-LED bleibt oben links */
-    .topbar .navbar .nav-link.dropdown-toggle { padding-right:.58rem!important; }
-    .topbar .navbar .nav-link.dropdown-toggle::after {
-        position:absolute; top:7px; right:6px; margin:0; opacity:.5;
-    }
-}
-
-/* "!"-Hinweis am Navlink (z. B. neue Setups), WhatsApp-Style: klein, rot, oben rechts */
-.nav-alert-badge {
-    position:absolute; top:-2px; right:-4px;
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:14px; height:14px; padding:0 3px;
-    border-radius:999px;
-    background:var(--sig-red, #e10600);
-    color:#fff;
-    font:800 .58rem/1 var(--ff-body);
-    box-shadow:0 0 8px rgba(225,6,0,.55), 0 0 0 2px rgba(6,7,10,.85);
-    animation:brand-pulse 2.4s ease-in-out infinite;
-    pointer-events:none;
-}
-
-.navbar-auth-user {
-    display:inline-flex; align-items:center; gap:.5rem;
-    color:var(--ink-2);
-    font-family:var(--ff-mono); font-size:.78rem; line-height:1;
-    padding:.4rem .75rem;
-    background:rgba(255,255,255,.04);
-    border:1px solid var(--stroke-1); border-radius:var(--r-pill);
-    max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.navbar-auth-user .live-dot { margin-right:0; flex:0 0 auto; }
-.navbar-auth-user__name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 .live-dot {
-    display:inline-block; width:8px; height:8px; border-radius:50%;
-    margin-right:.45rem; vertical-align:middle;
-    background:var(--sig-green); box-shadow:0 0 10px var(--sig-green);
-    animation:live-pulse 1.6s ease-in-out infinite;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--best); flex: none;
+    animation: live-pulse 1.6s ease-in-out infinite;
 }
-@keyframes live-pulse { 0%,100%{transform:scale(.8);opacity:.6;} 50%{transform:scale(1.2);opacity:1;} }
+@keyframes live-pulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
 
-main { display:block; flex:1 0 auto; min-height:60vh; padding:clamp(1.2rem,2vw,1.8rem) 0 calc(3rem + 78px); }
+.nav-alert-badge {
+    display: inline-block; margin-left: .3rem;
+    min-width: 1.05em; padding: 0 .25em;
+    background: var(--flag); color: #fff;
+    font-size: .68em; font-weight: 700; line-height: 1.5;
+    text-align: center; border-radius: var(--r-1);
+}
 
+/* --- Inhalt --- */
+main {
+    display: block;
+    flex: 1 0 auto;
+    min-height: 60vh;
+    padding: var(--sp-6) 0 var(--sp-8);
+}
+
+/* --- Footer: normaler Fluss, nicht mehr fixiert ---
+   Die alte Fassung klebte am Viewport und erzwang ein Ausgleichspadding an
+   main. Als Fluss-Element kostet er keinen Viewport und kollidiert nicht
+   mit dem Musik-Streifen unten links. */
 .footer {
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    z-index:1030;
-    flex-shrink:0;
-    margin-top:0;
-    padding:1.5rem 0;
-    background:linear-gradient(180deg, rgba(11,13,18,.6), rgba(7,8,11,.95));
-    border-top:1px solid var(--stroke-1);
-    backdrop-filter:var(--glass-blur-sm);
-    -webkit-backdrop-filter:var(--glass-blur-sm);
-    color:var(--ink-3);
-    font-size:.82rem;
+    flex-shrink: 0;
+    padding: var(--sp-5) 0;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-3);
+    font-size: var(--fs-s);
 }
-.footer a { color:var(--ink-2); }
-.footer a:hover { color:#fff; }
-
-.scroll-progress {
-    position:fixed; top:0; left:0; height:2px; width:0;
-    background:linear-gradient(90deg, var(--accent), var(--sig-cyan), var(--sig-magenta));
-    box-shadow:0 0 12px var(--accent-glow), 0 0 24px rgba(88,183,201,.4);
-    z-index:2000; pointer-events:none;
-    transition:width 60ms linear;
+.footer a { color: var(--ink-2); text-decoration: none; }
+.footer a:hover { color: var(--ink); }
+.footer__links {
+    display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5);
+    margin: var(--sp-3) 0;
+    list-style: none; padding: 0;
 }
+.footer__links a { text-transform: none; }
 
+/* --- Musik-Streifen: bleibt funktional, wird schmal --- */
 .music-player {
-    position:fixed;
-    top:calc(74px + .8rem);
-    right:1rem;
-    left:auto;
-    bottom:auto;
-    z-index:1025;
-    display:flex; align-items:center; gap:.55rem;
-    padding:.5rem .65rem;
-    min-width:320px;
-    max-width:min(520px, calc(100vw - 2rem));
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, transparent), rgba(255,255,255,.02)),
-        var(--f1-grid),
-        var(--surface-2);
-    border:1px solid color-mix(in srgb, var(--accent) 42%, var(--stroke-1));
-    border-radius:8px;
-    backdrop-filter:blur(10px) saturate(130%);
-    -webkit-backdrop-filter:blur(10px) saturate(130%);
-    box-shadow:0 16px 30px -18px rgba(0,0,0,.9), 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
-    color:var(--ink);
-    font-size:.78rem;
-    transition:padding var(--t-fast), min-width var(--t-fast), gap var(--t-fast), background var(--t-fast);
+    position: fixed;
+    left: var(--gutter); bottom: var(--sp-4); right: auto; top: auto;
+    z-index: 1025;
+    display: flex; align-items: center; gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    max-width: min(520px, calc(100vw - 2 * var(--gutter)));
+    background: var(--tarmac);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    color: var(--ink);
+    font-size: var(--fs-xs);
+    transition: padding var(--t-fast), gap var(--t-fast);
 }
-.music-player.is-collapsed {
-    min-width:0;
-    max-width:none;
-    padding:.45rem .5rem;
-    gap:.4rem;
-}
+.music-player.is-collapsed { padding: var(--sp-1) var(--sp-2); gap: var(--sp-1); }
 .music-player.is-collapsed #musicPrev,
 .music-player.is-collapsed #musicNext,
 .music-player.is-collapsed .music-meta,
-.music-player.is-collapsed .music-volume {
-    display:none;
-}
-.music-btn--collapse {
-    margin-left:.1rem;
-}
+.music-player.is-collapsed .music-volume { display: none; }
+
 .music-btn {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:30px; height:30px; padding:0;
-    background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
-    border:1px solid color-mix(in srgb, var(--accent) 28%, var(--stroke-1));
-    border-radius:6px;
-    color:#fff; cursor:pointer;
-    transition:background var(--t-fast), color var(--t-fast), transform var(--t-fast), border-color var(--t-fast);
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; padding: 0;
+    background: var(--kerb); border: 1px solid var(--rule);
+    border-radius: var(--r-1); color: var(--ink); cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast);
 }
-.music-btn:hover {
-    background:color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,.07));
-    border-color:color-mix(in srgb, var(--accent) 65%, var(--stroke-2));
-    color:#fff;
+.music-btn:hover { background: var(--track); border-color: var(--rule-strong); }
+.music-btn--collapse { margin-left: var(--sp-1); }
+
+.music-meta { flex: 1 1 auto; min-width: 0; max-width: 220px; }
+.music-title {
+    font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: var(--fs-xs); letter-spacing: .06em; text-transform: uppercase;
 }
-.music-meta { flex:1 1 auto; min-width:0; max-width:220px; }
-.music-title { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; }
-.music-sub { color:var(--ink-3); font-family:var(--ff-mono); font-size:.66rem; letter-spacing:.04em; }
+.music-sub { color: var(--ink-3); font-size: .68rem; font-variant-numeric: var(--num); }
+
 .music-volume {
-    -webkit-appearance:none; appearance:none;
-    width:90px; height:4px;
-    background:rgba(255,255,255,.12);
-    border-radius:2px;
-    outline:none;
+    -webkit-appearance: none; appearance: none;
+    width: 90px; height: 4px;
+    background: var(--kerb); border-radius: var(--r-1); outline: none;
 }
 .music-volume::-webkit-slider-thumb {
-    -webkit-appearance:none; appearance:none;
-    width:12px; height:12px; border-radius:50%;
-    background:var(--accent); border:2px solid #fff;
-    box-shadow:0 0 8px var(--accent-glow);
-    cursor:pointer;
+    -webkit-appearance: none; appearance: none;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--team); border: 2px solid var(--tarmac); cursor: pointer;
+}
+.music-volume::-moz-range-thumb {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--team); border: 2px solid var(--tarmac); cursor: pointer;
 }
 
-/* ── Responsive Pillen-Breakpoints ─────────────────────────────────────── */
-/* 1200–1400px (xl): maximal kompakt — nur "R", Wortmarke + Live-Dot aus */
-@media (min-width:1200px) and (max-width:1400px) {
-    .navbar-brand { margin-right:.25rem!important; }
-    .brand-word { display:none!important; }
-    .navbar-brand::after { display:none!important; }
-    .topbar .navbar .nav-link { font-size:.53rem!important; letter-spacing:.03em!important; padding:.26rem .34rem!important; }
-    .topbar .navbar .nav-link .nav-ico { font-size:1rem; }
-    .navbar-auth-user { max-width:36px!important; padding:.4rem .4rem!important; }
-    .navbar-auth-user__name { display:none!important; }
-    .navbar-nav.align-items-lg-center { gap:.2rem!important; }
-}
-/* 1400–1620px: kompakt — Wortmarke aus, etwas mehr Luft */
-@media (min-width:1400px) and (max-width:1620px) {
-    .brand-word { display:none!important; }
-    .navbar-brand::after { display:none!important; }
-    .topbar .navbar .nav-link { font-size:.56rem!important; padding:.28rem .44rem!important; }
-    .navbar-auth-user { max-width:130px; }
-}
-/* >=1620px: voll inkl. Wortmarke */
-@media (min-width:1620px) {
-    .topbar .navbar .nav-link { padding:.3rem .6rem!important; font-size:.6rem!important; }
+/* --- Schmale Viewports: Streifen bricht um, Navigation scrollt --- */
+@media (max-width: 991.98px) {
+    .strip { flex-wrap: wrap; padding: var(--sp-2) 0 var(--sp-1); }
+    .strip .app-shell-container { flex-wrap: wrap; }
+    .strip__nav {
+        order: 3; margin-left: 0; width: 100%;
+        gap: var(--sp-4);
+        overflow-x: auto; flex-wrap: nowrap;
+        padding-bottom: var(--sp-1);
+        scrollbar-width: none;
+    }
+    .strip__nav::-webkit-scrollbar { display: none; }
+    .strip__status { gap: var(--sp-2); }
+    .strip__kicker { font-size: var(--fs-xs); }
+    .music-player { max-width: calc(100vw - 2 * var(--gutter)); }
 }
