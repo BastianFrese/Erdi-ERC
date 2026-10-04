@@ -50,14 +50,14 @@ h3, .h3 { font-size: var(--fs-xl); }
     display: inline-flex; align-items: center; gap: .55rem;
     font-family: var(--ff); font-weight: 600;
     text-transform: uppercase; letter-spacing: .22em;
-    font-size: var(--fs-xs); color: var(--ink-3);
+    font-size: var(--fs-xs); color: var(--ink-2);
 }
 .eyebrow::before {
     content: ""; width: 18px; height: 2px; background: var(--team);
 }
 
 p { margin: 0 0 var(--sp-4); max-width: 72ch; color: var(--ink-2); }
-small { color: var(--ink-3); }
+small { color: var(--ink-2); }
 
 /* --- Verweise ---
    Nicht in Teamfarbe: die ist laut Spec Zuordnung Fahrer->Team, nicht Stimmung.

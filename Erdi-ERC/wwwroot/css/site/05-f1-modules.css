@@ -681,15 +681,17 @@
 }
 
 /* --- Stagger entrance animation for card grids --- */
-.f1-stagger > * {
-    opacity:0;
-    transform:translateY(20px) scale(.97);
-    transition:
-        opacity .6s var(--ease-launch, cubic-bezier(.16,.84,.34,1)),
-        transform .6s var(--ease-launch, cubic-bezier(.16,.84,.34,1));
-}
-.f1-stagger.is-visible > *,
-.reveal.is-visible .f1-stagger > * { opacity:1; transform:none; }
+/* Fruehre ein Staffel-Einblenden: Kinder starteten unsichtbar, der
+   IntersectionObserver im Layout setzte is-visible. Die Spec streicht
+   Reveal-on-Scroll — damit faellt der Aufheber weg, und die Kinder von
+   .f1-stagger blieben DAUERHAFT unsichtbar. Betroffen waren AllRaces,
+   LeagueResults und Community/Events (die Startseite baute sich ihren
+   eigenen Beobachter nach und war deshalb nicht betroffen) — derselbe
+   Fehler wie bei .reveal, nur an einer zweiten Klasse.
+   .f1-stagger ist deshalb jetzt eine Durchreiche, kein Zustand.
+   Die Staffel-Verzoegerungen unten bleiben stehen; sie wirken nur noch,
+   wenn ein Zustand sie ausloest, und schaden sonst nicht. */
+.f1-stagger > * { opacity:1; transform:none; }
 .f1-stagger > *:nth-child(1) { transition-delay:.00s; }
 .f1-stagger > *:nth-child(2) { transition-delay:.08s; }
 .f1-stagger > *:nth-child(3) { transition-delay:.16s; }

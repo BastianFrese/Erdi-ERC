@@ -33,7 +33,7 @@
 .strip__kicker {
     font-family: var(--ff-cond); font-size: var(--fs-s); font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase;
-    color: var(--ink-3); white-space: nowrap;
+    color: var(--ink-2); white-space: nowrap;
 }
 .strip__nav { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-left: var(--sp-5); }
 .strip__nav a {
@@ -85,7 +85,7 @@ main {
     flex-shrink: 0;
     padding: var(--sp-5) 0;
     border-top: 1px solid var(--rule);
-    color: var(--ink-3);
+    color: var(--ink-2);
     font-size: var(--fs-s);
 }
 .footer a { color: var(--ink-2); text-decoration: none; }
@@ -133,7 +133,7 @@ main {
     font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-size: var(--fs-xs); letter-spacing: .06em; text-transform: uppercase;
 }
-.music-sub { color: var(--ink-3); font-size: .68rem; font-variant-numeric: var(--num); }
+.music-sub { color: var(--ink-2); font-size: .68rem; font-variant-numeric: var(--num); }
 
 .music-volume {
     -webkit-appearance: none; appearance: none;

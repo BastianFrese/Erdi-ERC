@@ -88,7 +88,7 @@
     zu /wwwroot/css/site.bundled.css. Ergebnis: 1 HTTP-Request statt 13 @import-Roundtrips (render-blocking).
     Inputs/Outputs sorgen für incrementell — läuft nur wenn Partials neuer sind als das Bundle.
   -->
-  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/lib/bootstrap/dist/css/bootstrap.min.css;wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/02f-icons.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/04f-tower.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css" Outputs="wwwroot/css/site.bundled.css">
+  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/lib/bootstrap/dist/css/bootstrap.min.css;wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/02f-icons.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/04f-tower.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css" Outputs="wwwroot/css/site.bundled.css">
     <ItemGroup>
       <_CssBundle Include="wwwroot/lib/bootstrap/dist/css/bootstrap.min.css" />
       <_CssBundle Include="wwwroot/css/site/01-tokens.css" />
@@ -104,6 +104,8 @@
       <_CssBundle Include="wwwroot/css/site/09-responsive.css" />
       <_CssBundle Include="wwwroot/css/site/10-f1-quickwins.css" />
       <_CssBundle Include="wwwroot/css/site/11-unique-addons.css" />
+      <_CssBundle Include="wwwroot/css/site.track-setups.css" />
+      <_CssBundle Include="wwwroot/css/site.community.css" />
     </ItemGroup>
     <ReadLinesFromFile File="%(_CssBundle.Identity)">
       <Output TaskParameter="Lines" ItemName="_CssBundleLines" />

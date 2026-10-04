@@ -202,9 +202,11 @@ public class DesignContractTests
     /// braucht er einen Test.
     /// </summary>
     [Fact]
-    public void Reveal_Versteckt_Keinen_Inhalt()
+    public void Kein_Verstecktes_Element_Ohne_Aufheber()
     {
-        var beanstandet = new List<string>();
+        // Alle CSS-Regeln einsammeln, die einen Inhalt unsichtbar schalten.
+        var verstecker = new List<(string Klasse, string Zustand, string Datei)>();
+        var aufheber = new List<(string Klasse, string Zustand)>();
 
         foreach (var datei in AlleCssDateien())
         {
@@ -214,20 +216,51 @@ public class DesignContractTests
             foreach (Match m in Regex.Matches(text, @"(?<sel>[^{}]*)\{(?<body>[^{}]*)\}"))
             {
                 var selektor = m.Groups["sel"].Value;
-                if (!selektor.Contains(".reveal", StringComparison.Ordinal)) continue;
-                if (selektor.Contains("is-visible", StringComparison.Ordinal)) continue;
-
                 var op = Regex.Match(m.Groups["body"].Value, @"opacity\s*:\s*(?<v>[\d.]+)");
                 if (!op.Success) continue;
-
                 var wert = double.Parse(op.Groups["v"].Value, System.Globalization.CultureInfo.InvariantCulture);
-                if (wert < 1.0)
-                    beanstandet.Add($"{Path.GetFileName(datei)}: '{selektor.Trim()}' setzt opacity:{op.Groups["v"].Value}");
+
+                // Zustandsklasse im Selektor, z. B. is-visible
+                var zustand = Regex.Match(selektor, @"[.](is|has)-[a-z-]+");
+                // Die Klasse, die den Zustand traegt, z. B. f1-stagger oder reveal
+                var klassen = Regex.Matches(selektor, @"[.]([a-z0-9][a-z0-9_-]*)")
+                                   .Select(k => k.Groups[1].Value)
+                                   .Where(k => !k.StartsWith("is-") && !k.StartsWith("has-"))
+                                   .ToList();
+                if (klassen.Count == 0) continue;
+                var traeger = klassen[^1];
+
+                if (wert < 1.0) verstecker.Add((traeger, zustand.Success ? zustand.Value[1..] : "", Path.GetFileName(datei)));
+                else if (zustand.Success) aufheber.Add((traeger, zustand.Value[1..]));
+            }
+        }
+
+        // Fuer jede versteckende Regel: welcher Zustand hebt sie auf?
+        var erwartet = new Dictionary<string, string>();
+        foreach (var (klasse, _, _) in verstecker)
+        {
+            var passender = aufheber.FirstOrDefault(a => a.Klasse == klasse);
+            if (passender.Klasse is not null) erwartet[klasse] = passender.Zustand;
+        }
+
+        // Jede View, die eine solche Klasse benutzt, muss den Aufheber selbst mitbringen.
+        // (Der fruehre Test nagelte das auf ".reveal" fest und uebersah .f1-stagger.)
+        var beanstandet = new List<string>();
+        foreach (var view in Directory.EnumerateFiles(Path.Combine(RepoRoot, "Erdi-ERC", "Views"),
+                                                      "*.cshtml", SearchOption.AllDirectories))
+        {
+            var inhalt = Lies(view);
+            foreach (var (klasse, zustand) in erwartet)
+            {
+                if (!Regex.IsMatch(inhalt, $@"\b{Regex.Escape(klasse)}\b")) continue;
+                if (inhalt.Contains(zustand, StringComparison.Ordinal)) continue;
+                beanstandet.Add($"{Path.GetFileName(view)} benutzt '{klasse}', setzt aber nie '{zustand}' — " +
+                                $"{klasse} startet unsichtbar und bleibt es.");
             }
         }
 
         Assert.True(beanstandet.Count == 0,
-            "Einblende-Zustand ohne JS, das ihn aufhebt — der Inhalt bleibt unsichtbar:\n  " +
-            string.Join("\n  ", beanstandet));
+            "Einblende-Zustand ohne Aufheber — der Inhalt bleibt unsichtbar:\n  " +
+            string.Join("\n  ", beanstandet.Distinct()));
     }
 }

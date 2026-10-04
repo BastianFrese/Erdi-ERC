@@ -16,13 +16,13 @@
 .tower caption {
     text-align: left; padding: 0 0 var(--sp-2);
     font-family: var(--ff); font-size: var(--fs-xs); font-weight: 700;
-    letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+    letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2);
 }
 .tower th {
     padding: var(--sp-2);
     font-family: var(--ff); font-size: var(--fs-xs); font-weight: 600;
     letter-spacing: .1em; text-transform: uppercase;
-    color: var(--ink-3); text-align: left;
+    color: var(--ink-2); text-align: left;
     border-bottom: 1px solid var(--rule-strong);
 }
 .tower td {
@@ -33,7 +33,7 @@
 }
 .tower tbody tr:hover { background: var(--tarmac); }
 
-.tower__pos { width: 2.25rem; color: var(--ink-3); font-weight: 700; }
+.tower__pos { width: 2.25rem; color: var(--ink-2); font-weight: 700; }
 .tower__team { width: 3px; padding: 0; border-bottom: 1px solid var(--rule); }
 .tower__name {
     font-family: var(--ff); font-weight: 600; font-size: var(--fs-s);
@@ -54,7 +54,7 @@
 .sector__seg--fast { background: var(--fast); }
 .sector__seg--best { background: var(--best); }
 .sector__seg--slow { background: var(--slow); }
-.sector__glyph { font-size: .7em; line-height: 1; color: var(--ink-3); }
+.sector__glyph { font-size: .7em; line-height: 1; color: var(--ink-2); }
 
 /* --- Reifenmischung --- */
 .compound {
@@ -92,7 +92,7 @@
 .data-table th {
     padding: var(--sp-2); text-align: left;
     font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--ink-3); border-bottom: 1px solid var(--rule-strong);
+    color: var(--ink-2); border-bottom: 1px solid var(--rule-strong);
     position: sticky; top: 56px; background: var(--track);   /* klebt unter dem Streifen */
     z-index: 2;
 }
