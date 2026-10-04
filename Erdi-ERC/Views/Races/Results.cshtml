@@ -206,7 +206,7 @@ else
                                 <td class="text-tech fw-bold driver-tile__pos @posClass" style="font-size:1rem;padding-left:.6rem;">@s.Position</td>
                                 <td style="border-left:3px solid @teamColor;padding-left:.7rem;">
                                     <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@s.Driver">
-                                        <span class="fw-semibold">@s.Driver</span>
+                                        <span class="fw-semibold">@DriverNameHelper.Display(s.Driver)</span>
                                     </a>
                                     @if (isErsatzfahrer)
                                     {

@@ -141,7 +141,7 @@
                                         <div class="f1-timing-row__league">@w.Name</div>
                                         <div class="f1-timing-row__driver">
                                             <i class="f1-icon" data-lucide="trophy"></i>
-                                            <a asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@w.Winner">@w.Winner</a>
+                                            <a asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@w.Winner">@DriverNameHelper.Display(w.Winner)</a>
                                         </div>
                                         @if (w.IsReserveWinner == true)
                                         {

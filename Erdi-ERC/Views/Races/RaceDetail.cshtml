@@ -105,7 +105,7 @@
                         <a class="f1-podium-card__driver"
                            asp-controller="Profile" asp-action="ByDriverName"
                            asp-route-driverName="@row.Driver">
-                            @row.Driver
+                            @DriverNameHelper.Display(row.Driver)
                         </a>
                         <div class="f1-podium-card__team" style="color: @color;">
                             @(team?.Name ?? row.Team)
@@ -191,7 +191,7 @@
                                 <td style="border-left: 3px solid @color; padding-left: .7rem;">
                                     <a class="fw-semibold text-decoration-none"
                                        asp-controller="Profile" asp-action="ByDriverName"
-                                       asp-route-driverName="@row.Driver">@row.Driver</a>
+                                       asp-route-driverName="@row.Driver">@DriverNameHelper.Display(row.Driver)</a>
                                     @if (reserveDrivers.TryGetValue(normalizedDriver, out var reserveStanding))
                                     {
                                         var reserveForDisplay = raceReserveFor ?? reserveStanding.ReserveForDriver;

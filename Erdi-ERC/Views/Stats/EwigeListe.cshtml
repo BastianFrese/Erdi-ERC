@@ -151,7 +151,7 @@ else
                                             @for (int c = 0; c < s.Rows[r].Count; c++)
                                             {
                                                 if (hiddenColumnIndexes.Contains(c)) continue;
-                                                <td>@s.Rows[r][c]</td>
+                                                <td>@DriverNameHelper.Display(s.Rows[r][c])</td>
                                             }
                                         </tr>
                                     }

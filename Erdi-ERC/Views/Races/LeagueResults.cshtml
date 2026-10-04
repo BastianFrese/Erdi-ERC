@@ -182,7 +182,7 @@
                                 <i class="f1-icon f1-race-card__winner-icon" data-lucide="trophy"></i>
                                 <a class="f1-race-card__winner-name"
                                    asp-controller="Profile" asp-action="ByDriverName"
-                                   asp-route-driverName="@race.Winner">@race.Winner</a>
+                                   asp-route-driverName="@race.Winner">@DriverNameHelper.Display(race.Winner)</a>
                                 @if (RaceTeamHelper.IsRaceGuest(race, race.Winner))
                                 {
                                     <span class="badge bg-warning text-dark ms-2" style="font-size:.6rem;"
@@ -283,7 +283,7 @@
                                                 var drv = row.Drivers[di];
                                                 <a class="text-decoration-none" style="color:inherit;"
                                                    asp-controller="Profile" asp-action="ByDriverName"
-                                                   asp-route-driverName="@drv">@drv</a>
+                                                   asp-route-driverName="@drv">@DriverNameHelper.Display(drv)</a>
                                                 @if (di < row.Drivers.Count - 1)
                                                 {
                                                     <text> · </text>

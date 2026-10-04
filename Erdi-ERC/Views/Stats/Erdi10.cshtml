@@ -129,7 +129,7 @@
             <div class="f1-winner-card__info">
                 <div class="f1-winner-card__eyebrow">Rennsieger</div>
                 <div class="f1-winner-card__name">
-                                @latestWinner
+                                @DriverNameHelper.Display(latestWinner)
                                 @if (latestRace?.GuestAssignments?.Any(g =>
                                     !string.IsNullOrWhiteSpace(g.GuestDriver)
                                     && g.GuestDriver.Trim().Equals(latestWinner?.Trim() ?? string.Empty, StringComparison.OrdinalIgnoreCase)
@@ -266,14 +266,14 @@
                                                                     <i class="bi bi-trophy-fill text-amber"></i>
                                                                     <a class="text-decoration-none"
                                                                        asp-controller="Profile" asp-action="ByDriverName"
-                                                                       asp-route-driverName="@r.Winner">@r.Winner</a>
+                                                                       asp-route-driverName="@r.Winner">@DriverNameHelper.Display(r.Winner)</a>
                                                                     @if (isReserveWinner)
                                                                     {
                                                                         <span class="badge bg-info ms-1"
                                                                               title="Ersatzfahrer@(string.IsNullOrWhiteSpace(reserveForDisplay) ? "" : $" für {reserveForDisplay}")">Ersatz</span>
                                                                         @if (!string.IsNullOrWhiteSpace(reserveForDisplay))
                                                                         {
-                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@reserveForDisplay">@reserveForDisplay</a></span>
+                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@reserveForDisplay">@DriverNameHelper.Display(reserveForDisplay)</a></span>
                                                                         }
                                                                     }
                                                                     @if (isGuestWinner)
@@ -282,7 +282,7 @@
                                                                               title="Gastfahrer aus anderer Liga">Gast</span>
                                                                         @if (!string.IsNullOrWhiteSpace(raceGuestForWinner))
                                                                         {
-                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@raceGuestForWinner">@raceGuestForWinner</a></span>
+                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@raceGuestForWinner">@DriverNameHelper.Display(raceGuestForWinner)</a></span>
                                                                         }
                                                                     }
                                                                 </td>

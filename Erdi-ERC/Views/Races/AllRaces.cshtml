@@ -120,7 +120,7 @@ else
                                         <a class="fw-semibold text-decoration-none"
                                            style="color: @winnerColor;"
                                            asp-controller="Profile" asp-action="ByDriverName"
-                                           asp-route-driverName="@race.Winner">@race.Winner</a>
+                                           asp-route-driverName="@race.Winner">@DriverNameHelper.Display(race.Winner)</a>
                                         @if (race.IsGuestWinner)
                                         {
                                             <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;"
@@ -131,14 +131,14 @@ else
                                         <span class="text-mono">P1</span>
                                         <a class="text-decoration-none" style="color:var(--ink-2);"
                                            asp-controller="Profile" asp-action="ByDriverName"
-                                           asp-route-driverName="@race.Winner">@race.Winner</a>
+                                           asp-route-driverName="@race.Winner">@DriverNameHelper.Display(race.Winner)</a>
                                         @if (!string.IsNullOrWhiteSpace(race.P2))
                                         {
                                             <span class="mx-1" style="color:var(--stroke-3);">·</span>
                                             <span class="text-mono">P2</span>
                                             <a class="text-decoration-none" style="color:var(--ink-2);"
                                                asp-controller="Profile" asp-action="ByDriverName"
-                                               asp-route-driverName="@race.P2">@race.P2</a>
+                                               asp-route-driverName="@race.P2">@DriverNameHelper.Display(race.P2)</a>
                                             @if (race.IsGuestP2)
                                             {
                                                 <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;"
@@ -151,7 +151,7 @@ else
                                             <span class="text-mono">P3</span>
                                             <a class="text-decoration-none" style="color:var(--ink-2);"
                                                asp-controller="Profile" asp-action="ByDriverName"
-                                               asp-route-driverName="@race.P3">@race.P3</a>
+                                               asp-route-driverName="@race.P3">@DriverNameHelper.Display(race.P3)</a>
                                             @if (race.IsGuestP3)
                                             {
                                                 <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;"
