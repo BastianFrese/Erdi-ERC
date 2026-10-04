@@ -304,6 +304,7 @@
             <form asp-controller="AdminLeague" asp-action="SaveAllStandings" method="post" id="standings-form">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="leagueId" value="@Model.Id" />
+                <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0 league-page-standings-table">
                     <thead class="table-light">
                         <tr>
@@ -393,6 +394,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
                 <div class="p-3 d-flex justify-content-between align-items-center gap-2 flex-wrap border-top">
                     <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>Position, Siege und Punkte werden automatisch aus den Rennen (+ Korrektur) berechnet. Zum Entfernen das Häkchen in „Löschen" setzen. Einen Fahrer umzubenennen wirkt systemweit (Fahrerkarte, Ergebnisse, alle Ligen).</span>
                     <button class="btn btn-primary" type="submit"
@@ -492,6 +494,7 @@
             <a class="btn btn-sm btn-primary" asp-controller="AdminLeague" asp-action="EnterRace" asp-route-leagueId="@Model.Id">Renn-Ergebnis eintragen</a>
         </div>
         <div class="card-body p-0">
+            <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -572,6 +575,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 

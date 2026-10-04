@@ -189,3 +189,40 @@
         if (ev.key === 'Escape') closeAll();
     });
 })();
+
+/* ---------------------------------------------------------------------------
+   Navigationsreihe auf schmalen Schirmen.
+
+   Auf 390 px passt die Reihe nicht mehr; sie ist seitlich wischbar, aber man
+   sah es nicht: der letzte Punkt war einfach abgeschnitten. Hier bekommt sie
+   einen weichen Rand, solange es etwas zu wischen gibt, und die aktive Seite
+   wird beim Laden in den Blick gerueckt — sonst startet man auf "RACING HUB"
+   und die eigene Seite liegt ausserhalb.
+
+   Gemessen wird nur die Reihe selbst, nicht der Schirm: scrollWidth gegen
+   clientWidth. Die Klassen setzt das CSS (99-responsive.css).
+   --------------------------------------------------------------------------- */
+(function () {
+    const reihe = document.querySelector('.strip__nav');
+    if (!reihe) return;
+
+    const aktualisiere = () => {
+        const scrollbar = reihe.scrollWidth - reihe.clientWidth > 2;
+        const amEnde = reihe.scrollLeft + reihe.clientWidth >= reihe.scrollWidth - 2;
+        reihe.classList.toggle('is-scrollable', scrollbar);
+        reihe.classList.toggle('is-at-end', scrollbar && amEnde);
+    };
+
+    reihe.addEventListener('scroll', aktualisiere, { passive: true });
+    window.addEventListener('resize', aktualisiere, { passive: true });
+
+    const aktiv = reihe.querySelector('a.active');
+    if (aktiv && reihe.scrollWidth > reihe.clientWidth) {
+        // scrollIntoView blockweise waere zu weit: die Reihe soll nur seitlich
+        // nachziehen, nicht die Seite springen lassen.
+        const ziel = aktiv.offsetLeft - (reihe.clientWidth - aktiv.offsetWidth) / 2;
+        reihe.scrollLeft = Math.max(0, ziel);
+    }
+
+    aktualisiere();
+})();

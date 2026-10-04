@@ -1,0 +1,142 @@
+/* =====================================================================
+   99 · RESPONSIVE — die letzte Schicht
+   =====================================================================
+
+   Warum diese Datei 99 heisst und am Ende des Bundes steht: sie muss die
+   Komponenten ueberschreiben, und die stehen in 00 bis 11, in den
+   Seitendateien und in 99-home-index.css. Die bisherige Ebene lag als
+   09-responsive.css mitten im Bund — alles danach gewann gegen sie.
+
+   Und sie zielte auf die alte Gestalt: .navbar, .navbar-collapse, .topbar,
+   .hero, .result-row, .stat-grid, .section-head__bar, .race-hud-grid,
+   .podium-grid, .brand-word, .live-race-pill. Davon existiert im Markup
+   nichts mehr (nachgezaehlt: 0 Vorkommen). Die wenigen Regeln, die noch
+   etwas trafen — Musikspieler, Ereigniskarte, icon-chip, Tabellenpolster —,
+   sind hierher uebernommen.
+
+   Gemessen wurde vor dem Schreiben, nicht geschaetzt. Die Zahlen in den
+   Kommentaren stammen aus Messungen bei 390 px Breite.
+   ===================================================================== */
+
+/* ---------- Erste Regel: die Navigationsreihe bricht nie um ------------
+   Auf 390 px zerbrachen "KALENDER" und "RACING HUB" mitten im Wort, weil ein
+   Link normal umbrechen darf. Die Reihe wischt seitlich; ein Link darf das
+   nicht. Gilt fuer alle Breiten — auch am Rechner ist eine umbrechende
+   Beschriftung nichts, was jemand sehen will. */
+.strip__nav a { white-space: nowrap; }
+
+@media (max-width: 991.98px) {
+    /* Der Streifen war schon wischbar, man sah es nur nicht. is-scrollable und
+       is-at-end setzt site.js: der weiche Rand erscheint nur, wenn es wirklich
+       etwas zu wischen gibt, und verschwindet am Ende wieder. */
+    .strip__nav { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+    .strip__nav.is-scrollable {
+        mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent);
+    }
+    .strip__nav.is-scrollable.is-at-end { mask-image: none; }
+
+    /* Der Musikspieler lag als Streifen unten links und stiess an den Rand. */
+    .music-player {
+        top: calc(70px + .5rem);
+        left: .5rem; right: .5rem;
+        min-width: 0;
+        max-width: calc(100vw - 1rem);
+        flex-wrap: wrap;
+    }
+    .music-meta { flex: 1 1 160px; max-width: none; }
+    .music-volume { flex: 1 1 100%; width: 100%; }
+
+    /* Tabellenpolster: auf schmalen Schirmen zaehlt jede Spalte Platz. */
+    .table thead th, .table tbody td { padding: .55rem .6rem; }
+    .btn { font-size: .68rem; letter-spacing: .08em; }
+}
+
+@media (max-width: 767.98px) {
+    /* Titel plus Chips passten nicht mehr in eine Zeile und schoben die Seite
+       21 px breit (Ergebnisseite, gemessen). Unter 768 px darf der Kopf
+       umbrechen — am Rechner bleibt er bewusst eine Zeile. */
+    .f1-section__head { flex-wrap: wrap; row-gap: .45rem; }
+
+    /* Dasselbe in der Setup-Karte: eine starre Reihe, aus der die Reifen- und
+       Stufen-Abzeichen 257 px heraushingen. Die Karte sprengte damit die
+       ganze Seite. */
+    .setup-card__head { flex-wrap: wrap; }
+    .tier-badge { white-space: normal; }
+
+    /* Der Rest des Ueberlaufs (gemessen 122 px) kam von zu langen Titeln.
+       .text-truncate kuerzt nur, wenn das Element auch schrumpfen DARF. Die
+       automatische Mindestbreite eines Flex-Kindes ist sein Inhalt (min-content);
+       eine innere Reihe mit langem Text wurde damit 459 px breit in 309 px Platz,
+       und kein Umbruch half, weil sie allein schon zu breit war.
+       min-width: 0 hebt die automatische Mindestbreite auf, danach greift das
+       Kuerzen. Gilt nur auf schmalen Schirmen: am Rechner ist Platz genug. */
+    .d-flex > .d-flex { min-width: 0; }
+    .d-flex > .text-truncate,
+    .d-flex > * > .text-truncate { min-width: 0; }
+
+    .event-card { flex-direction: column; }
+    .event-card__date { flex: 0 0 auto; align-self: flex-start; }
+
+    /* Der Hero ist der erste Eindruck und darf auf dem Handy etwas mehr
+       Luft nach innen haben als der Rest. */
+    .f1-hero { padding: 1.5rem 1.15rem; }
+}
+
+@media (max-width: 575.98px) {
+    /* Schrift-Untergrenze.
+       Gemessen bei 390 px lagen die kleinsten Beschriftungen zwischen 8,6 und
+       11,9 px — auf einem Telefon unlesbar: Tabellenkoepfe 10,7 px (86 Stellen
+       auf drei Seiten), Statusabzeichen 9,3 px (48 auf der Ergebnisseite),
+       die Beinamen im Rennkalender-Poster 8,6 px (35), die Zeilen der
+       Constructors-Aufschluesselung 11,5 px (33).
+
+       Die Liste ist absichtlich eine Aufzaehlung und keine allgemeine Regel:
+       "alles unter 12 px wird 12 px" gibt es in CSS nicht, und pauschal jede
+       Schrift zu heben wuerde die Ueberschriften mitziehen.
+
+       !important ist hier richtig und nicht bequem: die Seitendateien setzen
+       dieselben Groessen ueber spezifischere Selektoren (".f1-ewige-table
+       thead th" schlaegt "th"). Ein Boden, den die naechste spezifischere
+       Regel wieder aushebelt, ist kein Boden.
+
+       Was hier NICHT steht, bleibt wie entworfen — eine groessere Zahl in einer
+       Tabellenzelle wird nicht auf 12 px heruntergezogen, weil "td" fehlt. */
+    .badge, .status-pill, th, .small, .text-tech, .text-mono, .text-mute,
+    .f1-chip, .f1-section__chip, .f1-stat__label, .nav-alert-badge, .music-sub,
+    .f1-pitcard__tag, .f1-ewige-tabs__tab, .f1-ewige-toolbar__count, .f1-rc-bar,
+    .f1-leaguecard__sub, .f1-leaguecard__event-label, .f1-leaguecard__event-date,
+    .f1-timing-row__league, .f1-timing-row__meta, .f1-overall-chip__pts,
+    .f1-constructors-breakdown__meta, .f1-constructors-breakdown__title,
+    .f1-constructors-podium__pts, .f1-constructors-hero__cta,
+    .community-stat-tile__label, .community-level-badge,
+    .event-timeline__date-year, .col-num,
+    .rc-poster-doc__leg-league, .rc-poster-doc__leg-time,
+    .rc-poster-doc__distance, .rc-poster-doc__footer, .rc-poster-doc__eyebrow,
+    .setup-freshness, .tire, .next-tag,
+    .race-lights-pill__text, .f1-overall-chip__cta,
+    .f1-constructors-podium__rank, .f1-constructors-podium__meta,
+    .f1-next-event__eyebrow, .f1-next-event__countdown-label,
+    .stw-item__type, .stw-item__reason, .stw-item code,
+    .stw-item__meta span, .stw-item__docbadge span,
+    .stw-filters button, .stw-league-filter,
+    .event-card__month, .f1-hub-tag, .f1-hub-tabs__tab, .f1-social-bar__label {
+        font-size: 12px !important;
+    }
+
+    /* Die Stewarding-Seite traegt ihre Gestaltung als <style> direkt in der View.
+       Das steht im Dokument hinter dem Bundle und gewinnt bei gleicher
+       Spezifitaet — ohne !important greift hier gar nichts.
+       Die Strafart "Strafpunkte (BigBot) + A..." lief mit .1em Sperrung in
+       Grossbuchstaben 18 px ueber den Rand (gemessen bei 360 px). */
+    .stw-item__type {
+        letter-spacing: .04em !important;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+}
+
+/* ---------- Bewegung bleibt aus, wenn sie aus sein soll --------------- */
+@media (prefers-reduced-motion: reduce) {
+    .strip__nav { scroll-behavior: auto; }
+    .icon-chip { animation: none !important; }
+}
