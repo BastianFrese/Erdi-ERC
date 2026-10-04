@@ -962,3 +962,21 @@
     align-items: center;
     gap: .35rem;
 }
+
+
+/* =====================================================================
+   KEINE BESCHRIFTUNG UEBER DER UEBERSCHRIFT
+   Die Chip-Zeile stand vor dem Titel und rutschte bei laengerem Text in
+   eine eigene Zeile darueber — genau das "ueberfluessige Label ueber
+   Inhalt", das der Auftrag als Klischee nennt. Der Titel kommt zuerst,
+   der Chip steht daneben, nie darueber.
+   ===================================================================== */
+.f1-section__head { flex-wrap: nowrap; align-items: baseline; }
+.f1-section__bar    { order: 0; }
+.f1-section__title  { order: 1; }
+.f1-section__chip   { order: 2; white-space: nowrap; }
+.f1-section__action,
+.f1-section__sub    { order: 3; }
+
+/* Freistehende Rubrik-Labels ueber Ueberschriften entfallen ganz. */
+.f1-eyebrow { display: none; }

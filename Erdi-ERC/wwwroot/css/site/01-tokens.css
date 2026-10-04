@@ -177,10 +177,13 @@ body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
     --ink-4: var(--ink-3);
 
     /* Akzent */
-    --accent: var(--team);
-    --accent-2: var(--team);
-    --accent-soft: color-mix(in srgb, var(--team) 18%, transparent);
-    --accent-glow: color-mix(in srgb, var(--team) 45%, transparent);
+    /* Das alte globale Rot war Geruest UND Signal in einem. Im neuen System ist
+       Geruest neutral und Rot ausschliesslich Signal (Reifen, Flagge, Status) —
+       Teamfarbe ist Zuordnung Fahrer->Team, nicht Stimmung. */
+    --accent: var(--ink-2);
+    --accent-2: var(--ink);
+    --accent-soft: color-mix(in srgb, var(--ink) 14%, transparent);
+    --accent-glow: transparent;
 
     /* Signale */
     --sig-cyan: var(--wet);

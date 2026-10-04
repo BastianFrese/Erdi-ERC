@@ -114,7 +114,7 @@
 /* --- Sektionstrennung: Hairline plus Farbtick, keine Karte --- */
 .section { margin: var(--sp-7) 0; }
 .section-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-4); }
-.section-head__bar { width: 3px; height: 1.1em; background: var(--team); flex: none; }
+.section-head__bar { width: 3px; height: 1.1em; background: var(--ink-3); flex: none; }
 .section-head__title {
     margin: 0; font-family: var(--ff-cond); font-size: var(--fs-l); font-weight: 600;
     letter-spacing: .06em; text-transform: uppercase;
