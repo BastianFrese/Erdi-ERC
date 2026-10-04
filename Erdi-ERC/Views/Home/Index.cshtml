@@ -36,40 +36,31 @@
 
 @* ============== Background-Layer ============== *@
 
-@* ============== HERO · RACE CONTROL ============== *@
+@* ============== HERO · RACE CONTROL ==============
+   Der Streckenstatus ist die Ampel-Pille mit ihren fuenf Lampen — sie sagt
+   dasselbe wie ein Flaggen-Badge, nur genauer. Beides nebeneinander hiess
+   zweimal "READY".
+   Frueher: Logo plus Verlauf plus Funken plus Speedlines plus vier Chips.
+   Jetzt: die Kopfzeile einer Uebertragung — Sitzung, Streckenstatus, Countdown.
+   Die dekorativen Chips ("DRS Active", "Fastest Lap") sind weg: sie behaupteten
+   einen Zustand, den es nicht gibt, und verbrannten damit Gruen und Magenta, die
+   der Turm fuer ihre echte Bedeutung braucht. *@
 @await Html.PartialAsync("_LiveRaceBanner")
-<section class="f1-hero reveal">
-
-    @* Speedlines *@
-
-    @* Particle Sparks *@
-
-    @* Ghost Letter *@
-
-    <div class="row g-4 align-items-center">
+<section class="f1-hero">
+    <div class="row g-4 align-items-start">
         <div class="col-lg-7">
-            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> F1 26<span class="text-mute" style="margin-left:.7rem;">Sim Racing League</span></span>
-                <span class="f1-chip f1-chip--drs"><i class="f1-icon" data-lucide="zap"></i> DRS Active</span>
-                <span class="f1-chip f1-chip--fastest"><i class="f1-icon" data-lucide="timer"></i> Fastest Lap</span>
-            </div>
-            <h1 class="f1-hero__title" style="color:var(--ink);text-shadow:none;">Erdi's<br /><em>Racing</em> Community</h1>
+            <h1 class="f1-hero__title">Erdi&#x27;s <em>Racing</em> Community</h1>
             <p class="f1-hero__lead">
-                Drei Ligen. Ein Ziel. <strong>Lights out and away we go.</strong><br />
-                Bestenlisten, Ergebnisse und kommende Events der ERC rund um Twitch-Streamer
-                <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" style="color:var(--accent-2); font-weight:700;">Erdi10</a>.
+                Drei Ligen. Ein Ziel. Bestenlisten, Ergebnisse und kommende Events der ERC
+                rund um Twitch-Streamer
+                <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener">Erdi10</a>.
             </p>
-            <div class="f1-hero__actions">
-                <a class="btn f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
-                <a class="btn f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
-                <button type="button" class="btn f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
-            </div>
 
             @if (nextStream != null)
             {
-                <div class="f1-broadcast-card">
-                    <div class="f1-broadcast-card__head">
-                        <span class="f1-broadcast-card__tag"><i class="f1-icon" data-lucide="radio"></i> N&auml;chster Stream</span>
+                <div class="rc-session">
+                    <div class="rc-session__head">
+                        <span class="rc-session__kicker">N&auml;chster Stream</span>
                         <span class="race-lights-pill" data-state="ready" data-race-state-target="@(((DateTime)nextStream.StartAt).ToString("O"))">
                             <span class="race-lights-pill__strip" aria-hidden="true">
                                 <span class="race-lights-pill__lamp"></span>
@@ -81,17 +72,25 @@
                             <span class="race-lights-pill__text">Ready</span>
                         </span>
                     </div>
-                    <div class="f1-broadcast-card__title">@nextStream.Title</div>
-                    <div class="f1-broadcast-card__meta">@(((DateTime)nextStream.StartAt).ToString("dd.MM.yyyy"))<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)nextStream.StartAt).ToString("HH:mm"))</span></div>
-                    <div id="nextStreamCountdown" data-target="@(((DateTime)nextStream.StartAt).ToString("O"))" class="f1-broadcast-card__count">Countdown l&auml;dt&hellip;</div>
+                    <div class="rc-session__title">@nextStream.Title</div>
+                    <div class="rc-session__when">
+                        @(((DateTime)nextStream.StartAt).ToString("dd.MM.yyyy"))<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)nextStream.StartAt).ToString("HH:mm"))</span>
+                    </div>
+                    <div id="nextStreamCountdown" data-target="@(((DateTime)nextStream.StartAt).ToString("O"))" class="rc-session__count">Countdown l&auml;dt&hellip;</div>
                     @if (nextStream.Url != null)
                     {
-                        <div style="margin-top:.7rem;">
-                            <a class="btn f1-btn f1-btn--outline" href="@nextStream.Url" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="external-link"></i> Zum Stream</a>
-                        </div>
+                        <a class="f1-btn f1-btn--outline rc-session__cta" href="@nextStream.Url" target="_blank" rel="noopener">
+                            <i class="f1-icon" data-lucide="external-link"></i> Zum Stream
+                        </a>
                     }
                 </div>
             }
+
+            <div class="f1-hero__actions">
+                <a class="f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
+                <a class="f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
+                <button type="button" class="f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
+            </div>
         </div>
 
         <div class="col-lg-5 d-none d-lg-flex flex-column align-items-end gap-3">

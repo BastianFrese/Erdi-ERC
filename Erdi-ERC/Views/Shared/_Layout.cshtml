@@ -217,14 +217,7 @@
     @* ---------- MAIN ---------- *@
     <main role="main" id="appMain" class="page">
         <div class="app-shell-container">
-            <div class="app-shell">
-                <aside class="app-shell__rail" aria-label="Meisterschaft">
-                    <partial name="_Tower" model="_layoutData.Tower" />
-                </aside>
-                <div class="app-shell__main">
-                    @RenderBody()
-                </div>
-            </div>
+            @RenderBody()
         </div>
     </main>
 

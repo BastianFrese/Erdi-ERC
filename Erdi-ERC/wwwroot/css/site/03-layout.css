@@ -166,31 +166,3 @@ main {
     .strip__kicker { font-size: var(--fs-xs); }
     .music-player { max-width: calc(100vw - 2 * var(--gutter)); }
 }
-
-/* =====================================================================
-   TURM-SPALTE
-   Ab 1200 px steht links eine feste Spalte mit der Meisterschaft. Sie ist
-   das Rueckgrat der Seite: dadurch wird sie ein Feed statt einer Folge von
-   Abschnitten. Darunter klappt sie weg — dort waere sie nur ein Klotz vor
-   dem Inhalt. Im Admin ohnehin nicht (eigene Huelle).
-   ===================================================================== */
-.app-shell { display: block; }
-.app-shell__rail { display: none; }
-
-@media (min-width: 1200px) {
-    .app-shell {
-        display: grid;
-        grid-template-columns: var(--rail) minmax(0, 1fr);
-        gap: var(--sp-6);
-        align-items: start;
-    }
-    .app-shell__rail {
-        display: block;
-        position: sticky;
-        /* Unter dem Broadcast-Streifen (58 px) plus etwas Luft */
-        top: 72px;
-        max-height: calc(100vh - 96px);
-        overflow-y: auto;
-    }
-    .app-shell__main { min-width: 0; }
-}

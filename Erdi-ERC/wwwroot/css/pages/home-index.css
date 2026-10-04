@@ -1029,3 +1029,32 @@
     opacity: .92;
 }
 .f1-hero__brand-logo:hover { transform: none; }
+
+/* =====================================================================
+   RACE-CONTROL-KOPFZEILE
+   Die Sitzung als Streckeninfo: Statusflagge, Sitzungsname, Zeitpunkt,
+   Countdown. Hairline oben statt Karte — ein Kasten im Kasten war genau
+   das, was der Auftrag ausschliesst.
+   ===================================================================== */
+.rc-session {
+    margin: var(--sp-5) 0 var(--sp-4);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--rule-strong);
+    max-width: 34rem;
+}
+.rc-session__head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.rc-session__kicker {
+    font-family: var(--ff); font-size: var(--fs-xs); font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+}
+.rc-session__title {
+    font-family: var(--ff-cond); font-size: var(--fs-l); font-weight: 600;
+    letter-spacing: .02em; text-transform: uppercase; color: var(--ink);
+}
+.rc-session__when { color: var(--ink-2); font-size: var(--fs-s); font-variant-numeric: var(--num); margin-top: .15rem; }
+.rc-session__count {
+    margin-top: var(--sp-3);
+    font-family: var(--ff-cond); font-size: var(--fs-xl); font-weight: 700;
+    font-variant-numeric: var(--num); letter-spacing: .01em;
+}
+.rc-session__cta { margin-top: var(--sp-3); display: inline-flex; }

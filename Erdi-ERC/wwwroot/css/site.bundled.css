@@ -736,32 +736,6 @@ scrollbar-width: none;
 .music-player { max-width: calc(100vw - 2 * var(--gutter)); }
 }
 /* =====================================================================
-TURM-SPALTE
-Ab 1200 px steht links eine feste Spalte mit der Meisterschaft. Sie ist
-das Rueckgrat der Seite: dadurch wird sie ein Feed statt einer Folge von
-Abschnitten. Darunter klappt sie weg — dort waere sie nur ein Klotz vor
-dem Inhalt. Im Admin ohnehin nicht (eigene Huelle).
-===================================================================== */
-.app-shell { display: block; }
-.app-shell__rail { display: none; }
-@media (min-width: 1200px) {
-.app-shell {
-display: grid;
-grid-template-columns: var(--rail) minmax(0, 1fr);
-gap: var(--sp-6);
-align-items: start;
-}
-.app-shell__rail {
-display: block;
-position: sticky;
-/* Unter dem Broadcast-Streifen (58 px) plus etwas Luft */
-top: 72px;
-max-height: calc(100vh - 96px);
-overflow-y: auto;
-}
-.app-shell__main { min-width: 0; }
-}
-/* =====================================================================
 04 · COMPONENTS
 ===================================================================== */
 /* Chamfered F1 broadcast panel — the signature shape, site-wide.
@@ -1226,8 +1200,8 @@ dort steht die Zahl, nicht der Token — sie muss zum Token oben passen.
 --bs-primary-rgb: 242, 244, 247;
 }
 /* =====================================================================
-04f · TURM UND DATENKODIERUNGEN
-Das tragende Bauteil: eine Zeile ist ein Fahrer, kein Karteikaertchen.
+04f · DATEN-PRIMITIVE
+Balken, Sektoren, Reifen, Deltas, Flaggenstatus, dichte Tabellen.
 Liegt im Bundle NACH 04-components.css, damit diese Regeln gewinnen.
 ===================================================================== */
 /* --- Der Turm --- */
@@ -1239,25 +1213,6 @@ max-width in der Namensspalte und der Text laeuft ueber. */
 table-layout: fixed;
 font-family: var(--ff-cond);
 }
-.tower caption {
-text-align: left; padding: 0 0 var(--sp-2);
-font-family: var(--ff); font-size: var(--fs-xs); font-weight: 700;
-letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2);
-}
-.tower th {
-padding: var(--sp-2);
-font-family: var(--ff); font-size: var(--fs-xs); font-weight: 600;
-letter-spacing: .1em; text-transform: uppercase;
-color: var(--ink-2); text-align: left;
-border-bottom: 1px solid var(--rule-strong);
-}
-.tower td {
-padding: var(--sp-2);
-border-bottom: 1px solid var(--rule);
-font-variant-numeric: var(--num);
-height: 2.25rem;                 /* feste Zeilenhoehe -> kein CLS */
-}
-.tower tbody tr:hover { background: var(--tarmac); }
 /* Spaltenbreiten gehoeren an die KOPFZEILE: bei table-layout:fixed liest der
 Browser die Breiten aus der ersten Zeile. Standen sie nur an den td-Klassen,
 teilte er den Rest gleichmaessig auf — der 3px-Teambalken wurde 75px breit
@@ -1266,18 +1221,9 @@ und schnitt den Fahrernamen ab. */
 /* Spezifischer als ".tower th { padding }" — sonst bleiben links und rechts
 8px Polsterung stehen und der 4px-Balken wird 16px breit. */
 .tower th.tower__col-team, .tower td.tower__team { width: 4px; padding: 0; }
-.tower__col-pts  { width: 4rem; text-align: right; }
-.tower__pos { color: var(--ink-2); font-weight: 700; }
 /* Der Balken je Zeile. Die Farbe kommt als --team aus dem Inline-Stil der Zeile,
 weil der Turm mehrere Teams gleichzeitig zeigt. Ohne background waere er unsichtbar. */
 .tower__team { padding: 0; border-bottom: 1px solid var(--rule); background: var(--team); }
-.tower__name {
-font-family: var(--ff); font-weight: 600; font-size: var(--fs-s);
-letter-spacing: .02em; text-transform: uppercase;
-white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.tower__pts { text-align: right; color: var(--ink); font-weight: 700; }
-.tower__gap { text-align: right; color: var(--ink-2); }
 /* Eigene Zeile hervorheben — der Teamfarben-Verlauf aus der Spec. */
 .tower__row--self {
 background: linear-gradient(90deg, color-mix(in srgb, var(--team) 14%, transparent), transparent 70%);
