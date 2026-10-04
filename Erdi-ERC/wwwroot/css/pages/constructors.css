@@ -37,9 +37,13 @@
     margin: 0 0 .35rem;
     letter-spacing: -.01em;
 }
+/* Frueher stand hier Schrift in --ink auf einem Verlauf aus zwei alten
+   Akzentfarben. Im neuen Token-Satz zeigen die auf --slow und --ink selbst —
+   also stand die Schrift auf ihrer eigenen Farbe. Dunkle Schrift traegt beide
+   Enden (#0B0C0E auf #FFD100 ≈ 16:1, auf #F2F4F7 ≈ 19:1). */
 .f1-constructors-hero__title-em {
     background: linear-gradient(90deg, var(--accent-1, var(--slow)), var(--accent-2, var(--wet)));
-    color: var(--ink);
+    color: var(--track);
 }
 .f1-constructors-hero__subtitle {
     color: var(--ink-3, var(--ink-2));
@@ -182,16 +186,17 @@
 .f1-pos-badge--p1 {
     background: linear-gradient(135deg, var(--slow), var(--slow));
     border-color: var(--slow);
-
+    color: var(--track);
 }
 .f1-pos-badge--p2 {
     background: linear-gradient(135deg, var(--ink-2), var(--wet));
     border-color: var(--ink-2);
-    color: var(--wet);
+    color: var(--track);
 }
 .f1-pos-badge--p3 {
     background: linear-gradient(135deg, var(--slow), var(--slow));
     border-color: var(--slow);
+    color: var(--track);
 }
 
 .f1-constructors-team {

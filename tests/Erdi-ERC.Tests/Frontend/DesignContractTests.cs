@@ -88,6 +88,32 @@ public class DesignContractTests
 
     // --- Verbotene Eigenschaften und Selektoren ---------------------------
 
+    /// <summary>
+    /// Genau ein Stylesheet-Request pro Seite. Der Layout laedt das Bundle;
+    /// jede weitere ~/css-Datei aus einer View waere ein zweiter, render-blockierender
+    /// Request fuer Regeln, die schon im Bundle stehen.
+    /// </summary>
+    [Fact]
+    public void Keine_View_Laedt_Ein_Eigenes_Stylesheet()
+    {
+        var views = Path.Combine(RepoRoot, "Erdi-ERC", "Views");
+        var uebrig = new List<string>();
+
+        foreach (var datei in Directory.EnumerateFiles(views, "*.cshtml", SearchOption.AllDirectories))
+        {
+            var treffer = Regex.Matches(Lies(datei), @"<link[^>]+rel=""stylesheet""[^>]+href=""([^""]+)""");
+            foreach (Match m in treffer)
+            {
+                var href = m.Groups[1].Value;
+                if (!href.StartsWith("~/css/site.bundled", StringComparison.OrdinalIgnoreCase))
+                    uebrig.Add($"{Path.GetRelativePath(RepoRoot, datei)} -> {href}");
+            }
+        }
+
+        Assert.True(uebrig.Count == 0,
+            "Views laden ein eigenes Stylesheet statt nur des Bundles:\n" + string.Join("\n", uebrig));
+    }
+
     [Fact]
     public void Kein_Backdrop_Filter_Mehr()
     {
@@ -190,6 +216,103 @@ public class DesignContractTests
     /// Bahrain-Fähnchen von flagcdn.com, obwohl 45 Flaggen lokal liegen. Deshalb
     /// hier ALLE Views.
     /// </summary>
+    /// <summary>
+    /// Schriftfarbe, die auf ihrer eigenen Hintergrundfarbe steht.
+    ///
+    /// Der Fall, der das ausgeloest hat: die Constructors-Kopfzeile setzt
+    ///   background: linear-gradient(90deg, var(--accent-1, var(--slow)), var(--accent-2, var(--wet)));
+    ///   color: var(--ink);
+    /// --accent-1 gibt es im neuen Token-Satz nicht mehr, also griff der Rueckfall
+    /// auf --slow, und --accent-2 zeigt auf --ink (dieselbe Farbe wie der Text).
+    /// Der Text stand damit auf seiner eigenen Farbe — unlesbar, ohne Fehlermeldung.
+    /// Die beiden Namen sind verschieden, die aufgeloesten Werte nicht; deshalb
+    /// loest der Test die var()-Kette auf, statt Namen zu vergleichen.
+    /// </summary>
+    [Fact]
+    public void Textfarbe_Steht_Nicht_Auf_Ihrer_Eigenen_Hintergrundfarbe()
+    {
+        var token = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var datei in AlleCssDateien())
+            foreach (Match m in Regex.Matches(Lies(datei), @"(--[a-zA-Z0-9-]+)\s*:\s*([^;{}]+);"))
+                token.TryAdd(m.Groups[1].Value, m.Groups[2].Value.Trim());
+
+        string Aufloesen(string wert)
+        {
+            for (var i = 0; i < 8 && wert.Contains("var(", StringComparison.OrdinalIgnoreCase); i++)
+            {
+                wert = Regex.Replace(wert,
+                    @"var\(\s*(--[a-zA-Z0-9-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)",
+                    m =>
+                    {
+                        var name = m.Groups[1].Value;
+                        if (token.TryGetValue(name, out var ersetzt)) return ersetzt;
+                        return m.Groups[2].Success ? m.Groups[2].Value.Trim() : m.Value;
+                    });
+            }
+            return wert.Trim().ToUpperInvariant();
+        }
+
+        // Farbstopps am Komma auf oberster Ebene trennen — in den Klammern stecken
+        // selbst wieder Klammern (var(--x, var(--y)), color-mix(...)), an denen
+        // ein einfacher Ausdruck zerbricht. Der letzte Stopp darf die schliessende
+        // Klammer des gradient()-Aufrufs nicht mitnehmen: sonst loest er sich zu
+        // "#F2F4F7)" auf und der Vergleich schlaegt still fehl.
+        static IEnumerable<string> Stopps(string verlauf)
+        {
+            var tiefe = 0;
+            var start = 0;
+            var ende = verlauf.Length;
+            if (verlauf.TrimStart().StartsWith("gradient(", StringComparison.Ordinal))
+            {
+                var auf = verlauf.IndexOf('(') + 1;
+                var t = 1;
+                for (var i = auf; i < verlauf.Length && t > 0; i++)
+                {
+                    if (verlauf[i] == '(') t++;
+                    else if (verlauf[i] == ')') t--;
+                    if (t == 0) { ende = i; break; }
+                }
+                start = auf;
+            }
+            for (var i = start; i < ende; i++)
+            {
+                if (verlauf[i] == '(') tiefe++;
+                else if (verlauf[i] == ')') tiefe--;
+                else if (verlauf[i] == ',' && tiefe == 0)
+                {
+                    yield return verlauf[start..i];
+                    start = i + 1;
+                }
+            }
+            yield return verlauf[start..ende];
+        }
+
+        var treffer = new List<string>();
+        foreach (var datei in AlleCssDateien())
+        {
+            var text = Regex.Replace(Lies(datei), @"/\*.*?\*/", "", RegexOptions.Singleline);
+            foreach (Match m in Regex.Matches(text, @"(?<sel>[^{}]*)\{(?<body>[^{}]*)\}"))
+            {
+                var rumpf = m.Groups["body"].Value;
+                var farbe = Regex.Match(rumpf, @"(?<!-)color\s*:\s*([^;]+);");
+                var verlauf = Regex.Match(rumpf, @"background[^:;]*:\s*[^;]*?(?<stops>gradient\([^;]+);");
+                if (!farbe.Success || !verlauf.Success) continue;
+
+                var textfarbe = Aufloesen(farbe.Groups[1].Value);
+                // Nur reine Farbangaben vergleichen. Ein color-mix(...)-Stopp hat
+                // keine einzelne Entsprechung — er kann nicht gleich sein.
+                var halte = Stopps(verlauf.Groups["stops"].Value)
+                            .Select(s => Regex.Replace(s, @"^\s*[-0-9.]+(deg|rad|turn|%|px)\s*", "").Trim())
+                            .Where(s => Regex.IsMatch(s, @"^(#[0-9a-fA-F]{3,8}|var\(.*\))$"))
+                            .Select(Aufloesen);
+                if (halte.Any(h => h == textfarbe))
+                    treffer.Add($"{Path.GetFileName(datei)}: '{m.Groups["sel"].Value.Trim()}' — {textfarbe}");
+            }
+        }
+        Assert.True(treffer.Count == 0,
+            "Text steht auf seiner eigenen Farbe:\n  " + string.Join("\n  ", treffer));
+    }
+
     [Theory]
     [InlineData("flagcdn.com")]
     [InlineData("cdn.jsdelivr.net")]

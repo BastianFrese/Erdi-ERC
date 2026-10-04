@@ -492,7 +492,7 @@
 .intro-overlay__card--wide { max-width:1180px; }
 .intro-overlay__card video { display:block; width:100%; height:auto; max-height:80vh; background:var(--track); }
 .intro-overlay__close {
-    position:absolute; top=.6rem; right=.6rem;
+    position:absolute; top:.6rem; right:.6rem;
     width:38px; height:38px;
     border:1px solid var(--stroke-2); border-radius:999px;
     background:color-mix(in srgb, var(--wet) 85%, transparent); color:var(--ink);

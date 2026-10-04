@@ -99,11 +99,6 @@
     var orderedRaces  = Model.Races.OrderBy(r => r.Date).ToList();
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/league-results.css" asp-append-version="true" />
-}
 
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {

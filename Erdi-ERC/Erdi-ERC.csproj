@@ -88,9 +88,9 @@
     zu /wwwroot/css/site.bundled.css. Ergebnis: 1 HTTP-Request statt 13 @import-Roundtrips (render-blocking).
     Inputs/Outputs sorgen für incrementell — läuft nur wenn Partials neuer sind als das Bundle.
   -->
-  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/lib/bootstrap/dist/css/bootstrap.min.css;wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/02f-icons.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/04f-primitives.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css" Outputs="wwwroot/css/site.bundled.css">
+  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/css/site/00-bootstrap.css;wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/02f-icons.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/04f-primitives.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/09-responsive.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css;wwwroot/css/site/99-home-index.css;wwwroot/css/pages/results.css;wwwroot/css/pages/league-results.css;wwwroot/css/pages/constructors.css;wwwroot/css/pages/erdi10.css;wwwroot/css/pages/race-detail.css;wwwroot/css/driver-card.css;wwwroot/css/pages/events.css;wwwroot/css/pages/ewige-liste.css;wwwroot/css/pages/widerruf.css;wwwroot/css/pages/troll.css;wwwroot/css/pages/applications.css;wwwroot/css/pages/admin-applications.css" Outputs="wwwroot/css/site.bundled.css">
     <ItemGroup>
-      <_CssBundle Include="wwwroot/lib/bootstrap/dist/css/bootstrap.min.css" />
+      <_CssBundle Include="wwwroot/css/site/00-bootstrap.css" />
       <_CssBundle Include="wwwroot/css/site/01-tokens.css" />
       <_CssBundle Include="wwwroot/css/site/02-base.css" />
       <_CssBundle Include="wwwroot/css/site/02f-icons.css" />
@@ -106,6 +106,24 @@
       <_CssBundle Include="wwwroot/css/site/11-unique-addons.css" />
       <_CssBundle Include="wwwroot/css/site.track-setups.css" />
       <_CssBundle Include="wwwroot/css/site.community.css" />
+      <_CssBundle Include="wwwroot/css/site/99-home-index.css" />
+      <!-- Seitenspezifische Dateien aus der Zeit vor dem Design-System. Sie stehen
+           bewusst in Abhaengigkeitsreihenfolge (results -> league-results/erdi10/
+           race-detail, home-index -> events/ewige-liste) und ganz am Ende, damit sie
+           weiterhin nach dem gemeinsamen Teil greifen. Sie liegen hier im Bundle
+           statt in den Views: 1 Request auf jeder Seite. -->
+      <_CssBundle Include="wwwroot/css/pages/results.css" />
+      <_CssBundle Include="wwwroot/css/pages/league-results.css" />
+      <_CssBundle Include="wwwroot/css/pages/constructors.css" />
+      <_CssBundle Include="wwwroot/css/pages/erdi10.css" />
+      <_CssBundle Include="wwwroot/css/pages/race-detail.css" />
+      <_CssBundle Include="wwwroot/css/driver-card.css" />
+      <_CssBundle Include="wwwroot/css/pages/events.css" />
+      <_CssBundle Include="wwwroot/css/pages/ewige-liste.css" />
+      <_CssBundle Include="wwwroot/css/pages/widerruf.css" />
+      <_CssBundle Include="wwwroot/css/pages/troll.css" />
+      <_CssBundle Include="wwwroot/css/pages/applications.css" />
+      <_CssBundle Include="wwwroot/css/pages/admin-applications.css" />
     </ItemGroup>
     <ReadLinesFromFile File="%(_CssBundle.Identity)">
       <Output TaskParameter="Lines" ItemName="_CssBundleLines" />

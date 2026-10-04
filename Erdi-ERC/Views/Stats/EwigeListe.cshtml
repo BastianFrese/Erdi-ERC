@@ -5,10 +5,6 @@
     var totalDataRows = Model.Sheets.Sum(s => Math.Max(0, s.Rows.Count - 1));
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/ewige-liste.css" asp-append-version="true" />
-}
 
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
