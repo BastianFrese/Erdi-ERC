@@ -980,3 +980,46 @@
 
 /* Freistehende Rubrik-Labels ueber Ueberschriften entfallen ganz. */
 .f1-eyebrow { display: none; }
+
+/* =====================================================================
+   CHIPS: KEINE SIGNALFARBE ALS DEKORATION
+   Gemessen im DOM: .f1-chip--drs (Leuchtgruen #00D26A) steht auf
+   "DRS Active", "Top 3" UND "Laeuft" — eine Klasse, drei Bedeutungen.
+   Dazu .f1-chip--fastest in Magenta fuer "Fastest Lap". Beide behaupten
+   einen Zustand, den es nicht gibt, und verbrennen damit Gruen ("DRS
+   offen") und Magenta ("schnellste Runde"), bevor der Turm sie benutzt.
+   Chips tragen weiter ihre Information, aber als Text — kein Kaestchen,
+   keine Signalfarbe. Das nimmt vier Umrandungen und drei Farben weg.
+   ===================================================================== */
+.f1-chip,
+.f1-chip--drs,
+.f1-chip--fastest,
+.f1-chip--live,
+.f1-chip--amber,
+.f1-chip--green,
+.f1-chip--cyan,
+.f1-chip--info,
+.f1-chip--red {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--ink-2);
+    font-weight: 600;
+}
+.f1-chip .f1-icon,
+.f1-chip i { color: var(--ink-3); }
+
+/* =====================================================================
+   HIERARCHIE: DIE H1 IST DAS GROESSTE, WAS KEINE LAUFENDE ZAHL IST
+   Gemessen: die groesste Schrift im Sichtfeld war der Countdown, die
+   zweitgroesste ein Fahrername, die H1 erst an dritter Stelle.
+   ===================================================================== */
+.f1-hero__title {
+    font-size: var(--fs-3xl);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+}
+.f1-hero__title em { font-style: normal; color: var(--ink-2); }
+/* Die laufende Zahl bleibt prominent, aber unter der Ueberschrift. */
+.f1-broadcast-card__count { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
