@@ -35,9 +35,19 @@
     }
     .strip__nav.is-scrollable.is-at-end { mask-image: none; }
 
-    /* Der Musikspieler lag als Streifen unten links und stiess an den Rand. */
+    /* Der Musikspieler lag als Streifen unten links und stiess an den Rand.
+       WICHTIG: bottom muss auf auto. Die Grundregel setzt
+       "left/bottom/right: auto" plus bottom: var(--sp-4) — wird hier nur top
+       gesetzt, hat das Element BEIDE Versatzwerte, und bei position: fixed
+       ohne feste Hoehe dehnt es sich dazwischen aus. Gemessen auf einem
+       800 px hohen Schirm: top 78 px, bottom 16 px -> 706 px hoher,
+       undurchsichtiger Kasten mit z-index 1025 ueber der ganzen Seite.
+       Das Element lag damit deckend ueber dem Inhalt und schluckte jeden Tipp.
+       Die Regel kam so aus der alten 09-responsive.css; der Fehler ist aelter
+       als der Umbau, er war nur nie jemandem aufgefallen. */
     .music-player {
         top: calc(70px + .5rem);
+        bottom: auto;
         left: .5rem; right: .5rem;
         min-width: 0;
         max-width: calc(100vw - 1rem);
