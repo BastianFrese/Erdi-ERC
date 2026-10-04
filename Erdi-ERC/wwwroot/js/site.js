@@ -298,3 +298,71 @@
         knopf.focus();
     });
 })();
+
+/* ---------------------------------------------------------------------------
+   Navigation: was nicht mehr passt, wandert nach "Mehr".
+
+   Auf schmalen Schirmen passen die sieben Hauptpunkte nicht mehr in die Reihe.
+   Sie war deshalb seitlich wischbar — man musste erst wischen, um "Kalender"
+   oder "Bewerbung" ueberhaupt zu sehen. Hier wird stattdessen gemessen: die
+   Hauptpunkte stellen sich der Reihe nach auf, und alles ab dem ersten, der
+   nicht mehr passt, wandert vorne in den Aufklapper — in der urspruenglichen
+   Reihenfolge.
+
+   Das Wischen bleibt als Rueckfall im CSS (overflow-x: auto): laeuft kein
+   JavaScript, verhaelt sich die Reihe wie vorher. Laeuft es, gibt es nichts zu
+   wischen.
+
+   Bei jeder Groessenaenderung wird zuerst alles zurueckgesetzt und neu
+   verteilt — so bleibt nichts haengen, wenn das Fenster wieder breiter wird.
+   --------------------------------------------------------------------------- */
+(function () {
+    const reihe = document.querySelector('.strip__nav');
+    const knopf = document.getElementById('moreBtn');
+    const panel = document.getElementById('morePanel');
+    if (!reihe || !knopf || !panel) return;
+    const liste = panel.querySelector('.strip__more-inner');
+    if (!liste) return;
+
+    // Die Hauptpunkte einmal merken: Reihenfolge und Zuordnung bleiben erhalten,
+    // egal wie oft umverteilt wird.
+    const hauptpunkte = [...reihe.children].filter((el) => el.tagName === 'A');
+    if (!hauptpunkte.length) return;
+
+    const verteilen = () => {
+        // 1. Alles zurueck in die Reihe, in der gemerkten Reihenfolge.
+        for (const a of hauptpunkte) {
+            if (!a.hasAttribute('data-verschoben')) continue;
+            a.removeAttribute('data-verschoben');
+            reihe.insertBefore(a, knopf);
+        }
+
+        // 2. Wie viel Platz bleibt neben dem Knopf?
+        const luecke = parseFloat(getComputedStyle(reihe).columnGap) || 0;
+        const platz = reihe.clientWidth - knopf.offsetWidth - luecke;
+        if (platz <= 0) return;
+
+        // 3. Von links nach rechts aufstellen: der erste, der nicht mehr passt,
+        //    nimmt alle folgenden mit.
+        let belegt = 0;
+        const wandern = [];
+        for (const a of hauptpunkte) {
+            belegt += a.offsetWidth + luecke;
+            if (belegt > platz) wandern.push(a);
+        }
+        if (!wandern.length) return;
+
+        for (const a of wandern) a.setAttribute('data-verschoben', '');
+        liste.prepend(...wandern);
+    };
+
+    verteilen();
+    // Die Schrift laedt nach; danach sind die Breiten andere.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(verteilen);
+
+    let zeitgeber;
+    window.addEventListener('resize', () => {
+        clearTimeout(zeitgeber);
+        zeitgeber = setTimeout(verteilen, 150);
+    });
+})();
