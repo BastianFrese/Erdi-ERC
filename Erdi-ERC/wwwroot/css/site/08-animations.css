@@ -1,7 +1,12 @@
 /* =====================================================================
    08 · ANIMATIONS
    ===================================================================== */
-.reveal { opacity:0; transform:translateY(14px); transition:opacity var(--t-slow), transform var(--t-slow); }
+/* Fruehre ein Einblende-Zustand: erst unsichtbar, das JS setzte is-visible.
+   Die Spec streicht Reveal-on-Scroll — und mit dem JS verschwindet die einzige
+   Stelle, die opacity wieder auf 1 hob. Ein opacity:0 ohne Aufheber macht den
+   Inhalt DAUERHAFT unsichtbar; das ist beim Umbau auf 31 Seiten passiert.
+   .reveal ist deshalb jetzt eine Durchreiche, kein Zustand. */
+.reveal { opacity:1; transform:none; }
 .reveal.is-visible { opacity:1; transform:none; }
 
 @keyframes fade-in { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
@@ -9,7 +14,6 @@
 
 @keyframes shine { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
 .shine {
-    background:linear-gradient(110deg, var(--ink) 0%, var(--ink) 40%, #fff 50%, var(--ink) 60%, var(--ink) 100%);
     background-size:200% 100%;
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
     animation:shine 4s linear infinite;
@@ -19,11 +23,6 @@
     0% { transform:translateX(0); }
     50% { transform:translateX(-1.2%); }
     100% { transform:translateX(0); }
-}
-
-@keyframes race-pulse {
-    0%,100% { box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
-    50% { box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 26%, transparent); }
 }
 
 @keyframes telemetry-glow {
@@ -37,8 +36,8 @@
 }
 
 @keyframes section-bar-pulse {
-    0%,100% { transform:scaleY(.92); box-shadow:0 0 8px var(--accent-glow); }
-    50% { transform:scaleY(1.08); box-shadow:0 0 16px color-mix(in srgb, var(--accent) 65%, transparent); }
+    0%,100% { transform:scaleY(.92); }
+    50% { transform:scaleY(1.08); }
 }
 
 @keyframes icon-idle-float {

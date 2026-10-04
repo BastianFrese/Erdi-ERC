@@ -24,9 +24,15 @@ public class DesignContractTests
     private static string WwwRoot => Path.Combine(RepoRoot, "Erdi-ERC", "wwwroot");
     private static string Csproj => Path.Combine(RepoRoot, "Erdi-ERC", "Erdi-ERC.csproj");
 
+    /// <summary>
+    /// Quelldateien unter wwwroot/css. Generierte Artefakte sind ausgenommen:
+    /// .min.css sind Minify-Ausgaben, site.bundled.css ist die Konkatenation
+    /// derselben Partials — beide wuerden jede Abweichung doppelt melden.
+    /// </summary>
     private static IEnumerable<string> AlleCssDateien() =>
         Directory.EnumerateFiles(Path.Combine(WwwRoot, "css"), "*.css", SearchOption.AllDirectories)
-                 .Where(p => !p.EndsWith(".min.css", StringComparison.OrdinalIgnoreCase));
+                 .Where(p => !p.EndsWith(".min.css", StringComparison.OrdinalIgnoreCase))
+                 .Where(p => Path.GetFileName(p) != "site.bundled.css");
 
     private static string Lies(string pfad) => File.ReadAllText(pfad);
 
@@ -140,5 +146,44 @@ public class DesignContractTests
         var layout = Lies(Path.Combine(RepoRoot, "Erdi-ERC", "Views", "Shared", "_Layout.cshtml"));
         Assert.DoesNotMatch(@"appMain'\)\s*\.style\.opacity", layout);
         Assert.DoesNotMatch(@"main\.style\.opacity\s*=\s*'0'", layout);
+    }
+
+    // --- Nichts darf dauerhaft unsichtbar sein ----------------------------
+
+    /// <summary>
+    /// Ein Einblende-Zustand (opacity &lt; 1) ohne das JS, das ihn wieder aufhebt,
+    /// macht den Inhalt DAUERHAFT unsichtbar. Genau das ist beim Umbau passiert:
+    /// der IntersectionObserver flog raus, die .reveal-Regel blieb. Der Fehler ist
+    /// auf keiner Seite sichtbar, auf der man nur das Markup prueft — deshalb
+    /// braucht er einen Test.
+    /// </summary>
+    [Fact]
+    public void Reveal_Versteckt_Keinen_Inhalt()
+    {
+        var beanstandet = new List<string>();
+
+        foreach (var datei in AlleCssDateien())
+        {
+            // Kommentare raus: sonst liest der Selektor-Ausdruck den Kommentartext
+            // der vorigen Regel mit und meldet Regeln, die es nicht gibt.
+            var text = Regex.Replace(Lies(datei), @"/\*.*?\*/", "", RegexOptions.Singleline);
+            foreach (Match m in Regex.Matches(text, @"(?<sel>[^{}]*)\{(?<body>[^{}]*)\}"))
+            {
+                var selektor = m.Groups["sel"].Value;
+                if (!selektor.Contains(".reveal", StringComparison.Ordinal)) continue;
+                if (selektor.Contains("is-visible", StringComparison.Ordinal)) continue;
+
+                var op = Regex.Match(m.Groups["body"].Value, @"opacity\s*:\s*(?<v>[\d.]+)");
+                if (!op.Success) continue;
+
+                var wert = double.Parse(op.Groups["v"].Value, System.Globalization.CultureInfo.InvariantCulture);
+                if (wert < 1.0)
+                    beanstandet.Add($"{Path.GetFileName(datei)}: '{selektor.Trim()}' setzt opacity:{op.Groups["v"].Value}");
+            }
+        }
+
+        Assert.True(beanstandet.Count == 0,
+            "Einblende-Zustand ohne JS, das ihn aufhebt — der Inhalt bleibt unsichtbar:\n  " +
+            string.Join("\n  ", beanstandet));
     }
 }

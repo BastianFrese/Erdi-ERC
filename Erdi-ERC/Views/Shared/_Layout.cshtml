@@ -148,106 +148,12 @@
 
     @* ---------- RACE-START LIGHTS (initial loader, einmalig pro Session) ---------- *@
     <div class="race-lights" id="raceStartLights" role="status" aria-label="Race start lights">
-        <div class="race-lights__bg" aria-hidden="true">
-            <div class="race-lights__chequers"></div>
-            <div class="race-lights__speedlines"></div>
-            <div class="race-lights__scan"></div>
-            <div class="race-lights__icons">
-                <i class="bi bi-trophy-fill" style="--i:0"></i>
-                <i class="bi bi-flag-fill" style="--i:1"></i>
-                <i class="bi bi-lightning-charge-fill" style="--i:2"></i>
-                <i class="bi bi-speedometer2" style="--i:3"></i>
-                <i class="bi bi-stopwatch-fill" style="--i:4"></i>
-                <i class="bi bi-fire" style="--i:5"></i>
-                <i class="bi bi-tools" style="--i:6"></i>
-                <i class="bi bi-gear-fill" style="--i:7"></i>
-                <i class="bi bi-trophy-fill" style="--i:8"></i>
-                <i class="bi bi-flag-fill" style="--i:9"></i>
-                <i class="bi bi-lightning-charge-fill" style="--i:10"></i>
-                <i class="bi bi-speedometer2" style="--i:11"></i>
-            </div>
-        </div>
         <div class="race-lights__rig" aria-hidden="true">
             <span class="race-lights__lamp" data-lamp="1"></span>
             <span class="race-lights__lamp" data-lamp="2"></span>
             <span class="race-lights__lamp" data-lamp="3"></span>
             <span class="race-lights__lamp" data-lamp="4"></span>
             <span class="race-lights__lamp" data-lamp="5"></span>
-        </div>
-        <div class="race-lights__car" aria-hidden="true">
-            <svg viewBox="0 0 360 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-                <defs>
-                    <linearGradient id="rlCarBody" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="@_winnerCarPrimaryLight"/>
-                        <stop offset="55%" stop-color="@_winnerCarPrimary"/>
-                        <stop offset="100%" stop-color="@_winnerCarPrimaryDark"/>
-                    </linearGradient>
-                    <linearGradient id="rlCarShine" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="rgba(255,255,255,.55)"/>
-                        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                    </linearGradient>
-                    <radialGradient id="rlWheel" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%"  stop-color="#3a3a3a"/>
-                        <stop offset="60%" stop-color="#111"/>
-                        <stop offset="100%" stop-color="#000"/>
-                    </radialGradient>
-                    <linearGradient id="rlHalo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="#222"/>
-                        <stop offset="100%" stop-color="#0a0a0a"/>
-                    </linearGradient>
-                </defs>
-
-                <!-- ground shadow -->
-                <ellipse cx="180" cy="98" rx="150" ry="6" fill="rgba(0,0,0,.55)"/>
-
-                <!-- rear wing -->
-                <rect x="20" y="38" width="14" height="34" rx="2" fill="#1a1a1a"/>
-                <rect x="14" y="34" width="28" height="6"  rx="2" fill="#111"/>
-                <rect x="14" y="68" width="28" height="4"  rx="1" fill="#111"/>
-
-                <!-- floor / sidepod -->
-                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarBody)"/>
-                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarShine)" opacity=".35"/>
-
-                <!-- engine cover / airbox -->
-                <path d="M120,60 L210,60 L205,40 L150,38 L130,48 Z" fill="url(#rlCarBody)"/>
-                <path d="M150,38 L205,40 L200,46 L155,44 Z" fill="rgba(255,255,255,.18)"/>
-                <!-- airbox intake -->
-                <path d="M170,38 L195,40 L190,30 L175,30 Z" fill="#0a0a0a"/>
-
-                <!-- halo + cockpit -->
-                <path d="M150,52 Q180,18 215,52" stroke="url(#rlHalo)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M158,52 Q182,30 210,52" fill="#0d0d0d"/>
-                <circle cx="184" cy="44" r="3.2" fill="#1a1a1a"/>
-
-                <!-- nose -->
-                <path d="M210,60 L320,72 L330,72 L320,60 Z" fill="url(#rlCarBody)"/>
-                <path d="M210,60 L320,72 L320,66 L210,58 Z" fill="rgba(255,255,255,.22)"/>
-
-                <!-- front wing -->
-                <rect x="318" y="74" width="32" height="6"  rx="2" fill="#111"/>
-                <rect x="322" y="68" width="24" height="4"  rx="1" fill="#1a1a1a"/>
-                <rect x="328" y="62" width="14" height="4"  rx="1" fill="#1a1a1a"/>
-
-                <!-- wheels -->
-                <g class="race-lights__car-wheel race-lights__car-wheel--rear">
-                    <circle cx="78" cy="80" r="18" fill="url(#rlWheel)"/>
-                    <circle cx="78" cy="80" r="6"  fill="#333"/>
-                    <line x1="78" y1="64" x2="78" y2="96" stroke="#444" stroke-width="1.5"/>
-                    <line x1="62" y1="80" x2="94" y2="80" stroke="#444" stroke-width="1.5"/>
-                </g>
-                <g class="race-lights__car-wheel race-lights__car-wheel--front">
-                    <circle cx="290" cy="80" r="18" fill="url(#rlWheel)"/>
-                    <circle cx="290" cy="80" r="6"  fill="#333"/>
-                    <line x1="290" y1="64" x2="290" y2="96" stroke="#444" stroke-width="1.5"/>
-                    <line x1="274" y1="80" x2="306" y2="80" stroke="#444" stroke-width="1.5"/>
-                </g>
-
-                <!-- livery accent -->
-                <path d="M70,72 L300,72 L300,76 L70,76 Z" fill="@_winnerCarSecondary" opacity=".55"/>
-                <text x="80" y="74" font-family="Orbitron, sans-serif" font-size="7" font-weight="800" fill="#fff" opacity=".85">ERDI&#x27;S RACING COMMUNITY</text>
-            </svg>
-            <div class="race-lights__car-flame" aria-hidden="true"></div>
         </div>
         <div class="race-lights__label" id="raceStartLabel">Lights out…</div>
     </div>
@@ -403,7 +309,6 @@
 
             // ---------- Scroll progress + sticky nav state ----------
             const nav = document.getElementById('mainNav');
-            const bar = document.getElementById('scrollProgress');
             // rAF-gedrosselt: höchstens ein Style-Write pro Frame statt bei jedem Scroll-Tick
             // (verhindert Layout-Thrash und hält das Scrollen flüssig).
             let scrollTicking = false;
@@ -412,7 +317,6 @@
                 const h = document.documentElement;
                 const scrolled = (h.scrollTop || document.body.scrollTop);
                 const max = (h.scrollHeight - h.clientHeight) || 1;
-                if (bar) bar.style.width = ((scrolled / max) * 100) + '%';
                 if (nav) nav.classList.toggle('is-scrolled', scrolled > 12);
             };
             const onScroll = () => {
@@ -422,21 +326,6 @@
             };
             document.addEventListener('scroll', onScroll, { passive: true });
             applyScroll();
-
-            // ---------- Reveal on scroll ----------
-            if ('IntersectionObserver' in window) {
-                // threshold:0 + rootMargin statt threshold:0.12 — sonst blenden Sections, die
-                // höher als ~8× Viewport sind (z.B. die volle Setup-Liste ohne Filter), NIE ein:
-                // 12% der Section sind dann nie gleichzeitig sichtbar -> is-visible wird nie gesetzt
-                // -> opacity:0 bleibt. So triggert das Einblenden, sobald die Section in den unteren
-                // Viewport-Rand kommt, unabhängig von ihrer Höhe.
-                const io = new IntersectionObserver((entries) => {
-                    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
-                }, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
-                document.querySelectorAll('.reveal, .f1-stagger').forEach(el => io.observe(el));
-            } else {
-                document.querySelectorAll('.reveal, .f1-stagger').forEach(el => el.classList.add('is-visible'));
-            }
 
             // ---------- Live Race-Lights pills (data-race-state-target="<ISO>") ----------
             (function () {
@@ -537,9 +426,9 @@
                         if (i < lamps.length) {
                             lamps[i].classList.add('is-on');
                             i++;
-                            setTimeout(tick, 480);
+                            setTimeout(tick, 220);
                         } else {
-                            const hold = 400 + Math.random() * 800;
+                            const hold = 260;
                             setTimeout(() => {
                                 lamps.forEach(l => l.classList.remove('is-on'));
                                 finish();
@@ -575,165 +464,6 @@
                     destroyRig();
                 }
 
-                // ---- Slow-navigation overlay ----
-                if (reduce) return;
-
-                const SLOW_THRESHOLD_MS = 260;
-                const isInternalNavLink = (a) => {
-                    if (!a || !a.getAttribute('href')) return false;
-                    const href = a.getAttribute('href');
-                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
-                    if (a.hasAttribute('download')) return false;
-                    if (a.dataset.bsToggle) return false;
-                    const target = a.getAttribute('target');
-                    if (target && target !== '' && target !== '_self') return false;
-                    try {
-                        const u = new URL(a.href, location.href);
-                        if (u.origin !== location.origin) return false;
-                        if (u.pathname === location.pathname && u.search === location.search && u.hash) return false;
-                        return true;
-                    } catch { return false; }
-                };
-
-                let armedTimer = null;
-                const cancelArmed = () => {
-                    if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
-                };
-
-                document.addEventListener('click', (e) => {
-                    if (e.defaultPrevented) return;
-                    if (e.button !== 0) return;
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                    const a = e.target.closest('a[href]');
-                    if (!isInternalNavLink(a)) return;
-
-                    cancelArmed();
-
-                    const force = a.dataset.raceLights === 'force';
-                    const customStart = a.dataset.raceLightsText;
-                    const customGo = a.dataset.raceLightsGo;
-                    const armDelay = force ? 0 : SLOW_THRESHOLD_MS;
-
-                    const arm = () => {
-                        sessionStorage.setItem(navKey, '1');
-                        if (customStart) sessionStorage.setItem(navLabelKey, customStart);
-                        if (customGo) sessionStorage.setItem(navGoKey, customGo);
-                        if (customStart) labelStartText = customStart;
-                        if (customGo) labelGoText = customGo;
-                        playSequence();
-                    };
-
-                    if (armDelay === 0) arm();
-                    else armedTimer = setTimeout(arm, armDelay);
-                }, true);
-
-                // Also handle form posts (e.g. filter form, save buttons)
-                document.addEventListener('submit', (e) => {
-                    const f = e.target;
-                    if (!(f instanceof HTMLFormElement)) return;
-                    try {
-                        const action = f.getAttribute('action') || location.href;
-                        const u = new URL(action, location.href);
-                        if (u.origin !== location.origin) return;
-                    } catch { return; }
-                    cancelArmed();
-                    armedTimer = setTimeout(() => {
-                        sessionStorage.setItem(navKey, '1');
-                        playSequence();
-                    }, SLOW_THRESHOLD_MS);
-                }, true);
-
-                // If navigation is cancelled / page stays alive, hide overlay after a while
-                window.addEventListener('pageshow', () => {
-                    cancelArmed();
-                });
-                window.addEventListener('beforeunload', cancelArmed);
-            })();
-
-            // ---------- Page transition (enter on load, leave on internal nav) ----------
-            (function () {
-                const main = document.getElementById('appMain');
-                if (!main) return;
-                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                const rig = document.getElementById('raceStartLights');
-
-                // Hide content while race-lights overlay is visible, then play enter once it's done.
-                const lightsActive = rig && !rig.classList.contains('is-done') && rig.style.display !== 'none';
-                if (lightsActive) {
-                    main.classList.remove('is-entering');
-                    main.style.opacity = '0';
-                    const onDone = () => {
-                        if (rig.classList.contains('is-done') || rig.style.display === 'none') {
-                            main.style.removeProperty('opacity');
-                            // restart enter animation
-                            main.classList.remove('is-entering');
-                            // force reflow
-                            void main.offsetWidth;
-                            main.classList.add('is-entering');
-                            obs.disconnect();
-                        }
-                    };
-                    const obs = new MutationObserver(onDone);
-                    obs.observe(rig, { attributes: true, attributeFilter: ['class', 'style'] });
-                }
-
-                // Clean up enter class after animation so reflows don't replay
-                main.addEventListener('animationend', (e) => {
-                    if (e.animationName === 'page-enter') {
-                        main.classList.remove('is-entering');
-                    }
-                }, true);
-
-                if (reduce) return;
-
-                // Trigger leave on internal navigation (links + forms)
-                const isInternal = (a) => {
-                    if (!a) return false;
-                    const href = a.getAttribute('href');
-                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
-                    if (a.hasAttribute('download')) return false;
-                    if (a.dataset.bsToggle) return false;
-                    const target = a.getAttribute('target');
-                    if (target && target !== '' && target !== '_self') return false;
-                    try {
-                        const u = new URL(a.href, location.href);
-                        if (u.origin !== location.origin) return false;
-                        if (u.pathname === location.pathname && u.search === location.search && u.hash) return false;
-                        return true;
-                    } catch { return false; }
-                };
-
-                document.addEventListener('click', (e) => {
-                    if (e.defaultPrevented) return;
-                    if (e.button !== 0) return;
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                    const a = e.target.closest('a[href]');
-                    if (!isInternal(a)) return;
-                    main.classList.remove('is-entering');
-                    main.classList.add('is-leaving');
-                }, true);
-
-                document.addEventListener('submit', (e) => {
-                    const f = e.target;
-                    if (!(f instanceof HTMLFormElement)) return;
-                    try {
-                        const action = f.getAttribute('action') || location.href;
-                        const u = new URL(action, location.href);
-                        if (u.origin !== location.origin) return;
-                    } catch { return; }
-                    main.classList.remove('is-entering');
-                    main.classList.add('is-leaving');
-                }, true);
-
-                // If user comes back via bfcache, replay enter
-                window.addEventListener('pageshow', (e) => {
-                    if (e.persisted) {
-                        main.classList.remove('is-leaving');
-                        main.classList.remove('is-entering');
-                        void main.offsetWidth;
-                        main.classList.add('is-entering');
-                    }
-                });
             })();
 
             // ---------- Animated number counters ----------
