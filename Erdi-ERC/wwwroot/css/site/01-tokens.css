@@ -51,9 +51,15 @@
     --flag: #E10600;   /* Ligafarbe, rote Flagge, Soft           */
     --wet:  #3B8BEA;   /* Inter, Wet, blaue Flagge               */
 
-    /* --- Teamfarbe: Zuordnung Fahrer -> Team, nicht Stimmung --- */
+    /* --- Teamfarbe: Zuordnung Fahrer -> Team, nicht Stimmung ---
+       Ohne Siegerteam (oder unter der Startseite ohne Renndaten) faellt alles
+       auf die Ligafarbe zurueck. --team-fill ist die Flaeche, --on-team die
+       Schrift darauf; beide werden von body.team-* je Team gesetzt, damit
+       Schrift auf der Teamfarbe messbar lesbar bleibt (siehe dort). */
     --team: var(--flag);
     --team-2: #FFFFFF;
+    --team-fill: var(--flag);
+    --on-team: var(--on-flag);
 
     /* --- Schrift: eine Familie, zwei Schnitte --- */
     --ff: 'Saira', 'Segoe UI', system-ui, sans-serif;
@@ -117,23 +123,25 @@
       Teams gleichzeitig einfaerben kann — dort reicht der body-Kontext nicht.
    Die Signalfarben werden hier nie ueberschrieben; Teamfarbe ist Zuordnung,
    nicht Stimmung. */
-body.team-redbull     { --team:#3671C6; --team-2:#CC1E4A; }
-body.team-mercedes    { --team:#00D2BE; --team-2:#C0C0C0; }
-body.team-ferrari     { --team:#E8002D; --team-2:#FFFFFF; }
-body.team-mclaren     { --team:#FF8000; --team-2:#000000; }
-body.team-astonmartin { --team:#229971; --team-2:#CEDC00; }
-body.team-alpine      { --team:#FF87BC; --team-2:#0093CC; }
-body.team-williams    { --team:#64C4FF; --team-2:#FFFFFF; }
-body.team-haas        { --team:#B6BABD; --team-2:#E8002D; }
+body.team-redbull     { --team:#3671C6; --team-2:#CC1E4A; --team-fill:#356FC2; --on-team:#F2F4F7; }
+body.team-mercedes    { --team:#00D2BE; --team-2:#C0C0C0; --team-fill:#00D2BE; --on-team:#0B0C0E; }
+body.team-ferrari     { --team:#E8002D; --team-2:#FFFFFF; --team-fill:#DF002B; --on-team:#F2F4F7; }
+body.team-mclaren     { --team:#FF8000; --team-2:#000000; --team-fill:#FF8000; --on-team:#0B0C0E; }
+body.team-astonmartin { --team:#229971; --team-2:#CEDC00; --team-fill:#229971; --on-team:#0B0C0E; }
+body.team-alpine      { --team:#FF87BC; --team-2:#0093CC; --team-fill:#FF87BC; --on-team:#0B0C0E; }
+body.team-williams    { --team:#64C4FF; --team-2:#FFFFFF; --team-fill:#64C4FF; --on-team:#0B0C0E; }
+body.team-haas        { --team:#B6BABD; --team-2:#E8002D; --team-fill:#B6BABD; --on-team:#0B0C0E; }
 body.team-racingbulls,
-body.team-rb          { --team:#6692FF; --team-2:#CC1E4A; }
+body.team-rb          { --team:#6692FF; --team-2:#CC1E4A; --team-fill:#6692FF; --on-team:#0B0C0E; }
 body.team-sauber,
 body.team-kicksauber,
-body.team-audi        { --team:#8A9597; --team-2:#FFFFFF; }
+body.team-audi        { --team:#8A9597; --team-2:#FFFFFF; --team-fill:#8A9597; --on-team:#0B0C0E; }
 
 /* Cadillac ist #000000 — als Balken und Verlauf unsichtbar.
-   Rueckfall auf die Tertiaerfarbe; die Sekundaerfarbe bleibt als Zusatz. */
-body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
+   Rueckfall auf die Tertiaerfarbe; die Sekundaerfarbe bleibt als Zusatz.
+   Die Fuellung ist ein FESTER dunkler Ton, kein var(--kerb): kerb kippt mit
+   dem Design (#202630 dunkel, #E4E7EC hell) und traegt dann helle Schrift. */
+body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; --team-fill:#202630; --on-team:#F2F4F7; }
 
 :root {
     --team-redbull:#3671C6;      --team-redbull-2:#CC1E4A;
@@ -178,13 +186,10 @@ body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
     --stroke-3: var(--rule-strong);
     --ink-4: var(--ink-3);
 
-    /* Akzent */
-    /* Das alte globale Rot war Geruest UND Signal in einem. Im neuen System ist
-       Geruest neutral und Rot ausschliesslich Signal (Reifen, Flagge, Status) —
-       Teamfarbe ist Zuordnung Fahrer->Team, nicht Stimmung. */
-    --accent: var(--ink-2);
-    --accent-2: var(--ink);
-    --accent-soft: color-mix(in srgb, var(--ink) 14%, transparent);
+    /* Akzent = Teamfarbe des letzten Siegers. Gesetzt wird er auf body, nicht
+       hier: siehe den Block "Teamfarbe als Geruest-Akzent" am Dateiende. */
+
+    /* Leuchtschatten bleiben gestrichen — der Verlauf war Dekoration. */
     --accent-glow: transparent;
 
     /* Signale */
@@ -297,4 +302,27 @@ body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
 [data-theme="light"] {
     --on-wet:  #F2F4F7;   /* 6,1:1 */
     --on-fast: #F2F4F7;   /* 7,5:1 */
+}
+
+/* ---------------------------------------------------------------------
+   Teamfarbe als Geruest-Akzent — auf body, nicht auf :root.
+
+   :root und body sind verschiedene Elemente. body.team-* ueberschreibt
+   --team erst auf body; eine Zeile "--accent: var(--team)" in :root setzt
+   --accent dort ein fuer alle Mal auf das Basis-Rot ein, weil der Wert beim
+   Berechnen eingesetzt wird. Die Seite bliebe rot, egal wer gewinnt — genau
+   das war beim ersten Versuch der Fall.
+
+   Die Signalfarben werden davon nicht beruehrt: --best, --slow, --flag, --wet
+   stehen weiter nur in :root und im hellen Block. Teamfarbe ist Zuordnung,
+   nicht Stimmung.
+
+   --g-accent war nach dem Verlaufs-Rueckbau "none": Primaer-Buttons, aktive
+   Seitenzahl und Fortschrittsbalken waren dadurch leer statt gefuellt.
+   --------------------------------------------------------------------- */
+body {
+    --accent: var(--team);
+    --accent-2: var(--team);
+    --accent-soft: color-mix(in srgb, var(--team) 18%, transparent);
+    --g-accent: var(--team-fill);
 }

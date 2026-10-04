@@ -37,7 +37,7 @@
 }
 .ach-filter:hover { border-color: var(--ink-3); color: var(--ink); }
 .ach-filter.is-active {
-    background: var(--team-primary, var(--flag)); border-color: transparent; color: var(--ink);
+    background: var(--team-fill); border-color: transparent; color: var(--on-team);
 }
 
 .achievements__group { margin-bottom: 1.25rem; }
@@ -89,7 +89,7 @@
 /* "NEU"-Marker */
 .achievement-chip__new {
     position: absolute; top: .35rem; right: .4rem;
-    background: var(--team-primary, var(--flag)); color: var(--ink);
+    background: var(--team-fill); color: var(--on-team);
     font-size: .58rem; font-weight: 800; letter-spacing: .12em;
     padding: .1rem .35rem; border-radius: 6px;
     animation: newPulse 1.6s ease-in-out infinite;

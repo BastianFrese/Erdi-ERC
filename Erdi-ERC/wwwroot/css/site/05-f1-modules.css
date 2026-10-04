@@ -598,11 +598,11 @@
     position:relative; overflow:hidden;
 }
 .f1-btn--primary {
-    background:var(--g-accent); color:var(--ink);
+    background:var(--g-accent); color:var(--on-team);
 }
 .f1-btn--primary:hover {
     transform:translateY(-1px);
-    color:var(--ink);
+    color:var(--on-team);
 }
 .f1-btn--ghost {
     background:var(--rule); color:var(--ink);
@@ -633,7 +633,7 @@
 .f1-chip--drs    { background:var(--sig-green); color:var(--on-best); }
 .f1-chip--fastest{ background:var(--sig-magenta); color:var(--on-fast); }
 .f1-chip--pit    { background:var(--sig-amber); color:var(--on-slow); }
-.f1-chip--live   { background:var(--accent); color:var(--ink); }
+.f1-chip--live   { background:var(--team-fill); color:var(--on-team); }
 .f1-chip--cyan   { background:color-mix(in srgb, var(--wet) 12%, transparent); color:var(--sig-cyan); border-color:color-mix(in srgb, var(--wet) 32%, transparent); }
 .f1-chip--amber  { background:color-mix(in srgb, var(--slow) 12%, transparent); color:var(--sig-amber); border-color:color-mix(in srgb, var(--slow) 32%, transparent); }
 .f1-chip--green  { background:color-mix(in srgb, var(--best) 10%, transparent); color:var(--sig-green); border-color:color-mix(in srgb, var(--best) 32%, transparent); }

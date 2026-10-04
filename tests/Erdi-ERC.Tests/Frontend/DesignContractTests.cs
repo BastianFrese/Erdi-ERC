@@ -400,10 +400,56 @@ public class DesignContractTests
                     && dunkel["--ink"] != hell["--ink"],
             "Die beiden Token-Saetze liessen sich nicht auseinanderhalten — der Test prueft sonst zweimal dasselbe.");
 
-        var treffer = new List<string>();
-        foreach (var datei in AlleCssDateien())
+        // Und je Team: body.team-* setzt --team/--team-fill/--on-team. Ohne diese
+        // Runde wuerde jede Regel mit var(--accent) nur gegen den Rueckfall
+        // (--flag) geprueft, und die elf echten Teamfarben nie.
+        var teams = new List<(string Name, Dictionary<string, string> Tokens)>();
+        foreach (Match m in Regex.Matches(tokenDatei, @"body\.team-([a-z]+)[^{}]*\{(?<body>[^{}]*)\}"))
         {
-            var text = Regex.Replace(Lies(datei), @"/\*.*?\*/", "", RegexOptions.Singleline);
+            var zusatz = Tokens(m.Groups["body"].Value);
+            if (!zusatz.ContainsKey("--team")) continue;
+            teams.Add((m.Groups[1].Value, zusatz));
+        }
+        Assert.True(teams.Count >= 10, $"Nur {teams.Count} Teamfarben gefunden — body.team-* fehlt?");
+
+        // Schrift auf der Teamfarbe muss je Team messbar lesbar sein. Das ist die
+        // Stelle, an der eine neue Teamfarbe sonst still unlesbar dazukommt.
+        var teamPaare = new List<string>();
+        foreach (var (name, zusatz) in teams)
+        {
+            var fill = Farbe(Aufloesen(zusatz["--team-fill"], dunkel));
+            var schrift = Farbe(Aufloesen(zusatz["--on-team"], dunkel));
+            if (fill is null || schrift is null)
+            {
+                teamPaare.Add($"{name}: --team-fill/--on-team nicht aufloesbar (durchsichtig?)");
+                continue;
+            }
+            var wert = Kontrast(schrift.Value, fill.Value);
+            if (wert < 4.5) teamPaare.Add($"{name}: {wert:F2}:1 (--on-team auf --team-fill)");
+        }
+        Assert.True(teamPaare.Count == 0,
+            "Schrift auf der Teamfarbe zu schwach:\n  " + string.Join("\n  ", teamPaare));
+
+        var saetze = new List<(string Name, Dictionary<string, string> Tokens)>();
+        foreach (var (themaName, basis) in new[] { ("dunkel", dunkel), ("hell", hell) })
+        {
+            saetze.Add((themaName, basis));
+            foreach (var (teamName, zusatz) in teams)
+            {
+                var gemischt = new Dictionary<string, string>(basis, StringComparer.OrdinalIgnoreCase);
+                foreach (var kv in zusatz) gemischt[kv.Key] = kv.Value;
+                saetze.Add(($"{themaName}/{teamName}", gemischt));
+            }
+        }
+
+        // Dateien einmal lesen statt je Durchlauf: mit den Teams sind es 24 Durchlaeufe.
+        var quellen = AlleCssDateien()
+            .Select(p => (Name: Path.GetFileName(p), Text: Regex.Replace(Lies(p), @"/\*.*?\*/", "", RegexOptions.Singleline)))
+            .ToList();
+
+        var treffer = new List<string>();
+        foreach (var (datei, text) in quellen)
+        {
             foreach (Match m in Regex.Matches(text, @"(?<sel>[^{}]*)\{(?<body>[^{}]*)\}"))
             {
                 var rumpf = m.Groups["body"].Value;
@@ -411,7 +457,7 @@ public class DesignContractTests
                 var flaecheMatch = Regex.Match(rumpf, @"background(?:-color|-image)?\s*:\s*([^;]+);");
                 if (!farbMatch.Success || !flaecheMatch.Success) continue;
 
-                foreach (var (name, tokens) in new[] { ("dunkel", dunkel), ("hell", hell) })
+                foreach (var (name, tokens) in saetze)
                 {
                     if (Farbe(Aufloesen(farbMatch.Groups[1].Value, tokens)) is not { } textfarbe) continue;
 
@@ -427,7 +473,7 @@ public class DesignContractTests
                     if (schlecht < Schwelle(rumpf))
                     {
                         var flaeche = flaecheMatch.Groups[1].Value.Trim();
-                        treffer.Add($"{Path.GetFileName(datei)} [{name}] {schlecht:F2}:1 — " +
+                        treffer.Add($"{datei} [{name}] {schlecht:F2}:1 — " +
                                     $"'{m.Groups["sel"].Value.Trim()}': {farbMatch.Groups[1].Value.Trim()} auf " +
                                     flaeche[..Math.Min(46, flaeche.Length)]);
                     }
@@ -435,7 +481,7 @@ public class DesignContractTests
             }
         }
         Assert.True(treffer.Count == 0,
-            "Zu wenig Kontrast zwischen Schrift und Flaeche:\n  " + string.Join("\n  ", treffer));
+            "Zu wenig Kontrast zwischen Schrift und Flaeche:\n  " + string.Join("\n  ", treffer.Distinct()));
     }
 
     private static Dictionary<string, string> Tokens(string block)

@@ -155,8 +155,8 @@
     font: 700 .65rem/1 var(--ff-tech);
     letter-spacing: .22em;
     text-transform: uppercase;
-    background: var(--accent);
-    color: var(--ink);
+    background: var(--team-fill);
+    color: var(--on-team);
     border-radius: 2px;
 }
 .f1-broadcast-card__title {
@@ -573,7 +573,7 @@
 }
 .f1-pitcard:hover .f1-pitcard__icon {
     transform: rotate(-8deg) scale(1.08);
-    color: var(--ink);
+    color: var(--on-team);
     background: var(--g-accent);
     border-color: transparent;
 }
@@ -709,8 +709,8 @@
 }
 .f1-leaguecard__event-date {
     padding: .2rem .55rem;
-    background: var(--accent);
-    color: var(--ink);
+    background: var(--team-fill);
+    color: var(--on-team);
     font: 700 .7rem/1 var(--ff-mono);
     letter-spacing: .04em;
     border-radius: 2px;
