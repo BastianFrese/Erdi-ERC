@@ -1023,3 +1023,13 @@
 .f1-hero__title em { font-style: normal; color: var(--ink-2); }
 /* Die laufende Zahl bleibt prominent, aber unter der Ueberschrift. */
 .f1-broadcast-card__count { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+
+/* =====================================================================
+   KEIN LABEL-BALKEN UEBER JEDER SEKTION
+   .f1-rc-bar stand vier Mal auf der Startseite als voller Kasten mit
+   Farbtick und Mittelpunkt ("Race Control · Live Telemetry") direkt ueber
+   der Ueberschrift, die dasselbe noch einmal sagt. Der frontend-design-
+   Skill nennt genau das als generisches Muster. Die Ueberschrift traegt
+   allein — und es sind vier Kaesten und vier Mittelpunkte weniger.
+   ===================================================================== */
+.f1-rc-bar { display: none; }

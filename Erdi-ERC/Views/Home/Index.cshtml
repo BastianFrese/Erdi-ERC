@@ -49,7 +49,7 @@
     <div class="row g-4 align-items-center">
         <div class="col-lg-7">
             <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> F1 26 &middot; Sim Racing League</span>
+                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> F1 26<span class="text-mute" style="margin-left:.7rem;">Sim Racing League</span></span>
                 <span class="f1-chip f1-chip--drs"><i class="f1-icon" data-lucide="zap"></i> DRS Active</span>
                 <span class="f1-chip f1-chip--fastest"><i class="f1-icon" data-lucide="timer"></i> Fastest Lap</span>
             </div>
@@ -82,7 +82,7 @@
                         </span>
                     </div>
                     <div class="f1-broadcast-card__title">@nextStream.Title</div>
-                    <div class="f1-broadcast-card__meta">@(((DateTime)nextStream.StartAt).ToString("dd.MM.yyyy")) &middot; @(((DateTime)nextStream.StartAt).ToString("HH:mm"))</div>
+                    <div class="f1-broadcast-card__meta">@(((DateTime)nextStream.StartAt).ToString("dd.MM.yyyy"))<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)nextStream.StartAt).ToString("HH:mm"))</span></div>
                     <div id="nextStreamCountdown" data-target="@(((DateTime)nextStream.StartAt).ToString("O"))" class="f1-broadcast-card__count">Countdown l&auml;dt&hellip;</div>
                     @if (nextStream.Url != null)
                     {
@@ -160,12 +160,12 @@
                                             <div class="f1-timing-row__team" style="color:@teamColor;">@w.WinnerTeam</div>
                                         }
                                         <div class="f1-timing-row__meta">
-                                            @if (w.DriverPoints != null) { <span><i class="f1-icon" data-lucide="user"></i> @PointsFormatHelper.Format(w.DriverPoints) Pkt.</span> }
-                                            @if (w.TeamPoints != null)   { <span><i class="f1-icon" data-lucide="users"></i> @PointsFormatHelper.Format(w.TeamPoints) Pkt.</span> }
+                                            @if (w.DriverPoints != null) { <span>Fahrer @PointsFormatHelper.Format(w.DriverPoints) Pkt.</span> }
+                                            @if (w.TeamPoints != null)   { <span style="margin-left:.9rem;">Team @PointsFormatHelper.Format(w.TeamPoints) Pkt.</span> }
                                         </div>
                                         @if (w.Track != null && w.Date != null)
                                         {
-                                            <div class="f1-timing-row__meta"><span><i class="f1-icon" data-lucide="map-pin"></i> @w.Track &middot; @(((DateTime)w.Date).ToString("dd.MM.yy"))</span></div>
+                                            <div class="f1-timing-row__meta"><span><i class="f1-icon" data-lucide="map-pin"></i> @w.Track<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)w.Date).ToString("dd.MM.yy"))</span></span></div>
                                         }
                                     </div>
                                 </div>
@@ -194,7 +194,7 @@
                                 </li>
                             }
                         </ol>
-                        <div class="f1-overall-chip__cta">Vollst&auml;ndige Tabelle &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></div>
+                        <div class="f1-overall-chip__cta">Vollst&auml;ndige Tabelle &ouml;ffnen</div>
                     </div>
                 </a>
             }
@@ -228,7 +228,7 @@
                                 @if (!string.IsNullOrWhiteSpace(g.Link))
                                 {
                                     <div class="f1-timing-row__meta" style="margin-top:.55rem;">
-                                        <a class="btn f1-btn f1-btn--outline" style="font-size:.75rem; padding:.3rem .65rem;" href="@g.Link" target="_blank" rel="noopener">Jetzt mitmachen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+                                        <a class="btn f1-btn f1-btn--outline" style="font-size:.75rem; padding:.3rem .65rem;" href="@g.Link" target="_blank" rel="noopener">Jetzt mitmachen</a>
                                     </div>
                                 }
                                 else
@@ -247,12 +247,12 @@
 </section>
 
 @* ============== TELEMETRIE · STATS ============== *@
-<div class="f1-rc-bar reveal">Race Control &middot; Live Telemetry</div>
+<div class="f1-rc-bar reveal">Race Control&ensp;Live Telemetry</div>
 <section class="f1-section reveal">
     <div class="f1-section__head">
         <span class="f1-section__bar" aria-hidden="true"></span>
         <h2 class="f1-section__title">Telemetrie</h2>
-        <span class="f1-section__chip">Live &middot; Snapshot</span>
+        <span class="f1-section__chip">Live&ensp;Snapshot</span>
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-stat-grid f1-stagger">
@@ -307,7 +307,7 @@
                 {
                     <div class="f1-stat__sub">
                         <div id="nextEventStatCountdown" data-target="@(((DateTime)nextUpcomingEvent.Date).ToString("O"))" style="color:var(--sig-amber); font-family:var(--ff-mono); font-weight:700; letter-spacing:.06em;">Countdown l&auml;dt&hellip;</div>
-                        <div style="color:var(--ink-3); font-size:.72rem; margin-top:.2rem;">@nextUpcomingEvent.Track &middot; @(((DateTime)nextUpcomingEvent.Date).ToString("dd.MM. HH:mm"))</div>
+                        <div style="color:var(--ink-3); font-size:.72rem; margin-top:.2rem;">@nextUpcomingEvent.Track<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)nextUpcomingEvent.Date).ToString("dd.MM. HH:mm"))</span></div>
                     </div>
                 }
                 else { <div class="f1-stat__sub">Aktuell kein Event geplant.</div> }
@@ -319,7 +319,7 @@
 </section>
 
 @* ============== PIT BOX · FEATURES ============== *@
-<div class="f1-rc-bar reveal">Pit Box &middot; Community Features</div>
+<div class="f1-rc-bar reveal">Pit Box&ensp;Community Features</div>
 <section class="f1-section reveal">
     <div class="f1-section__head">
         <span class="f1-section__bar" aria-hidden="true"></span>
@@ -333,7 +333,7 @@
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="trophy"></i></span><span class="f1-pitcard__tag">Standings</span></div>
                 <h5 class="f1-pitcard__title">Bestenlisten</h5>
                 <p class="f1-pitcard__lead">Live-Standings aus allen drei Ligen. Punkte, Siege, Position.</p>
-                <span class="f1-pitcard__cta">Jetzt ansehen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-pitcard__cta">Jetzt ansehen</span>
             </div>
         </a>
         <a asp-controller="Races" asp-action="AllRaces">
@@ -341,7 +341,7 @@
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--cyan"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Archive</span></div>
                 <h5 class="f1-pitcard__title">Race Results</h5>
                 <p class="f1-pitcard__lead">Alle Rennen aus allen Ligen mit Sieger, Podium und Siegerzeit.</p>
-                <span class="f1-pitcard__cta">Ergebnisse &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-pitcard__cta">Ergebnisse &ouml;ffnen</span>
             </div>
         </a>
         <a asp-controller="Setups" asp-action="TrackSetups">
@@ -349,7 +349,7 @@
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--amber"><i class="f1-icon" data-lucide="settings-2"></i></span><span class="f1-pitcard__tag">Setups</span></div>
                 <h5 class="f1-pitcard__title">F1 Strecken-Setups</h5>
                 <p class="f1-pitcard__lead">Setups pro Strecke mit Zugriff per Login, Discord-Rolle oder Twitch-Sub.</p>
-                <span class="f1-pitcard__cta">Setups &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-pitcard__cta">Setups &ouml;ffnen</span>
             </div>
         </a>
     </div>
@@ -357,12 +357,12 @@
 
 @if (preview != null)
 {
-    <div class="f1-rc-bar reveal">Paddock &middot; Unsere Ligen</div>
+    <div class="f1-rc-bar reveal">Paddock&ensp;Unsere Ligen</div>
     <section class="f1-section reveal">
         <div class="f1-section__head">
             <span class="f1-section__bar" aria-hidden="true"></span>
             <h2 class="f1-section__title">Paddock</h2>
-            <a class="f1-section__sub" asp-controller="Stats" asp-action="Erdi10">Alle Ligen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+            <a class="f1-section__sub" asp-controller="Stats" asp-action="Erdi10">Alle Ligen</a>
         </div>
         <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
         <div class="f1-paddock f1-stagger">
@@ -372,7 +372,7 @@
                     <div class="f1-leaguecard__head">
                         <div>
                             <h5 class="f1-leaguecard__name">@l.Name</h5>
-                            <div class="f1-leaguecard__sub">Liga &middot; Preview</div>
+                            <div class="f1-leaguecard__sub">Liga&ensp;Preview</div>
                         </div>
                         <span class="f1-leaguecard__chip"><i class="f1-icon" data-lucide="users"></i> @l.Drivers</span>
                     </div>
@@ -402,12 +402,12 @@
 }
 
 @* ============== PADDOCK NEWS ============== *@
-<div class="f1-rc-bar reveal">Paddock News &middot; Aktuelles</div>
+<div class="f1-rc-bar reveal">Paddock News&ensp;Aktuelles</div>
 <section class="f1-section reveal">
     <div class="f1-section__head">
         <span class="f1-section__bar" aria-hidden="true"></span>
         <h2 class="f1-section__title">Paddock News</h2>
-        <span class="f1-section__chip">Liga-News &middot; Updates</span>
+        <span class="f1-section__chip">Liga-News&ensp;Updates</span>
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-news-grid f1-stagger">
@@ -429,7 +429,7 @@
                         </div>
                         <h5 class="f1-newscard__title">@post.Title</h5>
                         <p class="f1-newscard__body">@(string.IsNullOrWhiteSpace(post.Summary) ? post.Content : post.Summary)</p>
-                        <span class="f1-newscard__cta">Alle News <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                        <span class="f1-newscard__cta">Alle News</span>
                     </div>
                 </a>
             }
@@ -482,7 +482,7 @@
                 <i class="f1-icon" data-lucide="x"></i>
             </button>
             <div class="f1-intro-guide-body">
-                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> Welcome &middot; Erdi's Racing Community</span>
+                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> Welcome&ensp;Erdi's Racing Community</span>
                 <h2 class="f1-hero__title" style="font-size:clamp(1.6rem,3.2vw,2.6rem); margin:1rem 0 .4rem;">Was du auf der Seite alles machen kannst</h2>
                 <p class="f1-hero__lead" style="font-size:.95rem; margin-bottom:1.4rem;">Schneller Einstieg in alle Bereiche der ERC.</p>
                 <div class="f1-intro-guide-grid f1-stagger">
@@ -491,7 +491,7 @@
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Hub</span></div>
                             <h5 class="f1-pitcard__title">Racing Hub</h5>
                             <p class="f1-pitcard__lead">Aktuelle Liga-Infos, Uebersicht der Serien und zentrale Einstiegsseite.</p>
-                            <span class="f1-pitcard__cta">Zum Hub <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Zum Hub</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Races" asp-action="Results">
@@ -499,7 +499,7 @@
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--cyan"><i class="f1-icon" data-lucide="trophy"></i></span><span class="f1-pitcard__tag">Archive</span></div>
                             <h5 class="f1-pitcard__title">Results &amp; Archiv</h5>
                             <p class="f1-pitcard__lead">Bestenlisten, Punkte, Sieger und Renn-Archiv.</p>
-                            <span class="f1-pitcard__cta">Results &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Results &ouml;ffnen</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Setups" asp-action="TrackSetups">
@@ -507,7 +507,7 @@
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--amber"><i class="f1-icon" data-lucide="settings-2"></i></span><span class="f1-pitcard__tag">Setups</span></div>
                             <h5 class="f1-pitcard__title">Track Setups</h5>
                             <p class="f1-pitcard__lead">Setups fuer jede Strecke &ndash; abhaengig von deinem Zugang.</p>
-                            <span class="f1-pitcard__cta">Setups oeffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Setups oeffnen</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Community" asp-action="Events">
@@ -515,7 +515,7 @@
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--green"><i class="f1-icon" data-lucide="calendar-days"></i></span><span class="f1-pitcard__tag">Events</span></div>
                             <h5 class="f1-pitcard__title">Events &amp; Streams</h5>
                             <p class="f1-pitcard__lead">Kommende Events, Countdown und Stream-Links.</p>
-                            <span class="f1-pitcard__cta">Events <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Events</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Home" asp-action="Faq">
@@ -523,7 +523,7 @@
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--magenta"><i class="f1-icon" data-lucide="help-circle"></i></span><span class="f1-pitcard__tag">Info</span></div>
                             <h5 class="f1-pitcard__title">Regeln &amp; FAQ</h5>
                             <p class="f1-pitcard__lead">Alle wichtigen Infos zu Ablauf, Regeln und haeufigen Fragen.</p>
-                            <span class="f1-pitcard__cta">FAQ &amp; Regelwerk <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">FAQ &amp; Regelwerk</span>
                         </div>
                     </a>
                 </div>
