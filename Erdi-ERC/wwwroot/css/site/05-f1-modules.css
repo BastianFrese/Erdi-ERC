@@ -630,9 +630,9 @@
     border:1px solid var(--stroke-1);
     color:var(--ink-2);
 }
-.f1-chip--drs    { background:var(--sig-green); color:var(--track); }
-.f1-chip--fastest{ background:var(--sig-magenta); color:var(--ink); }
-.f1-chip--pit    { background:var(--sig-amber); color:var(--track); }
+.f1-chip--drs    { background:var(--sig-green); color:var(--on-best); }
+.f1-chip--fastest{ background:var(--sig-magenta); color:var(--on-fast); }
+.f1-chip--pit    { background:var(--sig-amber); color:var(--on-slow); }
 .f1-chip--live   { background:var(--accent); color:var(--ink); }
 .f1-chip--cyan   { background:color-mix(in srgb, var(--wet) 12%, transparent); color:var(--sig-cyan); border-color:color-mix(in srgb, var(--wet) 32%, transparent); }
 .f1-chip--amber  { background:color-mix(in srgb, var(--slow) 12%, transparent); color:var(--sig-amber); border-color:color-mix(in srgb, var(--slow) 32%, transparent); }

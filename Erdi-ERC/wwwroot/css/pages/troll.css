@@ -94,11 +94,11 @@
 /* ---- Reaction light ---- */
 .troll-light {
     border: none; border-radius: 16px; width: min(320px, 80vw); height: 120px;
-    font: 800 1.3rem var(--ff-heading, sans-serif); color: var(--ink); cursor: pointer;
+    font: 800 1.3rem var(--ff-heading, sans-serif); color: var(--on-flag); cursor: pointer;
     background: var(--flag); transition: background .1s; letter-spacing: .04em;
 }
-.troll-light.is-go { background: var(--best); }
-.troll-light.is-early { background: var(--slow); }
+.troll-light.is-go { background: var(--best); color: var(--on-best); }
+.troll-light.is-early { background: var(--slow); color: var(--on-slow); }
 .troll-reaction__result { font: 700 1rem var(--ff-tech, monospace); color: var(--ink, var(--ink)); min-height: 1.2em; }
 
 /* ---- Captcha ---- */
@@ -134,7 +134,7 @@
 
 /* ---- Bluescreen ---- */
 .troll-bsod {
-    background: var(--wet); color: var(--ink);
+    background: var(--wet); color: var(--on-wet);
     margin: -.5rem; padding: clamp(1.2rem, 4vw, 2.4rem); border-radius: 12px;
     align-items: flex-start; text-align: left; gap: .8rem;
 }

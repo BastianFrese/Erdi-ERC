@@ -89,6 +89,38 @@ public class DesignContractTests
     // --- Verbotene Eigenschaften und Selektoren ---------------------------
 
     /// <summary>
+    /// Kommentare muessen aufgehen.
+    ///
+    /// Ein "*/" IM Kommentartext beendet ihn vorzeitig. Der Rest des Textes wird
+    /// dann als CSS gelesen, und alle Deklarationen bis zum naechsten "*/" fallen
+    /// still weg — kein Fehler, keine Warnung, die Regel wirkt einfach nicht.
+    ///
+    /// Genau das ist passiert: in einem Kommentar stand "--sig-*/--flag/--best".
+    /// Von den fünf --on-*-Tokens kam nur der erste nicht beim Browser an; die
+    /// anderen vier ueberlebten zufaellig, weil der Parser sich danach wieder
+    /// fing. Der Dateitest hat es nicht gesehen, weil er den Text liest: fuer ihn
+    /// stand die Deklaration da. Deshalb hier ein Test auf den Kommentarzaehler.
+    /// </summary>
+    [Fact]
+    public void Css_Kommentare_Gehen_Auf()
+    {
+        var treffer = new List<string>();
+        foreach (var datei in AlleCssDateien())
+        {
+            var text = Lies(datei);
+            var auf = Regex.Matches(text, @"/\*").Count;
+            var zu = Regex.Matches(text, @"\*/").Count;
+            if (auf != zu)
+                treffer.Add($"{Path.GetFileName(datei)}: {auf}x /* aber {zu}x */");
+            else if (Regex.IsMatch(Regex.Replace(text, @"/\*.*?\*/", "", RegexOptions.Singleline), @"\*/"))
+                treffer.Add($"{Path.GetFileName(datei)}: ein Kommentar endet zu frueh (\"*/\" im Kommentartext)");
+        }
+        Assert.True(treffer.Count == 0,
+            "Kommentare in CSS gehen nicht auf — alles dahinter wirkt nicht:\n  " +
+            string.Join("\n  ", treffer));
+    }
+
+    /// <summary>
     /// Genau ein Stylesheet-Request pro Seite. Der Layout laedt das Bundle;
     /// jede weitere ~/css-Datei aus einer View waere ein zweiter, render-blockierender
     /// Request fuer Regeln, die schon im Bundle stehen.
@@ -311,6 +343,220 @@ public class DesignContractTests
         }
         Assert.True(treffer.Count == 0,
             "Text steht auf seiner eigenen Farbe:\n  " + string.Join("\n  ", treffer));
+    }
+
+    /// <summary>
+    /// Schrift auf einer Flaeche braucht 4,5:1 (grosse Schrift 3:1).
+    ///
+    /// Der Gleichheitstest oben findet nur "genau dieselbe Farbe". Hier steht der
+    /// haeufigere Fall: Schrift und Flaeche sind verschieden, liegen aber zu nah
+    /// beieinander. Beim Umbau stand "Schrift auf einer Signalfarbe" ueberall als
+    /// color:var(--track) oder var(--ink) in den Regeln — beide Tokens kippen mit
+    /// dem Design, und das Signal kippt ebenfalls (gelb wird senf, hellgruen wird
+    /// dunkelgruen). Zweimal kippen ergibt zweimal falsch: im dunklen Design
+    /// unlesbar, im hellen gerade noch — oder umgekehrt.
+    ///
+    /// Geprueft werden beide Token-Saetze; der Gleichheitstest kennt nur einen
+    /// und ist deshalb in der Haelfte der Faelle blind.
+    /// </summary>
+    [Fact]
+    public void Schrift_Und_Flaeche_Haben_Genug_Kontrast()
+    {
+        var tokenDatei = Lies(Path.Combine(WwwRoot, "css", "site", "01-tokens.css"));
+
+        // Token-Saetze wie der Browser sie aufloest: [data-theme="light"] und die
+        // :root-Bloecke haben dieselbe Spezifitaet, also entscheidet allein die
+        // Reihenfolge im Quelltext. Ein Block wird deshalb in der Reihenfolge
+        // abgespielt, in der er dasteht: :root schreibt in beide Saetze, der
+        // helle Block nur in den hellen. "Erst alle :root, dann alle hell" waere
+        // falsch herum — genau daran war ein toter heller Override nicht zu sehen.
+        var dunkel = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var hell = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match block in Regex.Matches(tokenDatei, @"(?<sel>[^{}]+)\{(?<body>[^{}]*)\}"))
+        {
+            var selektor = block.Groups["sel"].Value;
+            var istRoot = Regex.IsMatch(selektor, @":root(?![\w-])");
+            var istHell = selektor.Contains("data-theme=\"light\"", StringComparison.Ordinal);
+            if (!istRoot && !istHell) continue;
+
+            foreach (var kv in Tokens(block.Groups["body"].Value))
+            {
+                if (istRoot) dunkel[kv.Key] = kv.Value;
+                if (istRoot || istHell) hell[kv.Key] = kv.Value;
+            }
+        }
+
+        // Tokens stehen nicht nur in der Token-Datei: --team-primary etwa wird in
+        // 11-unique-addons.css auf --accent gesetzt. Ohne diese Definition haette
+        // der Test den Rueckfall (--flag) bewertet statt der echten Farbe.
+        foreach (var datei in AlleCssDateien())
+            foreach (var kv in Tokens(Lies(datei)))
+            {
+                dunkel.TryAdd(kv.Key, kv.Value);
+                hell.TryAdd(kv.Key, kv.Value);
+            }
+
+        Assert.True(dunkel.ContainsKey("--ink") && hell.ContainsKey("--ink")
+                    && dunkel["--ink"] != hell["--ink"],
+            "Die beiden Token-Saetze liessen sich nicht auseinanderhalten — der Test prueft sonst zweimal dasselbe.");
+
+        var treffer = new List<string>();
+        foreach (var datei in AlleCssDateien())
+        {
+            var text = Regex.Replace(Lies(datei), @"/\*.*?\*/", "", RegexOptions.Singleline);
+            foreach (Match m in Regex.Matches(text, @"(?<sel>[^{}]*)\{(?<body>[^{}]*)\}"))
+            {
+                var rumpf = m.Groups["body"].Value;
+                var farbMatch = Regex.Match(rumpf, @"(?<!-)color\s*:\s*([^;]+);");
+                var flaecheMatch = Regex.Match(rumpf, @"background(?:-color|-image)?\s*:\s*([^;]+);");
+                if (!farbMatch.Success || !flaecheMatch.Success) continue;
+
+                foreach (var (name, tokens) in new[] { ("dunkel", dunkel), ("hell", hell) })
+                {
+                    if (Farbe(Aufloesen(farbMatch.Groups[1].Value, tokens)) is not { } textfarbe) continue;
+
+                    // Das schlechteste Ende eines Verlaufs zaehlt: dort ist der Text
+                    // am wenigsten zu sehen. Durchsichtige Flaechen fallen heraus —
+                    // ihre Wirkung haengt an der Unterlage, die hier nicht steht.
+                    var flaechen = Stopps(flaecheMatch.Groups[1].Value)
+                        .Select(s => Farbe(Aufloesen(s, tokens)))
+                        .Where(f => f is not null).Select(f => f!.Value).ToList();
+                    if (flaechen.Count == 0) continue;
+
+                    var schlecht = flaechen.Min(f => Kontrast(textfarbe, f));
+                    if (schlecht < Schwelle(rumpf))
+                    {
+                        var flaeche = flaecheMatch.Groups[1].Value.Trim();
+                        treffer.Add($"{Path.GetFileName(datei)} [{name}] {schlecht:F2}:1 — " +
+                                    $"'{m.Groups["sel"].Value.Trim()}': {farbMatch.Groups[1].Value.Trim()} auf " +
+                                    flaeche[..Math.Min(46, flaeche.Length)]);
+                    }
+                }
+            }
+        }
+        Assert.True(treffer.Count == 0,
+            "Zu wenig Kontrast zwischen Schrift und Flaeche:\n  " + string.Join("\n  ", treffer));
+    }
+
+    private static Dictionary<string, string> Tokens(string block)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match m in Regex.Matches(block, @"(--[a-zA-Z0-9-]+)\s*:\s*([^;{}]+);"))
+            map.TryAdd(m.Groups[1].Value, m.Groups[2].Value.Trim());
+        return map;
+    }
+
+    private static string Aufloesen(string wert, Dictionary<string, string> tokens)
+    {
+        for (var i = 0; i < 8 && wert.Contains("var(", StringComparison.OrdinalIgnoreCase); i++)
+        {
+            var vorher = wert;
+            wert = Regex.Replace(wert,
+                @"var\(\s*(--[a-zA-Z0-9-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)",
+                m => tokens.TryGetValue(m.Groups[1].Value, out var ersetzt)
+                     ? ersetzt
+                     : m.Groups[2].Success ? m.Groups[2].Value.Trim() : m.Value);
+            if (wert == vorher) break;
+        }
+        return wert.Trim();
+    }
+
+    /// <summary>Farbwert, oder null bei durchsichtigen und unaufloesbaren Angaben.</summary>
+    private static (double R, double G, double B)? Farbe(string wert)
+    {
+        wert = wert.Trim();
+        if (Regex.Match(wert, @"^#([0-9a-fA-F]{3})$") is { Success: true } kurz)
+        {
+            var s = kurz.Groups[1].Value;
+            return (Convert.ToInt32($"{s[0]}{s[0]}", 16),
+                    Convert.ToInt32($"{s[1]}{s[1]}", 16),
+                    Convert.ToInt32($"{s[2]}{s[2]}", 16));
+        }
+        if (Regex.Match(wert, @"^#([0-9a-fA-F]{6})$") is { Success: true } lang)
+        {
+            var s = lang.Groups[1].Value;
+            return (Convert.ToInt32(s[..2], 16), Convert.ToInt32(s.Substring(2, 2), 16), Convert.ToInt32(s.Substring(4, 2), 16));
+        }
+        if (Regex.Match(wert, @"^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)\s*(?:[/,]\s*([\d.]+%?))?\s*\)$")
+            is not { Success: true } rgb) return null;
+
+        if (rgb.Groups[4].Success)
+        {
+            var roh = rgb.Groups[4].Value;
+            var prozent = roh.EndsWith('%');
+            if (!double.TryParse(prozent ? roh.TrimEnd('%') : roh,
+                                 System.Globalization.NumberStyles.Float,
+                                 System.Globalization.CultureInfo.InvariantCulture, out var a)) return null;
+            if ((prozent ? a / 100 : a) < 1) return null;   // durchsichtig -> Unterlage unbekannt
+        }
+        return (Zahl(rgb.Groups[1].Value), Zahl(rgb.Groups[2].Value), Zahl(rgb.Groups[3].Value));
+    }
+
+    private static double Zahl(string s) =>
+        double.Parse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+
+    private static double Luminanz((double R, double G, double B) c)
+    {
+        static double Kanal(double v)
+        {
+            v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.Pow((v + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * Kanal(c.R) + 0.7152 * Kanal(c.G) + 0.0722 * Kanal(c.B);
+    }
+
+    private static double Kontrast((double R, double G, double B) a, (double R, double G, double B) b)
+    {
+        var hell = Math.Max(Luminanz(a), Luminanz(b));
+        var dunkel = Math.Min(Luminanz(a), Luminanz(b));
+        return (hell + 0.05) / (dunkel + 0.05);
+    }
+
+    /// <summary>WCAG: ab 24 px, oder ab 18,66 px fett, genuegen 3:1. Gilt auch fuer die font-Kurzform.</summary>
+    private static double Schwelle(string rumpf)
+    {
+        var groesse = Regex.Match(rumpf, @"(?:font-size\s*:|font\s*:\s*(?:\d{3}\s+)?)\s*([\d.]+)(rem|px)");
+        if (!groesse.Success) return 4.5;
+        var px = Zahl(groesse.Groups[1].Value) * (groesse.Groups[2].Value == "rem" ? 16 : 1);
+        var gewicht = Regex.Match(rumpf, @"(?:font-weight\s*:|font\s*:\s*)(\d{3})");
+        var fett = gewicht.Success && int.Parse(gewicht.Groups[1].Value) >= 700;
+        return px >= 24 || (fett && px >= 18.66) ? 3.0 : 4.5;
+    }
+
+    /// <summary>Farbangaben einer Flaeche: feste Farbe oder die Enden eines Verlaufs.</summary>
+    private static IEnumerable<string> Stopps(string wert)
+    {
+        var i = wert.IndexOf("gradient(", StringComparison.Ordinal);
+        if (i < 0) { yield return wert; yield break; }
+
+        var auf = wert.IndexOf('(', i);
+        var tiefe = 1;
+        var ende = wert.Length;
+        for (var j = auf + 1; j < wert.Length; j++)
+        {
+            if (wert[j] == '(') tiefe++;
+            else if (wert[j] == ')' && --tiefe == 0) { ende = j; break; }
+        }
+
+        var rumpf = wert[(auf + 1)..ende];
+        var teile = new List<string>();
+        var t = 0;
+        var start = 0;
+        for (var j = 0; j < rumpf.Length; j++)
+        {
+            if (rumpf[j] == '(') t++;
+            else if (rumpf[j] == ')') t--;
+            else if (rumpf[j] == ',' && t == 0) { teile.Add(rumpf[start..j]); start = j + 1; }
+        }
+        teile.Add(rumpf[start..]);
+
+        foreach (var teil in teile)
+        {
+            // Positionsangaben stehen vor UND hinter der Farbe ("135deg, ... 0%").
+            var s = Regex.Replace(teil, @"^\s*[-0-9.]+(deg|rad|turn|grad)\s*", "");
+            s = Regex.Replace(s, @"\s+[-0-9.]+(%|px|ch|em|rem)?\s*$", "");
+            yield return s.Trim();
+        }
     }
 
     [Theory]

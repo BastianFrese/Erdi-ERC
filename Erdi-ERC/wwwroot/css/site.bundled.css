@@ -1,4 +1,4 @@
-@charset "UTF-8";/*!
+@charset "UTF-8";/* ERLÄUTERUNG (nicht von Bootstrap): Diese Datei ist gekürzt, nicht geladen. Sie enthält aus wwwroot/lib/bootstrap/dist/css/bootstrap.min.css nur die Klassen, die im Markup tatsächlich vorkommen — plus die Zustandsklassen, die Bootstrap per JavaScript setzt. Eine Klasse, die hier fehlt, fehlt auch im Bundle. Wird im Markup eine neue Bootstrap-Klasse benutzt, muss sie hier ergänzt werden. Das @charset bleibt am Dateianfang, weil diese Datei Schritt 1 des Bundles ist. *//*!
 * Bootstrap  v5.3.3 (https://getbootstrap.com/)
 * Copyright 2011-2024 The Bootstrap Authors
 * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
@@ -95,6 +95,7 @@ U+2212, U+2215, U+FEFF, U+FFFD;
 --slow: #B07A00;
 --flag: #C00500;
 --wet:  #1F63B0;
+/* --on-wet und --on-fast stehen am Dateiende — siehe Kommentar dort. */
 --team-2: #FFFFFF;
 }
 /* --- Teamfarben -------------------------------------------------------
@@ -174,6 +175,22 @@ Teamfarbe ist Zuordnung Fahrer->Team, nicht Stimmung. */
 --sig-magenta: var(--fast);
 --sig-blue: var(--wet);
 --sig-red: var(--flag);
+/* Schrift AUF einer Signalfarbe. Diese fünf Tokens gehören immer dann dazu,
+wenn eine Regel eine Signalfarbe als Fläche setzt (--sig-…, --flag,
+--best, --slow, --wet, --fast).
+Warum eigene Tokens: --track und --ink kippen mit dem Design, das Signal
+kippt ebenfalls (gelb #FFD100 wird senf #B07A00, hellgrün #00D26A wird
+dunkelgrün #0A8F4B). Zweimal kippen ergibt zweimal falsch — vorher stand
+hier --track bzw. --ink, und je nach Design war die Schrift unlesbar.
+Jeder Wert ist gegen BEIDE Design-Sätze gerechnet, schlechtestes
+Verlaufsende eingeschlossen, alle ≥ 4,5:1.
+(Kein Schrägstrich-Sternchen in diesem Text: das beendet den Kommentar
+vorzeitig, und die Deklarationen darunter fallen still weg.) */
+--on-flag: #F2F4F7;   /* 4,5:1 dunkel · 6,5:1 hell */
+--on-slow: #0B0C0E;   /* 13,4:1 · 5,2:1 */
+--on-best: #0B0C0E;   /* 9,8:1 · 4,7:1 */
+--on-wet:  #0B0C0E;   /* 5,7:1 dunkel · helles Design am Dateiende */
+--on-fast: #0B0C0E;   /* 4,8:1 dunkel · helles Design am Dateiende */
 /* Podest */
 --gold: #FFD24A;
 --silver: #D4D8E0;
@@ -238,6 +255,19 @@ Teamfarbe ist Zuordnung Fahrer->Team, nicht Stimmung. */
 --tr-base: var(--t-base);
 --tr-slow: var(--t-base);
 --panel-bg: var(--tarmac);
+}
+/* ---------------------------------------------------------------------
+Schrift auf Blau und Violett kippt mit dem Design — nur diese beiden:
+ihre Signalfarben sind im dunklen Design hell (#3B8BEA, #B24BF3) und
+brauchen dunkle Schrift, im hellen dunkel (#1F63B0, #7A28B8) und brauchen
+helle. Der Block steht bewusst am DATEIENDE: [data-theme="light"] und die
+spaeteren :root-Bloecke haben dieselbe Spezifitaet, deshalb entscheidet
+allein die Reihenfolge im Quelltext. Oben im hellen Block standen diese
+zwei Werte zuerst — dort hat sie der spaetere :root-Block still ueberschrieben.
+--------------------------------------------------------------------- */
+[data-theme="light"] {
+--on-wet:  #F2F4F7;   /* 6,1:1 */
+--on-fast: #F2F4F7;   /* 7,5:1 */
 }
 /* =====================================================================
 02 · BASE
@@ -319,7 +349,7 @@ outline: 2px solid var(--best);
 outline-offset: 2px;
 border-radius: var(--r-1);
 }
-::selection { background: var(--team); color: var(--ink); }
+::selection { background: var(--team); color: var(--on-flag); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -640,7 +670,7 @@ animation: live-pulse 1.6s ease-in-out infinite;
 .nav-alert-badge {
 display: inline-block; margin-left: .3rem;
 min-width: 1.05em; padding: 0 .25em;
-background: var(--flag); color: var(--ink);
+background: var(--flag); color: var(--on-flag);
 font-size: .68em; font-weight: 700; line-height: 1.5;
 text-align: center; border-radius: var(--r-1);
 }
@@ -1906,9 +1936,9 @@ background:var(--rule);
 border:1px solid var(--stroke-1);
 color:var(--ink-2);
 }
-.f1-chip--drs    { background:var(--sig-green); color:var(--track); }
-.f1-chip--fastest{ background:var(--sig-magenta); color:var(--ink); }
-.f1-chip--pit    { background:var(--sig-amber); color:var(--track); }
+.f1-chip--drs    { background:var(--sig-green); color:var(--on-best); }
+.f1-chip--fastest{ background:var(--sig-magenta); color:var(--on-fast); }
+.f1-chip--pit    { background:var(--sig-amber); color:var(--on-slow); }
 .f1-chip--live   { background:var(--accent); color:var(--ink); }
 .f1-chip--cyan   { background:color-mix(in srgb, var(--wet) 12%, transparent); color:var(--sig-cyan); border-color:color-mix(in srgb, var(--wet) 32%, transparent); }
 .f1-chip--amber  { background:color-mix(in srgb, var(--slow) 12%, transparent); color:var(--sig-amber); border-color:color-mix(in srgb, var(--slow) 32%, transparent); }
@@ -2700,7 +2730,7 @@ background:var(--accent);
 .adm-nav-badge {
 margin-left:auto; min-width:18px; height:18px;
 padding:0 5px; border-radius:9px;
-background:var(--flag); color:var(--ink);
+background:var(--flag); color:var(--on-flag);
 font-size:.65rem; font-weight:700; line-height:18px;
 text-align:center; flex-shrink:0;
 }
@@ -3854,7 +3884,7 @@ flex: 0 0 auto;
 .live-race-banner__label {
 text-transform: uppercase; letter-spacing: .14em; font-weight: 800;
 font-size: .72rem; padding: .15rem .45rem; border-radius: 6px;
-background: var(--flag); color: var(--ink);
+background: var(--flag); color: var(--on-flag);
 }
 .live-race-banner__title { font-weight: 700; flex: 1 1 auto; }
 .live-race-banner__cta { font-size: .85rem; opacity: .85; white-space: nowrap; }
@@ -5123,7 +5153,7 @@ color: var(--ink-2);
 }
 .f1-newscard__cat--pinned {
 background: var(--sig-amber);
-color: var(--track);
+color: var(--on-slow);
 border-color: transparent;
 }
 .f1-newscard__date {
@@ -5764,8 +5794,8 @@ Akzentfarben. Im neuen Token-Satz zeigen die auf --slow und --ink selbst —
 also stand die Schrift auf ihrer eigenen Farbe. Dunkle Schrift traegt beide
 Enden (#0B0C0E auf #FFD100 ≈ 16:1, auf #F2F4F7 ≈ 19:1). */
 .f1-constructors-hero__title-em {
-background: linear-gradient(90deg, var(--accent-1, var(--slow)), var(--accent-2, var(--wet)));
-color: var(--track);
+background: var(--slow);
+color: var(--on-slow);
 }
 .f1-constructors-hero__subtitle {
 color: var(--ink-3, var(--ink-2));
@@ -5901,17 +5931,17 @@ background: var(--rule);
 .f1-pos-badge--p1 {
 background: linear-gradient(135deg, var(--slow), var(--slow));
 border-color: var(--slow);
-color: var(--track);
+color: var(--on-slow);
 }
 .f1-pos-badge--p2 {
 background: linear-gradient(135deg, var(--ink-2), var(--wet));
 border-color: var(--ink-2);
-color: var(--track);
+color: var(--on-wet);
 }
 .f1-pos-badge--p3 {
 background: linear-gradient(135deg, var(--slow), var(--slow));
 border-color: var(--slow);
-color: var(--track);
+color: var(--on-slow);
 }
 .f1-constructors-team {
 display: inline-flex;
@@ -6480,7 +6510,7 @@ font-style: italic;
 letter-spacing: .06em;
 background: linear-gradient(160deg, var(--slow) 0%, var(--slow) 38%, var(--slow) 56%, var(--slow) 100%);
 filter: drop-shadow(0 0 8px color-mix(in srgb, var(--slow) 40%, transparent));
-color: var(--ink);
+color: var(--on-slow);
 }
 .erc-brand__sub {
 font-size: 7.5px;
@@ -6748,7 +6778,7 @@ letter-spacing: -.04em;
 line-height: 1;
 background: linear-gradient(160deg, var(--slow) 0%, var(--slow) 36%, var(--slow) 55%, var(--slow) 100%);
 filter: drop-shadow(0 6px 26px color-mix(in srgb, var(--slow) 32%, transparent));
-color: var(--ink);
+color: var(--on-slow);
 }
 /* Name band */
 .erc-card--stats .erc-sname {
@@ -7244,11 +7274,11 @@ transition: width .25s ease;
 /* ---- Reaction light ---- */
 .troll-light {
 border: none; border-radius: 16px; width: min(320px, 80vw); height: 120px;
-font: 800 1.3rem var(--ff-heading, sans-serif); color: var(--ink); cursor: pointer;
+font: 800 1.3rem var(--ff-heading, sans-serif); color: var(--on-flag); cursor: pointer;
 background: var(--flag); transition: background .1s; letter-spacing: .04em;
 }
-.troll-light.is-go { background: var(--best); }
-.troll-light.is-early { background: var(--slow); }
+.troll-light.is-go { background: var(--best); color: var(--on-best); }
+.troll-light.is-early { background: var(--slow); color: var(--on-slow); }
 .troll-reaction__result { font: 700 1rem var(--ff-tech, monospace); color: var(--ink, var(--ink)); min-height: 1.2em; }
 /* ---- Captcha ---- */
 .troll-captcha { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; width: min(360px, 86vw); }
@@ -7279,7 +7309,7 @@ padding: .7rem 1rem; max-width: 44ch;
 .troll-input--wide { width: min(420px, 84vw); font-size: 1.05rem; }
 /* ---- Bluescreen ---- */
 .troll-bsod {
-background: var(--wet); color: var(--ink);
+background: var(--wet); color: var(--on-wet);
 margin: -.5rem; padding: clamp(1.2rem, 4vw, 2.4rem); border-radius: 12px;
 align-items: flex-start; text-align: left; gap: .8rem;
 }

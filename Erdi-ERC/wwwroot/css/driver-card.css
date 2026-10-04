@@ -87,7 +87,7 @@
   
   
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--slow) 40%, transparent));
-    color: var(--ink);
+    color: var(--on-slow);
 }
 .erc-brand__sub {
   font-size: 7.5px;
@@ -370,7 +370,7 @@
   
   
   filter: drop-shadow(0 6px 26px color-mix(in srgb, var(--slow) 32%, transparent));
-    color: var(--ink);
+    color: var(--on-slow);
 }
 
 /* Name band */

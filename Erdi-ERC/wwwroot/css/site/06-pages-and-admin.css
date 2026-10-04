@@ -707,7 +707,7 @@
 .adm-nav-badge {
     margin-left:auto; min-width:18px; height:18px;
     padding:0 5px; border-radius:9px;
-    background:var(--flag); color:var(--ink);
+    background:var(--flag); color:var(--on-flag);
     font-size:.65rem; font-weight:700; line-height:18px;
     text-align:center; flex-shrink:0;
 }

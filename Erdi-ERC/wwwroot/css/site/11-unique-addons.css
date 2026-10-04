@@ -150,7 +150,7 @@
 .live-race-banner__label {
     text-transform: uppercase; letter-spacing: .14em; font-weight: 800;
     font-size: .72rem; padding: .15rem .45rem; border-radius: 6px;
-    background: var(--flag); color: var(--ink);
+    background: var(--flag); color: var(--on-flag);
 }
 .live-race-banner__title { font-weight: 700; flex: 1 1 auto; }
 .live-race-banner__cta { font-size: .85rem; opacity: .85; white-space: nowrap; }

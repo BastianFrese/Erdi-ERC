@@ -104,6 +104,8 @@
     --flag: #C00500;
     --wet:  #1F63B0;
 
+    /* --on-wet und --on-fast stehen am Dateiende — siehe Kommentar dort. */
+
     --team-2: #FFFFFF;
 }
 
@@ -193,6 +195,23 @@ body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
     --sig-blue: var(--wet);
     --sig-red: var(--flag);
 
+    /* Schrift AUF einer Signalfarbe. Diese fünf Tokens gehören immer dann dazu,
+       wenn eine Regel eine Signalfarbe als Fläche setzt (--sig-…, --flag,
+       --best, --slow, --wet, --fast).
+       Warum eigene Tokens: --track und --ink kippen mit dem Design, das Signal
+       kippt ebenfalls (gelb #FFD100 wird senf #B07A00, hellgrün #00D26A wird
+       dunkelgrün #0A8F4B). Zweimal kippen ergibt zweimal falsch — vorher stand
+       hier --track bzw. --ink, und je nach Design war die Schrift unlesbar.
+       Jeder Wert ist gegen BEIDE Design-Sätze gerechnet, schlechtestes
+       Verlaufsende eingeschlossen, alle ≥ 4,5:1.
+       (Kein Schrägstrich-Sternchen in diesem Text: das beendet den Kommentar
+       vorzeitig, und die Deklarationen darunter fallen still weg.) */
+    --on-flag: #F2F4F7;   /* 4,5:1 dunkel · 6,5:1 hell */
+    --on-slow: #0B0C0E;   /* 13,4:1 · 5,2:1 */
+    --on-best: #0B0C0E;   /* 9,8:1 · 4,7:1 */
+    --on-wet:  #0B0C0E;   /* 5,7:1 dunkel · helles Design am Dateiende */
+    --on-fast: #0B0C0E;   /* 4,8:1 dunkel · helles Design am Dateiende */
+
     /* Podest */
     --gold: #FFD24A;
     --silver: #D4D8E0;
@@ -264,4 +283,18 @@ body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; }
     --tr-base: var(--t-base);
     --tr-slow: var(--t-base);
     --panel-bg: var(--tarmac);
+}
+
+/* ---------------------------------------------------------------------
+   Schrift auf Blau und Violett kippt mit dem Design — nur diese beiden:
+   ihre Signalfarben sind im dunklen Design hell (#3B8BEA, #B24BF3) und
+   brauchen dunkle Schrift, im hellen dunkel (#1F63B0, #7A28B8) und brauchen
+   helle. Der Block steht bewusst am DATEIENDE: [data-theme="light"] und die
+   spaeteren :root-Bloecke haben dieselbe Spezifitaet, deshalb entscheidet
+   allein die Reihenfolge im Quelltext. Oben im hellen Block standen diese
+   zwei Werte zuerst — dort hat sie der spaetere :root-Block still ueberschrieben.
+   --------------------------------------------------------------------- */
+[data-theme="light"] {
+    --on-wet:  #F2F4F7;   /* 6,1:1 */
+    --on-fast: #F2F4F7;   /* 7,5:1 */
 }

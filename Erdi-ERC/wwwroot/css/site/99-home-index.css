@@ -734,7 +734,7 @@
 }
 .f1-newscard__cat--pinned {
     background: var(--sig-amber);
-    color: var(--track);
+    color: var(--on-slow);
     border-color: transparent;
 }
 .f1-newscard__date {
