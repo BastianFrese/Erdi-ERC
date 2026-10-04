@@ -616,6 +616,22 @@
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 
+    @* ---------- HINWEIS AUF DIE NEUE GESTALT ----------
+       Wird von site.js eingeblendet — einmal je Browser, danach nicht wieder.
+       Kein role="dialog": der Hinweis verlangt keine Antwort und darf die Seite
+       nicht blockieren, man will sie ja gerade anschauen. role="status" kuendigt
+       ihn an, ohne den Fokus zu stehlen. *@
+    <aside class="design-notice" id="designNotice" role="status" aria-labelledby="designNoticeTitle">
+        <div class="design-notice__card">
+            <h2 class="design-notice__title" id="designNoticeTitle">Neues Design</h2>
+            <p class="design-notice__text">
+                Die Seite hat ein neues Aussehen bekommen: flacher, ruhiger, und die Farbe
+                des letzten Siegerteams zieht sich jetzt durch das ganze Ger&uuml;st.
+            </p>
+            <button type="button" class="f1-btn f1-btn--primary" data-design-notice-close>Alles klar</button>
+        </div>
+    </aside>
+
     @* ---------- KEYBOARD SHORTCUTS ---------- *@
     <div class="shortcut-overlay" id="shortcutOverlay" role="dialog" aria-modal="true" aria-labelledby="shortcutTitle">
         <div class="shortcut-overlay__card">

@@ -772,6 +772,40 @@ background: var(--team); border: 2px solid var(--tarmac); cursor: pointer;
 width: 12px; height: 12px; border-radius: 50%;
 background: var(--team); border: 2px solid var(--tarmac); cursor: pointer;
 }
+/* --- Hinweis auf die neue Gestalt -------------------------------------
+Erscheint einmal je Browser (site.js, Schluessel erc.design-notice.v1) und
+sitzt unten rechts: unten links liegt der Musikspieler, und der Hinweis
+soll ihn nicht verdecken.
+Bewusst kein Vollbild-Fenster: der Hinweis sagt "sieh dir das an", er
+verlangt keine Antwort. Ein Overlay mit Fokusfalle waere fuer diese
+Nachricht zu viel — man will die Seite anschauen, nicht sie wegklicken.
+Eingeblendet mit display, nicht mit opacity: so liegt er von Anfang an
+nicht im Bild und verschiebt nichts (CLS). */
+.design-notice {
+position: fixed;
+right: var(--gutter);
+bottom: var(--sp-4);
+z-index: 1030;                 /* ueber dem Musikspieler (1025), unter dem Streifen (1040) */
+width: min(380px, calc(100vw - 2 * var(--gutter)));
+display: none;
+}
+.design-notice.is-open {
+display: block;
+animation: designNoticeIn .3s ease-out both;
+}
+.design-notice__card {
+display: flex; flex-direction: column; align-items: flex-start; gap: .7rem;
+padding: 1.1rem 1.2rem 1.2rem;
+background: var(--tarmac);
+border: 1px solid var(--rule);
+border-radius: var(--r-3);
+}
+.design-notice__title { margin: 0; font-size: var(--fs-l); color: var(--ink); }
+.design-notice__text  { margin: 0; font-size: var(--fs-s); color: var(--ink-2); line-height: 1.5; }
+@keyframes designNoticeIn {
+from { opacity: 0; transform: translateY(.75rem); }
+to   { opacity: 1; transform: none; }
+}
 /* --- Schmale Viewports: Streifen bricht um, Navigation scrollt --- */
 @media (max-width: 991.98px) {
 .strip { flex-wrap: wrap; padding: var(--sp-2) 0 var(--sp-1); }
@@ -8256,8 +8290,18 @@ max-width: 100%;
 overflow-wrap: anywhere;
 }
 }
-/* ---------- Bewegung bleibt aus, wenn sie aus sein soll --------------- */
+/* ---------- Bewegung bleibt aus, wenn sie aus sein soll ---------------
+Die allgemeine Regel stand in der alten 09-responsive.css und ist beim
+Loeschen mitgegangen — danach liefen die eigenen Animationen (Hero-Streifen,
+Einblendungen) auch bei "Bewegung reduzieren" weiter. Deshalb steht sie
+hier wieder: sie greift nur, wenn das System es verlangt. */
 @media (prefers-reduced-motion: reduce) {
+*, *::before, *::after {
+animation-duration: .001ms !important;
+animation-iteration-count: 1 !important;
+transition-duration: .001ms !important;
+scroll-behavior: auto !important;
+}
 .strip__nav { scroll-behavior: auto; }
 .icon-chip { animation: none !important; }
 }

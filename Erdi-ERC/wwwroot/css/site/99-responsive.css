@@ -135,8 +135,18 @@
     }
 }
 
-/* ---------- Bewegung bleibt aus, wenn sie aus sein soll --------------- */
+/* ---------- Bewegung bleibt aus, wenn sie aus sein soll ---------------
+   Die allgemeine Regel stand in der alten 09-responsive.css und ist beim
+   Loeschen mitgegangen — danach liefen die eigenen Animationen (Hero-Streifen,
+   Einblendungen) auch bei "Bewegung reduzieren" weiter. Deshalb steht sie
+   hier wieder: sie greift nur, wenn das System es verlangt. */
 @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
     .strip__nav { scroll-behavior: auto; }
     .icon-chip { animation: none !important; }
 }

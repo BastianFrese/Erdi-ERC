@@ -226,3 +226,42 @@
 
     aktualisiere();
 })();
+
+/* ---------------------------------------------------------------------------
+   Hinweis auf die neue Gestalt.
+
+   Einmal je Browser. Ohne JavaScript erscheint er nicht — das ist Absicht:
+   eine Hoeflichkeitsmeldung ist kein Inhalt, der ohne Skript dastehen muss,
+   und so gibt es auch kein Aufblitzen beim Laden (das Element ist per CSS
+   display:none, bis diese Datei es einblendet).
+
+   Zwei Dinge, die diesen Hinweis von einem Dauerzustand unterscheiden:
+   - er verabschiedet sich von selbst, wenn der Browser ihn kennt, und
+   - er erscheint gar nicht mehr nach dem Ablaufdatum unten. Eine Meldung
+     ueber eine Umstellung ist nach ein paar Wochen nur noch Rauschen.
+   --------------------------------------------------------------------------- */
+(function () {
+    const hinweis = document.getElementById('designNotice');
+    if (!hinweis) return;
+
+    const schluessel = 'erc.design-notice.dismissed.v1';
+    const bis = new Date('2026-12-31T23:59:59');   // danach nie wieder
+
+    let bekannt = false;
+    try { bekannt = localStorage.getItem(schluessel) === '1'; } catch (e) { /* privater Modus */ }
+    if (bekannt || Date.now() > bis.getTime()) return;
+
+    const schliessen = () => {
+        hinweis.classList.remove('is-open');
+        try { localStorage.setItem(schluessel, '1'); } catch (e) { /* dann eben jedes Mal */ }
+    };
+
+    // Kurz warten: nicht im ersten Bild auftauchen. Die Seite soll sich erst
+    // setzen, sonst sieht der Hinweis wie ein Fehler aus.
+    setTimeout(() => hinweis.classList.add('is-open'), 1200);
+
+    hinweis.querySelector('[data-design-notice-close]')?.addEventListener('click', schliessen);
+    document.addEventListener('keydown', (ereignis) => {
+        if (ereignis.key === 'Escape' && hinweis.classList.contains('is-open')) schliessen();
+    });
+})();
