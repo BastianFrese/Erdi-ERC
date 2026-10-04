@@ -66,6 +66,16 @@ namespace Erdi_ERC.Controllers
         public IActionResult Regelwerk() => View();
         public IActionResult Maintenance() => View("Maintenance");
 
+        /// <summary>
+        /// Seite zum F1-25-Streckenbranding. Die Datei selbst liegt im
+        /// downloads-Ordner und wird dort vom StaticFile-Middleware ausgeliefert —
+        /// nicht ueber eine Controller-Aktion: bei 36 MB sind Bereichsanfragen
+        /// (Fortsetzen unterbrochener Downloads) und das Caching des
+        /// Middlewares besser als ein MVC-Durchlauf.
+        /// </summary>
+        [HttpGet]
+        public IActionResult Mods() => View();
+
         /// <summary>Liefert die neueste .exe aus dem downloads-Ordner als Download — kein fester Dateiname.</summary>
         [HttpGet]
         public IActionResult DownloadApp()

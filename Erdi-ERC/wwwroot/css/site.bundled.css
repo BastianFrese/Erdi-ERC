@@ -3919,6 +3919,86 @@ font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--ink);
 /* ---- Rivalry Sparkline ---- */
 .rivalry-spark { display:flex; gap:4px; }
 .rivalry-spark__dot { width:10px; height:10px; border-radius:50%; background:var(--kerb); }
+/* =====================================================================
+12 · F1-25-MOD — Styles für die Seite Home/Mods
+=====================================================================
+Eigene Datei und nicht als <style> im View, obwohl manche Inhaltsseiten das
+so machen (Faq, Stewarding): die Vertragstests lesen nur die Dateien unter
+wwwroot/css. Ein Kontrastfehler oder eine zu kleine Schrift in einem
+Inline-Block waere fuer sie unsichtbar — genau die Fehler, die in dieser
+Sitzung zweimal aufgetreten sind.
+===================================================================== */
+/* --- Vorher/Nachher --------------------------------------------------- */
+.mod-vergleich {
+display: grid;
+gap: .75rem;
+margin: 1.75rem 0 2.25rem;
+}
+.mod-vergleich__bild { margin: 0; }
+.mod-vergleich__bild img {
+display: block; width: 100%; height: auto;
+border: 1px solid var(--rule);
+border-radius: var(--r-2);
+background: var(--tarmac);
+}
+.mod-vergleich__bild figcaption {
+margin-top: .4rem;
+font-size: var(--fs-xs);
+letter-spacing: .14em; text-transform: uppercase;
+color: var(--ink-2);
+}
+/* --- Kennzahlen als Beschreibungsliste --------------------------------
+dl und nicht die Kacheln der Startseite: das sind Begriff/Wert-Paare,
+keine Wettkampf-Kennzahlen, und in der Vorlage standen sie genauso. */
+.mod-fakten {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+gap: 1rem 1.5rem;
+margin: 0 0 1.75rem;
+}
+.mod-fakten dt {
+font-size: var(--fs-xs);
+letter-spacing: .14em; text-transform: uppercase;
+color: var(--ink-2);
+}
+.mod-fakten dd { margin: .25rem 0 0; font-size: var(--fs-m); color: var(--ink); }
+/* --- Nummerierte Schritte ---------------------------------------------
+Die Nummer ist echt: es ist eine Reihenfolge, keine Zierde. */
+.mod-schritte {
+list-style: none; counter-reset: schritt;
+margin: 0; padding: 0;
+display: grid; gap: 1.1rem;
+}
+.mod-schritte > li { position: relative; padding-left: 2.75rem; }
+.mod-schritte > li::before {
+counter-increment: schritt; content: counter(schritt);
+position: absolute; left: 0; top: .1rem;
+width: 1.9rem; height: 1.9rem;
+display: grid; place-items: center;
+border: 1px solid var(--rule);
+border-radius: var(--r-2);
+background: var(--tarmac);
+color: var(--ink);
+font: 700 var(--fs-s)/1 var(--ff-tech);
+}
+.mod-schritte__titel { display: block; font-weight: 700; color: var(--ink); }
+.mod-schritte__text { font-size: var(--fs-s); color: var(--ink-2); }
+/* --- Warnhinweis (AntiCheat) ------------------------------------------
+Der Balken links ist die Warnfarbe des Systems, nicht Dekoration: hier
+steht die einzige Stelle, an der etwas schiefgehen kann. */
+.mod-warnung {
+border-left: 3px solid var(--flag);
+padding: .15rem 0 .15rem 1rem;
+}
+.mod-zusatz { font-size: var(--fs-s); color: var(--ink-2); }
+/* --- Downloadzeile: Knopf mit Groesse und Pruefsumme darunter --------- */
+.mod-download { display: grid; gap: .5rem; justify-items: start; }
+.mod-download__meta {
+font-family: var(--ff-mono, var(--ff));
+font-size: var(--fs-xs);
+color: var(--ink-2);
+overflow-wrap: anywhere;
+}
 .setup-card {
 display: flex;
 flex-direction: column;

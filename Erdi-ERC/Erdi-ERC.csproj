@@ -63,6 +63,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+    <!-- Mod-Paket (erc-f1-25-werkzeug.zip). Ohne diese Zeile laege die Datei auf
+         dem Server nur, weil sie einmal von Hand kopiert wurde — ein frisch
+         ausgerollter Server haette sie nicht. Die Datei selbst ist per
+         .gitignore (Erdi-ERC/downloads/*) nicht im Repo, genau wie die Installer. -->
+    <Content Include="downloads\**\*.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Tests\**" />
@@ -88,7 +96,7 @@
     zu /wwwroot/css/site.bundled.css. Ergebnis: 1 HTTP-Request statt 13 @import-Roundtrips (render-blocking).
     Inputs/Outputs sorgen für incrementell — läuft nur wenn Partials neuer sind als das Bundle.
   -->
-  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/css/site/00-bootstrap.css;wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/02f-icons.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/04f-primitives.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css;wwwroot/css/site/99-home-index.css;wwwroot/css/pages/results.css;wwwroot/css/pages/league-results.css;wwwroot/css/pages/constructors.css;wwwroot/css/pages/erdi10.css;wwwroot/css/pages/race-detail.css;wwwroot/css/driver-card.css;wwwroot/css/pages/events.css;wwwroot/css/pages/ewige-liste.css;wwwroot/css/pages/widerruf.css;wwwroot/css/pages/troll.css;wwwroot/css/pages/applications.css;wwwroot/css/pages/admin-applications.css;wwwroot/css/site/99-responsive.css" Outputs="wwwroot/css/site.bundled.css">
+  <Target Name="BundleSiteCss" BeforeTargets="BeforeBuild" Inputs="wwwroot/css/site/00-bootstrap.css;wwwroot/css/site/01-tokens.css;wwwroot/css/site/02-base.css;wwwroot/css/site/02f-icons.css;wwwroot/css/site/03-layout.css;wwwroot/css/site/04-components.css;wwwroot/css/site/04f-primitives.css;wwwroot/css/site/05-f1-modules.css;wwwroot/css/site/06-pages-and-admin.css;wwwroot/css/site/07-utilities.css;wwwroot/css/site/08-animations.css;wwwroot/css/site/10-f1-quickwins.css;wwwroot/css/site/11-unique-addons.css;wwwroot/css/site/12-mods.css;wwwroot/css/site.track-setups.css;wwwroot/css/site.community.css;wwwroot/css/site/99-home-index.css;wwwroot/css/pages/results.css;wwwroot/css/pages/league-results.css;wwwroot/css/pages/constructors.css;wwwroot/css/pages/erdi10.css;wwwroot/css/pages/race-detail.css;wwwroot/css/driver-card.css;wwwroot/css/pages/events.css;wwwroot/css/pages/ewige-liste.css;wwwroot/css/pages/widerruf.css;wwwroot/css/pages/troll.css;wwwroot/css/pages/applications.css;wwwroot/css/pages/admin-applications.css;wwwroot/css/site/99-responsive.css" Outputs="wwwroot/css/site.bundled.css">
     <ItemGroup>
       <_CssBundle Include="wwwroot/css/site/00-bootstrap.css" />
       <_CssBundle Include="wwwroot/css/site/01-tokens.css" />
@@ -103,6 +111,7 @@
       <_CssBundle Include="wwwroot/css/site/08-animations.css" />
       <_CssBundle Include="wwwroot/css/site/10-f1-quickwins.css" />
       <_CssBundle Include="wwwroot/css/site/11-unique-addons.css" />
+      <_CssBundle Include="wwwroot/css/site/12-mods.css" />
       <_CssBundle Include="wwwroot/css/site.track-setups.css" />
       <_CssBundle Include="wwwroot/css/site.community.css" />
       <_CssBundle Include="wwwroot/css/site/99-home-index.css" />

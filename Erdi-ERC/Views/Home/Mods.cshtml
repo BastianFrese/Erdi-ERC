@@ -1,0 +1,130 @@
+@{
+    ViewData["Title"] = "F1 25 Streckenbranding";
+    Layout = "_Layout";
+
+    // Groesse und Pruefsumme stehen hier, damit sie auf der Seite sichtbar sind.
+    // Die .sha256-Dateien der Telemetrie-Installer geben auf diesem Host 404
+    // (unbekannter Dateityp) — als Text auf der Seite funktioniert es sicher.
+    const string PaketGroesse = "36 MB";
+    const string Pruefsumme = "e7b4b94069fc1741ccd7e29ee4dbd78324d762bb6fc4cbf9807e9cbc9b6fab01";
+}
+
+<section class="f1-hero">
+    <h1 class="f1-hero__title">Die Werbung an allen 28 Strecken ist jetzt ERC</h1>
+    <p class="f1-hero__lead">
+        Getauscht werden nur die Werbebilder an Banden, Pitwall und Bannern. Bremsschilder,
+        Chevrons, DRS-Markierungen und alles, was das Spiel zum Rendern braucht, bleiben
+        unangetastet.
+    </p>
+
+    <div class="f1-hero__actions">
+        <div class="mod-download">
+            <a class="f1-btn f1-btn--primary"
+               href="/downloads/erc-f1-25-werkzeug.zip">
+                <i class="f1-icon" data-lucide="download"></i> Paket herunterladen (@PaketGroesse)
+            </a>
+            <span class="mod-download__meta">
+                Windows &middot; ZIP mit 211 Dateien &middot; SHA256 @Pruefsumme
+            </span>
+        </div>
+    </div>
+</section>
+
+@* Vorher/Nachher: die beiden Bilder sind der eigentliche Beweis. Die
+   Groessen stehen als Attribute im Markup, damit beim Laden nichts springt. *@
+<div class="mod-vergleich">
+    <figure class="mod-vergleich__bild">
+        <img src="~/images/mods/mod-vorher.jpg" width="1400" height="350" loading="lazy" decoding="async"
+             alt="Bande an der Strecke mit DHL-Werbung, vor der Mod" />
+        <figcaption>vorher</figcaption>
+    </figure>
+    <figure class="mod-vergleich__bild">
+        <img src="~/images/mods/mod-nachher.jpg" width="1400" height="350" loading="lazy" decoding="async"
+             alt="Dieselbe Bande mit ERC-Branding, nach der Mod" />
+        <figcaption>nachher</figcaption>
+    </figure>
+</div>
+
+<section class="f1-section">
+    <div class="f1-section__head">
+        <span class="f1-section__bar" aria-hidden="true"></span>
+        <h2 class="f1-section__title">Was getauscht wird</h2>
+    </div>
+
+    <dl class="mod-fakten">
+        <div><dt>Strecken</dt><dd>28, alle Layouts</dd></div>
+        <div><dt>Saisons</dt><dd>2025 und der 2026-DLC</dd></div>
+        <div><dt>Texturen</dt><dd>1137 Werbefl&auml;chen</dd></div>
+        <div><dt>Archivpakete</dt><dd>112</dd></div>
+        <div><dt>Umfang</dt><dd>nur Farbtexturen</dd></div>
+    </dl>
+
+    <p>
+        Jede Fl&auml;che bekommt das Zielflaggenfeld mit dem Schriftzug, in der Gr&ouml;&szlig;e und im
+        Kompressionsformat der Originaldatei. So sieht das aus, wenn man hineinschaut:
+    </p>
+    <p>
+        <code>sp_dhl_d.tif</code> <code>sp_aws_d.tif</code>
+        <code>sp_gulfair_d.tif</code> <code>sp_hashtag_bahraingp_d.tif</code>
+    </p>
+    <p class="mod-zusatz">
+        Nicht angetastet werden Normalmaps (<code>_n</code>), Glanzwerte (<code>_s</code>),
+        Masken (<code>_m</code>) und die Rennbeschilderung. Am Fahrverhalten &auml;ndert sich nichts.
+    </p>
+</section>
+
+<section class="f1-section">
+    <div class="f1-section__head">
+        <span class="f1-section__bar" aria-hidden="true"></span>
+        <h2 class="f1-section__title">Installieren</h2>
+    </div>
+
+    <ol class="mod-schritte">
+        <li>
+            <span class="mod-schritte__titel">Paket herunterladen</span>
+            <span class="mod-schritte__text">
+                Der Knopf oben auf dieser Seite. Das Paket ist @PaketGroesse gro&szlig; und l&auml;uft nur unter
+                Windows. Auspacken, fertig &ndash; installiert wird nichts.
+            </span>
+        </li>
+        <li>
+            <span class="mod-schritte__titel">Patchen.cmd doppelklicken</span>
+            <span class="mod-schritte__text">
+                Das Skript sucht deine F1-25-Installation in den Steam-Bibliotheken selbst,
+                sichert vorher alle Originale und tauscht dann die 112 Pakete. Dauert ein paar
+                Minuten. Das Spiel dabei geschlossen lassen. Liegt dein Spiel woanders:
+                <code>Patchen.cmd -GameDir "D:\Games\F1 25"</code>
+            </span>
+        </li>
+        <li>
+            <span class="mod-schritte__titel">Original zur&uuml;ck mit Zuruecksetzen.cmd</span>
+            <span class="mod-schritte__text">
+                Spielt alles aus der Sicherung zur&uuml;ck. Jederzeit, auch mittendrin.
+                Die Originale liegen nach dem ersten Patchen unter <code>_erc_backup</code> im
+                Spielordner.
+            </span>
+        </li>
+    </ol>
+</section>
+
+<section class="f1-section">
+    <div class="f1-section__head">
+        <span class="f1-section__bar" aria-hidden="true"></span>
+        <h2 class="f1-section__title">Vor dem Online-Fahren</h2>
+    </div>
+
+    <p class="mod-warnung">
+        F1 25 bringt EAAntiCheat mit. Die Mod ist rein kosmetisch, aber AntiCheat sortiert
+        nicht nach Spielrelevanz &ndash; es sieht ge&auml;nderte Spieldateien.
+    </p>
+    <p>
+        Vor Ranglisten- und &ouml;ffentlichen Rennen also <code>Zuruecksetzen.cmd</code> ausf&uuml;hren.
+        In der Liga-Lobby ist es unkritisch, solange alle dasselbe Paket fahren.
+    </p>
+    <p class="mod-zusatz">
+        Gebaut auf <a href="https://gitlab.com/rmc-dev/ego-engine-modding" target="_blank" rel="noopener">Ego Engine Modding</a>.
+        Das Paket enth&auml;lt <strong>keine Spielinhalte</strong> &ndash; es liest deine eigene
+        Installation und schreibt die ge&auml;nderten Texturen dort zur&uuml;ck. Deshalb ist es auch
+        nur @PaketGroesse gro&szlig; und nicht mehrere Gigabyte.
+    </p>
+</section>
