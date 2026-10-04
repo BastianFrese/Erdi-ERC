@@ -32,7 +32,7 @@
 }
 
 .community-kpi-card__value {
-    color: #fff;
+    color: var(--ink);
     font-size: 1.8rem;
     line-height: 1;
     font-family: var(--ff-tech);
@@ -71,7 +71,7 @@
 }
 
 .community-card__title {
-    color: #fff;
+    color: var(--ink);
     font-weight: 700;
     font-size: 1.08rem;
     margin-bottom: .35rem;
@@ -103,7 +103,7 @@
 }
 
 .community-table-wrap thead th {
-    background: rgba(255,255,255,.03);
+    background: var(--rule);
     color: var(--ink-2);
     font-size: .76rem;
     text-transform: uppercase;
@@ -120,19 +120,19 @@
 .community-feed__item {
     padding: .85rem .95rem;
     border-radius: var(--r-3);
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.05);
+    background: var(--rule);
+    border: 1px solid var(--rule);
 }
 
 .community-feed__item strong,
 .community-link-title {
-    color: #fff;
+    color: var(--ink);
 }
 
 .community-form-card {
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-4);
-    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    background: linear-gradient(180deg, var(--rule), var(--rule));
 }
 
 .community-form-card .card-body {
@@ -158,8 +158,8 @@
 .community-stat-tile {
     padding: .65rem .55rem;
     border-radius: 12px;
-    background: rgba(255,255,255,.035);
-    border: 1px solid rgba(255,255,255,.05);
+    background: var(--rule);
+    border: 1px solid var(--rule);
     text-align: center;
 }
 
@@ -171,7 +171,7 @@
 }
 
 .community-stat-tile__value {
-    color: #fff;
+    color: var(--ink);
     font-weight: 700;
     margin-top: .2rem;
 }

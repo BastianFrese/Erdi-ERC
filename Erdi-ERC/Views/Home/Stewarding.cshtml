@@ -5,12 +5,12 @@
     ViewData["Title"] = "Stewarding";
     string TypeColor(string t) => t switch
     {
-        "DSQ"                    => "#ff6b6b",
-        "Zeitstrafe + Strafpunkte"=> "#ff8a4c",
-        "Zeitstrafe"             => "#e8a93d",
-        "Gridstrafe"             => "#5b8cff",
-        "Verwarnung"             => "#c084fc",
-        _                        => "#888"
+        "DSQ"                    => "var(--flag)",
+        "Zeitstrafe + Strafpunkte"=> "var(--slow)",
+        "Zeitstrafe"             => "var(--slow)",
+        "Gridstrafe"             => "var(--wet)",
+        "Verwarnung"             => "var(--fast)",
+        _                        => "var(--ink-2)"
     };
     var totalDocs = Model.Count;
     var dsqCount  = Model.Count(p => p.PenaltyType == "DSQ");
@@ -53,14 +53,14 @@
 .stw-item__reason { font-size: .74rem; color: var(--ink-2); margin-top: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 640px; }
 .stw-item__docbadge { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .2rem; }
 .stw-item__docicon {
-    width: 34px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 2px;
+    width: 34px; height: 44px; background: var(--ink); border: 1px solid var(--ink); border-radius: 2px;
     display: flex; align-items: center; justify-content: center; position: relative;
 }
 .stw-item__docicon::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    background: #e10600; border-radius: 1px 1px 0 0;
+    background: var(--flag); border-radius: 1px 1px 0 0;
 }
-.stw-item__docicon i { font-size: .8rem; color: #111; margin-top: 3px; }
+.stw-item__docicon i { font-size: .8rem; color: var(--kerb); margin-top: 3px; }
 .stw-item__doclabel { font-family: var(--ff-tech); font-size: .5rem; letter-spacing: .06em; color: var(--ink-3); }
 
 /* Filter chips */
@@ -71,7 +71,7 @@
     transition: all var(--t-fast); font-family: var(--ff-tech); letter-spacing: .08em; text-transform: uppercase;
 }
 .stw-filter-btn:hover { border-color: var(--stroke-2); color: var(--ink-2); }
-.stw-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.stw-filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--ink); }
 
 /* Liga-Filter: Button-Liste (GET-Links) statt Dropdown. */
 .stw-league-filter {
@@ -108,14 +108,14 @@
 .stw-league-filter__btn.is-active {
     background: var(--accent);
     border-color: var(--accent);
-    color: #fff;
+    color: var(--ink);
 }
 .stw-league-filter__btn.is-archived {
     border-style: dashed;
     opacity: .85;
 }
 .stw-league-filter__btn.is-archived .bi { color: var(--ink-3); }
-.stw-league-filter__btn.is-archived.is-active .bi { color: #fff; }
+.stw-league-filter__btn.is-archived.is-active .bi { color: var(--ink); }
 
 /* Item als Link: kein Default-Underline, ganzer Bereich klickbar. */
 .stw-item--link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
@@ -138,7 +138,7 @@
         IconLucide = "file-text",
         Label     = "Entscheidungen",
         Value     = totalDocs.ToString(),
-        Sub       = "&#214;ffentliche Dokumente"
+        Sub       = "&var(--fast);ffentliche Dokumente"
     })" />
     <partial name="_F1StatTile" model="@(new F1StatTileVm {
         IconLucide = "x-octagon",
@@ -158,7 +158,7 @@
     <partial name="_F1Section" model="@(new F1SectionVm {
         Chip    = "Dokumente",
         Title   = "Steward-Entscheidungen",
-        SubText = totalDocs > 0 ? $"{totalDocs} Eintr&#228;ge" : null
+        SubText = totalDocs > 0 ? $"{totalDocs} Eintr&var(--wet);ge" : null
     })" />
 
     <div class="stw-filters" id="stwFilters">
@@ -201,7 +201,7 @@
         <div class="empty-state">
             <span class="icon-chip is-cyan"><i class="bi bi-shield-check"></i></span>
             <div class="empty-state__title">Keine Entscheidungen</div>
-            <p class="empty-state__lead">Derzeit sind keine Steward-Entscheidungen ver&#246;ffentlicht.</p>
+            <p class="empty-state__lead">Derzeit sind keine Steward-Entscheidungen ver&var(--wet);ffentlicht.</p>
         </div>
     }
     else

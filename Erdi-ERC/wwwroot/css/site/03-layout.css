@@ -64,7 +64,7 @@
 .nav-alert-badge {
     display: inline-block; margin-left: .3rem;
     min-width: 1.05em; padding: 0 .25em;
-    background: var(--flag); color: #fff;
+    background: var(--flag); color: var(--ink);
     font-size: .68em; font-weight: 700; line-height: 1.5;
     text-align: center; border-radius: var(--r-1);
 }

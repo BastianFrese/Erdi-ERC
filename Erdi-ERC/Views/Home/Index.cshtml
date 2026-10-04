@@ -53,7 +53,7 @@
                 <span class="f1-chip f1-chip--drs"><i class="f1-icon" data-lucide="zap"></i> DRS Active</span>
                 <span class="f1-chip f1-chip--fastest"><i class="f1-icon" data-lucide="timer"></i> Fastest Lap</span>
             </div>
-            <h1 class="f1-hero__title" style="color:#fff;text-shadow:none;">Erdi's<br /><em>Racing</em> Community</h1>
+            <h1 class="f1-hero__title" style="color:var(--ink);text-shadow:none;">Erdi's<br /><em>Racing</em> Community</h1>
             <p class="f1-hero__lead">
                 Drei Ligen. Ein Ziel. <strong>Lights out and away we go.</strong><br />
                 Bestenlisten, Ergebnisse und kommende Events der ERC rund um Twitch-Streamer
@@ -133,8 +133,8 @@
                             string? cssKey = Erdi_ERC.Helpers.F1TeamsHelper.GetCssKeyForDriver((string)w.Winner)
                                 ?? Erdi_ERC.Helpers.F1TeamsHelper.GetTeamByName((string?)w.WinnerTeam)?.CssKey;
                             string teamColor = cssKey != null
-                                ? Erdi_ERC.Helpers.F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == cssKey)?.PrimaryColor ?? "#e10600"
-                                : "#e10600";
+                                ? Erdi_ERC.Helpers.F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == cssKey)?.PrimaryColor ?? "var(--flag)"
+                                : "var(--flag)";
                             <div class="js-winner-slide f1-timing-card__slide @(i == 0 ? "is-active" : "")" data-slide-index="@i">
                                 <div class="f1-timing-row" style="border-left-color:@teamColor;">
                                     <div style="flex:1; min-width:0;">

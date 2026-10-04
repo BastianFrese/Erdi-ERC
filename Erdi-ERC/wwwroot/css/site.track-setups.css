@@ -29,7 +29,7 @@
 }
 
 .setup-card__title {
-    color: #fff;
+    color: var(--ink);
     font-weight: 700;
     font-size: 1.05rem;
 }
@@ -66,7 +66,7 @@
 }
 
 .setup-user-metric strong {
-    color: #fff;
+    color: var(--ink);
     font-family: var(--ff-mono);
     font-size: .88rem;
     text-align: right;
@@ -76,7 +76,7 @@
     position: relative;
     height: 6px;
     border-radius: 999px;
-    background: rgba(255,255,255,.08);
+    background: var(--rule);
     overflow: hidden;
 }
 
@@ -85,19 +85,19 @@
     inset: 0 auto 0 0;
     width: 0;
     border-radius: inherit;
-    background: linear-gradient(90deg, #7a0a05 0%, #e10600 100%);
+    background: linear-gradient(90deg, var(--flag) 0%, var(--flag) 100%);
 
     transition: width var(--t-base);
 }
 
 .setup-strategy-block {
-    background: rgba(232,169,61,.08);
+    background: color-mix(in srgb, var(--slow) 8%, transparent);
 }
 
 /* ── Interaktive Slider (immer aktiv) ────────────────────────────── */
 .setup-ingame-editor input[type="range"]:not(:disabled) {
     cursor: ew-resize;
-    accent-color: #e8002d;
+    accent-color: var(--flag);
 }
 
 .setup-ingame-editor input[type="range"]:not(:disabled):focus {
@@ -109,10 +109,10 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.12);
+    background: var(--rule);
+    border: 1px solid var(--rule);
     border-radius: 6px;
-    color: rgba(255,255,255,.5);
+    color: color-mix(in srgb, var(--ink) 50%, transparent);
     cursor: pointer;
     font-size: .72rem;
     font-weight: 600;
@@ -129,9 +129,9 @@
 }
 
 .setup-reset-btn:hover {
-    color: #e8002d;
-    border-color: rgba(232,0,45,.45);
-    background: rgba(232,0,45,.08);
+    color: var(--flag);
+    border-color: color-mix(in srgb, var(--flag) 45%, transparent);
+    background: color-mix(in srgb, var(--flag) 8%, transparent);
 
 }
 
@@ -155,11 +155,11 @@
     text-transform: uppercase;
 }
 
-.tire--soft { background: rgba(255, 82, 82, .16); color: #ff8f8f; }
-.tire--medium { background: rgba(255, 193, 7, .14); color: #ffd86b; }
-.tire--hard { background: rgba(245, 245, 245, .14); color: #f2f2f2; }
-.tire--inter { background: rgba(76, 175, 80, .16); color: #8eff93; }
-.tire--wet { background: rgba(33, 150, 243, .16); color: #79c8ff; }
+.tire--soft { background: color-mix(in srgb, var(--flag) 16%, transparent); color: var(--flag); }
+.tire--medium { background: color-mix(in srgb, var(--slow) 14%, transparent); color: var(--slow); }
+.tire--hard { background: color-mix(in srgb, var(--ink) 14%, transparent); color: var(--ink); }
+.tire--inter { background: color-mix(in srgb, var(--best) 16%, transparent); color: var(--best); }
+.tire--wet { background: color-mix(in srgb, var(--wet) 16%, transparent); color: var(--wet); }
 
 @media (max-width: 575.98px) {
     .setup-card__head {
@@ -189,7 +189,7 @@
     display: inline-flex;
     align-items: center;
     gap: .4rem;
-    background: rgba(255,255,255,.04);
+    background: var(--rule);
     border: 1px solid var(--stroke-1);
     border-radius: 6px;
     color: var(--ink-2);
@@ -228,13 +228,13 @@
     white-space:nowrap;
 }
 .tier-badge i { font-size:.85rem; }
-.tier-badge--public    { background:rgba(120,140,160,.12); color:#a8b6c4; border-color:rgba(120,140,160,.35); }
-.tier-badge--community { background:rgba(88,101,242,.14);  color:#a4adff; border-color:rgba(88,101,242,.45); }
-.tier-badge--t1        { background:rgba(34,211,238,.12);  color:#67e8f9; border-color:rgba(34,211,238,.45); }
-.tier-badge--t2      { background:rgba(245,158,11,.14);  color:#fbbf24; border-color:rgba(245,158,11,.50); }
+.tier-badge--public    { background:color-mix(in srgb, var(--wet) 12%, transparent); color:var(--wet); border-color:color-mix(in srgb, var(--wet) 35%, transparent); }
+.tier-badge--community { background:color-mix(in srgb, var(--wet) 14%, transparent);  color:var(--wet); border-color:color-mix(in srgb, var(--wet) 45%, transparent); }
+.tier-badge--t1        { background:color-mix(in srgb, var(--wet) 12%, transparent);  color:var(--wet); border-color:color-mix(in srgb, var(--wet) 45%, transparent); }
+.tier-badge--t2      { background:color-mix(in srgb, var(--slow) 14%, transparent);  color:var(--slow); border-color:color-mix(in srgb, var(--slow) 50%, transparent); }
 .tier-badge--t3      {
-    background:linear-gradient(135deg,rgba(244,63,94,.18),rgba(217,70,239,.14));
-    color:#fda4af;border-color:rgba(244,63,94,.55);
+    background:linear-gradient(135deg,color-mix(in srgb, var(--flag) 18%, transparent),color-mix(in srgb, var(--fast) 14%, transparent));
+    color:var(--flag);border-color:color-mix(in srgb, var(--flag) 55%, transparent);
 
 }
 
@@ -257,10 +257,10 @@
     font:800 .6rem/1 var(--ff-body);letter-spacing:.06em;
 }
 .setup-freshness--new {
-    background:rgba(225,6,0,.16);color:#ff6b63;border:1px solid rgba(225,6,0,.5);
+    background:color-mix(in srgb, var(--flag) 16%, transparent);color:var(--flag);border:1px solid color-mix(in srgb, var(--flag) 50%, transparent);
 }
 .setup-freshness--updated {
-    background:rgba(245,158,11,.14);color:#fbbf24;border:1px solid rgba(245,158,11,.5);
+    background:color-mix(in srgb, var(--slow) 14%, transparent);color:var(--slow);border:1px solid color-mix(in srgb, var(--slow) 50%, transparent);
 }
 
 /* ───── F1-Broadcast-Intro: stellt neue Setups einmalig vor (localStorage = gelesen) ───── */
@@ -272,7 +272,7 @@
 .setup-intro[hidden] { display:none; }
 .setup-intro::before {
     content:"";position:absolute;inset:0;
-    background:rgba(5,8,14,.72);
+    background:color-mix(in srgb, var(--wet) 72%, transparent);
     animation:setupIntroFade .35s ease both;
 }
 body.setup-intro-lock { overflow:hidden; }
@@ -287,7 +287,7 @@ body.setup-intro-lock { overflow:hidden; }
 /* statische Speed-Lines im Hintergrund — bewusst ohne Animation */
 .setup-intro__panel::before {
     content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px);
+    background:repeating-linear-gradient(115deg,var(--rule) 0 2px,transparent 2px 14px);
 }
 .setup-intro__head { position:relative;padding:1.1rem 1.25rem .9rem;border-bottom:1px solid var(--stroke-1); }
 .setup-intro__head::before {

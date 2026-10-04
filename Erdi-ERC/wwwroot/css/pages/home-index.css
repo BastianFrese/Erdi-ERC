@@ -964,7 +964,7 @@
 
 /* =====================================================================
    CHIPS: KEINE SIGNALFARBE ALS DEKORATION
-   Gemessen im DOM: .f1-chip--drs (Leuchtgruen #00D26A) steht auf
+   Gemessen im DOM: .f1-chip--drs (Leuchtgruen var(--best)) steht auf
    "DRS Active", "Top 3" UND "Laeuft" — eine Klasse, drei Bedeutungen.
    Dazu .f1-chip--fastest in Magenta fuer "Fastest Lap". Beide behaupten
    einen Zustand, den es nicht gibt, und verbrennen damit Gruen ("DRS

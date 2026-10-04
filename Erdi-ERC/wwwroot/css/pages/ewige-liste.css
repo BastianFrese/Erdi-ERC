@@ -28,7 +28,7 @@
     display: inline-flex;
     align-items: center;
     padding: .45rem .95rem;
-    background: rgba(255,255,255,.03);
+    background: var(--rule);
     color: var(--ink-3);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-2);
@@ -40,14 +40,14 @@
     white-space: nowrap;
 }
 .f1-ewige-tabs__tab:hover {
-    background: rgba(255,255,255,.07);
+    background: var(--rule);
     color: var(--ink);
     border-color: var(--stroke-2);
 }
 .f1-ewige-tabs__tab.is-active {
-    background: rgba(88,183,201,.1);
+    background: color-mix(in srgb, var(--wet) 10%, transparent);
     color: var(--sig-cyan);
-    border-color: rgba(88,183,201,.4);
+    border-color: color-mix(in srgb, var(--wet) 40%, transparent);
 
 }
 
@@ -57,7 +57,7 @@
 .f1-ewige-card {
     position: relative;
     background:
-        linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%),
+        linear-gradient(180deg, var(--rule), transparent 55%),
         var(--surface-1);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-3);
@@ -76,7 +76,7 @@
     gap: .55rem;
     padding: .75rem 1rem;
     border-bottom: 1px solid var(--stroke-1);
-    background: linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+    background: linear-gradient(180deg, var(--rule), transparent);
 }
 .f1-ewige-toolbar__search {
     display: flex;
@@ -84,7 +84,7 @@
     gap: .5rem;
     flex: 1 1 240px;
     min-width: 0;
-    background: rgba(0,0,0,.35);
+    background: color-mix(in srgb, var(--track) 35%, transparent);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-2);
     padding: .42rem .7rem;
@@ -114,7 +114,7 @@
     align-items: center;
     gap: .4rem;
     padding: .45rem .85rem;
-    background: rgba(255,255,255,.04);
+    background: var(--rule);
     color: var(--ink-2);
     border: 1px solid var(--stroke-2);
     border-radius: var(--r-2);
@@ -126,8 +126,8 @@
     white-space: nowrap;
 }
 .f1-ewige-toolbar__export:hover {
-    background: rgba(255,255,255,.08);
-    color: #fff;
+    background: var(--rule);
+    color: var(--ink);
     border-color: var(--stroke-3);
     transform: translateY(-1px);
 }
@@ -160,7 +160,7 @@
     position: sticky;
     top: 0;
     z-index: 3;
-    background: linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.3));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--track) 60%, transparent), color-mix(in srgb, var(--track) 30%, transparent));
     color: var(--ink-3);
     font: 700 .67rem/1 var(--ff-tech);
     letter-spacing: var(--letter-track);
@@ -180,7 +180,7 @@
     transition: background var(--t-fast);
 }
 .f1-ewige-table tbody tr:hover {
-    background: rgba(255,255,255,.035);
+    background: var(--rule);
 }
 .f1-ewige-table tbody tr:last-child td { border-bottom: 0; }
 

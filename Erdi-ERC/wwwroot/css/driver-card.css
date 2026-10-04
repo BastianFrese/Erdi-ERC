@@ -4,13 +4,13 @@
    ═══════════════════════════════════════════════════════════════ */
 
 .erc-card {
-  --dc-accent: #e10600;          /* team color, set inline per card */
-  --dc-edge:   #e10600;          /* ERC signature red edge          */
+  --dc-accent: var(--flag);          /* team color, set inline per card */
+  --dc-edge:   var(--flag);          /* ERC signature red edge          */
   width: 360px;
   height: 640px;
   position: relative;
   font-family: var(--ff-body, 'Inter', system-ui, sans-serif);
-  color: #fff;
+  color: var(--ink);
   flex: 0 0 auto;
 }
 
@@ -19,7 +19,7 @@
   position: absolute;
   inset: 0;
   border-radius: 22px;
-  background: radial-gradient(120% 80% at 50% 0%, #15171c 0%, #0a0b0e 46%, #050507 100%);
+  background: radial-gradient(120% 80% at 50% 0%, var(--kerb) 0%, var(--track) 46%, var(--track) 100%);
   overflow: hidden;
 
 }
@@ -30,7 +30,7 @@
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(-45deg,
-    rgba(255,255,255,.015) 0, rgba(255,255,255,.015) 1px,
+    var(--rule) 0, var(--rule) 1px,
     transparent 1px, transparent 13px);
   pointer-events: none;
   z-index: 0;
@@ -82,18 +82,18 @@
   font-weight: 900;
   font-style: italic;
   letter-spacing: .06em;
-  background: linear-gradient(160deg, #b07020 0%, #f0cc5a 38%, #ffe898 56%, #c88a2a 100%);
+  background: linear-gradient(160deg, var(--slow) 0%, var(--slow) 38%, var(--slow) 56%, var(--slow) 100%);
   
   
   
-  filter: drop-shadow(0 0 8px rgba(210,150,30,.4));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--slow) 40%, transparent));
     color: var(--ink);
 }
 .erc-brand__sub {
   font-size: 7.5px;
   font-weight: 800;
   letter-spacing: .34em;
-  color: rgba(255,255,255,.5);
+  color: color-mix(in srgb, var(--ink) 50%, transparent);
   text-transform: uppercase;
   margin-top: 3px;
 }
@@ -111,21 +111,21 @@
   height: 26px;
   padding: 0 9px;
   border-radius: 6px;
-  background: rgba(0,0,0,.5);
-  border: 1px solid rgba(255,255,255,.14);
+  background: color-mix(in srgb, var(--track) 50%, transparent);
+  border: 1px solid var(--rule-strong);
 }
 .erc-chip__val {
   font-size: 13px;
   font-weight: 800;
   letter-spacing: .04em;
-  color: #fff;
+  color: var(--ink);
 }
 .erc-chip__lbl {
   font-size: 7px;
   font-weight: 700;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.5);
+  color: color-mix(in srgb, var(--ink) 50%, transparent);
 }
 
 /* Nation badge: real flag + 3-letter F1 code, bulletproof on Windows */
@@ -146,7 +146,7 @@
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
-  color: #fff;
+  color: var(--ink);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -171,7 +171,7 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-    rgba(5,5,7,.5) 0%, transparent 18%, transparent 52%, rgba(5,5,7,.75) 84%, #050507 100%);
+    color-mix(in srgb, var(--track) 50%, transparent) 0%, transparent 18%, transparent 52%, color-mix(in srgb, var(--track) 75%, transparent) 84%, var(--track) 100%);
 }
 
 /* Big poster number — vertical, team color, readable */
@@ -185,8 +185,8 @@
   font-style: italic;
   line-height: .8;
   color: var(--dc-accent);
-  -webkit-text-stroke: 1.5px rgba(255,255,255,.9);
-  text-shadow: 0 6px 24px rgba(0,0,0,.55);
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--ink) 90%, transparent);
+  text-shadow: 0 6px 24px color-mix(in srgb, var(--track) 55%, transparent);
   letter-spacing: -.05em;
   z-index: 2;
   pointer-events: none;
@@ -209,7 +209,7 @@
   text-transform: uppercase;
   letter-spacing: .02em;
   line-height: .98;
-  text-shadow: 0 3px 16px rgba(0,0,0,.95);
+  text-shadow: 0 3px 16px color-mix(in srgb, var(--track) 95%, transparent);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -237,20 +237,20 @@
 }
 .erc-meta__cell + .erc-meta__cell {
   padding-left: 10px;
-  border-left: 1px solid rgba(255,255,255,.14);
+  border-left: 1px solid var(--rule-strong);
 }
 .erc-meta__lbl {
   font-size: 7px;
   font-weight: 800;
   letter-spacing: .2em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.45);
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
 }
 .erc-meta__val {
   font-size: 11px;          /* Basis; driver-card-fit.js verkleinert bei Bedarf */
   font-weight: 700;
   letter-spacing: .02em;
-  color: rgba(255,255,255,.92);
+  color: color-mix(in srgb, var(--ink) 92%, transparent);
   text-transform: uppercase;
   /* Einzeilig – das Autofit-Skript schrumpft den Text, statt ihn zu kappen. */
   white-space: nowrap;
@@ -297,9 +297,9 @@
   font-weight: 900;
   font-style: italic;
   line-height: .82;
-  color: #fff;
+  color: var(--ink);
   letter-spacing: -.04em;
-  text-shadow: 0 2px 14px rgba(0,0,0,.6);
+  text-shadow: 0 2px 14px color-mix(in srgb, var(--track) 60%, transparent);
 }
 .erc-tower__num small { font-size: 22px; opacity: .7; vertical-align: super; }
 .erc-tower__rule {
@@ -327,7 +327,7 @@
   font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.55);
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
   text-align: center;
   line-height: 1;
   white-space: nowrap;
@@ -365,11 +365,11 @@
   font-style: italic;
   letter-spacing: -.04em;
   line-height: 1;
-  background: linear-gradient(160deg, #b07020 0%, #f0cc5a 36%, #ffe898 55%, #c88a2a 100%);
+  background: linear-gradient(160deg, var(--slow) 0%, var(--slow) 36%, var(--slow) 55%, var(--slow) 100%);
   
   
   
-  filter: drop-shadow(0 6px 26px rgba(210,150,30,.32));
+  filter: drop-shadow(0 6px 26px color-mix(in srgb, var(--slow) 32%, transparent));
     color: var(--ink);
 }
 
@@ -390,7 +390,7 @@
   text-transform: uppercase;
   letter-spacing: .02em;
   line-height: 1;
-  text-shadow: 0 2px 12px rgba(0,0,0,.8);
+  text-shadow: 0 2px 12px color-mix(in srgb, var(--track) 80%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -419,14 +419,14 @@
   font-weight: 800;
   letter-spacing: .26em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.42);
+  color: color-mix(in srgb, var(--ink) 42%, transparent);
 }
 .erc-card--stats .erc-stats-eyebrow::before,
 .erc-card--stats .erc-stats-eyebrow::after {
   content: '';
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+  background: linear-gradient(90deg, transparent, var(--rule-strong), transparent);
 }
 
 /* Stat grid — FIFA 2×3 */
@@ -449,7 +449,7 @@
   bottom: 2px;
   width: 1px;
   transform: translateX(-50%);
-  background: linear-gradient(180deg, transparent, rgba(255,255,255,.16) 14%, rgba(255,255,255,.16) 86%, transparent);
+  background: linear-gradient(180deg, transparent, var(--rule-strong) 14%, var(--rule-strong) 86%, transparent);
 }
 .erc-stat {
   display: flex;
@@ -462,7 +462,7 @@
   font-weight: 900;
   font-style: italic;
   line-height: 1;
-  color: #fff;
+  color: var(--ink);
   min-width: 46px;
   text-align: right;
 }
@@ -471,7 +471,7 @@
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.55);
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
   line-height: 1.15;
 }
 
@@ -493,7 +493,7 @@
   font-weight: 800;
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.4);
+  color: color-mix(in srgb, var(--ink) 40%, transparent);
 }
 .erc-card__hw img {
   height: 18px;
@@ -508,6 +508,6 @@
   font-weight: 700;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.7);
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
   white-space: nowrap;
 }
