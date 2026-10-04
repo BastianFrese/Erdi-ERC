@@ -1,24 +1,20 @@
 @model Erdi_ERC.Models.UiComponents.F1PageHeroVm
 @*
-    F1 Page Hero — Broadcast-Style Hero-Block.
-    Verwendet bestehende CSS-Klassen aus pages/home-index.css (.f1-hero*).
-    Optional FX-Layer (Ghost-Text) braucht pages/home-index-fx.css.
+    Seiten-Kopfzeile. CSS: pages/home-index.css (.f1-hero*).
+
+    Frueher trug sie zwei leere FX-Ebenen (Telemetry, Chequer) und die Rubrik
+    als umrandetes Kaestchen mit Farbkante ueber der Ueberschrift. Das Kaestchen
+    ist weg: eine Rubrikzeile ueber einer Ueberschrift ist genau das
+    "ueberfluessige Label ueber Inhalt", das der Auftrag als Klischee nennt.
+    Die Information bleibt — sie steht jetzt als Text da, nicht als Kasten.
 *@
 <section class="f1-hero">
-    @if (Model.Telemetry)
-    {
-    }
-    @if (Model.Chequer)
-    {
-        <div class="f1-hero__chequer" aria-hidden="true"></div>
-    }
-
     @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
     {
-        <span class="f1-hero__eyebrow">
+        <p class="f1-hero__eyebrow">
             @if (Model.LiveDot) { <span class="f1-pulse-dot" aria-hidden="true"></span> }
             @Model.Eyebrow
-        </span>
+        </p>
     }
 
     <h1 class="f1-hero__title">
@@ -39,7 +35,7 @@
         <div class="f1-hero__actions">
             @foreach (var a in Model.Actions)
             {
-                <a class="btn f1-btn f1-btn--@a.Variant" href="@a.Href"
+                <a class="f1-btn f1-btn--@a.Variant" href="@a.Href"
                    @(string.IsNullOrEmpty(a.Target) ? "" : $"target=\"{a.Target}\" rel=\"noopener\"")>
                     @if (!string.IsNullOrWhiteSpace(a.IconLucide))
                     {
@@ -50,5 +46,4 @@
             }
         </div>
     }
-
 </section>

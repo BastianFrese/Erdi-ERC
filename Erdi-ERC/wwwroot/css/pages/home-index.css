@@ -54,19 +54,17 @@
 }
 
 /* Eyebrow + Live-Pille */
+/* Die Rubrikzeile: Text, kein Kasten. Ein umrandetes Kaestchen mit Farbkante
+   ueber einer Ueberschrift war das generische Muster. */
 .f1-hero__eyebrow {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: .55rem;
-    padding: .35rem .8rem;
-    background: var(--rule);
-    border: 1px solid var(--stroke-1);
-    border-left: 3px solid var(--accent);
+    margin: 0 0 .9rem;
     color: var(--ink-2);
-    font: 600 var(--fs-eyebrow)/1 var(--ff-tech);
-    letter-spacing: var(--letter-track);
+    font: 600 var(--fs-s)/1.2 var(--ff);
+    letter-spacing: .16em;
     text-transform: uppercase;
-    border-radius: 2px;
 }
 .f1-hero__eyebrow .f1-pulse-dot {
     width: 8px; height: 8px;
@@ -657,11 +655,12 @@
     line-height: 1.45;
     margin-bottom: .9rem;
 }
+/* Frueher ein umrandeter Kasten IN der Karte — Karte im Kasten, genau das
+   Muster, das der Auftrag ausschliesst. Jetzt durch eine Hairline abgesetzt. */
 .f1-leaguecard__event {
-    padding: .65rem .75rem;
-    background: color-mix(in srgb, var(--track) 40%, transparent);
-    border: 1px solid var(--stroke-1);
-    border-radius: var(--r-2);
+    margin-top: .9rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--rule);
 }
 .f1-leaguecard__event-label {
     font: 700 .6rem/1 var(--ff-tech);
