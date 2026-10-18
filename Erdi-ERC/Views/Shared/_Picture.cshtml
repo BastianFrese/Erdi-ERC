@@ -6,8 +6,14 @@
   anhand seiner eigenen Capabilities + Accept-Header aus.
 
   Pfad-Konvention:
-    Original:   /uploads/events/{guid}.jpg
-    2x-Variante: /uploads/events/{guid}@2x.jpg  (nur wenn Model.Retina == true)
+    Original:     /uploads/events/{guid}.jpg
+    WebP 1x:      /uploads/events/{guid}.webp        (offline, tools/MediaWebPConverter)
+    WebP 2x:      /uploads/events/{guid}@2x.webp     (nur wenn Model.Retina)
+    Original 2x:  /uploads/events/{guid}@2x.jpg      (nur wenn Model.Retina, optional)
+
+  width/height: kommen automatisch aus dem Dateikopf (Helpers/ImageDimensions),
+  damit der Browser den Platz vor dem Laden reserviert (kein Layout-Sprung).
+  Explizit am Model gesetzte Werte gewinnen.
 
   Cache: HTTP-Header Cache-Control: public, max-age=31536000, immutable
   wird von der /uploads-Static-File-Middleware in Program.cs gesetzt;
@@ -16,45 +22,51 @@
   Vorteile ggü. Block 2:
    - Kein CPU-Job beim Upload (kein Fire-and-forget-Race-Conditions)
    - Kein 5x Speicherverbrauch pro Bild
-   - Keine 404s für nicht-existierende Varianten
+   - Keine 404s für nicht-existierende Varianten (jede Variante wird geprüft)
    - Browser-native AVIF/WebP-Auswahl bleibt erhalten (Format vom Uploader)
 *@
 @using System.Text
 @using System.Web
+@using Erdi_ERC.Helpers
 @{
     var src = Model.Src;
     var isPriority = string.Equals(Model.Priority, "high", StringComparison.OrdinalIgnoreCase);
     var effectiveLoading = isPriority ? "eager" : Model.Loading;
     var fetchPriority = isPriority ? "high" : null;
-    var sizes = string.IsNullOrWhiteSpace(Model.Sizes) ? "100vw" : Model.Sizes;
 
-    // 2x-Retina-Pfad: <stem>@2x.<ext>
-    string? retinaSrc = null;
-    if (Model.Retina)
-    {
-        int dotIdx = src.LastIndexOf('.');
-        int slashIdx = src.LastIndexOf('/');
-        var stem = (dotIdx >= 0 && (slashIdx < 0 || dotIdx > slashIdx)) ? src[..dotIdx] : src;
-        var ext = (dotIdx >= 0 && (slashIdx < 0 || dotIdx > slashIdx)) ? src[dotIdx..] : string.Empty;
-        retinaSrc = $"{stem}@2x{ext}";
-    }
+    var env = (Microsoft.AspNetCore.Hosting.IWebHostEnvironment?)Context.RequestServices.GetService(typeof(Microsoft.AspNetCore.Hosting.IWebHostEnvironment));
+    var webRoot = env?.WebRootPath ?? "wwwroot";
 
-    // WebP-Zweitvariante (Offline erzeugt vom Tool tools/MediaWebPConverter):
+    // WebP-Zweitvarianten (Offline erzeugt vom Tool tools/MediaWebPConverter):
     // existiert {stem}.webp neben dem Original, bekommt der Browser eine
     // <source type="image/webp"> — deutlich kleinere Downloads, gleiche URLs
-    // für DB/Cache. Ohne Variante greift der Original-Fallback.
-    var env = (Microsoft.AspNetCore.Hosting.IWebHostEnvironment?)Context.RequestServices.GetService(typeof(Microsoft.AspNetCore.Hosting.IWebHostEnvironment));
-    var webpSrc = env is null ? null : TryGetWebpVariant(src, env.WebRootPath ?? "wwwroot");
+    // für DB/Cache. Mit Model.Retina kommt zusätzlich die @2x-Variante hinein,
+    // damit HiDPI-Displays scharf sehen, ohne die 1x-Grenze (1200px) zu sprengen.
+    // Ohne Variante greift der Original-Fallback.
+    var webpSrc = env is null ? null : TryVariant(src, webRoot, ".webp");
+    var webp2x  = (env is null || !Model.Retina) ? null : TryVariant(src, webRoot, "@2x.webp");
+    var webpSrcset = webpSrc is null
+        ? null
+        : webp2x is null ? webpSrc : $"{webpSrc} 1x, {webp2x} 2x";
+
+    // 2x im Originalformat, falls das Tool so etwas abgelegt hat (Fallback für Browser ohne WebP).
+    var ext = ExtensionOf(src);
+    var retinaSrc = (Model.Retina && ext is not null) ? TryVariant(src, webRoot, "@2x" + ext) : null;
+
+    // Intrinsische Maße aus dem Dateikopf → reservierter Platz gegen Layout-Sprung (CLS).
+    var dim = ImageDimensions.TryReadFromUpload(webRoot, src);
+    var width  = Model.Width  ?? dim?.Width;
+    var height = Model.Height ?? dim?.Height;
 
     var imgAttrs = new StringBuilder();
     imgAttrs.Append(" src=\"").Append(HttpUtility.HtmlAttributeEncode(src)).Append("\"");
     imgAttrs.Append(" alt=\"").Append(HttpUtility.HtmlAttributeEncode(Model.Alt ?? "")).Append("\"");
     if (!string.IsNullOrEmpty(Model.CssClass))
         imgAttrs.Append(" class=\"").Append(HttpUtility.HtmlAttributeEncode(Model.CssClass)).Append("\"");
-    if (Model.Width.HasValue)
-        imgAttrs.Append(" width=\"").Append(Model.Width.Value).Append("\"");
-    if (Model.Height.HasValue)
-        imgAttrs.Append(" height=\"").Append(Model.Height.Value).Append("\"");
+    if (width.HasValue)
+        imgAttrs.Append(" width=\"").Append(width.Value).Append("\"");
+    if (height.HasValue)
+        imgAttrs.Append(" height=\"").Append(height.Value).Append("\"");
     imgAttrs.Append(" loading=\"").Append(HttpUtility.HtmlAttributeEncode(effectiveLoading)).Append("\"");
     imgAttrs.Append(" decoding=\"").Append(HttpUtility.HtmlAttributeEncode(Model.Decoding)).Append("\"");
     if (retinaSrc != null)
@@ -66,9 +78,9 @@
         imgAttrs.Append(" ").Append(Model.ExtraAttrs);
 }
 <picture>
-    @if (!string.IsNullOrEmpty(webpSrc))
+    @if (!string.IsNullOrEmpty(webpSrcset))
     {
-        <source type="image/webp" srcset="@webpSrc">
+        <source type="image/webp" srcset="@webpSrcset">
     }
     <img @Html.Raw(imgAttrs.ToString())>
 </picture>
@@ -76,9 +88,22 @@
     // Prozessweiter Cache der Varianten-Existenz (pos. wie neg. Ergebnisse),
     // damit pro Bild max. einmal File.Exists läuft. Neue Varianten werden mit
     // dem nächsten App-Restart sichtbar (Publish startet die App eh neu).
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> WebpVariantExists = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> VariantExists = new();
 
-    private static string? TryGetWebpVariant(string src, string webRootPath)
+    private static string? ExtensionOf(string src)
+    {
+        if (string.IsNullOrWhiteSpace(src)) return null;
+        if (src.StartsWith("//") || src.Contains("://", StringComparison.Ordinal)) return null;
+        var path = src.StartsWith("~/", StringComparison.Ordinal) ? src[2..] : src;
+        var dot = path.LastIndexOf('.');
+        var slash = path.LastIndexOf('/');
+        return (dot >= 0 && dot > slash) ? path[dot..].ToLowerInvariant() : null;
+    }
+
+    // Liefert den Varianten-Pfad, wenn die Datei existiert, sonst null. Suffix ist z. B.
+    // ".webp", "@2x.webp" oder "@2x.jpg". Nur Uploads, nur die vom Tool konvertierten
+    // Formate (jpg/jpeg/png) — sonst gäbe es keine Variante.
+    private static string? TryVariant(string src, string webRootPath, string suffix)
     {
         if (string.IsNullOrWhiteSpace(src)) return null;
         if (src.StartsWith("//") || src.Contains("://", StringComparison.Ordinal)) return null; // extern/absolut
@@ -91,9 +116,9 @@
         var ext = path[dot..].ToLowerInvariant();
         if (ext is not (".jpg" or ".jpeg" or ".png")) return null; // nur vom Tool konvertierte Formate
 
-        var webpPath = path[..dot] + ".webp";
-        var exists = WebpVariantExists.GetOrAdd(webpPath, p =>
+        var variantPath = path[..dot] + suffix;
+        var exists = VariantExists.GetOrAdd(variantPath, p =>
             File.Exists(System.IO.Path.Combine(webRootPath, p.TrimStart('/').Replace('/', System.IO.Path.DirectorySeparatorChar))));
-        return exists ? webpPath : null;
+        return exists ? variantPath : null;
     }
 }

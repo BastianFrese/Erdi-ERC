@@ -1,10 +1,10 @@
 // =====================================================================
 // MediaWebPConverter — Offline-Werkzeug (KEIN Teil der Web-App)
 //
-// Erzeugt für jedes Bild in einem Uploads-Ordner eine WebP-Zweitdatei
-// ({stem}.webp) direkt daneben. Die DB-Referenzen auf die Original-URLs
-// bleiben unangetastet; das _Picture-Partial liefert die Variante aus,
-// sobald sie existiert (Fallback: Original).
+// Erzeugt für jedes Bild in einem Uploads-Ordner zwei WebP-Zweitdateien
+// ({stem}.webp für 1x und {stem}@2x.webp für HiDPI) direkt daneben. Die
+// DB-Referenzen auf die Original-URLs bleiben unangetastet; das _Picture-Partial
+// liefert die Varianten aus, sobald sie existieren (Fallback: Original).
 //
 // Idempotent: existiert die .webp bereits und ist NICHT älter als das
 // Original, wird sie übersprungen. Dadurch jederzeit re-runnable
@@ -28,8 +28,13 @@ if (!Directory.Exists(root))
     return 1;
 }
 
-const int MaxEdge = 1200;   // längste Kante — reicht für Hero/Lightbox (Zoom bis 4x)
-const int Quality = 75;     // WebP-Qualität (lossy) — Foto-tauglich, deutlich kleiner als q82
+const int MaxEdge = 1200;    // längste Kante der 1x-Variante — reicht für Hero/Lightbox
+const int MaxEdge2x = 2400;  // 2x-Variante für HiDPI-Displays ({stem}@2x.webp)
+const int Quality = 75;      // WebP-Qualität (lossy) — Foto-tauglich, deutlich kleiner als q82
+
+// Beide Varianten pro Bild. Das _Picture-Partial prüft die Existenz und nimmt
+// die @2x-Datei nur, wenn Model.Retina gesetzt ist (sonst reicht die 1x-Quelle).
+var variants = new (int Edge, string Suffix)[] { (MaxEdge, ".webp"), (MaxEdge2x, "@2x.webp") };
 
 var extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png" };
 
@@ -41,45 +46,49 @@ foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirecto
     var ext = Path.GetExtension(file);
     if (!extensions.Contains(ext)) continue;
 
-    var webpPath = Path.Combine(
-        Path.GetDirectoryName(file)!,
-        Path.GetFileNameWithoutExtension(file) + ".webp");
-
+    var dir = Path.GetDirectoryName(file)!;
+    var stem = Path.GetFileNameWithoutExtension(file);
     before += new FileInfo(file).Length;
 
-    // Idempotenz: nur konvertieren, wenn Variante fehlt ODER älter als das Original
-    if (File.Exists(webpPath) &&
-        File.GetLastWriteTimeUtc(webpPath) >= File.GetLastWriteTimeUtc(file))
+    foreach (var (edge, suffix) in variants)
     {
-        skipped++;
-        after += new FileInfo(webpPath).Length;
-        continue;
-    }
+        var target = Path.Combine(dir, stem + suffix);
+        var label = Path.GetRelativePath(root, target);
 
-    try
-    {
-        using var image = await Image.LoadAsync(file);
-        if (image.Width > MaxEdge || image.Height > MaxEdge)
+        // Idempotenz: nur konvertieren, wenn Variante fehlt ODER älter als das Original
+        if (File.Exists(target) &&
+            File.GetLastWriteTimeUtc(target) >= File.GetLastWriteTimeUtc(file))
         {
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Max,
-                Size = new Size(MaxEdge, MaxEdge)
-            }));
+            skipped++;
+            after += new FileInfo(target).Length;
+            continue;
         }
-        await image.SaveAsWebpAsync(webpPath, new SixLabors.ImageSharp.Formats.Webp.WebpEncoder
+
+        try
         {
-            Quality = Quality
-        });
-        after += new FileInfo(webpPath).Length;
-        converted++;
-        Console.WriteLine($"OK   {Path.GetRelativePath(root, file)}");
-    }
-    catch (Exception ex)
-    {
-        failed++;
-        Console.Error.WriteLine($"FEHLER {Path.GetRelativePath(root, file)}: {ex.Message}");
-        if (File.Exists(webpPath)) File.Delete(webpPath); // keine halben Varianten liegen lassen
+            using var image = await Image.LoadAsync(file);
+            if (image.Width > edge || image.Height > edge)
+            {
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Max,
+                    Size = new Size(edge, edge)
+                }));
+            }
+            await image.SaveAsWebpAsync(target, new SixLabors.ImageSharp.Formats.Webp.WebpEncoder
+            {
+                Quality = Quality
+            });
+            after += new FileInfo(target).Length;
+            converted++;
+            Console.WriteLine($"OK   {label}");
+        }
+        catch (Exception ex)
+        {
+            failed++;
+            Console.Error.WriteLine($"FEHLER {label}: {ex.Message}");
+            if (File.Exists(target)) File.Delete(target); // keine halben Varianten liegen lassen
+        }
     }
 }
 
