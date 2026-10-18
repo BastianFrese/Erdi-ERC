@@ -143,7 +143,7 @@ namespace Erdi_ERC.Services
                             buckets[cssKey] = bucket;
                         }
 
-                        bucket.AddRace(league.Id, points, finish.Position);
+                        bucket.AddRace(league.Id, race.RowId, points, finish.Position);
                     }
                 }
             }
@@ -191,10 +191,14 @@ namespace Erdi_ERC.Services
                 SecondaryColor = secondaryColor;
             }
 
-            public void AddRace(string leagueId, decimal points, int position)
+            /// <summary>
+            /// Zählt ein Ergebnis des Teams. <c>points</c>/<c>Wins</c>/<c>Top-N</c> sind
+            /// pro Fahrer-Ergebnis, <see cref="Events"/> dagegen pro <b>Rennen</b>:
+            /// zwei Autos desselben Teams in einem Rennen ergeben ein Rennen, nicht zwei.
+            /// </summary>
+            public void AddRace(string leagueId, int raceId, decimal points, int position)
             {
                 Points += points;
-                Events++;
 
                 if (position == 1) Wins++;
                 if (position == 2) SecondPlaces++;
@@ -208,7 +212,9 @@ namespace Erdi_ERC.Services
                     la = new LeagueAggregate();
                     PerLeague[leagueId] = la;
                 }
-                la.Add(points, position);
+                // Ein Rennen liegt immer in genau einer Liga → Summe der Liga-Rennen
+                // ist die Gesamtzahl der Team-Rennen.
+                if (la.Add(raceId, points, position)) Events++;
             }
 
             public OverallConstructorRow ToRow(int position)
@@ -249,17 +255,23 @@ namespace Erdi_ERC.Services
 
         private sealed class LeagueAggregate
         {
+            private readonly HashSet<int> _races = new();
+
             public decimal Points { get; private set; }
             public int Events { get; private set; }
             public int Wins { get; private set; }
             public int BestPosition { get; private set; } = int.MaxValue;
 
-            public void Add(decimal points, int position)
+            /// <summary>Gibt <c>true</c> zurück, wenn das Rennen für dieses Team neu ist —
+            /// nur dann darf der Rennen-Zähler hochgehen.</summary>
+            public bool Add(int raceId, decimal points, int position)
             {
                 Points += points;
-                Events++;
                 if (position == 1) Wins++;
                 if (position > 0 && position < BestPosition) BestPosition = position;
+                var isNewRace = _races.Add(raceId);
+                if (isNewRace) Events++;
+                return isNewRace;
             }
         }
     }

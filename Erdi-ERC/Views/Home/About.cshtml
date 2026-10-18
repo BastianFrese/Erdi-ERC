@@ -4,11 +4,10 @@
     ViewData["Title"] = p != null ? $"Über {p.DisplayName}" : "Über mich";
     Layout = "_Layout";
 
-    string accent = p?.AccentColor ?? "#e10600";
+    string accent = p?.AccentColor ?? "var(--flag)";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
     <style>
     /* ── Hero banner ────────────────────────────────────────────────── */
     .abp-hero {
@@ -24,17 +23,16 @@
         position: absolute; inset: 0;
         background:
             linear-gradient(to bottom,
-                rgba(0,0,0,.10) 0%,
-                rgba(0,0,0,.20) 55%,
-                rgba(7,8,11,.70) 85%,
-                rgba(7,8,11,.95) 100%);
+                color-mix(in srgb, var(--track) 10%, transparent) 0%,
+                color-mix(in srgb, var(--track) 20%, transparent) 55%,
+                color-mix(in srgb, var(--wet) 70%, transparent) 85%,
+                color-mix(in srgb, var(--wet) 95%, transparent) 100%);
     }
     .abp-hero__accent {
         position: absolute;
         bottom: 0; left: 0; right: 0;
         height: 4px;
         background: @accent;
-        box-shadow: 0 0 24px @(accent)88;
     }
     .abp-hero__number {
         position: absolute;
@@ -42,7 +40,7 @@
         font-family: var(--ff-tech);
         font-size: clamp(4rem, 10vw, 8rem);
         font-weight: 900;
-        color: rgba(255,255,255,.06);
+        color: var(--rule);
         line-height: 1;
         pointer-events: none;
         user-select: none;
@@ -74,7 +72,6 @@
         object-fit: cover;
         background: var(--surface-2);
         flex-shrink: 0;
-        box-shadow: 0 4px 24px rgba(0,0,0,.5);
     }
     .abp-avatar-fb {
         width: 96px; height: 96px;
@@ -84,7 +81,6 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 2.8rem;
         flex-shrink: 0;
-        box-shadow: 0 4px 24px rgba(0,0,0,.5);
     }
     .abp-identity__info {
         flex: 1;
@@ -235,7 +231,6 @@
     </style>
 }
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 @if (p != null && !string.IsNullOrEmpty(p.BackgroundUrl))
 {
@@ -271,7 +266,6 @@
 @if (p == null)
 {
     <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-        Eyebrow   = "ERC",
         Title     = "Über",
         Highlight = "mich",
         Lead      = "Diese Seite wurde noch nicht eingerichtet.",
@@ -321,25 +315,25 @@ else
                 <div class="abp-socials">
                     @if (!string.IsNullOrEmpty(p.DiscordUsername))
                     {
-                        <span class="abp-social-btn" style="color:#5865f2;border-color:rgba(88,101,242,.3);">
+                        <span class="abp-social-btn" style="color:#5865f2;border-color:color-mix(in srgb, var(--wet) 30%, transparent);">
                             <i class="bi bi-discord"></i> @p.DiscordUsername
                         </span>
                     }
                     @if (!string.IsNullOrEmpty(p.TwitchUrl))
                     {
-                        <a class="abp-social-btn" href="@p.TwitchUrl" target="_blank" rel="noopener" style="color:#9146ff;">
+                        <a class="abp-social-btn" href="@p.TwitchUrl" target="_blank" rel="noopener" style="color:var(--fast);">
                             <i class="bi bi-twitch"></i> Twitch
                         </a>
                     }
                     @if (!string.IsNullOrEmpty(p.YouTubeUrl))
                     {
-                        <a class="abp-social-btn" href="@p.YouTubeUrl" target="_blank" rel="noopener" style="color:#ff0000;">
+                        <a class="abp-social-btn" href="@p.YouTubeUrl" target="_blank" rel="noopener" style="color:var(--flag);">
                             <i class="bi bi-youtube"></i> YouTube
                         </a>
                     }
                     @if (!string.IsNullOrEmpty(p.InstagramUrl))
                     {
-                        <a class="abp-social-btn" href="@p.InstagramUrl" target="_blank" rel="noopener" style="color:#e1306c;">
+                        <a class="abp-social-btn" href="@p.InstagramUrl" target="_blank" rel="noopener" style="color:var(--flag);">
                             <i class="bi bi-instagram"></i> Instagram
                         </a>
                     }
@@ -351,7 +345,7 @@ else
                     }
                     @if (!string.IsNullOrEmpty(p.SteamUrl))
                     {
-                        <a class="abp-social-btn" href="@p.SteamUrl" target="_blank" rel="noopener" style="color:#1b9bc2;">
+                        <a class="abp-social-btn" href="@p.SteamUrl" target="_blank" rel="noopener" style="color:var(--wet);">
                             <i class="bi bi-steam"></i> Steam
                         </a>
                     }

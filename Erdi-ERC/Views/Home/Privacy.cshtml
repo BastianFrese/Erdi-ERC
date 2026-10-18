@@ -5,18 +5,15 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
     <style>
-        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
-        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden; }
+        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,var(--rule),transparent); }
         .doc-card__body { padding:1.25rem;line-height:1.75; }
     </style>
 }
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "Legal · Datenschutz",
     Title     = "Datenschutz",
     Highlight = "erklärung",
     Lead      = "Volle Transparenz darüber, welche Daten wir verarbeiten &ndash; und welche nicht.",
@@ -46,7 +43,7 @@
 
         <div class="col-12 reveal">
             <div class="doc-card">
-                <div class="doc-card__head"><i class="bi bi-database-fill" style="color:var(--text-amber,#f59e0b);"></i> 2. Welche Daten wir speichern</div>
+                <div class="doc-card__head"><i class="bi bi-database-fill" style="color:var(--text-amber,var(--slow));"></i> 2. Welche Daten wir speichern</div>
                 <div class="doc-card__body">
                     <p>Wenn du dich über <strong>Discord OAuth2</strong> anmeldest, übermittelt Discord folgende Daten an uns:</p>
                     <ul class="mb-3">
@@ -80,7 +77,7 @@
 
         <div class="col-md-6 reveal">
             <div class="doc-card h-100">
-                <div class="doc-card__head"><i class="bi bi-x-octagon-fill" style="color:#22c55e;"></i> 4. Was wir <span style="color:#22c55e;">nicht</span> tun</div>
+                <div class="doc-card__head"><i class="bi bi-x-octagon-fill" style="color:var(--best);"></i> 4. Was wir <span style="color:var(--best);">nicht</span> tun</div>
                 <div class="doc-card__body">
                     <ul class="mb-0">
                         <li>Kein Tracking oder Analyse-Cookies</li>
@@ -95,7 +92,7 @@
 
         <div class="col-md-6 reveal">
             <div class="doc-card h-100">
-                <div class="doc-card__head"><i class="bi bi-cookie" style="color:var(--text-amber,#f59e0b);"></i> 5. Cookies</div>
+                <div class="doc-card__head"><i class="bi bi-cookie" style="color:var(--text-amber,var(--slow));"></i> 5. Cookies</div>
                 <div class="doc-card__body">
                     <p class="mb-1">Wir setzen ausschließlich technisch notwendige Cookies:</p>
                     <ul class="mb-0">

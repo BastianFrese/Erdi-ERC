@@ -86,7 +86,7 @@
                 document.addEventListener('DOMContentLoaded', function () {
                     var m = document.querySelector('meta[name="theme-color"]');
                     if (m) m.setAttribute('content',
-                        document.documentElement.getAttribute('data-theme') === 'light' ? '#ffffff' : '#06070a');
+                        document.documentElement.getAttribute('data-theme') === 'light' ? 'var(--ink)' : 'var(--kerb)');
                 });
             } catch (e) { /* Private Mode -> dunkel (Default) */ }
         })();
@@ -101,7 +101,7 @@
     }
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#06070a" />
+    <meta name="theme-color" content="var(--kerb)" />
     <title>@ViewData["Title"] · Erdi's Racing Community</title>
     <meta name="description" content="@_ogDescription" />
 
@@ -120,6 +120,10 @@
     @* ---------- PWA ---------- *@
     <link rel="manifest" href="~/site.webmanifest" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    @* Die apple-Variante ist die einzige, die iOS liest; Chrome meldet sie als
+       veraltet und will die Standardform. Beide stehen lassen — sie schliessen
+       sich nicht aus, und eine davon allein laesst jeweils eine Plattform weg. *@
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Erdi's Racing Community" />
 
@@ -128,22 +132,17 @@
     <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" asp-append-version="true" />
     <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" asp-append-version="true" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    @* Non-blocking: media="print" + onload Trick. Browser holt das CSS, parst es aber ohne Render-Block. Fallback <noscript> fuer User ohne JS. *@
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></noscript>
+    @* Schriften kommen selbst gehostet aus 01-tokens.css (@font-face auf /fonts/).
+       Kein Fremd-Origin mehr: kein preconnect, kein media="print"-Trick, kein noscript.
+       Bootstrap Icons folgen in Task 12 ebenfalls selbst gehostet und beschnitten;
+       bis dahin bleiben die bi-Glyphen leer. *@
 
     @* LCP-Preload: Hero-Logo ist nur auf Pages relevant, die es above-the-fold zeigen (via ViewData["PreloadHero"]="hero"). Sonst wuerde jede Page 247 KB vorladen. *@
     @if ((ViewData["PreloadHero"] as string) == "hero")
     {
-        <link rel="preload" as="image" href="~/images/ERCLogoHighRes1.png" fetchpriority="high">
+        <link rel="preload" as="image" href="~/images/ERCLogo.webp" fetchpriority="high">
     }
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     @* site.bundled.css ist die Konkatenation aller CSS-Partials aus /css/site/ — 1 Request statt 13 @import-Roundtrips. Wird via MSBuild-Target bei jedem Build neu erzeugt (inkl. Minify zu site.bundled.min.css). *@
     <link rel="stylesheet" href="~/css/site.bundled.min.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -152,25 +151,6 @@
 
     @* ---------- RACE-START LIGHTS (initial loader, einmalig pro Session) ---------- *@
     <div class="race-lights" id="raceStartLights" role="status" aria-label="Race start lights">
-        <div class="race-lights__bg" aria-hidden="true">
-            <div class="race-lights__chequers"></div>
-            <div class="race-lights__speedlines"></div>
-            <div class="race-lights__scan"></div>
-            <div class="race-lights__icons">
-                <i class="bi bi-trophy-fill" style="--i:0"></i>
-                <i class="bi bi-flag-fill" style="--i:1"></i>
-                <i class="bi bi-lightning-charge-fill" style="--i:2"></i>
-                <i class="bi bi-speedometer2" style="--i:3"></i>
-                <i class="bi bi-stopwatch-fill" style="--i:4"></i>
-                <i class="bi bi-fire" style="--i:5"></i>
-                <i class="bi bi-tools" style="--i:6"></i>
-                <i class="bi bi-gear-fill" style="--i:7"></i>
-                <i class="bi bi-trophy-fill" style="--i:8"></i>
-                <i class="bi bi-flag-fill" style="--i:9"></i>
-                <i class="bi bi-lightning-charge-fill" style="--i:10"></i>
-                <i class="bi bi-speedometer2" style="--i:11"></i>
-            </div>
-        </div>
         <div class="race-lights__rig" aria-hidden="true">
             <span class="race-lights__lamp" data-lamp="1"></span>
             <span class="race-lights__lamp" data-lamp="2"></span>
@@ -178,245 +158,95 @@
             <span class="race-lights__lamp" data-lamp="4"></span>
             <span class="race-lights__lamp" data-lamp="5"></span>
         </div>
-        <div class="race-lights__car" aria-hidden="true">
-            <svg viewBox="0 0 360 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-                <defs>
-                    <linearGradient id="rlCarBody" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="@_winnerCarPrimaryLight"/>
-                        <stop offset="55%" stop-color="@_winnerCarPrimary"/>
-                        <stop offset="100%" stop-color="@_winnerCarPrimaryDark"/>
-                    </linearGradient>
-                    <linearGradient id="rlCarShine" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="rgba(255,255,255,.55)"/>
-                        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                    </linearGradient>
-                    <radialGradient id="rlWheel" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%"  stop-color="#3a3a3a"/>
-                        <stop offset="60%" stop-color="#111"/>
-                        <stop offset="100%" stop-color="#000"/>
-                    </radialGradient>
-                    <linearGradient id="rlHalo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"  stop-color="#222"/>
-                        <stop offset="100%" stop-color="#0a0a0a"/>
-                    </linearGradient>
-                </defs>
-
-                <!-- ground shadow -->
-                <ellipse cx="180" cy="98" rx="150" ry="6" fill="rgba(0,0,0,.55)"/>
-
-                <!-- rear wing -->
-                <rect x="20" y="38" width="14" height="34" rx="2" fill="#1a1a1a"/>
-                <rect x="14" y="34" width="28" height="6"  rx="2" fill="#111"/>
-                <rect x="14" y="68" width="28" height="4"  rx="1" fill="#111"/>
-
-                <!-- floor / sidepod -->
-                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarBody)"/>
-                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarShine)" opacity=".35"/>
-
-                <!-- engine cover / airbox -->
-                <path d="M120,60 L210,60 L205,40 L150,38 L130,48 Z" fill="url(#rlCarBody)"/>
-                <path d="M150,38 L205,40 L200,46 L155,44 Z" fill="rgba(255,255,255,.18)"/>
-                <!-- airbox intake -->
-                <path d="M170,38 L195,40 L190,30 L175,30 Z" fill="#0a0a0a"/>
-
-                <!-- halo + cockpit -->
-                <path d="M150,52 Q180,18 215,52" stroke="url(#rlHalo)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M158,52 Q182,30 210,52" fill="#0d0d0d"/>
-                <circle cx="184" cy="44" r="3.2" fill="#1a1a1a"/>
-
-                <!-- nose -->
-                <path d="M210,60 L320,72 L330,72 L320,60 Z" fill="url(#rlCarBody)"/>
-                <path d="M210,60 L320,72 L320,66 L210,58 Z" fill="rgba(255,255,255,.22)"/>
-
-                <!-- front wing -->
-                <rect x="318" y="74" width="32" height="6"  rx="2" fill="#111"/>
-                <rect x="322" y="68" width="24" height="4"  rx="1" fill="#1a1a1a"/>
-                <rect x="328" y="62" width="14" height="4"  rx="1" fill="#1a1a1a"/>
-
-                <!-- wheels -->
-                <g class="race-lights__car-wheel race-lights__car-wheel--rear">
-                    <circle cx="78" cy="80" r="18" fill="url(#rlWheel)"/>
-                    <circle cx="78" cy="80" r="6"  fill="#333"/>
-                    <line x1="78" y1="64" x2="78" y2="96" stroke="#444" stroke-width="1.5"/>
-                    <line x1="62" y1="80" x2="94" y2="80" stroke="#444" stroke-width="1.5"/>
-                </g>
-                <g class="race-lights__car-wheel race-lights__car-wheel--front">
-                    <circle cx="290" cy="80" r="18" fill="url(#rlWheel)"/>
-                    <circle cx="290" cy="80" r="6"  fill="#333"/>
-                    <line x1="290" y1="64" x2="290" y2="96" stroke="#444" stroke-width="1.5"/>
-                    <line x1="274" y1="80" x2="306" y2="80" stroke="#444" stroke-width="1.5"/>
-                </g>
-
-                <!-- livery accent -->
-                <path d="M70,72 L300,72 L300,76 L70,76 Z" fill="@_winnerCarSecondary" opacity=".55"/>
-                <text x="80" y="74" font-family="Orbitron, sans-serif" font-size="7" font-weight="800" fill="#fff" opacity=".85">ERDI&#x27;S RACING COMMUNITY</text>
-            </svg>
-            <div class="race-lights__car-flame" aria-hidden="true"></div>
-        </div>
         <div class="race-lights__label" id="raceStartLabel">Lights out…</div>
     </div>
 
-    <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
-
-    @* ---------- TOPBAR ---------- *@
-    <header class="topbar" id="mainNav">
-        <nav class="navbar navbar-expand-xl navbar-dark">
-            <div class="app-shell-container d-flex align-items-center w-100">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark" aria-hidden="true">R</span>
-                    <span class="brand-word">Erdi&#x27;s&nbsp;Racing&nbsp;Community</span>
+    @* ---------- BROADCAST-STREIFEN ----------
+       Duenn und hartkantig statt der frueheren Glas-Pille. Die Untermenues der alten
+       Navbar (Liga, Partner, Mehr) sind in den Footer gewandert — ein Broadcast-Streifen
+       hat keine Untermenues. *@
+    <header class="strip" id="mainNav">
+        <div class="app-shell-container">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <span class="strip__kicker">Erdi&#x27;s Racing Community</span>
+            </a>
+            <nav class="strip__nav" aria-label="Hauptnavigation">
+                <a class="@IsActive("Stats", "Erdi10")" asp-controller="Stats" asp-action="Erdi10">Racing Hub</a>
+                <a class="@IsActive("Races", "Results", "LeagueResults")" asp-controller="Races" asp-action="Results">Ergebnisse</a>
+                <a class="@IsActive("Races", "AllRaces", "RaceDetail")" asp-controller="Races" asp-action="AllRaces">Rennen</a>
+                <a class="@IsActive("Setups", "TrackSetups")" asp-controller="Setups" asp-action="TrackSetups">
+                    Setups
+                    @if (_latestSetupActivityIso != null)
+                    {
+                        <span class="nav-alert-badge" id="setupNewsBadge"
+                              data-latest="@_latestSetupActivityIso"
+                              data-on-setups="@(_isOnSetupsPage ? "true" : "false")"
+                              hidden role="status" aria-label="Neue Setups verf&uuml;gbar">!</span>
+                    }
                 </a>
+                <a class="@IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">Events</a>
+                <a class="@IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">Kalender</a>
+                <a class="@IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">Bewerbung</a>
+                @* Die Neben-Seiten lagen frueher in Bootstrap-Aufklappmenues der
+                   alten Navigationsleiste. Der flache Streifen traegt sieben
+                   Hauptziele; der Rest haengt hier. aria-expanded beschreibt
+                   einen reinen Aufklapper — kein role="menu": das verlangt
+                   Pfeiltasten-Navigation, und hier fuehrt Tab durch die Links. *@
+                <button type="button" class="strip__more-btn" id="moreBtn"
+                        aria-expanded="false" aria-controls="morePanel">
+                    Mehr<i class="f1-icon" data-lucide="chevron-down" aria-hidden="true"></i>
+                </button>
+            </nav>
+            @* Ausserhalb der Navigation: die Reihe hat overflow-x:auto (sie wischt
+               seitlich) und wuerde ein Panel darin abschneiden. .strip ist sticky
+               und damit positioniert — das Panel haengt an seinem unteren Rand. *@
+            <div class="strip__more-panel" id="morePanel">
+                <div class="strip__more-inner">
+                    <a class="@IsActive("Stats", "EwigeListe")" asp-controller="Stats" asp-action="EwigeListe">Ewige Liste</a>
+                    <a class="@IsActive("Stats", "HallOfFame")" asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a>
+                    <a class="@IsActive("Stats", "DriverLevels")" asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel&nbsp;/&nbsp;XP</a>
+                    <a class="@IsActive("Community", "Teams", "Team")" asp-controller="Community" asp-action="Teams">Teams</a>
+                    <a class="@IsActive("Community", "ReserveExchange")" asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-B&ouml;rse</a>
+                    <a class="@IsActive("Community", "CommunityVotes")" asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a>
+                    <a class="@IsActive("Community", "Highlights", "CommunityNews")" asp-controller="Community" asp-action="Highlights">Highlights</a>
+                    <a class="@IsActive("Home", "Stewarding", "StewardingDoc")" asp-controller="Home" asp-action="Stewarding">Stewarding</a>
+                    <a class="@IsActive("Home", "Faq")" asp-controller="Home" asp-action="Faq">FAQ</a>
+                    <a href="/about/erdi10">Über mich</a>
+                    <a class="@IsActive("Home", "Regelwerk")" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a>
+                </div>
+            </div>
+            <div class="strip__status">
                 @if (_activeStream != null)
                 {
                     <a href="@(_activeStream.Url ?? "https://twitch.tv/erdi10")" target="_blank" rel="noopener"
-                       class="live-race-pill ms-2 text-decoration-none" title="@_activeStream.Title">
-                        <span class="live-race-pill__dot"></span>
-                        <span>Live</span>
+                       title="@_activeStream.Title" class="d-flex align-items-center gap-2">
+                        <span class="live-dot" aria-hidden="true"></span><span>Live</span>
                     </a>
                 }
-                <button class="navbar-toggler ms-auto" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#mainNavbarCollapse"
-                        aria-controls="mainNavbarCollapse" aria-expanded="false" aria-label="Navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <button type="button" id="ercThemeToggle" class="btn btn-sm btn-ghost"
+                        aria-label="Design umschalten (hell/dunkel)" aria-pressed="false"
+                        title="Design umschalten">
+                    <i class="bi bi-sun" aria-hidden="true"></i>
                 </button>
-
-                <div class="navbar-collapse collapse" id="mainNavbarCollapse">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Stats", "Erdi10")" asp-controller="Stats" asp-action="Erdi10">
-                                <i class="bi bi-speedometer2 nav-ico" aria-hidden="true"></i>Racing&nbsp;Hub
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @((IsActive("Races", "Results", "LeagueResults") == "active" || IsActive("Races", "AllRaces", "RaceDetail") == "active") ? "active" : "")" href="#" id="racesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-flag-fill nav-ico" aria-hidden="true"></i>ERC Liga
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="racesDropdown">
-                                <li><a class="dropdown-item" asp-controller="Races" asp-action="Results"><i class="bi bi-trophy-fill me-2"></i>Results</a></li>
-                                <li><a class="dropdown-item" asp-controller="Races" asp-action="AllRaces"><i class="bi bi-flag-fill me-2"></i>Alle Rennen</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Setups", "TrackSetups")" asp-controller="Setups" asp-action="TrackSetups">
-                                <i class="bi bi-sliders2 nav-ico" aria-hidden="true"></i>Setups
-                                @if (_latestSetupActivityIso != null)
-                                {
-                                    <span class="nav-alert-badge" id="setupNewsBadge"
-                                          data-latest="@_latestSetupActivityIso"
-                                          data-on-setups="@(_isOnSetupsPage ? "true" : "false")"
-                                          hidden role="status" aria-label="Neue Setups verfügbar">!</span>
-                                }
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">
-                                <i class="bi bi-calendar2-event-fill nav-ico" aria-hidden="true"></i>Events
-                            </a>
-                        </li>
-@*                         <li class="nav-item">
-                            <a class="nav-link @IsActive("Community", "CommunityNews")" asp-controller="Community" asp-action="CommunityNews">
-                                <i class="bi bi-megaphone-fill nav-ico" aria-hidden="true"></i>News
-                            </a>
-                        </li> *@
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">
-                                <i class="bi bi-calendar-check-fill nav-ico" aria-hidden="true"></i>Kalender
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">
-                                <i class="bi bi-clipboard2-check nav-ico" aria-hidden="true"></i>Bewerbung
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="partnerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-stars nav-ico" aria-hidden="true"></i>Partner
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="partnerDropdown">
-                                <li><a class="dropdown-item" href="https://mozaracing.com/?ref=erdi10" target="_blank" rel="noopener">MOZA Racing</a></li>
-                                <li><a class="dropdown-item" href="https://www.instant-gaming.com/?igr=Erdi10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-grid-3x3-gap-fill nav-ico" aria-hidden="true"></i>Mehr
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="moreDropdown">
-                                <li><a class="dropdown-item" asp-controller="Stats" asp-action="EwigeListe" data-race-lights="force" data-race-lights-text="Hall of Fame · Lights out…" data-race-lights-go="WELCOME TO THE HALL OF FAME">Ewige Liste</a></li><li><a class="dropdown-item" asp-controller="Stats" asp-action="HallOfFame">Hall of Fame</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="Teams">Teams</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="ReserveExchange">Reservefahrer-Börse</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="CommunityVotes">Community-Votings</a></li><li><a class="dropdown-item" asp-controller="Community" asp-action="Highlights">Highlights</a></li><li><a class="dropdown-item" asp-controller="Stats" asp-action="DriverLevels">Fahrerlevel / XP</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Stewarding">Stewarding</a></li><li><a class="dropdown-item" asp-controller="Home" asp-action="Faq">FAQ</a></li>
-                                <li><a class="dropdown-item" href="/about/erdi10">Über mich</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Regelwerk">Regelwerk</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Impressum">Impressum</a></li>
-                                @if (User.Identity?.IsAuthenticated == true)
-                                {
-                                    <li><a class="dropdown-item" asp-controller="Application" asp-action="MyApplication"><i class="bi bi-clipboard2-check me-1"></i>Meine Bewerbungen</a></li>
-                                }
-                                @if (SiteSettings.IsAppDownloadEnabled())
-                                {
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" asp-controller="Home" asp-action="DownloadApp"><i class="bi bi-download me-1"></i>App herunterladen</a></li>
-                                }
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
-                                <li><a class="dropdown-item" href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener">Erdi10 Shop</a></li>
-                                @if (User.HasClaim("erdi:admin", "true"))
-                                {
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item fw-semibold" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i> Admin Dashboard</a></li>
-                                }
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <ul class="navbar-nav navbar-nav--auth align-items-lg-center gap-2">
-                        <li class="nav-item">
-                            <button type="button" id="ercThemeToggle" class="btn btn-sm btn-ghost"
-                                    aria-label="Design umschalten (hell/dunkel)" aria-pressed="false"
-                                    title="Design umschalten">
-                                <i class="bi bi-sun" aria-hidden="true"></i>
-                            </button>
-                        </li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="navbar-auth-user navbar-auth-user--link"
-                                   asp-controller="Profile" asp-action="Index"
-                                   title="@User.Identity!.Name – Profil öffnen">
-                                    <span class="live-dot" aria-hidden="true"></span>
-                                    <span class="navbar-auth-user__name">@User.Identity!.Name</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-ghost">
-                                        <i class="bi bi-box-arrow-right"></i>Logout
-                                    </button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">
-                                    <i class="bi bi-discord"></i>Login
-                                </a>
-                            </li>
-                        }
-                    </ul>
-
-                    @* Trennstrich + "F1"-Logo am rechten Pillen-Rand (Desktop) *@
-                    <div class="nav-f1-badge d-none d-xl-flex" aria-hidden="true">
-                        <span class="nav-f1-badge__divider"></span>
-                        <span class="nav-f1-badge__logo">F1</span>
-                    </div>
-                </div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Profile" asp-action="Index"
+                       title="@User.Identity!.Name &ndash; Profil &ouml;ffnen">@User.Identity!.Name</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-ghost">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">Login</a>
+                }
             </div>
-        </nav>
+        </div>
     </header>
 
     @* ---------- MAIN ---------- *@
-    <main role="main" id="appMain" class="page-transition is-entering">
+    <main role="main" id="appMain" class="page">
         <div class="app-shell-container">
             @RenderBody()
         </div>
@@ -425,21 +255,49 @@
     @* ---------- BODY-LEVEL OVERLAYS (außerhalb von main, damit position:fixed korrekt am Viewport bleibt) ---------- *@
     @await RenderSectionAsync("BodyOverlays", required: false)
 
-    @* ---------- FOOTER ---------- *@
+    @* ---------- FOOTER ----------
+       Traegt seit dem Umbau auch die Navigation, die frueher in den Untermenues der
+       Navbar hing (Liga, Partner, Mehr). Ein Broadcast-Streifen hat keine Untermenues,
+       die Wege zu den Nebenseiten muessen aber erreichbar bleiben. *@
     <footer class="footer">
-        <div class="app-shell-container d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <span><i class="bi bi-c-circle me-1"></i>@DateTime.UtcNow.Year &middot; Erdi's&nbsp;Racing&nbsp;Community</span>
-            <span class="d-none d-md-inline text-mute text-tech" style="font-size:.7rem;letter-spacing:.22em;">F1 26 · SIM RACING LEAGUE</span>
-            <span class="d-flex align-items-center flex-wrap gap-3">
-                <a asp-controller="Home" asp-action="Privacy">Datenschutz</a>
-                <a asp-controller="Home" asp-action="Impressum">Impressum</a>
-                <span class="d-flex align-items-center gap-2">
-                    <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" aria-label="Twitch" title="Twitch"><i class="bi bi-twitch"></i></a>
-                    <a href="https://www.youtube.com/@@PzudemK" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube"><i class="bi bi-youtube"></i></a>
-                    <a href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><i class="bi bi-instagram"></i></a>
-                    <a href="https://open.spotify.com/intl-de/artist/4VaOsXeYI0DNmfkPhP40L9" target="_blank" rel="noopener" aria-label="Spotify" title="Spotify"><i class="bi bi-spotify"></i></a>
+        <div class="app-shell-container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <span>@DateTime.UtcNow.Year&ensp;Erdi&#x27;s Racing Community</span>
+                <span class="d-none d-md-inline" style="letter-spacing:.22em;">F1 26&ensp;SIM RACING LEAGUE</span>
+                <span class="d-flex align-items-center gap-3">
+                    <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" title="Twitch">Twitch</a>
+                    <a href="https://www.youtube.com/@@PzudemK" target="_blank" rel="noopener" title="YouTube">YouTube</a>
+                    <a href="https://www.instagram.com/erdi10f1/" target="_blank" rel="noopener" title="Instagram">Instagram</a>
+                    <a href="https://open.spotify.com/intl-de/artist/4VaOsXeYI0DNmfkPhP40L9" target="_blank" rel="noopener" title="Spotify">Spotify</a>
                 </span>
-            </span>
+            </div>
+
+            <ul class="footer__links">
+                @* Die Inhaltsseiten (Ewige Liste, Teams, Fahrerlevel …) stehen jetzt
+                   im "Mehr"-Aufklapper der Navigation: im Footer waren sie nur
+                   erreichbar, wenn man ganz nach unten scrollt — auf dem Handy
+                   bei langen Seiten praktisch gar nicht. Hier bleiben die Shops,
+                   das Rechtliche und die Zugaenge, die es nur angemeldet gibt. *@
+                <li><a href="https://mozaracing.com/?ref=erdi10" target="_blank" rel="noopener">MOZA Racing</a></li>
+                <li><a href="https://www.instant-gaming.com/?igr=Erdi10Gamer" target="_blank" rel="noopener">Instant Gaming</a></li>
+                <li><a href="https://teams.spized.com/erc-fanshop" target="_blank" rel="noopener">ERC Fanshop</a></li>
+                <li><a href="https://erdi10.myspreadshop.de/" target="_blank" rel="noopener">Erdi10 Shop</a></li>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <li><a asp-controller="Application" asp-action="MyApplication">Meine Bewerbungen</a></li>
+                }
+                @if (SiteSettings.IsAppDownloadEnabled())
+                {
+                    <li><a asp-controller="Home" asp-action="DownloadApp">App herunterladen</a></li>
+                }
+                <li><a asp-controller="Home" asp-action="Mods">F1-25-Mod</a></li>
+                @if (User.HasClaim("erdi:admin", "true"))
+                {
+                    <li><a asp-controller="Admin" asp-action="Index">Admin Dashboard</a></li>
+                }
+                <li><a asp-controller="Home" asp-action="Privacy">Datenschutz</a></li>
+                <li><a asp-controller="Home" asp-action="Impressum">Impressum</a></li>
+            </ul>
         </div>
     </footer>
 
@@ -476,7 +334,6 @@
 
             // ---------- Scroll progress + sticky nav state ----------
             const nav = document.getElementById('mainNav');
-            const bar = document.getElementById('scrollProgress');
             // rAF-gedrosselt: höchstens ein Style-Write pro Frame statt bei jedem Scroll-Tick
             // (verhindert Layout-Thrash und hält das Scrollen flüssig).
             let scrollTicking = false;
@@ -485,7 +342,6 @@
                 const h = document.documentElement;
                 const scrolled = (h.scrollTop || document.body.scrollTop);
                 const max = (h.scrollHeight - h.clientHeight) || 1;
-                if (bar) bar.style.width = ((scrolled / max) * 100) + '%';
                 if (nav) nav.classList.toggle('is-scrolled', scrolled > 12);
             };
             const onScroll = () => {
@@ -495,21 +351,6 @@
             };
             document.addEventListener('scroll', onScroll, { passive: true });
             applyScroll();
-
-            // ---------- Reveal on scroll ----------
-            if ('IntersectionObserver' in window) {
-                // threshold:0 + rootMargin statt threshold:0.12 — sonst blenden Sections, die
-                // höher als ~8× Viewport sind (z.B. die volle Setup-Liste ohne Filter), NIE ein:
-                // 12% der Section sind dann nie gleichzeitig sichtbar -> is-visible wird nie gesetzt
-                // -> opacity:0 bleibt. So triggert das Einblenden, sobald die Section in den unteren
-                // Viewport-Rand kommt, unabhängig von ihrer Höhe.
-                const io = new IntersectionObserver((entries) => {
-                    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
-                }, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
-                document.querySelectorAll('.reveal, .f1-stagger').forEach(el => io.observe(el));
-            } else {
-                document.querySelectorAll('.reveal, .f1-stagger').forEach(el => el.classList.add('is-visible'));
-            }
 
             // ---------- Live Race-Lights pills (data-race-state-target="<ISO>") ----------
             (function () {
@@ -610,9 +451,9 @@
                         if (i < lamps.length) {
                             lamps[i].classList.add('is-on');
                             i++;
-                            setTimeout(tick, 480);
+                            setTimeout(tick, 220);
                         } else {
-                            const hold = 400 + Math.random() * 800;
+                            const hold = 260;
                             setTimeout(() => {
                                 lamps.forEach(l => l.classList.remove('is-on'));
                                 finish();
@@ -648,165 +489,6 @@
                     destroyRig();
                 }
 
-                // ---- Slow-navigation overlay ----
-                if (reduce) return;
-
-                const SLOW_THRESHOLD_MS = 260;
-                const isInternalNavLink = (a) => {
-                    if (!a || !a.getAttribute('href')) return false;
-                    const href = a.getAttribute('href');
-                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
-                    if (a.hasAttribute('download')) return false;
-                    if (a.dataset.bsToggle) return false;
-                    const target = a.getAttribute('target');
-                    if (target && target !== '' && target !== '_self') return false;
-                    try {
-                        const u = new URL(a.href, location.href);
-                        if (u.origin !== location.origin) return false;
-                        if (u.pathname === location.pathname && u.search === location.search && u.hash) return false;
-                        return true;
-                    } catch { return false; }
-                };
-
-                let armedTimer = null;
-                const cancelArmed = () => {
-                    if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
-                };
-
-                document.addEventListener('click', (e) => {
-                    if (e.defaultPrevented) return;
-                    if (e.button !== 0) return;
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                    const a = e.target.closest('a[href]');
-                    if (!isInternalNavLink(a)) return;
-
-                    cancelArmed();
-
-                    const force = a.dataset.raceLights === 'force';
-                    const customStart = a.dataset.raceLightsText;
-                    const customGo = a.dataset.raceLightsGo;
-                    const armDelay = force ? 0 : SLOW_THRESHOLD_MS;
-
-                    const arm = () => {
-                        sessionStorage.setItem(navKey, '1');
-                        if (customStart) sessionStorage.setItem(navLabelKey, customStart);
-                        if (customGo) sessionStorage.setItem(navGoKey, customGo);
-                        if (customStart) labelStartText = customStart;
-                        if (customGo) labelGoText = customGo;
-                        playSequence();
-                    };
-
-                    if (armDelay === 0) arm();
-                    else armedTimer = setTimeout(arm, armDelay);
-                }, true);
-
-                // Also handle form posts (e.g. filter form, save buttons)
-                document.addEventListener('submit', (e) => {
-                    const f = e.target;
-                    if (!(f instanceof HTMLFormElement)) return;
-                    try {
-                        const action = f.getAttribute('action') || location.href;
-                        const u = new URL(action, location.href);
-                        if (u.origin !== location.origin) return;
-                    } catch { return; }
-                    cancelArmed();
-                    armedTimer = setTimeout(() => {
-                        sessionStorage.setItem(navKey, '1');
-                        playSequence();
-                    }, SLOW_THRESHOLD_MS);
-                }, true);
-
-                // If navigation is cancelled / page stays alive, hide overlay after a while
-                window.addEventListener('pageshow', () => {
-                    cancelArmed();
-                });
-                window.addEventListener('beforeunload', cancelArmed);
-            })();
-
-            // ---------- Page transition (enter on load, leave on internal nav) ----------
-            (function () {
-                const main = document.getElementById('appMain');
-                if (!main) return;
-                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                const rig = document.getElementById('raceStartLights');
-
-                // Hide content while race-lights overlay is visible, then play enter once it's done.
-                const lightsActive = rig && !rig.classList.contains('is-done') && rig.style.display !== 'none';
-                if (lightsActive) {
-                    main.classList.remove('is-entering');
-                    main.style.opacity = '0';
-                    const onDone = () => {
-                        if (rig.classList.contains('is-done') || rig.style.display === 'none') {
-                            main.style.removeProperty('opacity');
-                            // restart enter animation
-                            main.classList.remove('is-entering');
-                            // force reflow
-                            void main.offsetWidth;
-                            main.classList.add('is-entering');
-                            obs.disconnect();
-                        }
-                    };
-                    const obs = new MutationObserver(onDone);
-                    obs.observe(rig, { attributes: true, attributeFilter: ['class', 'style'] });
-                }
-
-                // Clean up enter class after animation so reflows don't replay
-                main.addEventListener('animationend', (e) => {
-                    if (e.animationName === 'page-enter') {
-                        main.classList.remove('is-entering');
-                    }
-                }, true);
-
-                if (reduce) return;
-
-                // Trigger leave on internal navigation (links + forms)
-                const isInternal = (a) => {
-                    if (!a) return false;
-                    const href = a.getAttribute('href');
-                    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
-                    if (a.hasAttribute('download')) return false;
-                    if (a.dataset.bsToggle) return false;
-                    const target = a.getAttribute('target');
-                    if (target && target !== '' && target !== '_self') return false;
-                    try {
-                        const u = new URL(a.href, location.href);
-                        if (u.origin !== location.origin) return false;
-                        if (u.pathname === location.pathname && u.search === location.search && u.hash) return false;
-                        return true;
-                    } catch { return false; }
-                };
-
-                document.addEventListener('click', (e) => {
-                    if (e.defaultPrevented) return;
-                    if (e.button !== 0) return;
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                    const a = e.target.closest('a[href]');
-                    if (!isInternal(a)) return;
-                    main.classList.remove('is-entering');
-                    main.classList.add('is-leaving');
-                }, true);
-
-                document.addEventListener('submit', (e) => {
-                    const f = e.target;
-                    if (!(f instanceof HTMLFormElement)) return;
-                    try {
-                        const action = f.getAttribute('action') || location.href;
-                        const u = new URL(action, location.href);
-                        if (u.origin !== location.origin) return;
-                    } catch { return; }
-                    main.classList.remove('is-entering');
-                    main.classList.add('is-leaving');
-                }, true);
-
-                // If user comes back via bfcache, replay enter
-                window.addEventListener('pageshow', (e) => {
-                    if (e.persisted) {
-                        main.classList.remove('is-leaving');
-                        main.classList.remove('is-entering');
-                        void main.offsetWidth;
-                        main.classList.add('is-entering');
-                    }
-                });
             })();
 
             // ---------- Animated number counters ----------
@@ -955,6 +637,22 @@
         })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* ---------- HINWEIS AUF DIE NEUE GESTALT ----------
+       Wird von site.js eingeblendet — einmal je Browser, danach nicht wieder.
+       Kein role="dialog": der Hinweis verlangt keine Antwort und darf die Seite
+       nicht blockieren, man will sie ja gerade anschauen. role="status" kuendigt
+       ihn an, ohne den Fokus zu stehlen. *@
+    <aside class="design-notice" id="designNotice" role="status" aria-labelledby="designNoticeTitle">
+        <div class="design-notice__card">
+            <h2 class="design-notice__title" id="designNoticeTitle">Neues Design</h2>
+            <p class="design-notice__text">
+                Die Seite hat ein neues Aussehen bekommen: flacher, ruhiger, und die Farbe
+                des letzten Siegerteams zieht sich jetzt durch das ganze Ger&uuml;st.
+            </p>
+            <button type="button" class="f1-btn f1-btn--primary" data-design-notice-close>Alles klar</button>
+        </div>
+    </aside>
 
     @* ---------- KEYBOARD SHORTCUTS ---------- *@
     <div class="shortcut-overlay" id="shortcutOverlay" role="dialog" aria-modal="true" aria-labelledby="shortcutTitle">

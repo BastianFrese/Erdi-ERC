@@ -1,6 +1,7 @@
 using AspNet.Security.OAuth.Discord;
 using Erdi_ERC.Data;
 using Erdi_ERC.Helpers;
+using Erdi_ERC.Middleware;
 using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Erdi_ERC.Services;
@@ -802,6 +803,11 @@ app.UseRateLimiter();
 // (Wir nutzen ihn aktuell nur für klar öffentliche Endpunkte via [OutputCache]-Attribut.)
 app.UseOutputCache();
 
+// Vorkomprimierte Dateien zuerst: liefert .br/.gz aus, die das StaticWebAssets-SDK
+// beim Publish erzeugt hat. Muss VOR UseResponseCompression stehen — die
+// Laufzeitkompression ueberspringt Antworten, die schon ein Content-Encoding tragen.
+app.UsePrecompressedStaticFiles();
+
 // Response-Compression MUSS vor UseStaticFiles laufen, damit auch CSS/JS/SVG komprimiert werden.
 app.UseResponseCompression();
 
@@ -811,9 +817,17 @@ app.UseResponseCompression();
 // Uploads + Backgroundmusic werden weiter unten separat behandelt.
 app.UseStaticFiles(new StaticFileOptions
 {
+    // Vorkomprimierte Dateien enden auf .br/.gz und waeren damit unbekannte
+    // Typen; der Anbieter antwortet mit dem Typ der Originaldatei.
+    ContentTypeProvider = new InhaltstypAnbieter(),
     OnPrepareResponse = ctx =>
     {
-        var path = ctx.Context.Request.Path.Value;
+        // Nach dem Umschreiben auf .br endet der Pfad nicht mehr auf .css/.js —
+        // die Cache-Regeln unten wuerden nicht mehr greifen. Der Schluessel
+        // traegt den Pfad vor dem Umschreiben.
+        var path = ctx.Context.Items.TryGetValue(PrecompressedStaticFilesMiddleware.OriginalerPfad, out var original)
+            ? original as string
+            : ctx.Context.Request.Path.Value;
         if (string.IsNullOrEmpty(path)) return;
 
         var isCacheable =

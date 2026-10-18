@@ -1,100 +1,328 @@
 /* =====================================================================
-   01 · TOKENS
+   01 · TOKENS  —  „Race Control"
+   Einzige Quelle fuer Farbe, Schrift, Skala und Abstaende.
    ===================================================================== */
-:root {
-    --bg-0:#030407;
-    --bg-1:#07090f;
-    --bg-2:#0d1119;
-    --surface-1:rgba(12,16,24,.86);
-    --surface-2:rgba(16,21,31,.92);
-    --surface-3:rgba(24,30,44,.96);
 
-    --stroke-1:rgba(255,255,255,.12);
-    --stroke-2:rgba(255,255,255,.2);
-    --stroke-3:rgba(255,255,255,.3);
-
-    --ink:#f4f6fb;
-    --ink-2:rgba(244,246,251,.74);
-    --ink-3:rgba(244,246,251,.52);
-    --ink-4:rgba(244,246,251,.34);
-
-    --accent:#e10600;
-    --accent-2:#ff3b2f;
-    --accent-soft:rgba(225,6,0,.18);
-    --accent-glow:rgba(225,6,0,.55);
-
-    /* Signalfarben — bewusst entsättigt ("Broadcast-Calm"): Neon gebrochen,
-       Rot/Amber bleiben die einzigen lauten Farben, alles andere matt. */
-    --sig-cyan:#58b7c9;
-    --sig-amber:#e8a93d;
-    --sig-green:#4caf6d;
-    --sig-magenta:#9d6ec4;
-    --sig-blue:#6d9cc4;
-    --sig-red:#e05252;
-
-    --gold:#ffd24a;
-    --silver:#d4d8e0;
-    --bronze:#d68a4a;
-
-    --ff-display:'Inter','Segoe UI',system-ui,sans-serif;
-    --ff-tech:'Orbitron','Inter',system-ui,sans-serif;
-    --ff-body:'Inter','Segoe UI',system-ui,sans-serif;
-    --ff-mono:'JetBrains Mono','Cascadia Code',Consolas,monospace;
-
-    --r-1:4px;
-    --r-2:6px;
-    --r-3:8px;
-    --r-4:10px;
-    --r-5:12px;
-    --r-pill:999px;
-
-    --s-1:.25rem; --s-2:.5rem; --s-3:.75rem; --s-4:1rem;
-    --s-5:1.25rem; --s-6:1.5rem; --s-7:2rem; --s-8:3rem; --s-9:4rem;
-
-    --t-fast:120ms cubic-bezier(.4,0,.2,1);
-    --t-base:220ms cubic-bezier(.22,1,.36,1);
-    --t-slow:480ms cubic-bezier(.22,1,.36,1);
-
-    --sh-1:0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px -8px rgba(0,0,0,.5);
-    --sh-2:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 60px -20px rgba(0,0,0,.65), 0 6px 18px -8px rgba(0,0,0,.45);
-    --sh-3:0 1px 0 rgba(255,255,255,.06) inset, 0 30px 80px -24px rgba(0,0,0,.75), 0 0 0 1px var(--stroke-1);
-
-    --g-aurora:
-        radial-gradient(55% 75% at 50% 0%, rgba(225,6,0,.10), transparent 65%);
-    --g-chrome:linear-gradient(180deg,#f6f8ff 0%,#cfd6e4 45%,#7d8699 55%,#cfd6e4 100%);
-    --g-text-1:linear-gradient(180deg,#ffffff 0%,#c8cdd8 100%);
-    --g-text-2:linear-gradient(180deg,#ffffff 0%,#9aa3b6 100%);
-    --g-accent:linear-gradient(180deg,var(--accent-2),var(--accent));
-
-    --glass-blur:blur(10px) saturate(135%);
-    --glass-blur-sm:blur(6px) saturate(120%);
+/* --- Schriften, selbst gehostet, nur latin-Subset ---------------------
+   Saira ist ein Variable Font (wght 100..900) — eine Datei deckt alle
+   benutzten Gewichte ab. Saira Semi Condensed liefert Google nur als
+   getrennte Einzelgewichte; es wird deshalb genau eines geladen (600),
+   und alle --ff-cond-Stellen stehen auf 600. Zusammen zwei Dateien.
+   ponytail: nur latin (U+0000-00FF). Namen mit türkischen oder polnischen
+   Diakritika (ğ ş ł) fallen auf die Systemschrift zurück. Upgrade-Pfad:
+   latin-ext dazuladen — kostet zwei weitere Dateien, deshalb bewusst nicht. */
+@font-face {
+    font-family: 'Saira';
+    src: url('/fonts/saira-latin.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+                   U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                   U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Saira Semi Condensed';
+    src: url('/fonts/saira-semi-condensed-latin.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+                   U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                   U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-body.team-redbull       { --accent:#3671C6; --accent-2:#5b8fe0; --accent-soft:rgba(54,113,198,.20); --accent-glow:rgba(54,113,198,.55); }
-body.team-mercedes      { --accent:#00D2BE; --accent-2:#3ce6d6; --accent-soft:rgba(0,210,190,.20);  --accent-glow:rgba(0,210,190,.55); }
-body.team-ferrari       { --accent:#E8002D; --accent-2:#ff3357; --accent-soft:rgba(232,0,45,.20);   --accent-glow:rgba(232,0,45,.55); }
-body.team-mclaren       { --accent:#FF8000; --accent-2:#ffa133; --accent-soft:rgba(255,128,0,.20);  --accent-glow:rgba(255,128,0,.55); }
-body.team-astonmartin   { --accent:#229971; --accent-2:#3ec494; --accent-soft:rgba(34,153,113,.20); --accent-glow:rgba(34,153,113,.55); }
-body.team-alpine        { --accent:#FF87BC; --accent-2:#ffaecf; --accent-soft:rgba(255,135,188,.22);--accent-glow:rgba(255,135,188,.55); }
-body.team-williams      { --accent:#64C4FF; --accent-2:#8fd5ff; --accent-soft:rgba(100,196,255,.22);--accent-glow:rgba(100,196,255,.55); }
-body.team-haas          { --accent:#B6BABD; --accent-2:#d4d7d9; --accent-soft:rgba(182,186,189,.22);--accent-glow:rgba(182,186,189,.45); }
+:root {
+    /* --- Grundflaeche: neutral-kuehl, kein Blaustich --- */
+    --track: #0B0C0E;
+    --tarmac: #14171B;
+    --kerb: #202630;
+    --rule: rgba(255, 255, 255, .10);
+    --rule-strong: rgba(255, 255, 255, .22);
+
+    --ink: #F2F4F7;
+    --ink-2: rgba(242, 244, 247, .68);
+    --ink-3: rgba(242, 244, 247, .38);
+
+    /* --- Signalfarben: jede bedeutet genau eine Sache --- */
+    --fast: #B24BF3;   /* schnellste Runde / schnellster Sektor */
+    --best: #00D26A;   /* persoenliche Bestzeit, DRS offen      */
+    --slow: #FFD100;   /* langsamer, Vorsicht, Medium            */
+    --flag: #E10600;   /* Ligafarbe, rote Flagge, Soft           */
+    --wet:  #3B8BEA;   /* Inter, Wet, blaue Flagge               */
+
+    /* --- Teamfarbe: Zuordnung Fahrer -> Team, nicht Stimmung ---
+       Ohne Siegerteam (oder unter der Startseite ohne Renndaten) faellt alles
+       auf die Ligafarbe zurueck. --team-fill ist die Flaeche, --on-team die
+       Schrift darauf; beide werden von body.team-* je Team gesetzt, damit
+       Schrift auf der Teamfarbe messbar lesbar bleibt (siehe dort). */
+    --team: var(--flag);
+    --team-2: #FFFFFF;
+    --team-fill: var(--flag);
+    --on-team: var(--on-flag);
+
+    /* --- Schrift: eine Familie, zwei Schnitte --- */
+    --ff: 'Saira', 'Segoe UI', system-ui, sans-serif;
+    --ff-cond: 'Saira Semi Condensed', 'Saira', system-ui, sans-serif;
+    --num: tabular-nums;
+
+    /* --- Skala ~1.25 --- */
+    --fs-xs: .75rem;
+    --fs-s: .875rem;
+    --fs-m: 1rem;
+    --fs-l: 1.25rem;
+    --fs-xl: 1.75rem;
+    --fs-2xl: clamp(1.75rem, 3vw, 2.5rem);
+    --fs-3xl: clamp(2.25rem, 5vw, 3.5rem);
+
+    /* --- Abstaende --- */
+    --sp-1: .25rem; --sp-2: .5rem;  --sp-3: .75rem; --sp-4: 1rem;
+    --sp-5: 1.5rem; --sp-6: 2rem;   --sp-7: 3rem;   --sp-8: 4rem;
+
+    /* --- Kanten: hart, kein Radius-Feuerwerk --- */
+    --r-1: 2px;
+    --r-2: 3px;
+
+    /* --- Bewegung --- */
+    --t-fast: 120ms cubic-bezier(.4, 0, .2, 1);
+    --t-base: 220ms cubic-bezier(.22, 1, .36, 1);
+
+    /* --- Layout --- */
+    --rail: 288px;
+    --gutter: clamp(1rem, 2.4vw, 2rem);
+}
+
+/* --- Tageslicht-Variante: dieselben Namen, andere Werte --- */
+[data-theme="light"] {
+    --track: #F4F5F7;
+    --tarmac: #FFFFFF;
+    --kerb: #E4E7EC;
+    --rule: rgba(11, 12, 14, .12);
+    --rule-strong: rgba(11, 12, 14, .28);
+
+    --ink: #0B0C0E;
+    --ink-2: rgba(11, 12, 14, .72);
+    --ink-3: rgba(11, 12, 14, .42);
+
+    --fast: #7A28B8;
+    --best: #0A8F4B;
+    --slow: #B07A00;
+    --flag: #C00500;
+    --wet:  #1F63B0;
+
+    /* --on-wet und --on-fast stehen am Dateiende — siehe Kommentar dort. */
+
+    --team-2: #FFFFFF;
+}
+
+/* --- Teamfarben -------------------------------------------------------
+   Zwei Ebenen:
+   1. `body.team-<key>` setzt --team / --team-2 fuer die GANZE Seite
+      (Meister-Akzent im Streifen, Fahrerzeile).
+   2. `--team-<key>` als eigenstaendige Variable, damit der Turm MEHRERE
+      Teams gleichzeitig einfaerben kann — dort reicht der body-Kontext nicht.
+   Die Signalfarben werden hier nie ueberschrieben; Teamfarbe ist Zuordnung,
+   nicht Stimmung. */
+body.team-redbull     { --team:#3671C6; --team-2:#CC1E4A; --team-fill:#356FC2; --on-team:#F2F4F7; }
+body.team-mercedes    { --team:#00D2BE; --team-2:#C0C0C0; --team-fill:#00D2BE; --on-team:#0B0C0E; }
+body.team-ferrari     { --team:#E8002D; --team-2:#FFFFFF; --team-fill:#DF002B; --on-team:#F2F4F7; }
+body.team-mclaren     { --team:#FF8000; --team-2:#000000; --team-fill:#FF8000; --on-team:#0B0C0E; }
+body.team-astonmartin { --team:#229971; --team-2:#CEDC00; --team-fill:#229971; --on-team:#0B0C0E; }
+body.team-alpine      { --team:#FF87BC; --team-2:#0093CC; --team-fill:#FF87BC; --on-team:#0B0C0E; }
+body.team-williams    { --team:#64C4FF; --team-2:#FFFFFF; --team-fill:#64C4FF; --on-team:#0B0C0E; }
+body.team-haas        { --team:#B6BABD; --team-2:#E8002D; --team-fill:#B6BABD; --on-team:#0B0C0E; }
 body.team-racingbulls,
-body.team-rb            { --accent:#6692FF; --accent-2:#90b0ff; --accent-soft:rgba(102,146,255,.22);--accent-glow:rgba(102,146,255,.55); }
+body.team-rb          { --team:#6692FF; --team-2:#CC1E4A; --team-fill:#6692FF; --on-team:#0B0C0E; }
 body.team-sauber,
-body.team-kicksauber    { --accent:#52E252; --accent-2:#7feb7f; --accent-soft:rgba(82,226,82,.22); --accent-glow:rgba(82,226,82,.50); }
+body.team-kicksauber,
+body.team-audi        { --team:#8A9597; --team-2:#FFFFFF; --team-fill:#8A9597; --on-team:#0B0C0E; }
+
+/* Cadillac ist #000000 — als Balken und Verlauf unsichtbar.
+   Rueckfall auf die Tertiaerfarbe; die Sekundaerfarbe bleibt als Zusatz.
+   Die Fuellung ist ein FESTER dunkler Ton, kein var(--kerb): kerb kippt mit
+   dem Design (#202630 dunkel, #E4E7EC hell) und traegt dann helle Schrift. */
+body.team-cadillac    { --team:var(--ink-2); --team-2:#FFFFFF; --team-fill:#202630; --on-team:#F2F4F7; }
 
 :root {
-    --f1-red:var(--accent); --f1-red-dark:var(--accent); --f1-red-glow:var(--accent-glow);
-    --f1-accent-yellow:var(--sig-amber); --f1-accent-green:var(--sig-green); --f1-accent-cyan:var(--sig-cyan);
-    --f1-bg:var(--bg-0); --f1-bg-2:var(--bg-1);
-    --f1-surface:var(--surface-1); --f1-surface-strong:var(--surface-2);
-    --f1-border:var(--stroke-1); --f1-border-strong:var(--stroke-3);
-    --f1-text:var(--ink); --f1-text-muted:var(--ink-2); --f1-silver:var(--silver);
-    --radius-sm:var(--r-1); --radius-md:var(--r-2); --radius-lg:var(--r-3); --radius-xl:var(--r-4);
-    --shadow-sm:var(--sh-1); --shadow-md:var(--sh-1); --shadow-lg:var(--sh-2); --shadow-glow-red:0 0 0 1px var(--accent-soft);
-    --tr-fast:var(--t-fast); --tr-base:var(--t-base); --tr-slow:var(--t-slow);
-    --panel-bg:var(--surface-1); --carbon:repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px);
-    --f1-grid:repeating-linear-gradient(90deg, transparent 0 34px, rgba(255,255,255,.018) 34px 35px);
-    --f1-checker:repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 6px, transparent 6px 12px);
-    --f1-telemetry:linear-gradient(90deg, var(--accent-2), var(--accent));
+    --team-redbull:#3671C6;      --team-redbull-2:#CC1E4A;
+    --team-mercedes:#00D2BE;     --team-mercedes-2:#C0C0C0;
+    --team-ferrari:#E8002D;      --team-ferrari-2:#FFFFFF;
+    --team-mclaren:#FF8000;      --team-mclaren-2:#000000;
+    --team-astonmartin:#229971;  --team-astonmartin-2:#CEDC00;
+    --team-alpine:#FF87BC;       --team-alpine-2:#0093CC;
+    --team-williams:#64C4FF;     --team-williams-2:#FFFFFF;
+    --team-haas:#B6BABD;         --team-haas-2:#E8002D;
+    --team-racingbulls:#6692FF;  --team-racingbulls-2:#CC1E4A;
+    --team-audi:#8A9597;         --team-audi-2:#FFFFFF;
+    /* Cadillac: siehe oben — nie #000000 als Balkenfarbe ausliefern. */
+    --team-cadillac:#B6BABD;     --team-cadillac-2:#FFFFFF;
+    --team-unknown:var(--ink-2); --team-unknown-2:var(--ink-3);
+}
+
+/* =====================================================================
+   KOMPATIBILITAET
+
+   Die Ebenen 02–11 benutzen noch die alten Token-Namen. Statt sie hier
+   zu loeschen und die Seite bis Task 7 kaputt zu lassen, werden die alten
+   Namen auf die neuen Werte gezeigt. Damit zieht die neue Palette sofort
+   durch alle Ebenen, ohne dass eine davon angefasst werden muss.
+
+   Schatten und Glas werden dabei auf `none` gesetzt: das ist der Design-
+   Schnitt der Spec (flach, hartkantig) und wirkt damit ab Task 2.
+
+   Dieser Block verschwindet in Task 12, wenn 02–11 auf die neuen Namen
+   umgestellt sind. Bis dahin: nichts hier ergaenzen.
+   ===================================================================== */
+:root {
+    /* Flaechen */
+    --bg-0: var(--track);
+    --bg-1: var(--tarmac);
+    --bg-2: var(--kerb);
+    --surface-1: var(--tarmac);
+    --surface-2: var(--tarmac);
+    --surface-3: var(--kerb);
+    --stroke-1: var(--rule);
+    --stroke-2: var(--rule-strong);
+    --stroke-3: var(--rule-strong);
+    --ink-4: var(--ink-3);
+
+    /* Akzent = Teamfarbe des letzten Siegers. Gesetzt wird er auf body, nicht
+       hier: siehe den Block "Teamfarbe als Geruest-Akzent" am Dateiende. */
+
+    /* Leuchtschatten bleiben gestrichen — der Verlauf war Dekoration. */
+    --accent-glow: transparent;
+
+    /* Signale */
+    --sig-cyan: var(--wet);
+    --sig-amber: var(--slow);
+    --sig-green: var(--best);
+    --sig-magenta: var(--fast);
+    --sig-blue: var(--wet);
+    --sig-red: var(--flag);
+
+    /* Schrift AUF einer Signalfarbe. Diese fünf Tokens gehören immer dann dazu,
+       wenn eine Regel eine Signalfarbe als Fläche setzt (--sig-…, --flag,
+       --best, --slow, --wet, --fast).
+       Warum eigene Tokens: --track und --ink kippen mit dem Design, das Signal
+       kippt ebenfalls (gelb #FFD100 wird senf #B07A00, hellgrün #00D26A wird
+       dunkelgrün #0A8F4B). Zweimal kippen ergibt zweimal falsch — vorher stand
+       hier --track bzw. --ink, und je nach Design war die Schrift unlesbar.
+       Jeder Wert ist gegen BEIDE Design-Sätze gerechnet, schlechtestes
+       Verlaufsende eingeschlossen, alle ≥ 4,5:1.
+       (Kein Schrägstrich-Sternchen in diesem Text: das beendet den Kommentar
+       vorzeitig, und die Deklarationen darunter fallen still weg.) */
+    --on-flag: #F2F4F7;   /* 4,5:1 dunkel · 6,5:1 hell */
+    --on-slow: #0B0C0E;   /* 13,4:1 · 5,2:1 */
+    --on-best: #0B0C0E;   /* 9,8:1 · 4,7:1 */
+    --on-wet:  #0B0C0E;   /* 5,7:1 dunkel · helles Design am Dateiende */
+    --on-fast: #0B0C0E;   /* 4,8:1 dunkel · helles Design am Dateiende */
+
+    /* Podest */
+    --gold: #FFD24A;
+    --silver: #D4D8E0;
+    --bronze: #D68A4A;
+
+    /* Schrift */
+    --ff-display: var(--ff);
+    --ff-body: var(--ff);
+    --ff-tech: var(--ff-cond);
+    --ff-mono: var(--ff);
+
+    /* Radien */
+    --r-3: var(--r-2);
+    --r-4: var(--r-2);
+    --r-5: var(--r-2);
+    --r-pill: 999px;
+
+    /* Abstaende */
+    --s-1: var(--sp-1); --s-2: var(--sp-2); --s-3: var(--sp-3); --s-4: var(--sp-4);
+    --s-5: var(--sp-5); --s-6: var(--sp-6); --s-7: var(--sp-7); --s-8: var(--sp-8);
+    --s-9: var(--sp-8);
+
+    /* Bewegung */
+    --t-slow: var(--t-base);
+
+    /* Schatten: alle aus. Die Spec verbietet Schattendekoration. */
+    --sh-1: none;
+    --sh-2: none;
+    --sh-3: none;
+
+    /* Verlaeufe und Textur: aus. */
+    --g-aurora: none;
+    --g-chrome: none;
+    --g-text-1: none;
+    --g-text-2: none;
+    --g-accent: none;
+    --glass-blur: none;
+    --glass-blur-sm: none;
+    --carbon: none;
+    --f1-grid: none;
+    --f1-checker: none;
+    --f1-telemetry: linear-gradient(90deg, var(--team), var(--team));
+
+    /* F1-Aliase (12-tokens-f1.css aufgeloest) */
+    --f1-red: var(--team);
+    --f1-red-dark: var(--team);
+    --f1-red-glow: var(--accent-glow);
+    --f1-accent-yellow: var(--slow);
+    --f1-accent-green: var(--best);
+    --f1-accent-cyan: var(--wet);
+    --f1-bg: var(--track);
+    --f1-bg-2: var(--tarmac);
+    --f1-surface: var(--tarmac);
+    --f1-surface-strong: var(--tarmac);
+    --f1-border: var(--rule);
+    --f1-border-strong: var(--rule-strong);
+    --f1-text: var(--ink);
+    --f1-text-muted: var(--ink-2);
+    --f1-silver: var(--silver);
+    --radius-sm: var(--r-1);
+    --radius-md: var(--r-2);
+    --radius-lg: var(--r-2);
+    --radius-xl: var(--r-2);
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-glow-red: none;
+    --tr-fast: var(--t-fast);
+    --tr-base: var(--t-base);
+    --tr-slow: var(--t-base);
+    --panel-bg: var(--tarmac);
+}
+
+/* ---------------------------------------------------------------------
+   Schrift auf Blau und Violett kippt mit dem Design — nur diese beiden:
+   ihre Signalfarben sind im dunklen Design hell (#3B8BEA, #B24BF3) und
+   brauchen dunkle Schrift, im hellen dunkel (#1F63B0, #7A28B8) und brauchen
+   helle. Der Block steht bewusst am DATEIENDE: [data-theme="light"] und die
+   spaeteren :root-Bloecke haben dieselbe Spezifitaet, deshalb entscheidet
+   allein die Reihenfolge im Quelltext. Oben im hellen Block standen diese
+   zwei Werte zuerst — dort hat sie der spaetere :root-Block still ueberschrieben.
+   --------------------------------------------------------------------- */
+[data-theme="light"] {
+    --on-wet:  #F2F4F7;   /* 6,1:1 */
+    --on-fast: #F2F4F7;   /* 7,5:1 */
+}
+
+/* ---------------------------------------------------------------------
+   Teamfarbe als Geruest-Akzent — auf body, nicht auf :root.
+
+   :root und body sind verschiedene Elemente. body.team-* ueberschreibt
+   --team erst auf body; eine Zeile "--accent: var(--team)" in :root setzt
+   --accent dort ein fuer alle Mal auf das Basis-Rot ein, weil der Wert beim
+   Berechnen eingesetzt wird. Die Seite bliebe rot, egal wer gewinnt — genau
+   das war beim ersten Versuch der Fall.
+
+   Die Signalfarben werden davon nicht beruehrt: --best, --slow, --flag, --wet
+   stehen weiter nur in :root und im hellen Block. Teamfarbe ist Zuordnung,
+   nicht Stimmung.
+
+   --g-accent war nach dem Verlaufs-Rueckbau "none": Primaer-Buttons, aktive
+   Seitenzahl und Fortschrittsbalken waren dadurch leer statt gefuellt.
+   --------------------------------------------------------------------- */
+body {
+    --accent: var(--team);
+    --accent-2: var(--team);
+    --accent-soft: color-mix(in srgb, var(--team) 18%, transparent);
+    --g-accent: var(--team-fill);
 }

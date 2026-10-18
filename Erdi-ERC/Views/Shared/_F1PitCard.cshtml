@@ -1,7 +1,7 @@
 @model Erdi_ERC.Models.UiComponents.F1PitCardVm
 @*
     F1 PitCard — Feature/Navigation-Card mit Icon, Tag, Titel, Lead, CTA.
-    CSS: pages/home-index.css (.f1-pitcard*)
+    CSS: css/site/99-home-index.css (im Bundle) (.f1-pitcard*)
     IconVariant: "" | "cyan" | "amber" | "green" | "magenta"
 *@
 <a class="text-decoration-none" href="@Model.Href">
@@ -26,7 +26,7 @@
         @if (!string.IsNullOrWhiteSpace(Model.Cta))
         {
             <span class="f1-pitcard__cta">
-                @Model.Cta <i class="f1-icon" data-lucide="arrow-right"></i>
+                @Model.Cta
             </span>
         }
     </div>

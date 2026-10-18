@@ -1,91 +1,115 @@
 /* =====================================================================
-   02 · RESET & BASE
+   02 · BASE
+   Grundtypografie, Fokus, Selektion, Bewegung. Alles ueber Tokens.
    ===================================================================== */
-*,*::before,*::after { box-sizing:border-box; }
-html { font-size:15px; scroll-behavior:smooth; scrollbar-gutter:stable; }
-@media (min-width:1200px) { html { font-size:16px; } }
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-gutter: stable;   /* kein Layout-Sprung, wenn die Scrollbar kommt */
+}
 
 body {
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    color:var(--ink);
-    font-family:var(--ff-body);
-    font-weight:450;
-    line-height:1.55;
-    letter-spacing:-.005em;
-    background:var(--bg-0);
-    background-image:
-        radial-gradient(1400px 700px at 100% -10%, rgba(88,183,201,.07), transparent 60%),
-        radial-gradient(1100px 600px at -10% 110%, var(--accent-soft), transparent 65%),
-        radial-gradient(900px 500px at 50% 50%, rgba(157,110,196,.05), transparent 70%),
-        linear-gradient(180deg,var(--bg-0) 0%, #050609 100%);
-    background-attachment:fixed;
-    -webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility;
-    overflow-x:hidden;
-    padding-bottom:0;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;     /* haelt den Footer unten */
+    background: var(--track);
+    color: var(--ink);
+    font-family: var(--ff);
+    font-size: var(--fs-m);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
 }
 
-body::before {
-    content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
-    background-image:
-        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-    background-size:44px 44px;
-    mask-image:radial-gradient(circle at 50% 30%, #000 30%, transparent 80%);
-    opacity:.55;
+/* --- Ueberschriften ---
+   Keine Verlaufs-Textfuellung mehr; die alten Regeln haben den Text per
+   background-clip freigestellt, was ihn bei fehlendem Verlauf unsichtbar macht. */
+h1, .h1, h2, .h2, h3, .h3 {
+    font-family: var(--ff); font-weight: 700;
+    letter-spacing: -0.022em; line-height: 1.08; margin: 0 0 .6rem;
 }
-body::after {
-    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background:repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.012) 3px 4px);
-    opacity:.35;
-    animation:track-scan 10s linear infinite;
+h4, .h4, h5, .h5, h6, .h6 {
+    font-family: var(--ff); font-weight: 600;
+    letter-spacing: -0.012em; line-height: 1.2; margin: 0 0 .5rem;
 }
-
-@keyframes track-scan {
-    0% { background-position:0 0; }
-    100% { background-position:0 80px; }
-}
-
-::selection { background:var(--accent); color:#fff; }
-
-::-webkit-scrollbar { width:10px; height:10px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(255,255,255,.10); border-radius:10px; border:2px solid transparent; background-clip:padding-box; }
-::-webkit-scrollbar-thumb:hover { background:var(--accent); background-clip:padding-box; }
-
-a { color:#fff; text-decoration:none; transition:color var(--t-fast); }
-a:hover { color:var(--accent-2); }
-
-img,svg,video { max-width:100%; }
-
-hr { border:0; height:1px; background:linear-gradient(90deg, transparent, var(--stroke-2), transparent); margin:1.5rem 0; }
-
-h1,.h1,h2,.h2,h3,.h3 {
-    font-family:var(--ff-display); font-weight:800;
-    letter-spacing:-.022em; line-height:1.08; margin:0 0 .6rem;
-    background:var(--g-text-1);
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-}
-h4,.h4,h5,.h5,h6,.h6 { font-family:var(--ff-display); font-weight:700; letter-spacing:-.012em; line-height:1.2; margin:0 0 .5rem; color:var(--ink); }
-.display-1,.display-2,.display-3,.display-4,.display-5 {
-    font-family:var(--ff-display); font-weight:900; letter-spacing:-.03em;
-    background:var(--g-text-2); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+h1, .h1 { font-size: var(--fs-3xl); }
+h2, .h2 { font-size: var(--fs-2xl); }
+h3, .h3 { font-size: var(--fs-xl); }
+.display-1, .display-2, .display-3, .display-4, .display-5 {
+    font-family: var(--ff-cond); font-weight: 600;
+    letter-spacing: -0.03em; line-height: 1;
+    font-variant-numeric: var(--num);
 }
 
+/* --- Rubrikzeile ---
+   43 Verwendungen in den Views; bleibt erhalten, aber ohne Leucht-Kante. */
 .eyebrow {
-    display:inline-flex; align-items:center; gap:.55rem;
-    font-family:var(--ff-tech); font-weight:700;
-    text-transform:uppercase; letter-spacing:.32em;
-    font-size:.7rem; color:var(--ink-3);
+    display: inline-flex; align-items: center; gap: .55rem;
+    font-family: var(--ff); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .22em;
+    font-size: var(--fs-xs); color: var(--ink-2);
 }
 .eyebrow::before {
-    content:""; width:18px; height:2px; background:var(--accent); box-shadow:0 0 8px var(--accent-glow);
+    content: ""; width: 18px; height: 2px; background: var(--ink-3);
 }
 
-p { margin:0 0 1rem; color:var(--ink-2); }
-small { color:var(--ink-3); }
+p { margin: 0 0 var(--sp-4); max-width: 72ch; color: var(--ink-2); }
+small { color: var(--ink-2); }
 
-code,kbd { font-family:var(--ff-mono); background:rgba(255,255,255,.06); border:1px solid var(--stroke-1); border-radius:6px; padding:.1rem .4rem; color:var(--sig-cyan); font-size:.88em; }
+/* --- Verweise ---
+   Nicht in Teamfarbe: die ist laut Spec Zuordnung Fahrer->Team, nicht Stimmung.
+   Verweise sind Textfarbe mit Unterstreichung, der Akzent kommt beim Ueberfahren. */
+a {
+    color: var(--ink); text-decoration: underline;
+    text-decoration-thickness: 1px; text-decoration-color: var(--ink-3);
+    text-underline-offset: 2px;
+    transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+a:hover { color: var(--team); text-decoration-color: currentColor; }
+
+img, svg, video { max-width: 100%; }
+
+hr { border: 0; border-top: 1px solid var(--rule); margin: var(--sp-6) 0; }
+
+code, kbd {
+    font-family: var(--ff); font-weight: 600;
+    background: var(--kerb); border: 1px solid var(--rule);
+    border-radius: var(--r-1); padding: .1rem .4rem;
+    color: var(--ink); font-size: .88em;
+}
+
+/* Zahlen richten aus, ohne Mono-Schrift. */
+.u-num, .tower td, .data-table td, time, .delta { font-variant-numeric: var(--num); }
+
+:focus-visible {
+    outline: 2px solid var(--best);
+    outline-offset: 2px;
+    border-radius: var(--r-1);
+}
+
+::selection { background: var(--team-fill); color: var(--on-team); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--rule-strong); border-radius: var(--r-1);
+    border: 2px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-3); background-clip: padding-box; }
+
+.visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

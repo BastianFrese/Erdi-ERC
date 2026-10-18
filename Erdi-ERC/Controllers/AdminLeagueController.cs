@@ -800,6 +800,7 @@ namespace Erdi_ERC.Controllers
             }
 
             var dnfSet = (dnfDrivers ?? Array.Empty<string>()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var addedDrivers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (positions != null)
             {
                 for (int i = 0; i < positions.Length; i++)
@@ -808,6 +809,7 @@ namespace Erdi_ERC.Controllers
                     if (string.IsNullOrWhiteSpace(driver)) continue;
                     var pos = i + 1;
                     var isDnf = dnfSet.Contains(driver);
+                    addedDrivers.Add(driver.Trim());
                     var timeMs = ParseRaceTimeMs(raceTimes?.ElementAtOrDefault(i));
                     // penaltySeconds/qualiPositions kommen als string[] an: leere
                     // Zeilen posten "" und BLEIBEN im Array. Ein int[] wuerde vom
@@ -832,6 +834,22 @@ namespace Erdi_ERC.Controllers
 
                     if (pos == 1 && !isDnf) race.Winner = driver.Trim();
                 }
+            }
+
+            // DNF-Fahrer ohne Positions-Slot: das Formular leert den Slot, sobald ein
+            // Fahrer als DNF markiert wird (EnterRace.cshtml, syncDisabledOptions) —
+            // er kommt dann nur über dnfDrivers[] an. Ohne eigene Zeile (Position 0)
+            // gilt er auf der Results-Seite als "kein Ergebnis" und erscheint als DNS.
+            foreach (var dnfDriver in dnfSet)
+            {
+                var name = dnfDriver?.Trim() ?? string.Empty;
+                if (name.Length == 0 || addedDrivers.Contains(name)) continue;
+                _db.RaceFinishes.Add(new RaceFinish
+                {
+                    RaceResultId = race.RowId,
+                    Driver = name,
+                    Position = 0
+                });
             }
 
             return resolvedGuests;

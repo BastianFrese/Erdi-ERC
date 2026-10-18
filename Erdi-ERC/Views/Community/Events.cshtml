@@ -13,15 +13,9 @@
     var requestHost = Context.Request.Host.Host;
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/events.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "Erdi's Racing Community · Real Life",
     Title     = "Real-Life",
     Highlight = "Events",
     Lead      = "Kart-Events, LAN-Treffen und alles, was die ERC-Community offline zusammenbringt. Hier findest du unsere bisherigen Events &ndash; und alles, was als Nächstes ansteht.",
@@ -173,7 +167,6 @@ else
 
                                 <a class="f1-btn f1-btn--ghost" asp-controller="Community" asp-action="EventDetail" asp-route-id="@ev.Id">
                                     Mehr anzeigen
-                                    <i class="f1-icon" data-lucide="arrow-right" style="width:14px;height:14px;"></i>
                                 </a>
                             </div>
                         </div>

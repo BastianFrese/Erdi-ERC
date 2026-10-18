@@ -13,13 +13,12 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
     <style>
         .sandbox-banner {
             display: flex; align-items: center; gap: .75rem;
             padding: .65rem 1rem;
-            background: rgba(232,169,61,.08);
-            border: 1px solid rgba(232,169,61,.25);
+            background: color-mix(in srgb, var(--slow) 8%, transparent);
+            border: 1px solid color-mix(in srgb, var(--slow) 25%, transparent);
             border-radius: var(--r-2);
             margin-bottom: 1.5rem;
             font-size: .8rem; color: var(--sig-amber);
@@ -65,7 +64,6 @@
         .field-range::-webkit-slider-thumb {
             -webkit-appearance: none; width: 14px; height: 14px;
             border-radius: 50%; background: var(--accent); cursor: pointer;
-            box-shadow: 0 0 6px var(--accent-soft);
         }
         .field-num { width: 60px; background: var(--surface-2); border: 1px solid var(--stroke-1);
             border-radius: var(--r-1); color: var(--ink); font-size: .8rem;
@@ -89,10 +87,9 @@
     </style>
 }
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "Setup Sandbox",
+    Eyebrow   = "Setup-Werkstatt",
     Title     = Model.Track,
     Highlight = "Experimentier-Bereich",
     Lead      = "Hier kannst du Setup-Werte verändern und testen. Änderungen werden <strong>nicht</strong> in der Datenbank gespeichert.",
@@ -101,7 +98,7 @@
 
 <section class="f1-section">
     <div class="sandbox-banner">
-        <i class="bi bi-flask-fill fs-5"></i>
+        <i class="bi bi-sliders fs-5"></i>
         <span><strong>Sandbox-Modus:</strong> Alle Änderungen sind nur lokal in deinem Browser gespeichert und gehen beim Schließen verloren.</span>
     </div>
 

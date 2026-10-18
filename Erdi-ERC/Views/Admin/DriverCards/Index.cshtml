@@ -11,7 +11,6 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
     <style>
         .dc-admin-grid {
             display: flex;
@@ -209,6 +208,7 @@
                 Diese Namen stehen in einer Liga, haben aber kein <code>DriverProfile</code> &mdash; das oeffentliche Profil liefert daher 404.
                 Mit Discord-ID zuordnen erstellt ein neues <code>DriverProfile</code> + <code>DriverGamerTag</code> (kein Rename der Standings).
             </p>
+            <div class="table-responsive">
             <table class="dc-unlinked__table">
                 <thead>
                     <tr>
@@ -279,6 +279,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         </section>
     }
 

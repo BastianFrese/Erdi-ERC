@@ -74,10 +74,9 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
     <style>
-        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
-        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .doc-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden; }
+        .doc-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,var(--rule),transparent); }
         .doc-card__body { padding:1.25rem;line-height:1.75; }
         .rw-doc-banner { display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--surface-2);border:1px solid var(--stroke-1);border-radius:var(--r-3);margin-bottom:1.5rem; }
         .rw-doc-banner__icon { font-size:2rem;color:var(--sig-cyan);flex-shrink:0; }
@@ -93,7 +92,7 @@
         .rw-view-toggle { display:flex;gap:.5rem;margin-bottom:1rem; }
         .rw-view-toggle__btn { background:var(--surface-2);border:1px solid var(--stroke-1);color:var(--ink-3);font-size:.78rem;padding:.35rem .9rem;border-radius:var(--r-pill);cursor:pointer;transition:all var(--t-fast); }
         .rw-view-toggle__btn:hover { border-color:var(--stroke-2);color:var(--ink-2); }
-        .rw-view-toggle__btn.is-active { background:var(--accent);border-color:var(--accent);color:#fff; }
+        .rw-view-toggle__btn.is-active { background:var(--accent);border-color:var(--accent);color:var(--ink); }
         /* Markdown-Inhalt innerhalb doc-cards */
         .rw-md h1,.rw-md h2 { display:none; } /* Headings sind bereits im doc-card__head */
         .rw-md h3,.rw-md h4,.rw-md h5,.rw-md h6 { font-family:var(--ff-tech,inherit);font-size:.9rem;color:var(--ink);text-transform:uppercase;letter-spacing:.05em;margin:1.25rem 0 .4rem; }
@@ -120,16 +119,14 @@
         .rw-pdf-text th { background:var(--surface-2);font-weight:700;color:var(--ink); }
         .rw-pdf-text td { color:var(--ink-2); }
         /* Intro */
-        .rw-intro { background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.4rem 1.6rem;line-height:1.8;color:var(--ink-2);font-size:.9rem; }
+        .rw-intro { background:var(--rule);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.4rem 1.6rem;line-height:1.8;color:var(--ink-2);font-size:.9rem; }
         .rw-intro p { margin-bottom:.9rem;text-align:justify; }
         .rw-intro p:last-child { margin-bottom:0; }
     </style>
 }
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "Erdi's Racing Community · Dokumente",
     Title     = "Offizielles",
     Highlight = "Regelwerk",
     Lead      = _activeDoc != null
@@ -356,6 +353,7 @@
                         <span class="badge bg-secondary ms-auto">@_archivedDocs.Count</span>
                     </summary>
                     <div class="doc-card__body p-0">
+                        <div class="table-responsive">
                         <table class="table table-dark table-sm mb-0" style="font-size:.82rem;">
                             <thead><tr><th>Titel</th><th>Version</th><th>Datum</th><th></th></tr></thead>
                             <tbody>
@@ -370,6 +368,7 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </details>
             </div>

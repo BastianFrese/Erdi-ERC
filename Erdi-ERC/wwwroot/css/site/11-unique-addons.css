@@ -13,16 +13,12 @@
 .achievement-chip__tier {
     text-transform: uppercase; letter-spacing: .08em; font-size: .62rem; font-weight: 800;
     padding: .1rem .35rem; border-radius: 999px; margin-left: .25rem;
-    background: rgba(255,255,255,.08); color: #fff;
+    background: var(--rule); color: var(--ink);
 }
-.achievement-chip--bronze   { box-shadow: inset 0 0 0 1px #8a5a2bcc; }
-.achievement-chip--bronze   .achievement-chip__tier { background: linear-gradient(135deg,#cd7f32,#7a4a1f); color:#fff; }
-.achievement-chip--silver   { box-shadow: inset 0 0 0 1px #b8becacc; }
-.achievement-chip--silver   .achievement-chip__tier { background: linear-gradient(135deg,#e6e8ee,#9aa3b1); color:#222; }
-.achievement-chip--gold     { box-shadow: inset 0 0 0 1px #e6b400cc; }
-.achievement-chip--gold     .achievement-chip__tier { background: linear-gradient(135deg,#ffd24a,#b8860b); color:#1a1300; }
-.achievement-chip--platinum { box-shadow: inset 0 0 0 1px #b388ffcc, 0 0 18px rgba(179,136,255,.25); }
-.achievement-chip--platinum .achievement-chip__tier { background: linear-gradient(135deg,#b388ff,#7a4dff); color:#fff; }
+.achievement-chip--bronze   .achievement-chip__tier { color:var(--ink); }
+.achievement-chip--silver   .achievement-chip__tier { color:var(--kerb); }
+.achievement-chip--gold     .achievement-chip__tier { color:var(--kerb); }
+.achievement-chip--platinum .achievement-chip__tier { color:var(--ink); }
 .achievement-chip--gold,
 .achievement-chip--platinum { animation: chipShine 3.5s ease-in-out infinite; }
 @keyframes chipShine {
@@ -35,14 +31,13 @@
     display: flex; flex-wrap: wrap; gap: .35rem; margin: .25rem 0 1rem;
 }
 .ach-filter {
-    appearance: none; border: 1px solid #2a2e36; background: transparent; color: #d6d8de;
+    appearance: none; border: 1px solid var(--kerb); background: transparent; color: var(--ink);
     padding: .3rem .7rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
     letter-spacing: .02em; cursor: pointer; transition: all .15s ease;
 }
-.ach-filter:hover { border-color: #4a4f5a; color: #fff; }
+.ach-filter:hover { border-color: var(--ink-3); color: var(--ink); }
 .ach-filter.is-active {
-    background: var(--team-primary, #e50914); border-color: transparent; color: #fff;
-    box-shadow: 0 4px 14px rgba(229,9,20,.25);
+    background: var(--team-fill); border-color: transparent; color: var(--on-team);
 }
 
 .achievements__group { margin-bottom: 1.25rem; }
@@ -50,10 +45,10 @@
     display: flex; align-items: baseline; gap: .6rem; margin: 0 0 .55rem;
 }
 .achievements__group-title {
-    text-transform: uppercase; letter-spacing: .14em; font-weight: 800; font-size: .78rem; color: #fff;
+    text-transform: uppercase; letter-spacing: .14em; font-weight: 800; font-size: .78rem; color: var(--ink);
 }
 .achievements__group-count {
-    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: #9aa0aa;
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--ink-3);
 }
 .achievements__grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .6rem;
@@ -63,25 +58,24 @@
 .achievement-chip {
     position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem;
     padding: .55rem .7rem .85rem; border-radius: 12px;
-    background: #14171d; color: #e7e9ee; outline: none;
+    background: var(--kerb); color: var(--ink); outline: none;
     transition: transform .15s ease, box-shadow .15s ease, filter .2s ease;
     overflow: hidden;
 }
 .achievement-chip > i.bi { font-size: 1.1rem; }
 .achievement-chip__title { font-weight: 700; }
 .achievement-chip:hover, .achievement-chip:focus-visible { transform: translateY(-1px); }
-.achievement-chip:focus-visible { box-shadow: 0 0 0 2px var(--team-primary, #e50914); }
 
 .achievement-chip__progress {
     position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
-    background: rgba(255,255,255,.06);
+    background: var(--rule);
 }
 .achievement-chip__progress-fill {
-    display: block; height: 100%; background: linear-gradient(90deg, var(--team-primary, #e50914), #ffd24a);
+    display: block; height: 100%;
     transition: width .4s ease;
 }
 .achievement-chip__meta {
-    flex-basis: 100%; font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: #9aa0aa;
+    flex-basis: 100%; font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: var(--ink-3);
     display: flex; align-items: center; gap: .3rem;
 }
 
@@ -95,23 +89,17 @@
 /* "NEU"-Marker */
 .achievement-chip__new {
     position: absolute; top: .35rem; right: .4rem;
-    background: var(--team-primary, #e50914); color: #fff;
+    background: var(--team-fill); color: var(--on-team);
     font-size: .58rem; font-weight: 800; letter-spacing: .12em;
     padding: .1rem .35rem; border-radius: 6px;
     animation: newPulse 1.6s ease-in-out infinite;
 }
-@keyframes newPulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(229,9,20,.5); }
-    60%     { box-shadow: 0 0 0 8px rgba(229,9,20,0); }
-}
-.achievement-chip.is-new { box-shadow: 0 0 0 1px var(--team-primary, #e50914); }
 
 /* Featured Badge im Hero */
 .featured-achievement {
     display: inline-flex; align-items: center; gap: .35rem;
     padding: .25rem .55rem; border-radius: 999px;
     font-size: .8rem; vertical-align: middle;
-    background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
     color: var(--ink) !important;
     -webkit-text-fill-color: var(--ink) !important;
     -webkit-background-clip: border-box !important;
@@ -141,37 +129,28 @@
 .live-race-banner {
     display: flex; align-items: center; gap: .85rem;
     padding: .75rem 1rem; margin: 0 0 1rem;
-    border-radius: 14px; text-decoration: none; color: #fff;
-    background: linear-gradient(90deg, rgba(229,9,20,.18), rgba(229,9,20,.04) 60%, transparent);
-    border: 1px solid rgba(229,9,20,.45);
-    box-shadow: 0 8px 24px rgba(229,9,20,.18), inset 0 0 0 1px rgba(255,255,255,.04);
+    border-radius: 14px; text-decoration: none; color: var(--ink);
+    border: 1px solid color-mix(in srgb, var(--flag) 45%, transparent);
     position: relative; overflow: hidden;
     transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
-.live-race-banner:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(229,9,20,.28); border-color: rgba(229,9,20,.7); color:#fff; }
+.live-race-banner:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--flag) 70%, transparent); color:var(--ink); }
 .live-race-banner::after {
     content: ""; position:absolute; inset:0; pointer-events:none;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
     transform: translateX(-100%);
     animation: liveSweep 4.5s ease-in-out infinite;
 }
 @keyframes liveSweep { 0%,100% { transform: translateX(-100%); } 60% { transform: translateX(120%); } }
 .live-race-banner__pulse {
     width: 12px; height: 12px; border-radius: 50%;
-    background: #ff2d2d;
-    box-shadow: 0 0 0 0 rgba(255,45,45,.6);
+    background: var(--flag);
     animation: livePulse 1.4s ease-out infinite;
     flex: 0 0 auto;
-}
-@keyframes livePulse {
-    0%   { box-shadow: 0 0 0 0 rgba(255,45,45,.6); }
-    70%  { box-shadow: 0 0 0 14px rgba(255,45,45,0); }
-    100% { box-shadow: 0 0 0 0 rgba(255,45,45,0); }
 }
 .live-race-banner__label {
     text-transform: uppercase; letter-spacing: .14em; font-weight: 800;
     font-size: .72rem; padding: .15rem .45rem; border-radius: 6px;
-    background: #ff2d2d; color: #fff;
+    background: var(--flag); color: var(--on-flag);
 }
 .live-race-banner__title { font-weight: 700; flex: 1 1 auto; }
 .live-race-banner__cta { font-size: .85rem; opacity: .85; white-space: nowrap; }
@@ -185,16 +164,10 @@ body {
     --team-primary: var(--accent);
     --team-secondary: var(--accent-2);
 }
-
-/* Team-Reflexion an der Pille: klar sichtbarer Glow am "R", getönter Pillen-Rand (60%)
-   + dezenter Außen-Halo in Team-Farbe (über --cabin-team-glow; Farbe = --accent-glow je Team).
-   Aktiver Nav-Text bleibt weiß, Unterstrich/LED bleiben F1-rot (#e10600). */
-body[class*="team-"] .navbar-brand .brand-mark { text-shadow: 0 0 18px var(--team-primary), 0 0 7px var(--team-primary); }
 body[class*="team-"] .topbar .navbar {
-    border-color: color-mix(in srgb, var(--team-primary) 60%, #2a2a2a);
+    border-color: color-mix(in srgb, var(--team-primary) 60%, var(--kerb));
     --cabin-team-glow: 0 6px 26px -6px var(--accent-glow, transparent);
 }
-body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(--team-primary), var(--team-secondary)); }
 
 /* ---------- Achievement chips ---------- */
 .achievement-chip {
@@ -206,33 +179,31 @@ body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(-
     font-size: .8rem;
     font-weight: 600;
     letter-spacing: .04em;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
-    color: #e6e6e6;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    color: var(--ink);
     transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 .achievement-chip:hover { transform: translateY(-1px); }
 .achievement-chip i { font-size: 1rem; }
 .achievement-chip__title { white-space: nowrap; }
 
-.achievement-chip--amber  { border-color: rgba(255,176,32,.45);  color: #ffd27a; box-shadow: 0 0 18px rgba(255,176,32,.18); }
-.achievement-chip--cyan   { border-color: rgba(64,200,255,.45);  color: #b9eaff; box-shadow: 0 0 18px rgba(64,200,255,.18); }
-.achievement-chip--green  { border-color: rgba(80,220,120,.45);  color: #b6f3c8; box-shadow: 0 0 18px rgba(80,220,120,.18); }
-.achievement-chip--violet { border-color: rgba(180,120,255,.45); color: #dccaff; box-shadow: 0 0 18px rgba(180,120,255,.18); }
+.achievement-chip--amber  { border-color: color-mix(in srgb, var(--slow) 45%, transparent);  color: var(--slow); }
+.achievement-chip--cyan   { border-color: color-mix(in srgb, var(--wet) 45%, transparent);  color: var(--wet); }
+.achievement-chip--green  { border-color: color-mix(in srgb, var(--best) 45%, transparent);  color: var(--best); }
+.achievement-chip--violet { border-color: color-mix(in srgb, var(--fast) 45%, transparent); color: var(--fast); }
 
 /* ---------- Rivalry cards ---------- */
 .rivalry-card .rivalry-bar {
     position: relative;
     height: 6px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(220,60,60,.25), rgba(80,220,120,.25));
     overflow: hidden;
 }
 .rivalry-card .rivalry-bar__fill {
     position: absolute; inset: 0;
     width: 50%;
-    background: linear-gradient(90deg, #50dc78, #b6f3c8);
-    border-right: 1px solid rgba(255,255,255,.6);
+    border-right: 1px solid color-mix(in srgb, var(--ink) 60%, transparent);
     transition: width .3s ease;
 }
 
@@ -241,26 +212,19 @@ body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(-
     display: inline-flex; align-items: center; gap: .4rem;
     padding: .35rem .7rem;
     border-radius: 999px;
-    background: linear-gradient(90deg, #ff1d1d, #b80505);
-    color: #fff; font-weight: 800; letter-spacing: .14em; font-size: .72rem;
+    color: var(--ink); font-weight: 800; letter-spacing: .14em; font-size: .72rem;
     text-transform: uppercase;
-    box-shadow: 0 0 18px rgba(255,29,29,.45);
     animation: liveRacePulse 1.4s ease-in-out infinite;
 }
 .live-race-pill .live-race-pill__dot {
     width: 8px; height: 8px; border-radius: 50%;
-    background: #fff; box-shadow: 0 0 10px #fff;
-}
-@keyframes liveRacePulse {
-    0%, 100% { box-shadow: 0 0 18px rgba(255,29,29,.45); }
-    50%      { box-shadow: 0 0 28px rgba(255,29,29,.85); }
+    background: var(--ink);
 }
 
 /* ---------- Keyboard cheatsheet ---------- */
 .shortcut-overlay {
     position: fixed; inset: 0;
-    background: rgba(6,7,10,.78);
-    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--track) 78%, transparent);
     display: none;
     align-items: center; justify-content: center;
     z-index: 1080;
@@ -269,27 +233,22 @@ body[class*="team-"] .scroll-progress { background: linear-gradient(90deg, var(-
 .shortcut-overlay.is-open { display: flex; }
 .shortcut-overlay__card {
     width: min(520px, 92vw);
-    background: linear-gradient(180deg, #11141a, #0a0c10);
-    border: 1px solid rgba(255,255,255,.08);
+    border: 1px solid var(--rule);
     border-radius: 18px;
     padding: 1.25rem 1.5rem;
-    color: #e6e6e6;
-    box-shadow: 0 30px 80px rgba(0,0,0,.7);
+    color: var(--ink);
 }
 .shortcut-overlay h3 { font-family: Orbitron, sans-serif; letter-spacing: .12em; font-size: 1rem; margin: 0 0 1rem; color: var(--team-primary); }
-.shortcut-row { display: flex; align-items: center; justify-content: space-between; padding: .35rem 0; border-bottom: 1px dashed rgba(255,255,255,.06); }
+.shortcut-row { display: flex; align-items: center; justify-content: space-between; padding: .35rem 0; border-bottom: 1px dashed var(--rule); }
 .shortcut-row:last-child { border-bottom: 0; }
 .shortcut-keys kbd {
     display: inline-block; padding: .15rem .45rem; margin-left: .25rem;
-    border-radius: 6px; background: #1a1d24; border: 1px solid #2a2e36;
-    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: #fff;
+    border-radius: 6px; background: var(--kerb); border: 1px solid var(--kerb);
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--ink);
 }
 @keyframes shortcutFade { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
 
 /* ---- Rivalry Sparkline ---- */
 .rivalry-spark { display:flex; gap:4px; }
-.rivalry-spark__dot { width:10px; height:10px; border-radius:50%; background:#2a2e36; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
-.rivalry-spark__dot.is-w { background: linear-gradient(135deg, #1ed760, #0aa84a); }
-.rivalry-spark__dot.is-l { background: linear-gradient(135deg, #ff4d4f, #c62828); }
-.rivalry-spark__dot.is-d { background: linear-gradient(135deg, #b0b6c0, #6b7280); }
+.rivalry-spark__dot { width:10px; height:10px; border-radius:50%; background:var(--kerb); }
 

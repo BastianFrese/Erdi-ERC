@@ -32,40 +32,38 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
     <style>
         /* ───────── Saison-Poster (= Render-View + Discord-Vorschau) ───────── */
         .rc-poster-doc {
-            position: relative; color: #fff; overflow: hidden;
+            position: relative; color: var(--ink); overflow: hidden;
             border-radius: var(--r-3); border: 1px solid var(--stroke-1);
-            box-shadow: var(--sh-2);
             max-width: 1100px; margin: 0 auto;
-            background-color: #0b1117;
+            background-color: var(--wet);
             background-image: var(--rc-bg-image, none);
             background-size: cover; background-position: center;
         }
         /* Dunkler Verlauf über dem Hintergrundbild für lesbaren Content */
         .rc-poster-doc::before {
             content: ""; position: absolute; inset: 0; z-index: 0;
-            background: linear-gradient(180deg, rgba(8,10,16,.55) 0%, rgba(8,10,16,.78) 100%);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--wet) 55%, transparent) 0%, color-mix(in srgb, var(--wet) 78%, transparent) 100%);
             pointer-events: none;
         }
         .rc-poster-doc > * { position: relative; z-index: 1; }
         .rc-poster-doc__chequer {
             position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 2;
-            background-image: linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 24px),
-                              linear-gradient(90deg, transparent 0, transparent 12px, #fff 12px, #fff 24px);
+            background-image: linear-gradient(90deg, var(--ink) 0, var(--ink) 12px, transparent 12px, transparent 24px),
+                              linear-gradient(90deg, transparent 0, transparent 12px, var(--ink) 12px, var(--ink) 24px);
             background-size: 24px 6px; background-position: 0 0, 0 0;
         }
 
         .rc-poster-doc__head {
             display: flex; flex-direction: column; align-items: center; gap: .9rem;
             padding: 2.4rem 1.6rem 1.6rem;
-            border-bottom: 1px solid rgba(255,255,255,.08);
+            border-bottom: 1px solid var(--rule);
             text-align: center;
         }
         .rc-poster-doc__logo {
-            width: 130px; height: auto; filter: drop-shadow(0 6px 18px rgba(0,0,0,.55));
+            width: 130px; height: auto; filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--track) 55%, transparent));
         }
         .rc-poster-doc__eyebrow {
             font: 700 .68rem/1 var(--ff-tech); letter-spacing: .25em; text-transform: uppercase;
@@ -73,10 +71,10 @@
         }
         .rc-poster-doc__title {
             font: 900 clamp(1.9rem, 4.4vw, 2.8rem)/.95 var(--ff-heading);
-            text-transform: uppercase; letter-spacing: -.01em; margin: 0; color: #fff;
+            text-transform: uppercase; letter-spacing: -.01em; margin: 0; color: var(--ink);
         }
         .rc-poster-doc__sub {
-            font: 400 .95rem/1.45 var(--ff-body); color: rgba(255,255,255,.72); max-width: 580px; margin: 0;
+            font: 400 .95rem/1.45 var(--ff-body); color: color-mix(in srgb, var(--ink) 72%, transparent); max-width: 580px; margin: 0;
         }
 
         .rc-poster-doc__body { padding: 1.4rem 1.4rem 1.6rem; display: flex; flex-direction: column; gap: .6rem; }
@@ -85,66 +83,66 @@
             grid-template-columns: 50px 72px 1fr auto;
             gap: .9rem; align-items: center;
             padding: .85rem 1rem;
-            border: 1px solid rgba(255,255,255,.1);
+            border: 1px solid var(--rule);
             border-radius: 6px;
-            background: rgba(255,255,255,.04);
+            background: var(--rule);
             position: relative; overflow: hidden;
         }
         .rc-poster-doc__row::before {
             content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: transparent;
         }
         .rc-poster-doc__row.is-next {
-            border-color: rgba(34, 211, 238, .55);
-            background: linear-gradient(135deg, rgba(34,211,238,.10), rgba(34,211,238,.02));
+            border-color: color-mix(in srgb, var(--wet) 55%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--wet) 10%, transparent), color-mix(in srgb, var(--wet) 2%, transparent));
         }
         .rc-poster-doc__row.is-next::before { background: var(--sig-cyan); }
         .rc-poster-doc__order {
             font: 900 1.5rem/1 var(--ff-heading); text-align: center;
-            font-feature-settings: "tnum"; color: #fff;
+            font-feature-settings: "tnum"; color: var(--ink);
         }
-        .rc-poster-doc__flag { font-size: 2.3rem; line-height: 1; text-align: center; filter: drop-shadow(0 4px 12px rgba(0,0,0,.55)); }
+        .rc-poster-doc__flag { font-size: 2.3rem; line-height: 1; text-align: center; filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--track) 55%, transparent)); }
         .rc-poster-doc__main { min-width: 0; display: flex; flex-direction: column; gap: .35rem; }
         .rc-poster-doc__track {
-            font: 900 1.05rem/1.05 var(--ff-heading); text-transform: uppercase; letter-spacing: .02em; color: #fff;
+            font: 900 1.05rem/1.05 var(--ff-heading); text-transform: uppercase; letter-spacing: .02em; color: var(--ink);
         }
         .rc-poster-doc__track .next-tag {
             display: inline-block; margin-left: .45rem;
             font: 700 .54rem/1 var(--ff-tech); letter-spacing: .18em; text-transform: uppercase;
-            color: #0b1117; background: var(--sig-cyan);
+            color: var(--wet); background: var(--sig-cyan);
             padding: .22rem .5rem; border-radius: 3px; vertical-align: middle;
         }
         .rc-poster-doc__distance {
             display: inline-flex; align-items: center;
             font: 700 .58rem/1 var(--ff-tech); letter-spacing: .14em; text-transform: uppercase;
-            color: #ff4b4b; border: 1px solid rgba(255,75,75,.5);
+            color: var(--flag); border: 1px solid color-mix(in srgb, var(--flag) 50%, transparent);
             padding: .25rem .55rem; border-radius: 999px;
-            background: rgba(255,75,75,.08); align-self: flex-start;
+            background: color-mix(in srgb, var(--flag) 8%, transparent); align-self: flex-start;
         }
         .rc-poster-doc__legs { display: flex; gap: .4rem; flex-wrap: wrap; }
         .rc-poster-doc__leg {
             display: flex; flex-direction: column; gap: .15rem;
             min-width: 88px;
             padding: .45rem .6rem;
-            border: 1px solid rgba(255,255,255,.12);
+            border: 1px solid var(--rule);
             border-radius: 5px;
-            background: rgba(0,0,0,.35);
+            background: color-mix(in srgb, var(--track) 35%, transparent);
             text-align: center;
         }
         .rc-poster-doc__leg.is-next {
-            border-color: rgba(34,211,238,.6);
-            background: rgba(34,211,238,.08);
+            border-color: color-mix(in srgb, var(--wet) 60%, transparent);
+            background: color-mix(in srgb, var(--wet) 8%, transparent);
         }
-        .rc-poster-doc__leg-league { font: 700 .54rem/1 var(--ff-tech); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+        .rc-poster-doc__leg-league { font: 700 .54rem/1 var(--ff-tech); letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 55%, transparent); }
         .rc-poster-doc__leg.is-next .rc-poster-doc__leg-league { color: var(--sig-cyan); }
-        .rc-poster-doc__leg-date   { font: 700 .85rem/1 var(--ff-tech); color: #fff; margin-top: .3rem; }
-        .rc-poster-doc__leg-time   { font: 700 .64rem/1 var(--ff-tech); color: rgba(255,255,255,.6); margin-top: .2rem; }
+        .rc-poster-doc__leg-date   { font: 700 .85rem/1 var(--ff-tech); color: var(--ink); margin-top: .3rem; }
+        .rc-poster-doc__leg-time   { font: 700 .64rem/1 var(--ff-tech); color: color-mix(in srgb, var(--ink) 60%, transparent); margin-top: .2rem; }
 
         .rc-poster-doc__footer {
             display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
             padding: .9rem 1.4rem 1.2rem;
-            border-top: 1px solid rgba(255,255,255,.08);
+            border-top: 1px solid var(--rule);
             font: 700 .6rem/1 var(--ff-tech); letter-spacing: .18em; text-transform: uppercase;
-            color: rgba(255,255,255,.5);
+            color: color-mix(in srgb, var(--ink) 50%, transparent);
         }
 
         @@media (max-width: 600px) {
@@ -155,7 +153,6 @@
 
         /* ───────── Vollbild-Modus (Discord-Vorschau via ?preview=1) ───────── */
         body.rc-preview-active { overflow: hidden; }
-        body.rc-preview-active .f1-home-backdrop,
         body.rc-preview-active .erdi-empty-state,
         body.rc-preview-active > nav,
         body.rc-preview-active > header,
@@ -171,17 +168,17 @@
         body.rc-preview-active .rc-preview-backdrop {
             display: block;
             position: fixed; inset: 0; z-index: 9998;
-            background: rgba(0,0,0,.86); backdrop-filter: blur(8px);
+            background: color-mix(in srgb, var(--track) 86%, transparent); backdrop-filter: blur(8px);
         }
         .rc-preview-backdrop { display: none; }
         .rc-preview-close {
             position: fixed; top: 1.2rem; right: 1.2rem; z-index: 10000;
-            background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); color: #fff;
+            background: color-mix(in srgb, var(--track) 55%, transparent); border: 1px solid var(--rule-strong); color: var(--ink);
             width: 36px; height: 36px; border-radius: 50%; font-size: .9rem; cursor: pointer;
             display: none; align-items: center; justify-content: center;
             transition: background .15s ease;
         }
-        .rc-preview-close:hover { background: rgba(225,6,0,.75); }
+        .rc-preview-close:hover { background: color-mix(in srgb, var(--flag) 75%, transparent); }
         body.rc-preview-active .rc-preview-close { display: flex; }
     </style>
 }
@@ -239,7 +236,7 @@ else
                     <div class="rc-poster-doc__legs">
                         @if (orderedLegs.Count == 0)
                         {
-                            <span style="font-size:.6rem; color:rgba(255,255,255,.45); letter-spacing:.12em; text-transform:uppercase; align-self:center;">—</span>
+                            <span style="font-size:.6rem; color:color-mix(in srgb, var(--ink) 45%, transparent); letter-spacing:.12em; text-transform:uppercase; align-self:center;">—</span>
                         }
                         else
                         {
@@ -256,8 +253,8 @@ else
                                     @if (hasResult)
                                     {
                                         <a class="rc-poster-doc__leg-result" href="@Url.Action("RaceDetail", "Races", new { leagueId = leg.LeagueId, raceId = legRaceRowId })"
-                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--sig-cyan,#58b7c9);text-decoration:none;">
-                                            <i class="bi bi-flag-checkered"></i> Ergebnis
+                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--sig-cyan,var(--wet));text-decoration:none;">
+                                            <i class="bi bi-flag-fill"></i> Ergebnis
                                         </a>
                                     }
                                 </div>

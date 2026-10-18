@@ -19,7 +19,7 @@
     margin-bottom: 1.75rem;
     padding: 1.5rem 1.75rem;
     background:
-        linear-gradient(165deg, rgba(255,255,255,.04) 0%, transparent 35%),
+        linear-gradient(165deg, var(--rule) 0%, transparent 35%),
         linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
     border: 1px solid var(--stroke-1);
     clip-path: var(--clip-chamfer, polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px));
@@ -32,7 +32,7 @@
     top: 0; left: 0; right: 0;
     height: 2px;
     background: var(--telemetry-stripe, linear-gradient(90deg, var(--sig-cyan), var(--accent-2), var(--sig-magenta)));
-    box-shadow: 0 0 14px rgba(225,6,0,.45);
+
     z-index: 1;
     pointer-events: none;
 }
@@ -68,7 +68,7 @@
     font-weight: 800;
     font-size: 1.35rem;
     letter-spacing: -.01em;
-    color: #fff;
+    color: var(--ink);
     margin: 0 0 .2rem;
 }
 .app-hero__title p {
@@ -89,9 +89,9 @@
     margin-bottom: 1.5rem;
     padding: 1rem 1.25rem;
     background:
-        linear-gradient(180deg, rgba(88,101,242,.08), transparent 55%),
+        linear-gradient(180deg, color-mix(in srgb, var(--wet) 8%, transparent), transparent 55%),
         var(--surface-1);
-    border-color: rgba(88,101,242,.25);
+    border-color: color-mix(in srgb, var(--wet) 25%, transparent);
 }
 .app-discord-warn__icon {
     flex-shrink: 0;
@@ -100,10 +100,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(88,101,242,.15);
+    background: color-mix(in srgb, var(--wet) 15%, transparent);
     border-radius: var(--r-2);
     font-size: 1.25rem;
-    color: #5865f2;
+    color: var(--wet);
 }
 .app-discord-warn__body strong {
     display: block;
@@ -111,7 +111,7 @@
     font-size: .72rem;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--ink);
     margin-bottom: .35rem;
 }
 .app-discord-warn__body p {
@@ -165,10 +165,10 @@
 .app-form__input,
 .app-form__select,
 .app-form__textarea {
-    background: rgba(255,255,255,.04);
+    background: var(--rule);
     border: 1px solid var(--stroke-1);
     border-radius: 8px;
-    color: #fff;
+    color: var(--ink);
     padding: .6rem .85rem;
     font-size: .9rem;
     font-family: var(--ff-body);
@@ -181,25 +181,25 @@
     outline: none;
     border-color: color-mix(in srgb, var(--accent) 55%, var(--stroke-1));
     box-shadow: 0 0 0 3px var(--accent-soft);
-    background: rgba(255,255,255,.06);
+    background: var(--rule);
 }
 .app-form__input::placeholder,
 .app-form__textarea::placeholder {
     color: var(--ink-4);
 }
 .app-form__input[readonly] {
-    background: rgba(255,255,255,.02);
+    background: var(--rule);
     color: var(--ink-2);
     cursor: default;
 }
 .app-form__select {
     color-scheme: dark;
-    background-color: #1a2130;
+    background-color: var(--kerb);
     cursor: pointer;
 }
 .app-form__select option {
-    background-color: #111722;
-    color: #eaf1ff;
+    background-color: var(--kerb);
+    color: var(--ink);
 }
 .app-form__textarea {
     resize: vertical;
@@ -213,8 +213,8 @@
 .app-form__validation {
     grid-column: 1 / -1;
     padding: .65rem 1rem;
-    background: rgba(255,71,87,.08);
-    border: 1px solid rgba(255,71,87,.2);
+    background: color-mix(in srgb, var(--flag) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--flag) 20%, transparent);
     border-radius: var(--r-2);
     font-size: .8rem;
     color: var(--sig-red);
@@ -255,19 +255,19 @@
     flex-direction: column;
     gap: .35rem;
     padding: .85rem 1rem;
-    background: rgba(255,255,255,.03);
+    background: var(--rule);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-3, 10px);
     transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
 }
 .app-league-card:hover .app-league-card__body {
     border-color: var(--stroke-2);
-    background: rgba(255,255,255,.05);
+    background: var(--rule);
 }
 .app-league-card input:checked + .app-league-card__body {
     border-color: color-mix(in srgb, var(--accent) 65%, var(--stroke-1));
     background: var(--accent-soft);
-    box-shadow: 0 0 0 3px var(--accent-soft);
+
 }
 .app-league-card input:focus-visible + .app-league-card__body {
     outline: 2px solid var(--accent);
@@ -283,7 +283,7 @@
     font-family: var(--ff-tech);
     font-weight: 800;
     font-size: .95rem;
-    color: #fff;
+    color: var(--ink);
 }
 .app-league-card__seats {
     font-family: var(--ff-tech);
@@ -311,19 +311,19 @@
     width: fit-content;
 }
 .app-league-card__badge--free {
-    background: rgba(76,175,109,.10);
-    color: #4caf6d;
+    background: color-mix(in srgb, var(--best) 10%, transparent);
+    color: var(--best);
 }
 .app-league-card__badge--wait {
-    background: rgba(232,169,61,.10);
-    color: var(--sig-amber, #e8a93d);
+    background: color-mix(in srgb, var(--slow) 10%, transparent);
+    color: var(--sig-amber, var(--slow));
 }
 .app-league-card__badge--open {
-    background: rgba(109,156,196,.10);
-    color: #6d9cc4;
+    background: color-mix(in srgb, var(--wet) 10%, transparent);
+    color: var(--wet);
 }
 .app-league-card--full .app-league-card__body {
-    background: rgba(255,255,255,.015);
+    background: var(--rule);
 }
 
 /* ── Zeichen-Zähler ──────────────────────────────────────────────────── */
@@ -375,27 +375,27 @@
     margin-bottom: .25rem;
 }
 .app-submit-card__icon--ok {
-    background: rgba(76,175,109,.10);
-    box-shadow: 0 0 24px rgba(76,175,109,.25);
+    background: color-mix(in srgb, var(--best) 10%, transparent);
+
 }
 .app-submit-card__icon--wait {
-    background: rgba(232,169,61,.10);
-    box-shadow: 0 0 24px rgba(232,169,61,.25);
+    background: color-mix(in srgb, var(--slow) 10%, transparent);
+
 }
 .app-submit-card__icon--info {
-    background: rgba(109,156,196,.10);
-    box-shadow: 0 0 24px rgba(109,156,196,.25);
+    background: color-mix(in srgb, var(--wet) 10%, transparent);
+
 }
 .app-submit-card__icon--send {
-    background: rgba(88,183,201,.10);
-    box-shadow: 0 0 24px rgba(88,183,201,.25);
+    background: color-mix(in srgb, var(--wet) 10%, transparent);
+
 }
 .app-submit-card__title {
     font-family: var(--ff-tech);
     font-weight: 800;
     font-size: 1.25rem;
     letter-spacing: -.01em;
-    color: #fff;
+    color: var(--ink);
     margin: 0;
 }
 .app-submit-card__body {
@@ -405,15 +405,15 @@
     max-width: 38ch;
 }
 .app-submit-card__body strong {
-    color: #fff;
+    color: var(--ink);
 }
 .app-submit-card__warn {
     display: inline-flex;
     align-items: center;
     gap: .5rem;
     padding: .5rem 1rem;
-    background: rgba(232,169,61,.08);
-    border: 1px solid rgba(232,169,61,.2);
+    background: color-mix(in srgb, var(--slow) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--slow) 20%, transparent);
     border-radius: var(--r-2);
     font-size: .78rem;
     color: var(--sig-amber);
@@ -431,11 +431,11 @@
     gap: .6rem;
     padding: .75rem 1rem;
     margin-bottom: 1.25rem;
-    background: rgba(109,156,196,.08);
-    border: 1px solid rgba(109,156,196,.25);
+    background: color-mix(in srgb, var(--wet) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--wet) 25%, transparent);
     border-radius: var(--r-2, 8px);
     font-size: .85rem;
-    color: #cfe9ff;
+    color: var(--wet);
 }
 .app-card-stack {
     display: flex;
@@ -459,7 +459,7 @@
     font-family: var(--ff-tech);
     font-weight: 800;
     font-size: 1.05rem;
-    color: #fff;
+    color: var(--ink);
 }
 .app-card__meta {
     display: flex;
@@ -482,14 +482,14 @@
     display: flex;
     justify-content: flex-end;
     padding-top: .5rem;
-    border-top: 1px solid rgba(255,255,255,.05);
+    border-top: 1px solid var(--rule);
 }
 .app-btn-danger {
-    color: var(--sig-red, #ff6b6b);
+    color: var(--sig-red);
 }
 .app-btn-danger:hover {
-    color: #fff;
-    background: rgba(255,71,87,.15);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--flag) 15%, transparent);
 }
 .app-review-note__label {
     display: block;
@@ -504,7 +504,7 @@
 .app-review-note blockquote {
     margin: 0;
     padding: .65rem .9rem;
-    background: rgba(255,255,255,.03);
+    background: var(--rule);
     border-left: 2px solid var(--accent);
     border-radius: 0 8px 8px 0;
     font-size: .85rem;
@@ -522,7 +522,7 @@
     margin: 1.75rem 0 .85rem;
 }
 .app-section-title i {
-    color: var(--sig-amber, #e8a93d);
+    color: var(--sig-amber, var(--slow));
     margin-right: .4rem;
 }
 .app-card--waitlist {
@@ -546,8 +546,8 @@
     font-family: var(--ff-tech);
     font-size: 1.9rem;
     font-weight: 900;
-    color: var(--sig-amber, #e8a93d);
-    background: rgba(232,169,61,.07);
+    color: var(--sig-amber, var(--slow));
+    background: color-mix(in srgb, var(--slow) 7%, transparent);
     border-radius: var(--r-2, 8px);
 }
 

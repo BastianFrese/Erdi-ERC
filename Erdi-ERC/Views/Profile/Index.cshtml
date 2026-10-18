@@ -18,7 +18,7 @@
     var profileHardware = SimHardwareHelper.Resolve(profile?.InputDevice);
     var currentInputDevice = profile?.InputDevice?.Trim() ?? string.Empty;
     var hwOptions = new[] { "Fanatec", "MOZA Racing", "Logitech G", "Thrustmaster", "Gamepad" };
-    var currentNumberColor = ViewBag.NumberColor as string ?? "#e10600";
+    var currentNumberColor = ViewBag.NumberColor as string ?? "var(--flag)";
 
     var featured = DriverAchievementsHelper.GetFeatured(Model.Achievements);
     var totalRaces = Model.Races.Count;
@@ -33,20 +33,16 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/driver-card.css" asp-append-version="true" />
     <style>
-        .profile-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2); }
-        .profile-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent); }
+        .profile-card { background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden; }
+        .profile-card__head { padding:.85rem 1rem;border-bottom:1px solid var(--stroke-1);display:flex;align-items:center;gap:.5rem;font:700 .88rem/1 var(--ff-body);color:var(--ink);background:linear-gradient(180deg,var(--rule),transparent); }
         .profile-card__body { padding:1.25rem; }
     </style>
 }
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "Fahrer-Profil · ERC",
+    Eyebrow   = "Fahrerprofil",
     Title     = Model.Driver,
 })" />
 
@@ -133,7 +129,7 @@
         </div>
 
         <div class="profile-card mt-4">
-            <div class="profile-card__head"><i class="bi bi-stars" style="color:var(--text-amber,#f59e0b);"></i> Profil-Infos</div>
+            <div class="profile-card__head"><i class="bi bi-stars" style="color:var(--text-amber,var(--slow));"></i> Profil-Infos</div>
             <div class="profile-card__body d-flex flex-column gap-2">
                 <div class="surface-glass p-2">
                     <div class="text-mute small">Lieblingsstrecke</div>
@@ -195,17 +191,17 @@
                     {
                         <form asp-action="RemoveProfilePhoto" method="post" onsubmit="return confirm('Profilbild wirklich entfernen?');">
                             @Html.AntiForgeryToken()
-                            <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:#ef4444;color:#ef4444;">Foto entfernen</button>
+                            <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--flag);color:var(--flag);">Foto entfernen</button>
                         </form>
                     }
                 </div>
             </div>
 
-            <div class="profile-card mt-4" style="border-color:var(--text-amber,#f59e0b);">
-                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,#f59e0b);"></i> Ingame-Namen ändern</div>
+            <div class="profile-card mt-4" style="border-color:var(--text-amber,var(--slow));">
+                <div class="profile-card__head"><i class="bi bi-pencil-square" style="color:var(--text-amber,var(--slow));"></i> Ingame-Namen ändern</div>
                 <div class="profile-card__body d-flex flex-column gap-3">
                     <div class="text-mute small">Hier kannst du deinen Ingame-Namen (@preferredPlatform) selbst anpassen.</div>
-                    <div class="surface-glass p-3" style="border-left:3px solid var(--text-amber,#f59e0b);font-size:.88rem;">
+                    <div class="surface-glass p-3" style="border-left:3px solid var(--text-amber,var(--slow));font-size:.88rem;">
                         <strong>Wichtiger Hinweis:</strong> Bitte trage hier immer zu <strong>100% deinen echten und korrekten Ingame-Namen</strong> ein. Falsche Angaben führen zu falschen Zuordnungen im System.
                     </div>
                     <form asp-action="UpdateEaName" method="post" class="d-flex flex-column gap-2">
@@ -218,7 +214,7 @@
                                 Ich bestätige, dass dieser Ingame-Name mein echter, vollständiger und aktueller Name ist.
                             </label>
                         </div>
-                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,#f59e0b);color:var(--text-amber,#f59e0b);">Ingame-Namen speichern</button>
+                        <button class="f1-btn f1-btn--ghost" type="submit" style="border-color:var(--text-amber,var(--slow));color:var(--text-amber,var(--slow));">Ingame-Namen speichern</button>
                     </form>
                 </div>
             </div>
@@ -349,7 +345,7 @@
         }
 
         <div class="profile-card mb-4">
-            <div class="profile-card__head"><i class="bi bi-trophy" style="color:var(--text-amber,#f59e0b);"></i> Achievements</div>
+            <div class="profile-card__head"><i class="bi bi-trophy" style="color:var(--text-amber,var(--slow));"></i> Achievements</div>
             <div class="profile-card__body">
                 @if (unlocked.Any())
                 {
@@ -412,8 +408,7 @@
             <div class="profile-card__body p-0">
                 @if (Model.Races.Any())
                 {
-                    <div class="f1-results-card" style="box-shadow:none;border:none;border-radius:0;">
-                        <div class="f1-results-card__telemetry" aria-hidden="true"></div>
+                    <div class="f1-results-card" style="border:none;border-radius:0;">
                         <div class="table-responsive">
                             <table class="f1-results-table profile-race-table">
                                 <thead>
@@ -453,10 +448,10 @@
 }
 else
 {
-    <span class="status-pill" style="background:rgba(239,68,68,.15);color:#ef4444;">@(r.Position == 0 ? "DNF" : "DNS")</span>
+    <span class="status-pill" style="background:color-mix(in srgb, var(--flag) 15%, transparent);color:var(--flag);">@(r.Position == 0 ? "DNF" : "DNS")</span>
 }
 </td>
-                                            <td class="text-tech is-center" style="color:var(--sig-purple,#a855f7);">@(r.FastestLap ? "★" : "")</td>
+                                            <td class="text-tech is-center" style="color:var(--sig-purple,var(--fast));">@(r.FastestLap ? "★" : "")</td>
                                             <td style="font-size:.82rem;color:var(--ink-2);">@(r.WasReserve ? r.ReserveForDriver : "")</td>
                                         </tr>
                                     }
@@ -483,7 +478,7 @@ else
             const loadLib = () => new Promise((resolve, reject) => {
                 if (window.htmlToImage) { resolve(window.htmlToImage); return; }
                 const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+                s.src = '/lib/html-to-image/html-to-image.js';
                 s.onload = () => resolve(window.htmlToImage);
                 s.onerror = () => reject(new Error('Bild-Bibliothek konnte nicht geladen werden.'));
                 document.head.appendChild(s);
@@ -609,9 +604,9 @@ else
                     p1Chips.forEach((chip, i) => {
                         setTimeout(() => {
                             chip.animate([
-                                { transform: 'translateY(0) scale(1)', boxShadow: '0 0 0 rgba(255, 193, 7, 0)' },
-                                { transform: 'translateY(-1px) scale(1.04)', boxShadow: '0 0 14px rgba(255, 193, 7, .55)' },
-                                { transform: 'translateY(0) scale(1)', boxShadow: '0 0 0 rgba(255, 193, 7, 0)' }
+                                { transform: 'translateY(0) scale(1)', boxShadow: '0 0 0 color-mix(in srgb, var(--slow) 0%, transparent)' },
+                                { transform: 'translateY(-1px) scale(1.04)', boxShadow: '0 0 14px color-mix(in srgb, var(--slow) 55%, transparent)' },
+                                { transform: 'translateY(0) scale(1)', boxShadow: '0 0 0 color-mix(in srgb, var(--slow) 0%, transparent)' }
                             ], {
                                 duration: 1350,
                                 easing: 'cubic-bezier(.22,.61,.36,1)',

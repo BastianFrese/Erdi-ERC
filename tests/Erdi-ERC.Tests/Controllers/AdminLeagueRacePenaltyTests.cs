@@ -197,6 +197,39 @@ public class AdminRaceEntryPenaltyTests
         Assert.Equal(1, finish.RaceTimeMs);
     }
 
+    [Fact]
+    public async Task SaveEnteredRace_dnfDriverWithoutPosition_persistsFinishWithPositionZero()
+    {
+        // Regression: Das Formular leert den Positions-Slot eines als DNF markierten
+        // Fahrers (EnterRace.cshtml, syncDisabledOptions). Kam er deshalb nur über
+        // dnfDrivers[] an, wurde gar kein RaceFinish geschrieben — die Results-Seite
+        // zeigte ihn dann als DNS statt DNF.
+        using var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "l1", Name = "L1" });
+        ctx.Db.SaveChanges();
+
+        var ctrl = BuildController(ctx);
+        TestAuthHelper.AttachContext(ctrl, TestAuthHelper.CreateAdminContext("admin1", "AdminUser"));
+
+        var result = await ctrl.SaveEnteredRace(
+            leagueId: "l1",
+            date: new DateTime(2026, 8, 31),
+            track: "Monza",
+            fastestLapDriver: null,
+            positions: new[] { "Alpha", "Bravo", "", "" },
+            raceTimes: new[] { "1:30.000", "1:31.000", "", "" },
+            penaltySeconds: new[] { "", "", "", "" },
+            dnfDrivers: new[] { "Charlie" },
+            reserveDrivers: null,
+            reserveMainDrivers: null);
+
+        Assert.IsType<RedirectToActionResult>(result);
+
+        var charlie = ctx.Db.RaceFinishes.SingleOrDefault(f => f.Driver == "Charlie");
+        Assert.NotNull(charlie);
+        Assert.Equal(0, charlie!.Position);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private sealed class NullTempDataProvider : ITempDataProvider

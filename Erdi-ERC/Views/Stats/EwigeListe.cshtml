@@ -5,15 +5,9 @@
     var totalDataRows = Model.Sheets.Sum(s => Math.Max(0, s.Rows.Count - 1));
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/ewige-liste.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow = "Erdi's Racing Community · Archiv",
     Title = "Ewige",
     Highlight = "Liste",
     Lead = "Das komplette Archiv der Erdi's Racing Community – alle Saisons, Ligen und Ergebnisse auf einen Blick.",
@@ -106,8 +100,6 @@ else
 
             <div class="tab-pane fade @active" id="sheet-pane-@i" role="tabpanel" aria-labelledby="sheet-tab-@i">
                 <div class="f1-ewige-card reveal">
-                    <div class="f1-ewige-card__telemetry" aria-hidden="true"></div>
-                    <div class="f1-ewige-card__corner" aria-hidden="true"></div>
 
                     <div class="f1-ewige-toolbar">
                         <div class="f1-ewige-toolbar__search">
@@ -152,7 +144,7 @@ else
                                             @for (int c = 0; c < s.Rows[r].Count; c++)
                                             {
                                                 if (hiddenColumnIndexes.Contains(c)) continue;
-                                                <td>@s.Rows[r][c]</td>
+                                                <td>@DriverNameHelper.Display(s.Rows[r][c])</td>
                                             }
                                         </tr>
                                     }

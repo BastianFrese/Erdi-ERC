@@ -13,10 +13,10 @@ cd C:\Users\basti\source\repos\Erdi-ERC
 dotnet user-secrets init --project Erdi-ERC/Erdi-ERC.csproj
 
 # 2) Connection-String zur Dev-DB setzen
-#    Server/Port: typischerweise REDACTED-HOST:3306 (Heimnetz)
+#    Server/Port: typischerweise 192.168.100.51:3306 (Heimnetz)
 #    Database:    erditest (NICHT erdierc — das ist LIVE)
 #    User/Pass:   dein Dev-DB-Credential (nicht dasselbe wie Prod!)
-dotnet user-secrets set "ConnectionStrings:Default" "Server=<DEIN-DEV-HOST>;Port=3306;Database=erditest;User=REDACTED;Password=<DEIN-DEV-PASSWORT>;TreatTinyAsBoolean=true" --project Erdi-ERC/Erdi-ERC.csproj
+dotnet user-secrets set "ConnectionStrings:Default" "Server=<DEIN-DEV-HOST>;Port=3306;Database=erditest;User=erditest;Password=<DEIN-DEV-PASSWORT>;TreatTinyAsBoolean=true" --project Erdi-ERC/Erdi-ERC.csproj
 
 # 3) Discord-OAuth-Credentials setzen (für Login lokal)
 #    Diese bekommst du aus https://discord.com/developers/applications
@@ -84,6 +84,6 @@ Diese Datei ist **nicht** im Repo. Backup-Strategien:
 - VS muss die Solution neu laden (`Datei → Close Solution` → reopen). User-Secrets werden zur Build-Zeit evaluiert.
 
 **MySQL-Connection schlägt fehl obwohl User-Secrets gesetzt sind:**
-- Bist du im Heimnetz? Dev-DB läuft auf `REDACTED-HOST` (Heimnetz).
+- Bist du im Heimnetz? Dev-DB läuft auf `192.168.100.51` (Heimnetz).
 - VPN aktiv? Manche VPNs blocken lokale Subnetze.
-- Teste: `Test-NetConnection REDACTED-HOST -Port 3306` (PowerShell).
+- Teste: `Test-NetConnection 192.168.100.51 -Port 3306` (PowerShell).

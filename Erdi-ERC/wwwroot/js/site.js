@@ -189,3 +189,180 @@
         if (ev.key === 'Escape') closeAll();
     });
 })();
+
+/* ---------------------------------------------------------------------------
+   Navigationsreihe auf schmalen Schirmen.
+
+   Auf 390 px passt die Reihe nicht mehr; sie ist seitlich wischbar, aber man
+   sah es nicht: der letzte Punkt war einfach abgeschnitten. Hier bekommt sie
+   einen weichen Rand, solange es etwas zu wischen gibt, und die aktive Seite
+   wird beim Laden in den Blick gerueckt — sonst startet man auf "RACING HUB"
+   und die eigene Seite liegt ausserhalb.
+
+   Gemessen wird nur die Reihe selbst, nicht der Schirm: scrollWidth gegen
+   clientWidth. Die Klassen setzt das CSS (99-responsive.css).
+   --------------------------------------------------------------------------- */
+(function () {
+    const reihe = document.querySelector('.strip__nav');
+    if (!reihe) return;
+
+    const aktiv = reihe.querySelector('a.active');
+    if (aktiv && reihe.scrollWidth > reihe.clientWidth) {
+        // scrollIntoView blockweise waere zu weit: die Reihe soll nur seitlich
+        // nachziehen, nicht die Seite springen lassen.
+        const ziel = aktiv.offsetLeft - (reihe.clientWidth - aktiv.offsetWidth) / 2;
+        reihe.scrollLeft = Math.max(0, ziel);
+    }
+
+})();
+
+/* ---------------------------------------------------------------------------
+   Hinweis auf die neue Gestalt.
+
+   Einmal je Browser. Ohne JavaScript erscheint er nicht — das ist Absicht:
+   eine Hoeflichkeitsmeldung ist kein Inhalt, der ohne Skript dastehen muss,
+   und so gibt es auch kein Aufblitzen beim Laden (das Element ist per CSS
+   display:none, bis diese Datei es einblendet).
+
+   Zwei Dinge, die diesen Hinweis von einem Dauerzustand unterscheiden:
+   - er verabschiedet sich von selbst, wenn der Browser ihn kennt, und
+   - er erscheint gar nicht mehr nach dem Ablaufdatum unten. Eine Meldung
+     ueber eine Umstellung ist nach ein paar Wochen nur noch Rauschen.
+   --------------------------------------------------------------------------- */
+(function () {
+    const hinweis = document.getElementById('designNotice');
+    if (!hinweis) return;
+
+    const schluessel = 'erc.design-notice.dismissed.v1';
+    const bis = new Date('2026-12-31T23:59:59');   // danach nie wieder
+
+    let bekannt = false;
+    try { bekannt = localStorage.getItem(schluessel) === '1'; } catch (e) { /* privater Modus */ }
+    if (bekannt || Date.now() > bis.getTime()) return;
+
+    const schliessen = () => {
+        hinweis.classList.remove('is-open');
+        try { localStorage.setItem(schluessel, '1'); } catch (e) { /* dann eben jedes Mal */ }
+    };
+
+    // Kurz warten: nicht im ersten Bild auftauchen. Die Seite soll sich erst
+    // setzen, sonst sieht der Hinweis wie ein Fehler aus.
+    setTimeout(() => hinweis.classList.add('is-open'), 1200);
+
+    hinweis.querySelector('[data-design-notice-close]')?.addEventListener('click', schliessen);
+    document.addEventListener('keydown', (ereignis) => {
+        if (ereignis.key === 'Escape' && hinweis.classList.contains('is-open')) schliessen();
+    });
+})();
+
+/* ---------------------------------------------------------------------------
+   Aufklapper "Mehr" in der Navigation.
+
+   Reiner Aufklapper, kein Menue im Sinne von role="menu": das verlangt
+   Pfeiltasten-Navigation und Fokusverwaltung. Hier fuehrt Tab durch die Links,
+   Escape schliesst und setzt den Fokus auf den Knopf zurueck, ein Klick
+   daneben schliesst ebenfalls. aria-expanded am Knopf beschreibt den Zustand.
+   --------------------------------------------------------------------------- */
+(function () {
+    const knopf = document.getElementById('moreBtn');
+    const panel = document.getElementById('morePanel');
+    if (!knopf || !panel) return;
+
+    const setzen = (offen) => {
+        panel.classList.toggle('is-open', offen);
+        knopf.setAttribute('aria-expanded', offen ? 'true' : 'false');
+    };
+
+    knopf.addEventListener('click', () => setzen(!panel.classList.contains('is-open')));
+
+    document.addEventListener('click', (ereignis) => {
+        if (!panel.classList.contains('is-open')) return;
+        if (panel.contains(ereignis.target) || knopf.contains(ereignis.target)) return;
+        setzen(false);
+    });
+
+    document.addEventListener('keydown', (ereignis) => {
+        if (ereignis.key !== 'Escape' || !panel.classList.contains('is-open')) return;
+        setzen(false);
+        knopf.focus();
+    });
+})();
+
+/* ---------------------------------------------------------------------------
+   Navigation: was nicht mehr passt, wandert nach "Mehr".
+
+   Auf schmalen Schirmen passen die sieben Hauptpunkte nicht mehr in die Reihe.
+   Sie war deshalb seitlich wischbar — man musste erst wischen, um "Kalender"
+   oder "Bewerbung" ueberhaupt zu sehen. Hier wird stattdessen gemessen: die
+   Hauptpunkte stellen sich der Reihe nach auf, und alles ab dem ersten, der
+   nicht mehr passt, wandert vorne in den Aufklapper — in der urspruenglichen
+   Reihenfolge.
+
+   Das Wischen bleibt als Rueckfall im CSS (overflow-x: auto): laeuft kein
+   JavaScript, verhaelt sich die Reihe wie vorher. Laeuft es, gibt es nichts zu
+   wischen.
+
+   Bei jeder Groessenaenderung wird zuerst alles zurueckgesetzt und neu
+   verteilt — so bleibt nichts haengen, wenn das Fenster wieder breiter wird.
+   --------------------------------------------------------------------------- */
+(function () {
+    const reihe = document.querySelector('.strip__nav');
+    const knopf = document.getElementById('moreBtn');
+    const panel = document.getElementById('morePanel');
+    if (!reihe || !knopf || !panel) return;
+    const liste = panel.querySelector('.strip__more-inner');
+    if (!liste) return;
+
+    // Die Hauptpunkte einmal merken: Reihenfolge und Zuordnung bleiben erhalten,
+    // egal wie oft umverteilt wird.
+    const hauptpunkte = [...reihe.children].filter((el) => el.tagName === 'A');
+    if (!hauptpunkte.length) return;
+
+    const verteilen = () => {
+        // 1. Alles zurueck in die Reihe, in der gemerkten Reihenfolge.
+        for (const a of hauptpunkte) {
+            if (!a.hasAttribute('data-verschoben')) continue;
+            a.removeAttribute('data-verschoben');
+            reihe.insertBefore(a, knopf);
+        }
+
+        // 2. Wie viel Platz bleibt neben dem Knopf?
+        const luecke = parseFloat(getComputedStyle(reihe).columnGap) || 0;
+        const platz = reihe.clientWidth - knopf.offsetWidth - luecke;
+        if (platz <= 0) return;
+
+        // 3. Von links nach rechts aufstellen: der erste, der nicht mehr passt,
+        //    nimmt alle folgenden mit.
+        let belegt = 0;
+        const wandern = [];
+        for (const a of hauptpunkte) {
+            belegt += a.offsetWidth + luecke;
+            if (belegt > platz) wandern.push(a);
+        }
+        if (!wandern.length) return;
+
+        // Nie alles umhaengen. Eine Reihe, in der nur noch der Knopf steht, ist
+        // keine Navigation mehr — genau das war auf einem Screenshot zu sehen,
+        // und der Zustand darf gar nicht erst entstehen. Ist der Platz zu knapp,
+        // bleiben die ersten zwei stehen und der Rest wandert; die Reihe wischt
+        // dann wie vorher.
+        const mindestensInDerReihe = 2;
+        if (hauptpunkte.length - wandern.length < mindestensInDerReihe) {
+            wandern.length = 0;
+            for (let i = mindestensInDerReihe; i < hauptpunkte.length; i++) wandern.push(hauptpunkte[i]);
+        }
+
+        for (const a of wandern) a.setAttribute('data-verschoben', '');
+        liste.prepend(...wandern);
+    };
+
+    verteilen();
+    // Die Schrift laedt nach; danach sind die Breiten andere.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(verteilen);
+
+    let zeitgeber;
+    window.addEventListener('resize', () => {
+        clearTimeout(zeitgeber);
+        zeitgeber = setTimeout(verteilen, 150);
+    });
+})();

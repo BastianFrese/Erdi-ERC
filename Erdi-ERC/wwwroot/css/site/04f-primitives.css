@@ -1,0 +1,110 @@
+/* =====================================================================
+   04f · DATEN-PRIMITIVE
+   Balken, Sektoren, Reifen, Deltas, Flaggenstatus, dichte Tabellen.
+   Liegt im Bundle NACH 04-components.css, damit diese Regeln gewinnen.
+   ===================================================================== */
+
+/* --- Der Turm --- */
+.tower {
+    width: 100%;
+    border-collapse: collapse;
+    /* fixed ist Pflicht: ohne festes Tabellenlayout ignoriert der Browser
+       max-width in der Namensspalte und der Text laeuft ueber. */
+    table-layout: fixed;
+    font-family: var(--ff-cond);
+}
+
+/* Spaltenbreiten gehoeren an die KOPFZEILE: bei table-layout:fixed liest der
+   Browser die Breiten aus der ersten Zeile. Standen sie nur an den td-Klassen,
+   teilte er den Rest gleichmaessig auf — der 3px-Teambalken wurde 75px breit
+   und schnitt den Fahrernamen ab. */
+.tower__col-pos  { width: 2.25rem; }
+/* Spezifischer als ".tower th { padding }" — sonst bleiben links und rechts
+   8px Polsterung stehen und der 4px-Balken wird 16px breit. */
+.tower th.tower__col-team, .tower td.tower__team { width: 4px; padding: 0; }
+/* Der Balken je Zeile. Die Farbe kommt als --team aus dem Inline-Stil der Zeile,
+   weil der Turm mehrere Teams gleichzeitig zeigt. Ohne background waere er unsichtbar. */
+.tower__team { padding: 0; border-bottom: 1px solid var(--rule); background: var(--team); }
+
+/* Eigene Zeile hervorheben — der Teamfarben-Verlauf aus der Spec. */
+.tower__row--self {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--team) 14%, transparent), transparent 70%);
+}
+
+/* --- Sektorzeiten: Farbe UND Glyphe, nie Farbe allein --- */
+.sector { display: inline-flex; align-items: center; gap: 2px; }
+.sector__seg { width: 12px; height: 8px; background: var(--kerb); }
+.sector__seg--fast { background: var(--fast); }
+.sector__seg--best { background: var(--best); }
+.sector__seg--slow { background: var(--slow); }
+.sector__glyph { font-size: .7em; line-height: 1; color: var(--ink-2); }
+
+/* --- Reifenmischung --- */
+.compound {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.35rem; height: 1.35rem;
+    font-family: var(--ff); font-size: .62rem; font-weight: 700; letter-spacing: 0;
+    border: 1.5px solid var(--ink-3); border-radius: 50%;
+    color: var(--ink); background: transparent;
+}
+.compound--soft   { border-color: var(--flag); color: var(--flag); }
+.compound--medium { border-color: var(--slow); color: var(--slow); }
+.compound--hard   { border-color: var(--ink);  color: var(--ink); }
+.compound--inter  { border-color: var(--best); color: var(--best); }
+.compound--wet    { border-color: var(--wet);  color: var(--wet); }
+
+/* --- Zeitdifferenz --- */
+.delta { font-variant-numeric: var(--num); color: var(--ink-2); }
+.delta--lead { color: var(--ink); font-weight: 700; }
+.delta--loss { color: var(--ink-2); }
+
+/* --- Streckenstatus --- */
+.flagstate {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    font-family: var(--ff); font-size: var(--fs-xs); font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 2px var(--sp-2); border: 1px solid var(--ink-3); color: var(--ink-2);
+}
+.flagstate--green   { border-color: var(--best); color: var(--best); }
+.flagstate--yellow  { border-color: var(--slow); color: var(--slow); }
+.flagstate--red     { border-color: var(--flag); color: var(--flag); }
+.flagstate--chequer { border-color: var(--ink);  color: var(--ink); }
+
+/* --- Dichte Datentabelle --- */
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--fs-s); }
+.data-table th {
+    padding: var(--sp-2); text-align: left;
+    font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-2); border-bottom: 1px solid var(--rule-strong);
+    position: sticky; top: 56px; background: var(--track);   /* klebt unter dem Streifen */
+    z-index: 2;
+}
+.data-table td { padding: var(--sp-2); border-bottom: 1px solid var(--rule); font-variant-numeric: var(--num); }
+.data-table tbody tr:hover { background: var(--tarmac); }
+
+/* --- Panel: harter Kasten mit Kopfzeile --- */
+.panel { background: var(--tarmac); border: 1px solid var(--rule); border-radius: var(--r-2); }
+.panel__head {
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--rule);
+}
+.panel__head-title {
+    font-family: var(--ff-cond); font-size: var(--fs-s); font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+}
+.panel__body { padding: var(--sp-4); }
+
+/* --- Sektionstrennung: Hairline plus Farbtick, keine Karte --- */
+.section { margin: var(--sp-7) 0; }
+.section-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.section-head__bar { width: 3px; height: 1.1em; background: var(--ink-3); flex: none; }
+.section-head__title {
+    margin: 0; font-family: var(--ff-cond); font-size: var(--fs-l); font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* --- Leere Datenmengen duerfen nicht kollabieren --- */
+.tower__empty, .data-table__empty {
+    padding: var(--sp-6) var(--sp-4); text-align: left;
+    color: var(--ink-2); border: 1px dashed var(--rule); border-radius: var(--r-2);
+}

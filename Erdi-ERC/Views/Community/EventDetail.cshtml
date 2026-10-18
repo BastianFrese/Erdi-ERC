@@ -22,14 +22,10 @@
         eventLead += $" &nbsp;·&nbsp; <i class=\"bi bi-geo-alt-fill\" style=\"color:var(--sig-cyan);margin-right:.2rem;\"></i>{System.Net.WebUtility.HtmlEncode(Model.Location)}";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = Model.IsUpcoming ? "Upcoming · Real-Life Event" : "Recap · Real-Life Event",
+    Eyebrow   = Model.IsUpcoming ? "Kommendes Event" : "Rückblick",
     LiveDot   = Model.IsUpcoming,
     Title     = Model.Title,
     Lead      = eventLead,
@@ -49,7 +45,7 @@
         })" />
 
         <div class="event-detail-gallery-card"
-             style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--sh-2);"
+             style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;"
              data-event-gallery
              data-images="@string.Join(",", allImages.Select(f => $"\"/uploads/events/{f}\""))">
             <div class="event-detail-gallery-hero-wrap"
@@ -115,7 +111,7 @@
         Title = "Bericht"
     })" />
 
-    <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;box-shadow:var(--sh-2);">
+    <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.5rem;">
         <p style="color:var(--ink-2);line-height:1.7;margin-bottom:0;">@Model.Description</p>
         @if (video is { } embed)
         {

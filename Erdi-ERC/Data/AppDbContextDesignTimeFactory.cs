@@ -27,7 +27,7 @@ namespace Erdi_ERC.Data
             var connectionString = config.GetConnectionString("Default");
 
             if (string.IsNullOrWhiteSpace(connectionString))
-                connectionString = "Server=REDACTED;Port=3306;Database=REDACTED;User=REDACTED;Password=REDACTED;";
+                connectionString = "Server=localhost;Port=3306;Database=erdierc;User=root;Password=design-time;";
 
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36)))

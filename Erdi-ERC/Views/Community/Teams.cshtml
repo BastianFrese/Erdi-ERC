@@ -4,14 +4,9 @@
     var topTeam = Model.Teams.OrderByDescending(x => x.Points).FirstOrDefault();
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "ERC Teams",
     Title     = "Team",
     Highlight = "seiten",
     Lead      = "Eigene Teamprofile mit Fahrern, Punkten, Erfolgen und schneller Übersicht.",

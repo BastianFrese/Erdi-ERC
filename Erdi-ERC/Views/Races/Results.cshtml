@@ -11,17 +11,11 @@
     var totalDriversAll = leagues.Sum(l => l.Standings.Count(s => !s.IsReserveDriver));
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 @await Html.PartialAsync("_LiveRaceBanner")
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow = "Erdi10 · Championship",
     LiveDot = true,
     Title = "Race",
     Highlight = "Results",
@@ -48,7 +42,7 @@
                 </p>
             </div>
             <div class="f1-constructors-hero__podium" style="align-self:center;">
-                <span class="f1-constructors-hero__cta">Volle Constructors-Tabelle &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-constructors-hero__cta">Volle Constructors-Tabelle &ouml;ffnen</span>
             </div>
         </div>
     </a>
@@ -149,8 +143,6 @@ else
         </div>
 
         <div class="f1-results-card">
-            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
-            <div class="f1-results-card__corner" aria-hidden="true"></div>
             <div class="table-responsive">
                 <table class="f1-results-table" id="results-table-@league.Id">
                     <colgroup>
@@ -185,7 +177,7 @@ else
                                 <th class="is-center" title="@raceHover" style="padding:.5rem .35rem;">
                                     @if (!string.IsNullOrEmpty(flagCode))
                                     {
-                                        <img src="https://flagcdn.com/w40/@(flagCode).png" alt="@r.Track" style="width:18px;height:13px;object-fit:cover;border-radius:2px;display:block;margin:0 auto 4px;" loading="lazy" />
+                                        <img src="/images/flags/@(flagCode).svg" alt="@r.Track" style="width:18px;height:13px;object-fit:cover;border-radius:2px;display:block;margin:0 auto 4px;" loading="lazy" />
                                     }
                                     <div class="text-tech" style="font-size:.6rem;letter-spacing:.1em;color:var(--ink-2);">@TrackAbbr(r.Track)</div>
                                 </th>
@@ -207,7 +199,7 @@ else
                                 <td class="text-tech fw-bold driver-tile__pos @posClass" style="font-size:1rem;padding-left:.6rem;">@s.Position</td>
                                 <td style="border-left:3px solid @teamColor;padding-left:.7rem;">
                                     <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@s.Driver">
-                                        <span class="fw-semibold">@s.Driver</span>
+                                        <span class="fw-semibold">@DriverNameHelper.Display(s.Driver)</span>
                                     </a>
                                     @if (isErsatzfahrer)
                                     {
@@ -245,8 +237,8 @@ else
                                     else if (fin.Position == 0)
                                     {
                                         // Im Rennen gestartet, aber nicht ins Ziel gekommen → DNF.
-                                        cellStyle = "background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);";
-                                        cellColor = "#f87171";
+                                        cellStyle = "background:color-mix(in srgb, var(--flag) 8%, transparent);border:1px solid color-mix(in srgb, var(--flag) 30%, transparent);";
+                                        cellColor = "var(--flag)";
                                         cellText = "DNF";
                                     }
                                     else if (fin.Position < 0)
@@ -256,11 +248,11 @@ else
                                         cellColor = "var(--ink-4)";
                                         cellText = "DNS";
                                     }
-                                    else if (fin.Position == 1) { cellStyle = "background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.45);"; cellColor = "#ffd24a"; cellText = fin.Position.ToString(); }
-                                    else if (fin.Position == 2) { cellStyle = "background:rgba(212,216,224,.14);border:1px solid rgba(212,216,224,.4);"; cellColor = "#d4d8e0"; cellText = fin.Position.ToString(); }
-                                    else if (fin.Position == 3) { cellStyle = "background:rgba(214,138,74,.16);border:1px solid rgba(214,138,74,.4);"; cellColor = "#d68a4a"; cellText = fin.Position.ToString(); }
-                                    else if (fin.Position <= 10) { cellStyle = "background:rgba(88,183,201,.08);border:1px solid rgba(88,183,201,.22);"; cellColor = "#aef3ff"; cellText = fin.Position.ToString(); }
-                                    else { cellStyle = "background:rgba(255,255,255,.03);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position == 1) { cellStyle = "background:color-mix(in srgb, var(--slow) 18%, transparent);border:1px solid color-mix(in srgb, var(--slow) 45%, transparent);"; cellColor = "var(--slow)"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position == 2) { cellStyle = "background:color-mix(in srgb, var(--wet) 14%, transparent);border:1px solid color-mix(in srgb, var(--wet) 40%, transparent);"; cellColor = "var(--wet)"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position == 3) { cellStyle = "background:color-mix(in srgb, var(--slow) 16%, transparent);border:1px solid color-mix(in srgb, var(--slow) 40%, transparent);"; cellColor = "var(--slow)"; cellText = fin.Position.ToString(); }
+                                    else if (fin.Position <= 10) { cellStyle = "background:color-mix(in srgb, var(--wet) 8%, transparent);border:1px solid color-mix(in srgb, var(--wet) 22%, transparent);"; cellColor = "var(--wet)"; cellText = fin.Position.ToString(); }
+                                    else { cellStyle = "background:var(--rule);border:1px solid var(--stroke-1);"; cellColor = "var(--ink-2)"; cellText = fin.Position.ToString(); }
                                     var cellHover = !string.IsNullOrWhiteSpace(raceMainForDriver)
                                         ? $"{r.Track} · {r.Date:dd.MM.yy} · Ersatz für {raceMainForDriver}"
                                         : $"{r.Track} · {r.Date:dd.MM.yy}";
@@ -278,7 +270,7 @@ else
                                                 @cellText
                                                 @if (fin?.FastestLap == true)
                                                 {
-                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:#fff;filter:drop-shadow(0 0 4px rgba(157,110,196,.9));" title="Schnellste Runde"></i>
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-6px;right:-6px;font-size:.55rem;color:var(--ink);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--fast) 90%, transparent));" title="Schnellste Runde"></i>
                                                 }
                                             </span>
                                         }
@@ -288,7 +280,7 @@ else
                                                 @cellText
                                                 @if (fin?.FastestLap == true)
                                                 {
-                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-4px;right:-4px;font-size:.55rem;color:var(--sig-magenta);filter:drop-shadow(0 0 4px rgba(157,110,196,.7));" title="Schnellste Runde"></i>
+                                                    <i class="bi bi-lightning-charge-fill" style="position:absolute;top:-4px;right:-4px;font-size:.55rem;color:var(--sig-magenta);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--fast) 70%, transparent));" title="Schnellste Runde"></i>
                                                 }
                                             </span>
                                         }

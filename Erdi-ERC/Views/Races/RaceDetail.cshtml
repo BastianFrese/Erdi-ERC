@@ -46,16 +46,10 @@
         : string.Empty;
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/race-detail.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = $"{Model.League.Name} · Grand Prix",
+    Eyebrow   = Model.League.Name,
     Title     = Model.Race.Track,
     Lead      = $"Round <strong>{raceNumber}</strong> von {raceTotal} · {Model.Race.Date.ToString("dd. MMMM yyyy")}{pointsBadgeHtml}",
 
@@ -106,7 +100,7 @@
                         <a class="f1-podium-card__driver"
                            asp-controller="Profile" asp-action="ByDriverName"
                            asp-route-driverName="@row.Driver">
-                            @row.Driver
+                            @DriverNameHelper.Display(row.Driver)
                         </a>
                         <div class="f1-podium-card__team" style="color: @color;">
                             @(team?.Name ?? row.Team)
@@ -147,8 +141,6 @@
     else
     {
         <div class="f1-results-card">
-            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
-            <div class="f1-results-card__corner"    aria-hidden="true"></div>
             <div class="table-responsive">
                 <table class="f1-results-table">
                     <colgroup>
@@ -192,7 +184,7 @@
                                 <td style="border-left: 3px solid @color; padding-left: .7rem;">
                                     <a class="fw-semibold text-decoration-none"
                                        asp-controller="Profile" asp-action="ByDriverName"
-                                       asp-route-driverName="@row.Driver">@row.Driver</a>
+                                       asp-route-driverName="@row.Driver">@DriverNameHelper.Display(row.Driver)</a>
                                     @if (reserveDrivers.TryGetValue(normalizedDriver, out var reserveStanding))
                                     {
                                         var reserveForDisplay = raceReserveFor ?? reserveStanding.ReserveForDriver;

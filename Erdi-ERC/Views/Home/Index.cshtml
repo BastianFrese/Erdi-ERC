@@ -30,75 +30,34 @@
     }
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/home-index-fx.css" asp-append-version="true" />
-}
 
 @* ============== Background-Layer ============== *@
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
-@* ============== HERO · RACE CONTROL ============== *@
+@* ============== HERO · RACE CONTROL ==============
+   Der Streckenstatus ist die Ampel-Pille mit ihren fuenf Lampen — sie sagt
+   dasselbe wie ein Flaggen-Badge, nur genauer. Beides nebeneinander hiess
+   zweimal "READY".
+   Frueher: Logo plus Verlauf plus Funken plus Speedlines plus vier Chips.
+   Jetzt: die Kopfzeile einer Uebertragung — Sitzung, Streckenstatus, Countdown.
+   Die dekorativen Chips ("DRS Active", "Fastest Lap") sind weg: sie behaupteten
+   einen Zustand, den es nicht gibt, und verbrannten damit Gruen und Magenta, die
+   der Turm fuer ihre echte Bedeutung braucht. *@
 @await Html.PartialAsync("_LiveRaceBanner")
-<section class="f1-hero reveal">
-    <div class="f1-hero__telemetry"></div>
-    <div class="f1-hero__chequer" aria-hidden="true"></div>
-    <div class="f1-hero__scanline" aria-hidden="true"></div>
-    <div class="f1-hero__depth-grid" aria-hidden="true"></div>
-
-    @* Speedlines *@
-    <div class="f1-hero__speedlines" aria-hidden="true">
-        <span class="f1-speedline" style="--sl-top:18%; --sl-width:220px; --sl-dur:1.2s; --sl-delay:0s;   --sl-opacity:.55;"></span>
-        <span class="f1-speedline" style="--sl-top:35%; --sl-width:140px; --sl-dur:1.6s; --sl-delay:.4s;  --sl-opacity:.35;"></span>
-        <span class="f1-speedline" style="--sl-top:48%; --sl-width:320px; --sl-dur:1.0s; --sl-delay:.9s;  --sl-opacity:.65;"></span>
-        <span class="f1-speedline" style="--sl-top:62%; --sl-width:90px;  --sl-dur:1.8s; --sl-delay:.2s;  --sl-opacity:.30;"></span>
-        <span class="f1-speedline" style="--sl-top:74%; --sl-width:180px; --sl-dur:1.3s; --sl-delay:1.1s; --sl-opacity:.45;"></span>
-        <span class="f1-speedline" style="--sl-top:28%; --sl-width:260px; --sl-dur:2.1s; --sl-delay:.7s;  --sl-opacity:.28;"></span>
-    </div>
-
-    @* Particle Sparks *@
-    <div class="f1-hero__sparks" aria-hidden="true">
-        <span class="f1-spark" style="--sp-x:12%;  --sp-y:78%; --sp-size:2px; --sp-dur:2.8s; --sp-delay:.0s;  --sp-dx:-14px; --sp-dy:-70px;"></span>
-        <span class="f1-spark" style="--sp-x:22%;  --sp-y:85%; --sp-size:3px; --sp-dur:3.4s; --sp-delay:.6s;  --sp-dx:8px;   --sp-dy:-90px; background:var(--sig-amber);"></span>
-        <span class="f1-spark" style="--sp-x:38%;  --sp-y:80%; --sp-size:2px; --sp-dur:2.5s; --sp-delay:1.2s; --sp-dx:20px;  --sp-dy:-65px;"></span>
-        <span class="f1-spark" style="--sp-x:55%;  --sp-y:88%; --sp-size:4px; --sp-dur:3.8s; --sp-delay:.3s;  --sp-dx:-10px; --sp-dy:-100px; background:var(--sig-cyan);"></span>
-        <span class="f1-spark" style="--sp-x:68%;  --sp-y:75%; --sp-size:2px; --sp-dur:2.2s; --sp-delay:.9s;  --sp-dx:16px;  --sp-dy:-60px;"></span>
-        <span class="f1-spark" style="--sp-x:78%;  --sp-y:82%; --sp-size:3px; --sp-dur:3.1s; --sp-delay:.4s;  --sp-dx:-22px; --sp-dy:-85px; background:var(--sig-magenta);"></span>
-        <span class="f1-spark" style="--sp-x:85%;  --sp-y:70%; --sp-size:2px; --sp-dur:2.7s; --sp-delay:1.5s; --sp-dx:12px;  --sp-dy:-75px;"></span>
-        <span class="f1-spark" style="--sp-x:92%;  --sp-y:78%; --sp-size:3px; --sp-dur:3.6s; --sp-delay:.8s;  --sp-dx:-18px; --sp-dy:-95px; background:var(--sig-amber);"></span>
-        <span class="f1-spark" style="--sp-x:6%;   --sp-y:65%; --sp-size:2px; --sp-dur:2.4s; --sp-delay:2.0s; --sp-dx:24px;  --sp-dy:-55px;"></span>
-        <span class="f1-spark" style="--sp-x:48%;  --sp-y:90%; --sp-size:2px; --sp-dur:4.0s; --sp-delay:.1s;  --sp-dx:-8px;  --sp-dy:-110px; background:var(--sig-cyan);"></span>
-        <span class="f1-spark" style="--sp-x:30%;  --sp-y:72%; --sp-size:4px; --sp-dur:3.2s; --sp-delay:1.7s; --sp-dx:18px;  --sp-dy:-80px;"></span>
-        <span class="f1-spark" style="--sp-x:72%;  --sp-y:92%; --sp-size:2px; --sp-dur:2.9s; --sp-delay:.5s;  --sp-dx:-12px; --sp-dy:-68px; background:var(--sig-magenta);"></span>
-    </div>
-
-    @* Ghost Letter *@
-    <div class="f1-hero__ghost" aria-hidden="true">ERC</div>
-
-    <div class="row g-4 align-items-center">
+<section class="f1-hero">
+    <div class="row g-4 align-items-start">
         <div class="col-lg-7">
-            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> F1 26 &middot; Sim Racing League</span>
-                <span class="f1-chip f1-chip--drs"><i class="f1-icon" data-lucide="zap"></i> DRS Active</span>
-                <span class="f1-chip f1-chip--fastest"><i class="f1-icon" data-lucide="timer"></i> Fastest Lap</span>
-            </div>
-            <h1 class="f1-hero__title" style="color:#fff;text-shadow:none;">Erdi's<br /><em>Racing</em> Community</h1>
+            <h1 class="f1-hero__title">Erdi&#x27;s <em>Racing</em> Community</h1>
             <p class="f1-hero__lead">
-                Drei Ligen. Ein Ziel. <strong>Lights out and away we go.</strong><br />
-                Bestenlisten, Ergebnisse und kommende Events der ERC rund um Twitch-Streamer
-                <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener" style="color:var(--accent-2); font-weight:700;">Erdi10</a>.
+                Drei Ligen. Ein Ziel. Bestenlisten, Ergebnisse und kommende Events der ERC
+                rund um Twitch-Streamer
+                <a href="https://twitch.tv/erdi10" target="_blank" rel="noopener">Erdi10</a>.
             </p>
-            <div class="f1-hero__actions">
-                <a class="btn f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
-                <a class="btn f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
-                <button type="button" class="btn f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
-            </div>
 
             @if (nextStream != null)
             {
-                <div class="f1-broadcast-card">
-                    <div class="f1-broadcast-card__head">
-                        <span class="f1-broadcast-card__tag"><i class="f1-icon" data-lucide="radio"></i> N&auml;chster Stream</span>
+                <div class="rc-session">
+                    <div class="rc-session__head">
+                        <span class="rc-session__kicker">N&auml;chster Stream</span>
                         <span class="race-lights-pill" data-state="ready" data-race-state-target="@(((DateTime)nextStream.StartAt).ToString("O"))">
                             <span class="race-lights-pill__strip" aria-hidden="true">
                                 <span class="race-lights-pill__lamp"></span>
@@ -110,28 +69,36 @@
                             <span class="race-lights-pill__text">Ready</span>
                         </span>
                     </div>
-                    <div class="f1-broadcast-card__title">@nextStream.Title</div>
-                    <div class="f1-broadcast-card__meta">@(((DateTime)nextStream.StartAt).ToString("dd.MM.yyyy")) &middot; @(((DateTime)nextStream.StartAt).ToString("HH:mm"))</div>
-                    <div id="nextStreamCountdown" data-target="@(((DateTime)nextStream.StartAt).ToString("O"))" class="f1-broadcast-card__count">Countdown l&auml;dt&hellip;</div>
+                    <div class="rc-session__title">@nextStream.Title</div>
+                    <div class="rc-session__when">
+                        @(((DateTime)nextStream.StartAt).ToString("dd.MM.yyyy"))<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)nextStream.StartAt).ToString("HH:mm"))</span>
+                    </div>
+                    <div id="nextStreamCountdown" data-target="@(((DateTime)nextStream.StartAt).ToString("O"))" class="rc-session__count">Countdown l&auml;dt&hellip;</div>
                     @if (nextStream.Url != null)
                     {
-                        <div style="margin-top:.7rem;">
-                            <a class="btn f1-btn f1-btn--outline" href="@nextStream.Url" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="external-link"></i> Zum Stream</a>
-                        </div>
+                        <a class="f1-btn f1-btn--outline rc-session__cta" href="@nextStream.Url" target="_blank" rel="noopener">
+                            <i class="f1-icon" data-lucide="external-link"></i> Zum Stream
+                        </a>
                     }
                 </div>
             }
+
+            <div class="f1-hero__actions">
+                <a class="f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
+                <a class="f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
+                <button type="button" class="f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
+            </div>
         </div>
 
         <div class="col-lg-5 d-none d-lg-flex flex-column align-items-end gap-3">
             <div class="f1-hero__brand">
                 @{
                     var heroPic = new PictureVm {
-                        Src = "/images/ERCLogoHighRes1.png",
+                        Src = "/images/ERCLogo.webp",
                         Alt = "ERC Logo",
                         CssClass = "f1-hero__brand-logo",
-                        Width = 512, Height = 512,
-                        Sizes = "(max-width: 992px) 40vw, 512px",
+                        Width = 480, Height = 289,
+                        Sizes = "(max-width: 992px) 40vw, 176px",
                         Loading = "eager",
                         Decoding = "sync",
                         Priority = "high"
@@ -140,9 +107,30 @@
                 <partial name="_Picture" model="heroPic" />
             </div>
 
+        </div>
+    </div>
+
+    @* Broadcast-Ticker am unteren Rand *@
+</section>
+
+@* ============== INFO-TAFELN ==============
+   Die drei Tafeln standen in der rechten Hero-Spalte. Mit dem Logo
+   bildeten sie die laengste Spalte: der Rahmen war 904 px hoch, die
+   linke Spalte endete bei 489 px — 303 px davon standen leer. Jetzt
+   liegen sie in einer eigenen Reihe und teilen sich die Breite.
+   d-none d-lg-grid haelt die Sichtbarkeit wie bisher: sie sassen in
+   der rechten Hero-Spalte (d-none d-lg-flex) und waren unter 992 px
+   ausgeblendet. *@
+@if (lastWinnerItems.Count > 0 || overallTop3.Count > 0 || activeGiveaways.Any())
+{
+    @* Kein d-none d-lg-grid hier: die Bootstrap-Datei ist auf die im Markup
+       benutzten Klassen gekuerzt, und d-lg-grid stand beim Kuerzen in keiner
+       View — die Regel fehlt also. Sichtbarkeit und Raster stehen deshalb in
+       99-home-index.css bei .f1-info-row. *@
+    <section class="f1-info-row">
             @if (lastWinnerItems.Count > 0)
             {
-                <div class="f1-timing-card f1-tiltable js-winner-slideshow" aria-live="polite">
+                <div class="f1-timing-card js-winner-slideshow" aria-live="polite">
                     <div class="f1-timing-card__head">
                         <span class="f1-timing-card__label"><i class="f1-icon" data-lucide="trophy"></i> Letzte Sieger</span>
                         <div class="f1-timing-card__dots" aria-hidden="true">
@@ -162,15 +150,15 @@
                             string? cssKey = Erdi_ERC.Helpers.F1TeamsHelper.GetCssKeyForDriver((string)w.Winner)
                                 ?? Erdi_ERC.Helpers.F1TeamsHelper.GetTeamByName((string?)w.WinnerTeam)?.CssKey;
                             string teamColor = cssKey != null
-                                ? Erdi_ERC.Helpers.F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == cssKey)?.PrimaryColor ?? "#e10600"
-                                : "#e10600";
+                                ? Erdi_ERC.Helpers.F1TeamsHelper.Teams.FirstOrDefault(t => t.CssKey == cssKey)?.PrimaryColor ?? "var(--flag)"
+                                : "var(--flag)";
                             <div class="js-winner-slide f1-timing-card__slide @(i == 0 ? "is-active" : "")" data-slide-index="@i">
-                                <div class="f1-timing-row" style="border-left-color:@teamColor; box-shadow:-2px 0 20px @(teamColor)66;">
+                                <div class="f1-timing-row" style="border-left-color:@teamColor;">
                                     <div style="flex:1; min-width:0;">
                                         <div class="f1-timing-row__league">@w.Name</div>
                                         <div class="f1-timing-row__driver">
                                             <i class="f1-icon" data-lucide="trophy"></i>
-                                            <a asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@w.Winner">@w.Winner</a>
+                                            <a asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@w.Winner">@DriverNameHelper.Display(w.Winner)</a>
                                         </div>
                                         @if (w.IsReserveWinner == true)
                                         {
@@ -189,12 +177,12 @@
                                             <div class="f1-timing-row__team" style="color:@teamColor;">@w.WinnerTeam</div>
                                         }
                                         <div class="f1-timing-row__meta">
-                                            @if (w.DriverPoints != null) { <span><i class="f1-icon" data-lucide="user"></i> @PointsFormatHelper.Format(w.DriverPoints) Pkt.</span> }
-                                            @if (w.TeamPoints != null)   { <span><i class="f1-icon" data-lucide="users"></i> @PointsFormatHelper.Format(w.TeamPoints) Pkt.</span> }
+                                            @if (w.DriverPoints != null) { <span>Fahrer @PointsFormatHelper.Format(w.DriverPoints) Pkt.</span> }
+                                            @if (w.TeamPoints != null)   { <span style="margin-left:.9rem;">Team @PointsFormatHelper.Format(w.TeamPoints) Pkt.</span> }
                                         </div>
                                         @if (w.Track != null && w.Date != null)
                                         {
-                                            <div class="f1-timing-row__meta"><span><i class="f1-icon" data-lucide="map-pin"></i> @w.Track &middot; @(((DateTime)w.Date).ToString("dd.MM.yy"))</span></div>
+                                            <div class="f1-timing-row__meta"><span><i class="f1-icon" data-lucide="map-pin"></i> @w.Track<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)w.Date).ToString("dd.MM.yy"))</span></span></div>
                                         }
                                     </div>
                                 </div>
@@ -207,7 +195,7 @@
             @if (overallTop3.Count > 0)
             {
                 <a class="text-decoration-none d-block" asp-controller="Races" asp-action="Constructors">
-                    <div class="f1-timing-card f1-tiltable f1-overall-chip">
+                    <div class="f1-timing-card f1-overall-chip">
                         <div class="f1-timing-card__head">
                             <span class="f1-timing-card__label"><i class="f1-icon" data-lucide="layers"></i> Constructors aller Ligen</span>
                             <span class="f1-chip f1-chip--drs" style="font-size:.6rem; padding:.15rem .45rem;">Top 3</span>
@@ -223,7 +211,7 @@
                                 </li>
                             }
                         </ol>
-                        <div class="f1-overall-chip__cta">Vollst&auml;ndige Tabelle &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></div>
+                        <div class="f1-overall-chip__cta">Vollst&auml;ndige Tabelle &ouml;ffnen</div>
                     </div>
                 </a>
             }
@@ -234,12 +222,12 @@
             {
                 @foreach (var g in activeGiveaways)
                 {
-                    <div class="f1-timing-card f1-tiltable">
+                    <div class="f1-timing-card">
                         <div class="f1-timing-card__head">
                             <span class="f1-timing-card__label"><i class="f1-icon" data-lucide="gift"></i> Giveaway</span>
                             <span class="f1-chip f1-chip--drs" style="font-size:.6rem; padding:.15rem .45rem;">L&auml;uft</span>
                         </div>
-                        <div class="f1-timing-row" style="border-left-color:var(--accent); box-shadow:-2px 0 20px var(--accent)22;">
+                        <div class="f1-timing-row" style="border-left-color:var(--accent);">
                             <div style="flex:1; min-width:0;">
                                 <div class="f1-timing-row__league">@(string.IsNullOrWhiteSpace(g.Prize) ? "Gewinnspiel" : g.Prize)</div>
                                 <div class="f1-timing-row__driver">
@@ -257,7 +245,7 @@
                                 @if (!string.IsNullOrWhiteSpace(g.Link))
                                 {
                                     <div class="f1-timing-row__meta" style="margin-top:.55rem;">
-                                        <a class="btn f1-btn f1-btn--outline" style="font-size:.75rem; padding:.3rem .65rem;" href="@g.Link" target="_blank" rel="noopener">Jetzt mitmachen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+                                        <a class="btn f1-btn f1-btn--outline" style="font-size:.75rem; padding:.3rem .65rem;" href="@g.Link" target="_blank" rel="noopener">Jetzt mitmachen</a>
                                     </div>
                                 }
                                 else
@@ -269,43 +257,22 @@
                     </div>
                 }
             }
-        </div>
-    </div>
+    </section>
+}
 
-    @* Broadcast-Ticker am unteren Rand *@
-    <div class="f1-ticker" aria-hidden="true">
-        <div class="f1-ticker__track">
-            <span class="f1-ticker__item"><b>ERC</b> &middot; Erdi's Racing Community</span>
-            <span class="f1-ticker__item"><b>F1 26</b> &middot; Sim Racing Liga</span>
-            <span class="f1-ticker__item"><b>MAIN</b> &middot; Meisterschafts-Liga</span>
-            <span class="f1-ticker__item"><b>SECOND</b> &middot; zweite Liga</span>
-            <span class="f1-ticker__item"><b>SUPER</b> &middot; Top-Fahrer Showdown</span>
-            <span class="f1-ticker__item"><b>TWITCH</b> &middot; erdi10</span>
-            <span class="f1-ticker__item"><b>SETUPS</b> &middot; Strecken-Setups verfuegbar</span>
-            @* Duplicate for seamless loop *@
-            <span class="f1-ticker__item"><b>ERC</b> &middot; Erdi's Racing Community</span>
-            <span class="f1-ticker__item"><b>F1 26</b> &middot; Sim Racing Liga</span>
-            <span class="f1-ticker__item"><b>MAIN</b> &middot; Meisterschafts-Liga</span>
-            <span class="f1-ticker__item"><b>SECOND</b> &middot; zweite Liga</span>
-            <span class="f1-ticker__item"><b>SUPER</b> &middot; Top-Fahrer Showdown</span>
-            <span class="f1-ticker__item"><b>TWITCH</b> &middot; erdi10</span>
-            <span class="f1-ticker__item"><b>SETUPS</b> &middot; Strecken-Setups verfuegbar</span>
-        </div>
-    </div>
-</section>
 
 @* ============== TELEMETRIE · STATS ============== *@
-<div class="f1-rc-bar reveal">Race Control &middot; Live Telemetry</div>
+<div class="f1-rc-bar reveal">Race Control&ensp;Live Telemetry</div>
 <section class="f1-section reveal">
     <div class="f1-section__head">
         <span class="f1-section__bar" aria-hidden="true"></span>
         <h2 class="f1-section__title">Telemetrie</h2>
-        <span class="f1-section__chip">Live &middot; Snapshot</span>
+        <span class="f1-section__chip">Live&ensp;Snapshot</span>
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-stat-grid f1-stagger">
         <a asp-controller="Stats" asp-action="Erdi10">
-            <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="3">
+            <div class="f1-stat" data-ghost="3">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="flag"></i></span>
                     <span class="f1-stat__pos">P1</span>
@@ -318,7 +285,7 @@
             </div>
         </a>
         <a asp-controller="Races" asp-action="Results">
-            <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.DriverCount">
+            <div class="f1-stat" data-ghost="@ViewBag.DriverCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="users"></i></span>
                     <span class="f1-stat__pos">P2</span>
@@ -331,7 +298,7 @@
             </div>
         </a>
         <a asp-controller="Races" asp-action="@(string.IsNullOrWhiteSpace(firstLeagueId) ? "Results" : "AllRaces")">
-            <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.RaceCount">
+            <div class="f1-stat" data-ghost="@ViewBag.RaceCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="flag"></i></span>
                     <span class="f1-stat__pos">P3</span>
@@ -344,7 +311,7 @@
             </div>
         </a>
         <a asp-controller="Stats" asp-action="Erdi10">
-            <div class="f1-stat f1-tiltable f1-border-anim" data-ghost="@ViewBag.UpcomingCount">
+            <div class="f1-stat" data-ghost="@ViewBag.UpcomingCount">
                 <div class="f1-stat__head">
                     <span class="f1-stat__icon"><i class="f1-icon" data-lucide="calendar-days"></i></span>
                     <span class="f1-stat__pos">P4</span>
@@ -355,7 +322,7 @@
                 {
                     <div class="f1-stat__sub">
                         <div id="nextEventStatCountdown" data-target="@(((DateTime)nextUpcomingEvent.Date).ToString("O"))" style="color:var(--sig-amber); font-family:var(--ff-mono); font-weight:700; letter-spacing:.06em;">Countdown l&auml;dt&hellip;</div>
-                        <div style="color:var(--ink-3); font-size:.72rem; margin-top:.2rem;">@nextUpcomingEvent.Track &middot; @(((DateTime)nextUpcomingEvent.Date).ToString("dd.MM. HH:mm"))</div>
+                        <div style="color:var(--ink-3); font-size:.72rem; margin-top:.2rem;">@nextUpcomingEvent.Track<span class="text-mute" style="margin-left:.6rem;">@(((DateTime)nextUpcomingEvent.Date).ToString("dd.MM. HH:mm"))</span></div>
                     </div>
                 }
                 else { <div class="f1-stat__sub">Aktuell kein Event geplant.</div> }
@@ -367,7 +334,7 @@
 </section>
 
 @* ============== PIT BOX · FEATURES ============== *@
-<div class="f1-rc-bar reveal">Pit Box &middot; Community Features</div>
+<div class="f1-rc-bar reveal">Pit Box&ensp;Community Features</div>
 <section class="f1-section reveal">
     <div class="f1-section__head">
         <span class="f1-section__bar" aria-hidden="true"></span>
@@ -377,27 +344,27 @@
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-pitbox f1-stagger">
         <a asp-controller="Races" asp-action="Results">
-            <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+            <div class="f1-pitcard">
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="trophy"></i></span><span class="f1-pitcard__tag">Standings</span></div>
                 <h5 class="f1-pitcard__title">Bestenlisten</h5>
                 <p class="f1-pitcard__lead">Live-Standings aus allen drei Ligen. Punkte, Siege, Position.</p>
-                <span class="f1-pitcard__cta">Jetzt ansehen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-pitcard__cta">Jetzt ansehen</span>
             </div>
         </a>
         <a asp-controller="Races" asp-action="AllRaces">
-            <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+            <div class="f1-pitcard">
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--cyan"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Archive</span></div>
                 <h5 class="f1-pitcard__title">Race Results</h5>
                 <p class="f1-pitcard__lead">Alle Rennen aus allen Ligen mit Sieger, Podium und Siegerzeit.</p>
-                <span class="f1-pitcard__cta">Ergebnisse &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-pitcard__cta">Ergebnisse &ouml;ffnen</span>
             </div>
         </a>
         <a asp-controller="Setups" asp-action="TrackSetups">
-            <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+            <div class="f1-pitcard">
                 <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--amber"><i class="f1-icon" data-lucide="settings-2"></i></span><span class="f1-pitcard__tag">Setups</span></div>
                 <h5 class="f1-pitcard__title">F1 Strecken-Setups</h5>
                 <p class="f1-pitcard__lead">Setups pro Strecke mit Zugriff per Login, Discord-Rolle oder Twitch-Sub.</p>
-                <span class="f1-pitcard__cta">Setups &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                <span class="f1-pitcard__cta">Setups &ouml;ffnen</span>
             </div>
         </a>
     </div>
@@ -405,22 +372,22 @@
 
 @if (preview != null)
 {
-    <div class="f1-rc-bar reveal">Paddock &middot; Unsere Ligen</div>
+    <div class="f1-rc-bar reveal">Paddock&ensp;Unsere Ligen</div>
     <section class="f1-section reveal">
         <div class="f1-section__head">
             <span class="f1-section__bar" aria-hidden="true"></span>
             <h2 class="f1-section__title">Paddock</h2>
-            <a class="f1-section__sub" asp-controller="Stats" asp-action="Erdi10">Alle Ligen <i class="f1-icon" data-lucide="arrow-right"></i></a>
+            <a class="f1-section__sub" asp-controller="Stats" asp-action="Erdi10">Alle Ligen</a>
         </div>
         <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
         <div class="f1-paddock f1-stagger">
             @foreach (dynamic l in preview)
             {
-                <div class="f1-leaguecard f1-tiltable f1-border-anim">
+                <div class="f1-leaguecard">
                     <div class="f1-leaguecard__head">
                         <div>
                             <h5 class="f1-leaguecard__name">@l.Name</h5>
-                            <div class="f1-leaguecard__sub">Liga &middot; Preview</div>
+                            <div class="f1-leaguecard__sub">Liga&ensp;Preview</div>
                         </div>
                         <span class="f1-leaguecard__chip"><i class="f1-icon" data-lucide="users"></i> @l.Drivers</span>
                     </div>
@@ -450,12 +417,12 @@
 }
 
 @* ============== PADDOCK NEWS ============== *@
-<div class="f1-rc-bar reveal">Paddock News &middot; Aktuelles</div>
+<div class="f1-rc-bar reveal">Paddock News&ensp;Aktuelles</div>
 <section class="f1-section reveal">
     <div class="f1-section__head">
         <span class="f1-section__bar" aria-hidden="true"></span>
         <h2 class="f1-section__title">Paddock News</h2>
-        <span class="f1-section__chip">Liga-News &middot; Updates</span>
+        <span class="f1-section__chip">Liga-News&ensp;Updates</span>
     </div>
     <div class="f1-sector-strip" aria-hidden="true"><span class="f1-sector-strip__s1"></span><span class="f1-sector-strip__s2"></span><span class="f1-sector-strip__s3"></span></div>
     <div class="f1-news-grid f1-stagger">
@@ -470,14 +437,14 @@
             @foreach (var post in communityNews)
             {
                 <a asp-controller="Community" asp-action="CommunityNews">
-                    <div class="f1-newscard f1-tiltable f1-border-anim f1-holographic @(post.IsPinned ? "is-pinned" : "")">
+                    <div class="f1-newscard @(post.IsPinned ? "is-pinned" : "")">
                         <div class="f1-newscard__head">
                             <span class="f1-newscard__cat @(post.IsPinned ? "f1-newscard__cat--pinned" : "")">@post.Category</span>
                             <span class="f1-newscard__date">@post.PublishedAt.ToLocalTime().ToString("dd.MM.")</span>
                         </div>
                         <h5 class="f1-newscard__title">@post.Title</h5>
                         <p class="f1-newscard__body">@(string.IsNullOrWhiteSpace(post.Summary) ? post.Content : post.Summary)</p>
-                        <span class="f1-newscard__cta">Alle News <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                        <span class="f1-newscard__cta">Alle News</span>
                     </div>
                 </a>
             }
@@ -503,35 +470,6 @@
         } else {
             document.querySelectorAll('.f1-stagger').forEach(el => el.classList.add('is-visible'));
         }
-
-        // -------- 3D Mouse-Tilt --------
-        const MAX_TILT = 7;
-        document.querySelectorAll('.f1-tiltable').forEach(card => {
-            let raf = null;
-            card.addEventListener('mousemove', (e) => {
-                cancelAnimationFrame(raf);
-                raf = requestAnimationFrame(() => {
-                    const r = card.getBoundingClientRect();
-                    const x = e.clientX - r.left;
-                    const y = e.clientY - r.top;
-                    const rx = ((y - r.height / 2) / (r.height / 2)) * -MAX_TILT;
-                    const ry = ((x - r.width  / 2) / (r.width  / 2)) *  MAX_TILT;
-                    card.style.setProperty('--tilt-x', rx.toFixed(2) + 'deg');
-                    card.style.setProperty('--tilt-y', ry.toFixed(2) + 'deg');
-                    card.style.setProperty('--mx', ((x / r.width)  * 100).toFixed(1) + '%');
-                    card.style.setProperty('--my', ((y / r.height) * 100).toFixed(1) + '%');
-                });
-            });
-            card.addEventListener('mouseleave', () => {
-                cancelAnimationFrame(raf);
-                card.style.setProperty('--tilt-x', '0deg');
-                card.style.setProperty('--tilt-y', '0deg');
-                card.style.setProperty('--f1-lift', '0px');
-            });
-            card.addEventListener('mouseenter', () => {
-                card.style.setProperty('--f1-lift', '-5px');
-            });
-        });
 
         // -------- Lucide init nach dynamic content --------
         if (window.ercRenderLucide) window.ercRenderLucide();
@@ -559,48 +497,48 @@
                 <i class="f1-icon" data-lucide="x"></i>
             </button>
             <div class="f1-intro-guide-body">
-                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> Welcome &middot; Erdi's Racing Community</span>
+                <span class="f1-hero__eyebrow"><span class="f1-pulse-dot"></span> Welcome&ensp;Erdi's Racing Community</span>
                 <h2 class="f1-hero__title" style="font-size:clamp(1.6rem,3.2vw,2.6rem); margin:1rem 0 .4rem;">Was du auf der Seite alles machen kannst</h2>
                 <p class="f1-hero__lead" style="font-size:.95rem; margin-bottom:1.4rem;">Schneller Einstieg in alle Bereiche der ERC.</p>
                 <div class="f1-intro-guide-grid f1-stagger">
                     <a class="text-decoration-none" asp-controller="Stats" asp-action="Erdi10">
-                        <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+                        <div class="f1-pitcard">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon"><i class="f1-icon" data-lucide="flag"></i></span><span class="f1-pitcard__tag">Hub</span></div>
                             <h5 class="f1-pitcard__title">Racing Hub</h5>
                             <p class="f1-pitcard__lead">Aktuelle Liga-Infos, Uebersicht der Serien und zentrale Einstiegsseite.</p>
-                            <span class="f1-pitcard__cta">Zum Hub <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Zum Hub</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Races" asp-action="Results">
-                        <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+                        <div class="f1-pitcard">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--cyan"><i class="f1-icon" data-lucide="trophy"></i></span><span class="f1-pitcard__tag">Archive</span></div>
                             <h5 class="f1-pitcard__title">Results &amp; Archiv</h5>
                             <p class="f1-pitcard__lead">Bestenlisten, Punkte, Sieger und Renn-Archiv.</p>
-                            <span class="f1-pitcard__cta">Results &ouml;ffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Results &ouml;ffnen</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Setups" asp-action="TrackSetups">
-                        <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+                        <div class="f1-pitcard">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--amber"><i class="f1-icon" data-lucide="settings-2"></i></span><span class="f1-pitcard__tag">Setups</span></div>
                             <h5 class="f1-pitcard__title">Track Setups</h5>
                             <p class="f1-pitcard__lead">Setups fuer jede Strecke &ndash; abhaengig von deinem Zugang.</p>
-                            <span class="f1-pitcard__cta">Setups oeffnen <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Setups oeffnen</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Community" asp-action="Events">
-                        <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+                        <div class="f1-pitcard">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--green"><i class="f1-icon" data-lucide="calendar-days"></i></span><span class="f1-pitcard__tag">Events</span></div>
                             <h5 class="f1-pitcard__title">Events &amp; Streams</h5>
                             <p class="f1-pitcard__lead">Kommende Events, Countdown und Stream-Links.</p>
-                            <span class="f1-pitcard__cta">Events <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">Events</span>
                         </div>
                     </a>
                     <a class="text-decoration-none" asp-controller="Home" asp-action="Faq">
-                        <div class="f1-pitcard f1-tiltable f1-border-anim f1-holographic">
+                        <div class="f1-pitcard">
                             <div class="f1-pitcard__head"><span class="f1-pitcard__icon f1-pitcard__icon--magenta"><i class="f1-icon" data-lucide="help-circle"></i></span><span class="f1-pitcard__tag">Info</span></div>
                             <h5 class="f1-pitcard__title">Regeln &amp; FAQ</h5>
                             <p class="f1-pitcard__lead">Alle wichtigen Infos zu Ablauf, Regeln und haeufigen Fragen.</p>
-                            <span class="f1-pitcard__cta">FAQ &amp; Regelwerk <i class="f1-icon" data-lucide="arrow-right"></i></span>
+                            <span class="f1-pitcard__cta">FAQ &amp; Regelwerk</span>
                         </div>
                     </a>
                 </div>

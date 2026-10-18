@@ -99,16 +99,9 @@
     var orderedRaces  = Model.Races.OrderBy(r => r.Date).ToList();
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/league-results.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = $"{Model.League.Name} · Liga",
     Title     = Model.League.Name,
     Lead      = "Alle Rennen und Constructors' Championship",
 
@@ -183,7 +176,7 @@
                                 <i class="f1-icon f1-race-card__winner-icon" data-lucide="trophy"></i>
                                 <a class="f1-race-card__winner-name"
                                    asp-controller="Profile" asp-action="ByDriverName"
-                                   asp-route-driverName="@race.Winner">@race.Winner</a>
+                                   asp-route-driverName="@race.Winner">@DriverNameHelper.Display(race.Winner)</a>
                                 @if (RaceTeamHelper.IsRaceGuest(race, race.Winner))
                                 {
                                     <span class="badge bg-warning text-dark ms-2" style="font-size:.6rem;"
@@ -206,7 +199,6 @@
                             }
                             <a class="f1-race-card__link" href="@detailUrl">
                                 Details
-                                <i class="f1-icon" data-lucide="arrow-right" style="width:12px;height:12px;"></i>
                             </a>
                         </div>
                     </div>
@@ -227,8 +219,6 @@
         })" />
 
         <div class="f1-results-card">
-            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
-            <div class="f1-results-card__corner"    aria-hidden="true"></div>
             <div class="table-responsive">
                 <table class="f1-results-table">
                     <colgroup>
@@ -284,7 +274,7 @@
                                                 var drv = row.Drivers[di];
                                                 <a class="text-decoration-none" style="color:inherit;"
                                                    asp-controller="Profile" asp-action="ByDriverName"
-                                                   asp-route-driverName="@drv">@drv</a>
+                                                   asp-route-driverName="@drv">@DriverNameHelper.Display(drv)</a>
                                                 @if (di < row.Drivers.Count - 1)
                                                 {
                                                     <text> · </text>

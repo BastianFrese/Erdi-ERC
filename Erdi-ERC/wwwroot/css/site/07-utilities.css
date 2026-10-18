@@ -1,20 +1,30 @@
 /* =====================================================================
    07 · UTILITIES
    ===================================================================== */
-.text-accent { color:var(--accent)!important; }
-.text-cyan   { color:var(--sig-cyan)!important; }
-.text-amber  { color:var(--sig-amber)!important; }
-.text-green  { color:var(--sig-green)!important; }
+.text-accent { color:var(--team)!important; }
+.text-cyan   { color:var(--wet)!important; }
+.text-amber  { color:var(--slow)!important; }
+.text-green  { color:var(--best)!important; }
 .text-mute   { color:var(--ink-3)!important; }
-.text-mono   { font-family:var(--ff-mono)!important; }
-.text-tech   { font-family:var(--ff-tech)!important; letter-spacing:.05em; }
+.text-mono   { font-family:var(--ff)!important; font-variant-numeric:var(--num); }
+.text-tech   { font-family:var(--ff-cond)!important; letter-spacing:.05em; }
 
-.surface-glass { background:var(--surface-1); border:1px solid var(--stroke-1); border-radius:var(--r-3); backdrop-filter:var(--glass-blur-sm); -webkit-backdrop-filter:var(--glass-blur-sm); }
-.glow-accent { box-shadow:0 0 24px -6px var(--accent-glow); }
+/* Fruehre eine Glasflaeche. Die Spec verbietet Glas; die Klasse bleibt als
+   normale Flaeche erhalten, damit ihre Verwendungen nicht ins Leere laufen. */
+.surface-glass {
+    background:var(--tarmac); border:1px solid var(--rule);
+    border-radius:var(--r-2);
+}
+
+/* Fruehre ein Leuchtschatten. Schatten sind gestrichen — die Klasse bleibt
+   als Durchreiche, damit ihre Verwendungen im Markup nichts kaputt machen. */
+.glow-accent { }
 
 .gap-tight > * + * { margin-top:.4rem; }
 .gap-loose > * + * { margin-top:1.2rem; }
 
-.divider { height:1px; background:var(--stroke-1); margin:1rem 0; }
+.divider { height:1px; background:var(--rule); margin:1rem 0; }
 
-:focus-visible { outline:none; box-shadow:0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); border-radius:8px; }
+/* Der globale Fokusring steht genau einmal, in 02-base.css. Die fruehre
+   Doppeldefinition hier (outline:none plus eigener box-shadow) ist entfernt —
+   zwei Regeln mit gleicher Spezifitaet sind ein Wettlauf, den niemand gewinnen soll. */

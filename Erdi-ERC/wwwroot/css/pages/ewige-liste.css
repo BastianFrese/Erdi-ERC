@@ -28,7 +28,7 @@
     display: inline-flex;
     align-items: center;
     padding: .45rem .95rem;
-    background: rgba(255,255,255,.03);
+    background: var(--rule);
     color: var(--ink-3);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-2);
@@ -40,15 +40,15 @@
     white-space: nowrap;
 }
 .f1-ewige-tabs__tab:hover {
-    background: rgba(255,255,255,.07);
+    background: var(--rule);
     color: var(--ink);
     border-color: var(--stroke-2);
 }
 .f1-ewige-tabs__tab.is-active {
-    background: rgba(88,183,201,.1);
+    background: color-mix(in srgb, var(--wet) 10%, transparent);
     color: var(--sig-cyan);
-    border-color: rgba(88,183,201,.4);
-    box-shadow: 0 0 12px rgba(88,183,201,.12), inset 0 1px 0 rgba(88,183,201,.2);
+    border-color: color-mix(in srgb, var(--wet) 40%, transparent);
+
 }
 
 /* =====================================================================
@@ -57,35 +57,13 @@
 .f1-ewige-card {
     position: relative;
     background:
-        linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%),
+        linear-gradient(180deg, var(--rule), transparent 55%),
         var(--surface-1);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-3);
     overflow: hidden;
-    box-shadow: var(--sh-2);
+
     margin-bottom: 1.5rem;
-}
-.f1-ewige-card__telemetry {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--telemetry-stripe);
-    box-shadow: 0 0 12px rgba(225,6,0,.4);
-    z-index: 2;
-    pointer-events: none;
-}
-.f1-ewige-card__corner {
-    position: absolute;
-    top: 10px; right: 10px;
-    width: 78px; height: 16px;
-    background:
-        repeating-linear-gradient(45deg, var(--ink) 0 6px, transparent 6px 12px),
-        repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.06) 6px 12px);
-    opacity: .35;
-    transform: skewX(-18deg);
-    border-left: 2px solid var(--accent);
-    pointer-events: none;
-    z-index: 2;
 }
 
 /* =====================================================================
@@ -98,7 +76,7 @@
     gap: .55rem;
     padding: .75rem 1rem;
     border-bottom: 1px solid var(--stroke-1);
-    background: linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+    background: linear-gradient(180deg, var(--rule), transparent);
 }
 .f1-ewige-toolbar__search {
     display: flex;
@@ -106,7 +84,7 @@
     gap: .5rem;
     flex: 1 1 240px;
     min-width: 0;
-    background: rgba(0,0,0,.35);
+    background: color-mix(in srgb, var(--track) 35%, transparent);
     border: 1px solid var(--stroke-1);
     border-radius: var(--r-2);
     padding: .42rem .7rem;
@@ -136,7 +114,7 @@
     align-items: center;
     gap: .4rem;
     padding: .45rem .85rem;
-    background: rgba(255,255,255,.04);
+    background: var(--rule);
     color: var(--ink-2);
     border: 1px solid var(--stroke-2);
     border-radius: var(--r-2);
@@ -148,8 +126,8 @@
     white-space: nowrap;
 }
 .f1-ewige-toolbar__export:hover {
-    background: rgba(255,255,255,.08);
-    color: #fff;
+    background: var(--rule);
+    color: var(--ink);
     border-color: var(--stroke-3);
     transform: translateY(-1px);
 }
@@ -182,7 +160,7 @@
     position: sticky;
     top: 0;
     z-index: 3;
-    background: linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.3));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--track) 60%, transparent), color-mix(in srgb, var(--track) 30%, transparent));
     color: var(--ink-3);
     font: 700 .67rem/1 var(--ff-tech);
     letter-spacing: var(--letter-track);
@@ -202,7 +180,7 @@
     transition: background var(--t-fast);
 }
 .f1-ewige-table tbody tr:hover {
-    background: rgba(255,255,255,.035);
+    background: var(--rule);
 }
 .f1-ewige-table tbody tr:last-child td { border-bottom: 0; }
 
@@ -213,6 +191,5 @@
     .f1-ewige-tabs { gap: .25rem; }
     .f1-ewige-tabs__tab { font-size: .64rem; padding: .4rem .7rem; }
     .f1-ewige-toolbar { padding: .6rem .75rem; gap: .4rem; }
-    .f1-ewige-card__corner { display: none; }
     .f1-ewige-table-wrap { max-height: 60vh; }
 }

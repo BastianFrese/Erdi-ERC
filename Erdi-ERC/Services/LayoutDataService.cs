@@ -12,7 +12,7 @@ namespace Erdi_ERC.Services
     /// </summary>
     public sealed class LayoutDataService : ILayoutDataService
     {
-        private const string CacheKey = "layout-data:v1";
+        private const string CacheKey = "layout-data:v2";
         private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
         private static readonly LayoutData EmptyData = new(

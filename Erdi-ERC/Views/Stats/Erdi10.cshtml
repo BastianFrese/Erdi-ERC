@@ -44,18 +44,11 @@
         .FirstOrDefault();
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/results.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/pages/erdi10.css" asp-append-version="true" />
-}
 
 @await Html.PartialAsync("_LiveRaceBanner")
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "F1 26 · Racing Hub",
     LiveDot   = true,
     Title     = "Erdi",
     Highlight = "Hub",
@@ -130,7 +123,7 @@
             <div class="f1-winner-card__info">
                 <div class="f1-winner-card__eyebrow">Rennsieger</div>
                 <div class="f1-winner-card__name">
-                                @latestWinner
+                                @DriverNameHelper.Display(latestWinner)
                                 @if (latestRace?.GuestAssignments?.Any(g =>
                                     !string.IsNullOrWhiteSpace(g.GuestDriver)
                                     && g.GuestDriver.Trim().Equals(latestWinner?.Trim() ?? string.Empty, StringComparison.OrdinalIgnoreCase)
@@ -195,7 +188,7 @@
                                             data-bs-toggle="pill"
                                             data-bs-target="#races-@league.Id"
                                             type="button">
-                                        <i class="bi bi-flag-checkered"></i> Rennen
+                                        <i class="bi bi-flag-fill"></i> Rennen
                                     </button>
                                     <button class="f1-sub-tabs__tab"
                                             data-bs-toggle="pill"
@@ -209,8 +202,6 @@
                                     <!-- Rennen -->
                                     <div class="tab-pane fade show active" id="races-@league.Id">
                                         <div class="f1-results-card">
-                                            <div class="f1-results-card__telemetry" aria-hidden="true"></div>
-                                            <div class="f1-results-card__corner" aria-hidden="true"></div>
                                             <div class="table-responsive">
                                                 <table class="f1-results-table">
                                                     <colgroup>
@@ -259,7 +250,7 @@
                                                                 : null;
                                                             var raceDetailUrl = Url.Action("RaceDetail", "Races", new { leagueId = league.Id, raceId = r.RowId });
                                                             <tr class="f1-hub-race-row"
-                                                                style="box-shadow: inset 3px 0 0 @rowColor;"
+                                                                style=""
                                                                 onclick="window.location.href='@raceDetailUrl'">
                                                                 <td class="text-mono" style="font-size:.8rem;">@r.Date.ToString("dd.MM.yyyy")</td>
                                                                 <td class="fw-semibold">@r.Track</td>
@@ -267,14 +258,14 @@
                                                                     <i class="bi bi-trophy-fill text-amber"></i>
                                                                     <a class="text-decoration-none"
                                                                        asp-controller="Profile" asp-action="ByDriverName"
-                                                                       asp-route-driverName="@r.Winner">@r.Winner</a>
+                                                                       asp-route-driverName="@r.Winner">@DriverNameHelper.Display(r.Winner)</a>
                                                                     @if (isReserveWinner)
                                                                     {
                                                                         <span class="badge bg-info ms-1"
                                                                               title="Ersatzfahrer@(string.IsNullOrWhiteSpace(reserveForDisplay) ? "" : $" für {reserveForDisplay}")">Ersatz</span>
                                                                         @if (!string.IsNullOrWhiteSpace(reserveForDisplay))
                                                                         {
-                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@reserveForDisplay">@reserveForDisplay</a></span>
+                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@reserveForDisplay">@DriverNameHelper.Display(reserveForDisplay)</a></span>
                                                                         }
                                                                     }
                                                                     @if (isGuestWinner)
@@ -283,7 +274,7 @@
                                                                               title="Gastfahrer aus anderer Liga">Gast</span>
                                                                         @if (!string.IsNullOrWhiteSpace(raceGuestForWinner))
                                                                         {
-                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@raceGuestForWinner">@raceGuestForWinner</a></span>
+                                                                            <span class="text-mute ms-1" style="font-size:.78rem;">für <a class="text-decoration-none" asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@raceGuestForWinner">@DriverNameHelper.Display(raceGuestForWinner)</a></span>
                                                                         }
                                                                     }
                                                                 </td>

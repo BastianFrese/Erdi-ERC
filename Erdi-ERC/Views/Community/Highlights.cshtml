@@ -7,14 +7,9 @@
     var requestHost = Context.Request.Host.Host;
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/home-index.css" asp-append-version="true" />
-}
 
-<div class="f1-home-backdrop" aria-hidden="true"></div>
 
 <partial name="_F1PageHero" model="@(new F1PageHeroVm {
-    Eyebrow   = "ERC Media",
     Title     = "Clips &",
     Highlight = "Highlights",
     Lead      = "Twitch Clips, YouTube Shorts und Community-Highlights rund um Rennen, Events und besondere Momente.",
@@ -38,7 +33,7 @@
             Title = "Highlight einreichen"
         })" />
 
-        <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.25rem;box-shadow:var(--sh-2);">
+        <div style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);padding:1.25rem;">
             @if (TempData["HighlightMessage"] is string highlightMessage)
             {
                 <div class="alert alert-warning mb-3" role="alert">@highlightMessage</div>
