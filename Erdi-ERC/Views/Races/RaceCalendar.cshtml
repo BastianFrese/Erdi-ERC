@@ -38,14 +38,14 @@
             position: relative; color: var(--ink); overflow: hidden;
             border-radius: var(--r-3); border: 1px solid var(--stroke-1);
             max-width: 1100px; margin: 0 auto;
-            background-color: var(--wet);
+            background-color: var(--tarmac);
             background-image: var(--rc-bg-image, none);
             background-size: cover; background-position: center;
         }
         /* Dunkler Verlauf über dem Hintergrundbild für lesbaren Content */
         .rc-poster-doc::before {
             content: ""; position: absolute; inset: 0; z-index: 0;
-            background: linear-gradient(180deg, color-mix(in srgb, var(--wet) 55%, transparent) 0%, color-mix(in srgb, var(--wet) 78%, transparent) 100%);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--track) 55%, transparent) 0%, color-mix(in srgb, var(--track) 78%, transparent) 100%);
             pointer-events: none;
         }
         .rc-poster-doc > * { position: relative; z-index: 1; }
@@ -67,7 +67,7 @@
         }
         .rc-poster-doc__eyebrow {
             font: 700 .68rem/1 var(--ff-tech); letter-spacing: .25em; text-transform: uppercase;
-            color: var(--sig-cyan);
+            color: var(--ink-2);
         }
         .rc-poster-doc__title {
             font: 900 clamp(1.9rem, 4.4vw, 2.8rem)/.95 var(--ff-heading);
@@ -92,10 +92,9 @@
             content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: transparent;
         }
         .rc-poster-doc__row.is-next {
-            border-color: color-mix(in srgb, var(--wet) 55%, transparent);
-            background: linear-gradient(135deg, color-mix(in srgb, var(--wet) 10%, transparent), color-mix(in srgb, var(--wet) 2%, transparent));
+            border-color: var(--stroke-2);
         }
-        .rc-poster-doc__row.is-next::before { background: var(--sig-cyan); }
+        .rc-poster-doc__row.is-next::before { background: var(--flag); }
         .rc-poster-doc__order {
             font: 900 1.5rem/1 var(--ff-heading); text-align: center;
             font-feature-settings: "tnum"; color: var(--ink);
@@ -108,7 +107,7 @@
         .rc-poster-doc__track .next-tag {
             display: inline-block; margin-left: .45rem;
             font: 700 .54rem/1 var(--ff-tech); letter-spacing: .18em; text-transform: uppercase;
-            color: var(--wet); background: var(--sig-cyan);
+            color: var(--on-flag); background: var(--flag);
             padding: .22rem .5rem; border-radius: 3px; vertical-align: middle;
         }
         .rc-poster-doc__distance {
@@ -129,11 +128,11 @@
             text-align: center;
         }
         .rc-poster-doc__leg.is-next {
-            border-color: color-mix(in srgb, var(--wet) 60%, transparent);
-            background: color-mix(in srgb, var(--wet) 8%, transparent);
+            border-color: var(--stroke-2);
+            background: color-mix(in srgb, var(--flag) 10%, transparent);
         }
         .rc-poster-doc__leg-league { font: 700 .54rem/1 var(--ff-tech); letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 55%, transparent); }
-        .rc-poster-doc__leg.is-next .rc-poster-doc__leg-league { color: var(--sig-cyan); }
+        .rc-poster-doc__leg.is-next .rc-poster-doc__leg-league { color: var(--ink); }
         .rc-poster-doc__leg-date   { font: 700 .85rem/1 var(--ff-tech); color: var(--ink); margin-top: .3rem; }
         .rc-poster-doc__leg-time   { font: 700 .64rem/1 var(--ff-tech); color: color-mix(in srgb, var(--ink) 60%, transparent); margin-top: .2rem; }
 
@@ -253,7 +252,7 @@ else
                                     @if (hasResult)
                                     {
                                         <a class="rc-poster-doc__leg-result" href="@Url.Action("RaceDetail", "Races", new { leagueId = leg.LeagueId, raceId = legRaceRowId })"
-                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--sig-cyan,var(--wet));text-decoration:none;">
+                                           style="margin-left:.5rem;font-size:.7rem;font-weight:700;color:var(--ink);text-decoration:none;">
                                             <i class="bi bi-flag-fill"></i> Ergebnis
                                         </a>
                                     }
