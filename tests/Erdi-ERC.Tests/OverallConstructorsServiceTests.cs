@@ -260,6 +260,36 @@ public class OverallConstructorsServiceTests
     }
 
     [Fact]
+    public async Task ComputeAsync_countsDistinctRacesPerTeam_notDriverResults()
+    {
+        // Regression: "Rennen" zählte jedes punktende Fahrer-Ergebnis. Ein Team mit zwei
+        // Autos bekam dadurch rund doppelt so viele "Rennen" wie tatsächlich gefahren
+        // wurden (Racing Bulls MAIN: 15 statt 8). Pro Team und Liga darf ein Rennen
+        // nur einmal zählen — Punkte/Siege bleiben pro Ergebnis.
+        var ctx = new SqliteTestContext();
+        ctx.Db.Leagues.Add(new League { Id = "main" });
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "main", Driver = "Alpha", Team = "Racing Bulls" });
+        ctx.Db.DriverStandings.Add(new DriverStanding { LeagueId = "main", Driver = "Beta", Team = "Racing Bulls" });
+        ctx.Db.SaveChanges();
+
+        var race = new RaceResult { LeagueId = "main", Date = DateTime.UtcNow, Track = "Test" };
+        ctx.Db.RaceResults.Add(race);
+        ctx.Db.SaveChanges();
+        ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = "Alpha", Position = 1 });
+        ctx.Db.RaceFinishes.Add(new RaceFinish { RaceResultId = race.RowId, Driver = "Beta", Position = 2 });
+        ctx.Db.SaveChanges();
+
+        var service = new OverallConstructorsService(ctx.Db, NewCache(), F1Scoring());
+        var rows = await service.ComputeAsync();
+
+        var team = rows.Single();
+        Assert.Equal(1, team.Events);                    // ein Rennen, nicht zwei Ergebnisse
+        Assert.Equal(1, team.PerLeague.Single().Events);
+        Assert.Equal(46, team.Points);                   // 25 (P1) + 21 (P2) bleiben pro Ergebnis
+        Assert.Equal(1, team.Wins);
+    }
+
+    [Fact]
     public async Task ComputeAsync_attributesPointsToGuestTeam_AcrossLeagues()
     {
         // Bob ist in Liga "am" für Mercedes gemeldet, in Liga "pro" aber als Gaststarter
