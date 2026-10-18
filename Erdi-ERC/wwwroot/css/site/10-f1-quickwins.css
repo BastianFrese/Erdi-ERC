@@ -37,6 +37,116 @@
     0%, 100% { transform: translate3d(0, 0, 0) rotate(-4deg);  opacity: .10; }
     50%      { transform: translate3d(0, -14px, 0) rotate(4deg); opacity: .28; }
 }
+/* --- Background animation layers --- */
+.race-lights__bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+.race-lights__rig,
+.race-lights__label { position: relative; z-index: 2; }
+
+/* Chequered flag pattern, slowly drifting */
+.race-lights__chequers {
+    position: absolute;
+    inset: -10%;
+    background-image:
+        linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.06) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.06) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.06) 75%);
+    background-size: 36px 36px;
+    background-position: 0 0, 0 18px, 18px -18px, -18px 0;
+    opacity: .35;
+    mask-image: radial-gradient(70% 60% at 50% 50%, #000 35%, transparent 80%);
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 50%, #000 35%, transparent 80%);
+    animation: rl-chequer-drift 22s linear infinite;
+}
+
+/* Horizontal speed lines streaking across */
+.race-lights__speedlines {
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(90deg,
+            transparent 0 60px,
+            rgba(225,6,0,.18) 60px 62px,
+            transparent 62px 180px,
+            rgba(255,255,255,.10) 180px 181px,
+            transparent 181px 320px);
+    mix-blend-mode: screen;
+    opacity: .55;
+    animation: rl-speed 1.8s linear infinite;
+    will-change: transform;
+}
+
+/* Soft scanline / vignette pulse */
+.race-lights__scan {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(120% 80% at 50% 110%, rgba(225,6,0,.25), transparent 60%),
+        radial-gradient(80% 60% at 50% -10%, rgba(76,175,109,.10), transparent 60%);
+    animation: rl-scan-pulse 2.4s ease-in-out infinite;
+}
+
+/* Floating F1-themed icons */
+.race-lights__icons {
+    position: absolute;
+    inset: 0;
+}
+.race-lights__icons > i {
+    position: absolute;
+    color: rgba(255,255,255,.10);
+    font-size: clamp(28px, 4vw, 56px);
+    text-shadow: 0 0 18px rgba(225,6,0,.35);
+    animation: rl-icon-float 8s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -0.7s);
+    will-change: transform, opacity;
+}
+.race-lights__icons > i:nth-child(1)  { top:  8%; left:  6%; }
+.race-lights__icons > i:nth-child(2)  { top: 14%; left: 78%; }
+.race-lights__icons > i:nth-child(3)  { top: 30%; left: 22%; }
+.race-lights__icons > i:nth-child(4)  { top: 22%; left: 56%; }
+.race-lights__icons > i:nth-child(5)  { top: 48%; left: 88%; }
+.race-lights__icons > i:nth-child(6)  { top: 62%; left:  4%; }
+.race-lights__icons > i:nth-child(7)  { top: 70%; left: 38%; }
+.race-lights__icons > i:nth-child(8)  { top: 80%; left: 70%; }
+.race-lights__icons > i:nth-child(9)  { top: 88%; left: 14%; }
+.race-lights__icons > i:nth-child(10) { top: 38%; left: 70%; }
+.race-lights__icons > i:nth-child(11) { top: 54%; left: 46%; }
+.race-lights__icons > i:nth-child(12) { top: 18%; left: 36%; }
+
+/* GO state: switch palette to green */
+.race-lights.is-go .race-lights__scan {
+    background:
+        radial-gradient(120% 80% at 50% 110%, rgba(76,175,109,.30), transparent 60%),
+        radial-gradient(80% 60% at 50% -10%, rgba(76,175,109,.18), transparent 60%);
+}
+.race-lights.is-go .race-lights__speedlines {
+    background:
+        repeating-linear-gradient(90deg,
+            transparent 0 60px,
+            rgba(76,175,109,.22) 60px 62px,
+            transparent 62px 180px,
+            rgba(255,255,255,.10) 180px 181px,
+            transparent 181px 320px);
+    animation-duration: .9s;
+}
+.race-lights.is-go .race-lights__icons > i {
+    color: rgba(109,255,161,.18);
+    text-shadow: 0 0 22px rgba(76,175,109,.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .race-lights__chequers,
+    .race-lights__speedlines,
+    .race-lights__scan,
+    .race-lights__icons > i { animation: none !important; }
+}
+
 .race-lights.is-done {
     opacity: 0;
     visibility: hidden;

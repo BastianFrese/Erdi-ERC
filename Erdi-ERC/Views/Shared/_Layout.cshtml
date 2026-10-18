@@ -32,7 +32,7 @@
                 if (_teamInfo != null)
                 {
                     _winnerTeamKey = _overrideKey;
-                    _winnerCarPrimary = $"";
+                    _winnerCarPrimary = _teamInfo.PrimaryColor;
                     _winnerCarSecondary = _teamInfo.SecondaryColor;
                     string Shade(string hex, double factor)
                     {
@@ -151,12 +151,106 @@
 
     @* ---------- RACE-START LIGHTS (initial loader, einmalig pro Session) ---------- *@
     <div class="race-lights" id="raceStartLights" role="status" aria-label="Race start lights">
+        <div class="race-lights__bg" aria-hidden="true">
+            <div class="race-lights__chequers"></div>
+            <div class="race-lights__speedlines"></div>
+            <div class="race-lights__scan"></div>
+            <div class="race-lights__icons">
+                <i class="bi bi-trophy-fill" style="--i:0"></i>
+                <i class="bi bi-flag-fill" style="--i:1"></i>
+                <i class="bi bi-lightning-charge-fill" style="--i:2"></i>
+                <i class="bi bi-speedometer2" style="--i:3"></i>
+                <i class="bi bi-stopwatch-fill" style="--i:4"></i>
+                <i class="bi bi-fire" style="--i:5"></i>
+                <i class="bi bi-tools" style="--i:6"></i>
+                <i class="bi bi-gear-fill" style="--i:7"></i>
+                <i class="bi bi-trophy-fill" style="--i:8"></i>
+                <i class="bi bi-flag-fill" style="--i:9"></i>
+                <i class="bi bi-lightning-charge-fill" style="--i:10"></i>
+                <i class="bi bi-speedometer2" style="--i:11"></i>
+            </div>
+        </div>
         <div class="race-lights__rig" aria-hidden="true">
             <span class="race-lights__lamp" data-lamp="1"></span>
             <span class="race-lights__lamp" data-lamp="2"></span>
             <span class="race-lights__lamp" data-lamp="3"></span>
             <span class="race-lights__lamp" data-lamp="4"></span>
             <span class="race-lights__lamp" data-lamp="5"></span>
+        </div>
+        <div class="race-lights__car" aria-hidden="true">
+            <svg viewBox="0 0 360 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <linearGradient id="rlCarBody" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"  stop-color="@_winnerCarPrimaryLight"/>
+                        <stop offset="55%" stop-color="@_winnerCarPrimary"/>
+                        <stop offset="100%" stop-color="@_winnerCarPrimaryDark"/>
+                    </linearGradient>
+                    <linearGradient id="rlCarShine" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"  stop-color="rgba(255,255,255,.55)"/>
+                        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                    </linearGradient>
+                    <radialGradient id="rlWheel" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%"  stop-color="#3a3a3a"/>
+                        <stop offset="60%" stop-color="#111"/>
+                        <stop offset="100%" stop-color="#000"/>
+                    </radialGradient>
+                    <linearGradient id="rlHalo" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"  stop-color="#222"/>
+                        <stop offset="100%" stop-color="#0a0a0a"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- ground shadow -->
+                <ellipse cx="180" cy="98" rx="150" ry="6" fill="rgba(0,0,0,.55)"/>
+
+                <!-- rear wing -->
+                <rect x="20" y="38" width="14" height="34" rx="2" fill="#1a1a1a"/>
+                <rect x="14" y="34" width="28" height="6"  rx="2" fill="#111"/>
+                <rect x="14" y="68" width="28" height="4"  rx="1" fill="#111"/>
+
+                <!-- floor / sidepod -->
+                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarBody)"/>
+                <path d="M30,78 L320,78 L330,72 L310,60 L70,60 L40,68 Z" fill="url(#rlCarShine)" opacity=".35"/>
+
+                <!-- engine cover / airbox -->
+                <path d="M120,60 L210,60 L205,40 L150,38 L130,48 Z" fill="url(#rlCarBody)"/>
+                <path d="M150,38 L205,40 L200,46 L155,44 Z" fill="rgba(255,255,255,.18)"/>
+                <!-- airbox intake -->
+                <path d="M170,38 L195,40 L190,30 L175,30 Z" fill="#0a0a0a"/>
+
+                <!-- halo + cockpit -->
+                <path d="M150,52 Q180,18 215,52" stroke="url(#rlHalo)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M158,52 Q182,30 210,52" fill="#0d0d0d"/>
+                <circle cx="184" cy="44" r="3.2" fill="#1a1a1a"/>
+
+                <!-- nose -->
+                <path d="M210,60 L320,72 L330,72 L320,60 Z" fill="url(#rlCarBody)"/>
+                <path d="M210,60 L320,72 L320,66 L210,58 Z" fill="rgba(255,255,255,.22)"/>
+
+                <!-- front wing -->
+                <rect x="318" y="74" width="32" height="6"  rx="2" fill="#111"/>
+                <rect x="322" y="68" width="24" height="4"  rx="1" fill="#1a1a1a"/>
+                <rect x="328" y="62" width="14" height="4"  rx="1" fill="#1a1a1a"/>
+
+                <!-- wheels -->
+                <g class="race-lights__car-wheel race-lights__car-wheel--rear">
+                    <circle cx="78" cy="80" r="18" fill="url(#rlWheel)"/>
+                    <circle cx="78" cy="80" r="6"  fill="#333"/>
+                    <line x1="78" y1="64" x2="78" y2="96" stroke="#444" stroke-width="1.5"/>
+                    <line x1="62" y1="80" x2="94" y2="80" stroke="#444" stroke-width="1.5"/>
+                </g>
+                <g class="race-lights__car-wheel race-lights__car-wheel--front">
+                    <circle cx="290" cy="80" r="18" fill="url(#rlWheel)"/>
+                    <circle cx="290" cy="80" r="6"  fill="#333"/>
+                    <line x1="290" y1="64" x2="290" y2="96" stroke="#444" stroke-width="1.5"/>
+                    <line x1="274" y1="80" x2="306" y2="80" stroke="#444" stroke-width="1.5"/>
+                </g>
+
+                <!-- livery accent -->
+                <path d="M70,72 L300,72 L300,76 L70,76 Z" fill="@_winnerCarSecondary" opacity=".55"/>
+                <text x="80" y="74" font-family="Orbitron, sans-serif" font-size="7" font-weight="800" fill="#fff" opacity=".85">ERDI&#x27;S RACING COMMUNITY</text>
+            </svg>
+            <div class="race-lights__car-flame" aria-hidden="true"></div>
         </div>
         <div class="race-lights__label" id="raceStartLabel">Lights out…</div>
     </div>

@@ -157,9 +157,12 @@ public class DesignContractTests
     [InlineData("f1-speedline")]
     [InlineData("f1-spark")]
     [InlineData("chequered-sweep")]
-    [InlineData("race-lights__chequers")]
-    [InlineData("race-lights__scan")]
-    [InlineData("race-lights__speedlines")]
+    // race-lights__chequers, __scan und __speedlines standen hier auch.
+    // Sie gehoeren zum Lade-Überlagerer (Karomuster, Scanlinie, Speedlines
+    // hinter dem Formel-Auto) und sind auf Wunsch zurückgekommen: dieser eine
+    // geplante Moment beim Laden ist genau der Fall, für den die Gestaltung
+    // Bewegung und Effekte zulässt — gestreut über die Seite wären sie das
+    // Problem, das die Regel meint. Die übrigen zehn bleiben verboten.
     [InlineData("f1-border-anim")]
     [InlineData("f1-holographic")]
     [InlineData("f1-lift")]
