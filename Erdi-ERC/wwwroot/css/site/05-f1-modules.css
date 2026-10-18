@@ -331,7 +331,9 @@
     min-height:220px;
     max-height:none;
     display:block;
-    object-fit:cover;
+    /* contain statt cover: das Cover wird nicht mehr beschnitten — die
+       Tarmac-Fläche des Containers fängt die Ränder auf. */
+    object-fit:contain;
     object-position:center;
 }
 /* Cover ist klickbar und öffnet die Lightbox (wwwroot/js/event-lightbox.js).
@@ -359,6 +361,42 @@
     .event-timeline__cover-btn:hover img {
         transform:scale(1.045);
         filter:brightness(1.07);
+    }
+}
+.event-timeline__thumbs {
+    display:flex;
+    flex-wrap:wrap;
+    gap:.5rem;
+    padding:.75rem 1.1rem 1rem;
+    border-top:1px solid var(--stroke-1);
+}
+.event-timeline__thumb {
+    width:84px;
+    height:56px;
+    margin:0;
+    padding:0;
+    border:0;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--tarmac);
+    cursor:zoom-in;
+    display:flex;
+}
+.event-timeline__thumb:focus-visible {
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+}
+.event-timeline__thumb img {
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+    transition:transform .35s var(--t-slow), filter .35s ease;
+}
+@media (hover:hover) {
+    .event-timeline__thumb:hover img {
+        transform:scale(1.06);
+        filter:brightness(1.08);
     }
 }
 .event-timeline__content {
@@ -467,13 +505,16 @@
 }
 .event-detail-gallery-hero-wrap {
     position:relative;
-    aspect-ratio:16/9;
     background:var(--track);
 }
+/* Kein fester Zuschnitt mehr: die Karte wächst mit der natürlichen Bildhöhe,
+   statt das Foto auf 16/9 zu beschneiden. max-height bremst nur Extrem-
+   Hochformate (Handy-Fotos) auf ein erträgliches Maß. */
 .event-detail-gallery-hero {
     width:100%;
-    height:100%;
-    object-fit:cover;
+    height:auto;
+    max-height:80vh;
+    object-fit:contain;
     display:block;
 }
 .event-detail-gallery-thumbs-wrap {
@@ -488,7 +529,7 @@
 .event-detail-gallery-thumb-image {
     width:100%;
     height:100%;
-    object-fit:cover;
+    object-fit:contain;
     display:block;
 }
 

@@ -47,7 +47,9 @@
         <div class="event-detail-gallery-card"
              style="background:var(--surface-1);border:1px solid var(--stroke-1);border-radius:var(--r-3);overflow:hidden;"
              data-event-gallery
-             data-images="@string.Join(",", allImages.Select(f => $"\"/uploads/events/{f}\""))">
+             @* Eckige Klammern sind Pflicht: event-lightbox.js macht JSON.parse und
+                bricht sonst vor dem Binden ab — ohne sie war die Galerie hier tot. *@
+             data-images="@("[" + string.Join(",", allImages.Select(f => $"\"/uploads/events/{f}\"")) + "]")">
             <div class="event-detail-gallery-hero-wrap"
                  data-gallery-index="0"
                  role="button"
@@ -60,7 +62,8 @@
                         CssClass = "event-detail-gallery-hero",
                         Loading = "eager",
                         Decoding = "async",
-                        Priority = "high"
+                        Priority = "high",
+                        Retina = true
                     };
                 }
                 <partial name="_Picture" model="heroPic" />

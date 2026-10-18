@@ -170,6 +170,31 @@ else
                                 </a>
                             </div>
                         </div>
+
+                        @if (galleryImages.Count > 1)
+                        {
+                            @* Alle hochgeladenen Fotos als Streifen sichtbar machen — jedes öffnet die
+                               Lightbox über data-gallery-index (event-lightbox.js bindet generisch darauf).
+                               Index deckt sich mit data-images: 0 = Cover, danach die Galerie-Uploads. *@
+                            <div class="event-timeline__thumbs">
+                                @for (int gi = 0; gi < galleryImages.Count; gi++)
+                                {
+                                    var galleryThumb = new PictureVm {
+                                        Src = $"/uploads/events/{galleryImages[gi]}",
+                                        Alt = "",
+                                        CssClass = "event-timeline__thumb-img",
+                                        Loading = "lazy",
+                                        Decoding = "async"
+                                    };
+                                    <button type="button"
+                                            class="event-timeline__thumb"
+                                            data-gallery-index="@gi"
+                                            aria-label="Bild @(gi + 1) von @galleryImages.Count vergrößern">
+                                        <partial name="_Picture" model="galleryThumb" />
+                                    </button>
+                                }
+                            </div>
+                        }
                     </div>
 
                     @if (galleryImages.Count > 0)

@@ -263,7 +263,13 @@
                                         @foreach (var img in ev.Images)
                                         {
                                             <div class="adm-gallery__thumb">
-                                                <img src="/uploads/events/@img.FileName" alt="" />
+                                                <a class="adm-gallery__view"
+                                                   href="/uploads/events/@img.FileName"
+                                                   target="_blank" rel="noopener"
+                                                   title="Groß ansehen"
+                                                   aria-label="Bild groß ansehen">
+                                                    <img src="/uploads/events/@img.FileName" alt="" />
+                                                </a>
                                                 <form asp-action="DeleteEventImage" method="post"
                                                       onsubmit="return confirm('Bild löschen?');">
                                                     @Html.AntiForgeryToken()
