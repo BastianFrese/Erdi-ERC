@@ -4,17 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "778f08bc26b874e8",
+        "id": "38cdcf96e75d3401",
         "type": "tabs",
         "children": [
           {
-            "id": "afbc22f0fb58f9f0",
+            "id": "9240384a5c2a237b",
             "type": "leaf",
             "state": {
-              "type": "empty",
+              "type": "graph",
               "state": {},
-              "icon": "lucide-file",
-              "title": "Neuer Tab"
+              "icon": "lucide-git-fork",
+              "title": "Graph-Ansicht"
             }
           }
         ]
@@ -37,7 +37,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Dateiexplorer"
@@ -177,8 +179,21 @@
       "bases:Neue Base erstellen": false
     }
   },
-  "active": "6e830941c940270e",
+  "active": "9240384a5c2a237b",
   "lastOpenFiles": [
+    "Tasks/2026-08-15-saison-bewerbung.md",
+    "Tasks/2026-08-17-morgen-deploy.md",
+    "Daily/2026-09-02.md",
+    "superpowers/plans/2026-10-04-erc-race-control-design-system.md",
+    "superpowers/specs/2026-10-04-erc-race-control-frontend-design.md",
+    "superpowers/plans",
+    "Unbenannt",
+    "Features/applications.md",
+    "Tasks/2026-08-15-restore-owner-handle.md",
+    "Tasks/2026-08-05-bewerbungssystem-v1-offene-punkte.md",
+    "Features/giveaway-infotafel.md",
+    "Features/Events-Video-Embed.md",
+    "Features/Constructors-Ohne-Team.md",
     "Unbenannt.md"
   ]
 }
