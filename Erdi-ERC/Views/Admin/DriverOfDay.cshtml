@@ -1,0 +1,243 @@
+@model DotdAdminViewModel
+@{
+    ViewData["Title"] = "Driver of the Day";
+    ViewData["Kicker"] = "Community";
+    ViewData["HeroTitle"] = "Driver of the Day";
+}
+
+<div class="adm-dashboard">
+
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:#e10600;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-mic-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@(Model.Active is null ? "—" : "LIVE")</div>
+                <div class="adm-kpi-card__label">Abstimmung</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#39ff14;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-bar-chart-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@(Model.Active?.TotalVotes ?? 0)</div>
+                <div class="adm-kpi-card__label">Stimmen</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#58b7c9;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-broadcast"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.History.Count</div>
+                <div class="adm-kpi-card__label">Ergebnisse (letzte 10)</div>
+            </div>
+        </div>
+    </section>
+
+    @if (Model.Active is null)
+    {
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-play-circle-fill me-2" style="color:var(--accent);"></i>Wahl öffnen
+                </span>
+            </div>
+            <div class="adm-panel__body">
+                <form asp-action="Open" method="post" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-6">
+                        <label class="adm-form-label">Liga</label>
+                        <select class="form-select form-select-sm" name="leagueId" required>
+                            @foreach (var league in Model.Leagues.Where(l => !l.IsArchived))
+                            {
+                                <option value="@league.Id">@league.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-sm btn-primary" type="submit">
+                            <i class="bi bi-broadcast-pin me-1"></i>Wahl öffnen
+                        </button>
+                        <span class="text-muted ms-2" style="font-size:.8rem;">
+                            Alle Fahrer der Liga stehen zur Wahl. Chat-Befehl: <code>!vote name</code>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-broadcast-pin me-2" style="color:#e10600;"></i>
+                    Offene Wahl: @Model.Active.LeagueName
+                </span>
+                <span class="adm-badge">@Model.Active.TotalVotes Stimmen</span>
+            </div>
+            <div class="adm-panel__body">
+                <p class="mb-3" style="font-size:.85rem;">
+                    Gestartet am @Model.Active.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") Uhr.
+                    Chat-Befehl: <code>!vote name</code> (auch <code>!dotd name</code>).
+                </p>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <form asp-action="Close" method="post"
+                          onsubmit="return confirm('Wahl schließen und Sieger ermitteln?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-primary" type="submit">
+                            <i class="bi bi-flag-fill me-1"></i>Wahl schließen
+                        </button>
+                    </form>
+                    <form asp-action="Discard" method="post"
+                          onsubmit="return confirm('Wahl verwerfen? Stimmen und Eintrag werden gelöscht.');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-danger" type="submit">
+                            <i class="bi bi-trash3 me-1"></i>Wahl verwerfen
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-list-ol me-2" style="color:#39ff14;"></i>Live-Zahlen (nur Admin)
+                </span>
+            </div>
+            @if (Model.Active.Counts.Count == 0)
+            {
+                <div class="adm-panel__body">
+                    <div class="adm-empty">
+                        <i class="bi bi-hourglass-split adm-empty__icon"></i>
+                        <span>Noch keine gültigen Stimmen.</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="adm-panel__body">
+                    <table class="table table-sm align-middle mb-0" style="font-size:.85rem;">
+                        <thead>
+                            <tr>
+                                <th style="width:3rem;">#</th>
+                                <th>Fahrer</th>
+                                <th class="text-end" style="width:6rem;">Stimmen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ var rank = 1; }
+                            @foreach (var row in Model.Active.Counts)
+                            {
+                                <tr>
+                                    <td class="text-muted">@rank</td>
+                                    <td>@DriverNameHelper.Display(row.Driver)</td>
+                                    <td class="text-end">@row.Votes</td>
+                                </tr>
+                                rank++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-link-45deg me-2" style="color:#58b7c9;"></i>Overlay für Streamlabs
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <p class="mb-2" style="font-size:.85rem;">
+                In Streamlabs als Browserquelle eintragen (transparenter Hintergrund):
+            </p>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <code id="overlay-url">@DotdAdminViewModel.OverlayUrl</code>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        onclick="navigator.clipboard.writeText(document.getElementById('overlay-url').textContent);this.textContent='Kopiert';">
+                    <i class="bi bi-clipboard me-1"></i>Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-clock-history me-2" style="color:#c78cff;"></i>Historie
+            </span>
+        </div>
+        @if (Model.History.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-mic adm-empty__icon"></i>
+                    <span>Noch keine abgeschlossene Wahl.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-panel__body">
+                <table class="table table-sm align-middle mb-0" style="font-size:.85rem;">
+                    <thead>
+                        <tr>
+                            <th>Geschlossen</th>
+                            <th>Liga</th>
+                            <th>Sieger</th>
+                            <th class="text-end">Stimmen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vote in Model.History)
+                        {
+                            <tr>
+                                <td>@(vote.ClosedAt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
+                                <td>@vote.LeagueName</td>
+                                <td>
+                                    @if (vote.WinnerDriver is null)
+                                    {
+                                        <span class="text-muted">Keine Stimmen</span>
+                                    }
+                                    else
+                                    {
+                                        @DriverNameHelper.Display(vote.WinnerDriver)
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @(vote.WinnerVotes is null ? "—" : $"{vote.WinnerVotes}/{vote.TotalVotes}")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    @if (Model.Rejections.Count > 0)
+    {
+        <div class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__head-title">
+                    <i class="bi bi-question-circle me-2" style="color:#ffb800;"></i>Nicht zugeordnete Chat-Versuche
+                </span>
+            </div>
+            <div class="adm-panel__body">
+                <p class="mb-2" style="font-size:.8rem;">
+                    Unbekannt oder mehrdeutig — diese Stimmen wurden nicht gezählt.
+                </p>
+                <ul class="mb-0" style="font-size:.85rem;">
+                    @foreach (var rejection in Model.Rejections)
+                    {
+                        <li>
+                            <code>@rejection.ChatText</code>
+                            <span class="text-muted ms-2">@rejection.At.ToLocalTime().ToString("HH:mm:ss")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+</div>

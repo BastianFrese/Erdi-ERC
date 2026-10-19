@@ -37,6 +37,14 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminDriverOfDay" asp-action="Index" style="--kpi-color:#e10600;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-mic-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@(ViewBag.DotdOpen == true ? "LIVE" : "—")</div>
+                <div class="adm-kpi-card__label">Driver of the Day</div>
+            </div>
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
     </section>
 
     @* ══════════════════════════════════════════════════════════════════

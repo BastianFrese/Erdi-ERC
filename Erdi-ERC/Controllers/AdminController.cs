@@ -19,15 +19,17 @@ namespace Erdi_ERC.Controllers
         private readonly IStreamScheduleQueryService _streamSchedules;
         private readonly ISiteSettingsService _siteSettings;
         private readonly IOutputCacheStore _outputCache;
+        private readonly IDotdVoteService _dotd;
 
         public AdminController(AppDbContext db, IAdminAuditService audit, IStreamScheduleQueryService streamSchedules,
-            ISiteSettingsService siteSettings, IOutputCacheStore outputCache)
+            ISiteSettingsService siteSettings, IOutputCacheStore outputCache, IDotdVoteService dotd)
         {
             _db = db;
             _audit = audit;
             _streamSchedules = streamSchedules;
             _siteSettings = siteSettings;
             _outputCache = outputCache;
+            _dotd = dotd;
         }
 
         // ---- Dashboard / Main Übersicht ----
@@ -53,6 +55,7 @@ namespace Erdi_ERC.Controllers
                 .ToListAsync();
 
             ViewBag.IsSuperAdmin = IsSuperAdmin;
+            ViewBag.DotdOpen = await _dotd.HasOpenVoteAsync();
             ViewBag.AppDownloadEnabled = _siteSettings.IsAppDownloadEnabled();
             ViewBag.AppDownloadFileAvailable = _siteSettings.HasInstallerFile();
             ViewBag.MaintenanceMode = _siteSettings.IsMaintenanceMode();

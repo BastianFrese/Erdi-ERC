@@ -162,6 +162,12 @@
                             <i class="bi bi-gift-fill"></i> Giveaways
                         </a>
                     }
+                    @if (canComHub)
+                    {
+                        <a class="@Nav("AdminDriverOfDay","Index")" asp-controller="AdminDriverOfDay" asp-action="Index">
+                            <i class="bi bi-mic-fill"></i> Driver of the Day
+                        </a>
+                    }
                 </div>
             }
 
