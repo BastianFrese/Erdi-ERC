@@ -480,7 +480,7 @@
 .intro-overlay {
     position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     padding:24px;
-    background:color-mix(in srgb, var(--wet) 86%, transparent);
+    background:color-mix(in srgb, var(--track) 86%, transparent);
     z-index:2000;
 }
 .intro-overlay__card {
@@ -495,7 +495,7 @@
     position:absolute; top:.6rem; right:.6rem;
     width:38px; height:38px;
     border:1px solid var(--stroke-2); border-radius:999px;
-    background:color-mix(in srgb, var(--wet) 85%, transparent); color:var(--ink);
+    background:var(--kerb); color:var(--ink);
     display:inline-flex; align-items:center; justify-content:center;
     z-index:5; cursor:pointer;
     transition:background var(--t-fast), border-color var(--t-fast);
@@ -588,7 +588,7 @@
 }
 .league-page-surface .card-body { padding:1.1rem; }
 .league-page-add-row td {
-    background:color-mix(in srgb, var(--wet) 92%, transparent)!important;
+    background:var(--kerb)!important;
 }
 .league-page-add-row .form-control,
 .league-page-add-row .form-select {
@@ -741,8 +741,11 @@
 .adm-topbar {
     display:flex; align-items:center; gap:.75rem;
     padding:0 1.25rem; height:52px; flex-shrink:0;
-    border-bottom:1px solid var(--stroke-1);
-    background:color-mix(in srgb, var(--wet) 88%, transparent);
+    border-bottom:1px solid var(--rule);
+    /* Neutral, nicht blau: Blau ist im System die Inter/Wet-Flagge, keine
+       Fläche. Die Topbar war ein durchgehendes Blau und las sich wie ein
+       fremdes Admin-Theme. */
+    background:var(--tarmac);
     position:sticky; top:0; z-index:100;
 }
 .adm-topbar__toggle {
@@ -1268,4 +1271,58 @@
     width:20px; height:20px; padding:0;
     font-size:.65rem; line-height:1;
     display:flex; align-items:center; justify-content:center;
+}
+
+/* --- Aufklappbare Feldgruppen im Renn-Eintrag ------------------------
+   Stamm, Ersatz und Gäste getrennt und aufklappbar: bei vollem Kader war
+   die flache Liste ein langer Block ohne Orientierung. <details> ist
+   nativ per Tastatur bedienbar, ohne JS. Dieselbe Form trägt auch die
+   Reserve-Zuordnung, die sonst als langer Block unter dem Formular steht. */
+.field-groups { display: flex; flex-direction: column; gap: var(--sp-2); }
+.field-group { border: 1px solid var(--rule); border-radius: var(--r-2); background: var(--tarmac); }
+.field-group > summary {
+    cursor: pointer;
+    padding: var(--sp-2) var(--sp-3);
+    font: 600 var(--fs-xs)/1.2 var(--ff-cond);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+.field-group[open] > summary { color: var(--ink); border-bottom: 1px solid var(--rule); }
+.field-group > summary:focus-visible { outline: 2px solid var(--wet); outline-offset: 2px; }
+.field-group__count {
+    display: inline-block;
+    margin-left: .35rem;
+    padding: .05rem .35rem;
+    border-radius: var(--r-1);
+    background: var(--kerb);
+    color: var(--ink-2);
+    font-size: .7rem;
+    letter-spacing: 0;
+}
+.field-group__list { padding: var(--sp-2) var(--sp-3); display: flex; flex-direction: column; gap: .15rem; }
+.field-group__body { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
+
+/* --- Bestenliste: Blocktrennung Stamm / Ersatz -----------------------
+   Eine flache Tabelle ließ Stamm- und Ersatzfahrer durcheinanderlaufen.
+   Die Trennzeile ist reine Gruppierung, keine Datenzeile. */
+.league-page-group-row td {
+    background: var(--rule);
+    color: var(--ink-2);
+    font: 600 .68rem/1.2 var(--ff-cond);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    padding: .55rem .75rem;
+    border-top: 1px solid var(--rule-strong);
+}
+.league-page-group-row:first-child td { border-top: 0; }
+.league-page-group-row__count {
+    display: inline-block;
+    margin-left: .4rem;
+    padding: .05rem .35rem;
+    border-radius: var(--r-1);
+    background: var(--kerb);
+    color: var(--ink-2);
+    font-size: .7rem;
+    letter-spacing: 0;
 }

@@ -88,7 +88,17 @@
             .GroupBy(g => g.GuestDriver.Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First().MainDriver.Trim(), StringComparer.OrdinalIgnoreCase);
 
-    var allDrivers = drivers.Concat(guestDrivers).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(d => d).ToList();
+    // Fahrer-Gruppen statt einer flachen Liste: bei vollem Kader wird die sehr lang,
+    // und im Dropdown ist die Reihenfolge wichtiger als das Alphabet — Stammfahrer
+    // zuerst, Ersatzfahrer danach, Gäste zuletzt. Getrennt gehalten, damit Markup
+    // und JS dieselbe Einteilung benutzen.
+    var driverGroups = new List<(string Key, string Label, List<string> Drivers)>
+    {
+        ("main", "Stammfahrer", mainDrivers),
+        ("reserve", "Ersatzfahrer", reserveDrivers),
+    };
+    if (guestDrivers.Count > 0)
+        driverGroups.Add(("guests", "Gäste", guestDrivers));
 
     if (isEdit)
     {
@@ -211,26 +221,28 @@
 
                 @if (reserveDrivers.Count > 0)
                 {
-                    <div class="border rounded p-3 mb-4 bg-dark-subtle">
-                        <h5 class="mb-2">Reserve-Zuordnung für dieses Rennen (optional)</h5>
-                        <p class="text-muted small mb-3">Hier kannst du bei Bedarf die Zuordnung nur für dieses Rennen überschreiben. Wenn leer, gilt die Standard-Zuordnung aus der Fahrerverwaltung.</p>
-                        <div class="row g-2">
-                            @foreach (var reserveDriver in reserveDrivers)
-                            {
-                                <input type="hidden" name="reserveDrivers" value="@reserveDriver" />
-                                <div class="col-md-6">
-                                    <label class="form-label small">@reserveDriver fährt für</label>
-                                    <select class="form-select form-select-sm reserve-main-select" name="reserveMainDrivers" data-reserve-driver="@reserveDriver">
-                                        <option value="">-- keine Zuordnung für dieses Rennen --</option>
-                                        @foreach (var mainDriver in mainDrivers)
-                                        {
-                                            <option value="@mainDriver" selected="@(prefillReserveToMain.TryGetValue(reserveDriver, out var mapped) && string.Equals(mapped, mainDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
-                                        }
-                                    </select>
-                                </div>
-                            }
+                    <details class="field-group mb-4" open="@(prefillReserveToMain.Count > 0 ? "open" : null)">
+                        <summary>Reserve-Zuordnung für dieses Rennen <span class="field-group__count">@reserveDrivers.Count</span></summary>
+                        <div class="field-group__body">
+                            <p class="text-muted small mb-3">Hier kannst du bei Bedarf die Zuordnung nur für dieses Rennen überschreiben. Wenn leer, gilt die Standard-Zuordnung aus der Fahrerverwaltung.</p>
+                            <div class="row g-2">
+                                @foreach (var reserveDriver in reserveDrivers)
+                                {
+                                    <input type="hidden" name="reserveDrivers" value="@reserveDriver" />
+                                    <div class="col-md-6">
+                                        <label class="form-label small">@reserveDriver fährt für</label>
+                                        <select class="form-select form-select-sm reserve-main-select" name="reserveMainDrivers" data-reserve-driver="@reserveDriver">
+                                            <option value="">-- keine Zuordnung für dieses Rennen --</option>
+                                            @foreach (var mainDriver in mainDrivers)
+                                            {
+                                                <option value="@mainDriver" selected="@(prefillReserveToMain.TryGetValue(reserveDriver, out var mapped) && string.Equals(mapped, mainDriver, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@mainDriver</option>
+                                            }
+                                        </select>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                    </div>
+                    </details>
                 }
 
                 <div class="border rounded p-3 mb-4" style="border-color:rgba(91,140,255,.35)!important;">
@@ -289,9 +301,14 @@
                                             <select class="form-select race-position-select" name="positions">
                                                 <option value="">-- Leer --</option>
                                                 @{ var selectedDriverForPos = posToDriver.TryGetValue(i + 1, out var pd) ? pd : null; }
-                                                @foreach(var driver in allDrivers)
+                                                @foreach (var group in driverGroups)
                                                 {
-                                                    <option value="@driver" selected="@(string.Equals(driver, selectedDriverForPos, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@driver</option>
+                                                    <optgroup label="@group.Label" data-group="@group.Key">
+                                                        @foreach (var driver in group.Drivers)
+                                                        {
+                                                            <option value="@driver" selected="@(string.Equals(driver, selectedDriverForPos, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@driver</option>
+                                                        }
+                                                    </optgroup>
                                                 }
                                             </select>
                                         </div>
@@ -320,16 +337,46 @@
                         <div class="border rounded p-3">
                             <h5 class="mb-2">DNF</h5>
                             <p class="text-muted small mb-3">Markiere Fahrer, die ausgefallen sind.</p>
-                            <div class="row g-2" id="dnfList">
-                                @foreach (var driver in allDrivers)
-                                {
-                                    <div class="col-12">
-                                        <div class="form-check">
-                                            <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" checked="@(dnfPrefill.Contains(driver) ? "checked" : null)" />
-                                            <label class="form-check-label" for="dnf-@driver.GetHashCode()">@driver</label>
-                                        </div>
+                            <div class="field-groups">
+                                <details class="field-group" open>
+                                    <summary>Stammfahrer <span class="field-group__count">@mainDrivers.Count</span></summary>
+                                    <div class="field-group__list">
+                                        @foreach (var driver in mainDrivers)
+                                        {
+                                            <div class="form-check">
+                                                <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" checked="@(dnfPrefill.Contains(driver) ? "checked" : null)" />
+                                                <label class="form-check-label" for="dnf-@driver.GetHashCode()">@driver</label>
+                                            </div>
+                                        }
                                     </div>
+                                </details>
+                                @if (reserveDrivers.Count > 0)
+                                {
+                                    <details class="field-group">
+                                        <summary>Ersatzfahrer <span class="field-group__count">@reserveDrivers.Count</span></summary>
+                                        <div class="field-group__list">
+                                            @foreach (var driver in reserveDrivers)
+                                            {
+                                                <div class="form-check">
+                                                    <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" checked="@(dnfPrefill.Contains(driver) ? "checked" : null)" />
+                                                    <label class="form-check-label" for="dnf-@driver.GetHashCode()">@driver</label>
+                                                </div>
+                                            }
+                                        </div>
+                                    </details>
                                 }
+                                <details class="field-group" id="dnfGuestGroup" hidden="@(guestDrivers.Count == 0 ? "hidden" : null)">
+                                    <summary>Gäste <span class="field-group__count" data-dnf-guest-count>@guestDrivers.Count</span></summary>
+                                    <div class="field-group__list" id="dnfList">
+                                        @foreach (var driver in guestDrivers)
+                                        {
+                                            <div class="form-check">
+                                                <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="@driver" id="dnf-@driver.GetHashCode()" checked="@(dnfPrefill.Contains(driver) ? "checked" : null)" />
+                                                <label class="form-check-label" for="dnf-@driver.GetHashCode()">@driver</label>
+                                            </div>
+                                        }
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     </div>
@@ -470,22 +517,30 @@
                     const opt = document.createElement('option');
                     opt.value = name;
                     opt.textContent = name;
-                    select.appendChild(opt);
+                    // Gäste gehören in ihre eigene Gruppe, nicht hinten ans Ende der Liste.
+                    let guestGroup = select.querySelector('optgroup[data-group="guests"]');
+                    if (!guestGroup) {
+                        guestGroup = document.createElement('optgroup');
+                        guestGroup.label = 'Gäste';
+                        guestGroup.setAttribute('data-group', 'guests');
+                        select.appendChild(guestGroup);
+                    }
+                    guestGroup.appendChild(opt);
                 }
                 if (dnfList) {
-                    const col = document.createElement('div');
-                    col.className = 'col-12';
+                    const row = document.createElement('div');
+                    row.className = 'form-check';
                     const id = 'dnf-guest-' + name.replace(/[^a-z0-9]/gi, '');
-                    col.innerHTML = `<div class="form-check">
-                        <input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="${name}" id="${id}" />
-                        <label class="form-check-label" for="${id}">${name} <span class="text-info">(Gast)</span></label></div>`;
-                    dnfList.appendChild(col);
-                    const newCheck = col.querySelector('.dnf-driver-check');
+                    row.innerHTML = `<input class="form-check-input dnf-driver-check" type="checkbox" name="dnfDrivers" value="${name}" id="${id}" />
+                        <label class="form-check-label" for="${id}">${name} <span class="text-info">(Gast)</span></label>`;
+                    dnfList.appendChild(row);
+                    const newCheck = row.querySelector('.dnf-driver-check');
                     if (newCheck) {
                         newCheck.addEventListener('change', syncDisabledOptions);
                         dnfChecks.push(newCheck);
                     }
                 }
+                updateGuestDnfGroup();
 
                 // Pflicht-Zuordnung: neue Zeile im Gast-Zuordnungs-Panel.
                 if (guestAssignmentRows && guestAssignmentsContainer) {
@@ -534,6 +589,17 @@
                 syncDisabledOptions();
             };
 
+            // Gast-Gruppe in der DNF-Liste: Zahl mitziehen, Gruppe ein-/ausblenden.
+            const updateGuestDnfGroup = () => {
+                const group = document.getElementById('dnfGuestGroup');
+                if (!group) return;
+                const count = dnfList ? dnfList.querySelectorAll('.dnf-driver-check').length : 0;
+                const label = group.querySelector('[data-dnf-guest-count]');
+                if (label) label.textContent = String(count);
+                if (count > 0) group.removeAttribute('hidden');
+                else group.setAttribute('hidden', 'hidden');
+            };
+
             const removeGuestDriver = (name) => {
                 const lowered = name.toLowerCase();
                 for (const select of selects) {
@@ -547,12 +613,13 @@
                 if (dnfList) {
                     for (const check of Array.from(dnfChecks)) {
                         if ((check.value || '').toLowerCase() === lowered) {
-                            check.closest('.col-12')?.remove();
+                            check.closest('.form-check')?.remove();
                             const idx = dnfChecks.indexOf(check);
                             if (idx >= 0) dnfChecks.splice(idx, 1);
                             break;
                         }
                     }
+                    updateGuestDnfGroup();
                 }
             };
 

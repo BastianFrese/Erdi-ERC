@@ -12,6 +12,17 @@
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .OrderBy(x => x)
         .ToList();
+
+    // Bestenliste in zwei Blöcken: Stammfahrer und Ersatzfahrer. Die Formular-
+    // Arrays (rowId, driver, team …) bleiben indexgleich, weil die Zeilen in
+    // derselben Reihenfolge abgeschickt werden wie sie im Formular stehen.
+    var standingsGroups = new List<(string Label, List<Erdi_ERC.Models.DriverStanding> Rows)>
+    {
+        ("Stammfahrer", Model.Standings.Where(s => !s.IsReserveDriver).ToList()),
+        ("Ersatzfahrer", Model.Standings.Where(s => s.IsReserveDriver).ToList()),
+    };
+    var mainCount = standingsGroups[0].Rows.Count;
+    var reserveCount = standingsGroups[1].Rows.Count;
 }
 
 
@@ -20,7 +31,7 @@
         <div>
             <partial name="_AdminHeroCard" />
             <div class="league-page-pills mt-3">
-                <span class="league-page-pill"><i class="bi bi-trophy-fill me-1"></i>@Model.Standings.Count Fahrer</span>
+                <span class="league-page-pill"><i class="bi bi-trophy-fill me-1"></i>@mainCount Stamm@(reserveCount > 0 ? $" · {reserveCount} Ersatz" : "")</span>
                 <span class="league-page-pill"><i class="bi bi-flag-fill me-1"></i>@Model.Races.Count Rennen</span>
                 <span class="league-page-pill">@(Model.IsArchived ? "Archiviert" : "Aktiv")</span>
             </div>
@@ -321,8 +332,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var s in Model.Standings)
+                        @foreach (var group in standingsGroups)
                         {
+                            if (group.Rows.Count == 0) continue;
+                            <tr class="league-page-group-row">
+                                <td colspan="10">
+                                    @group.Label <span class="league-page-group-row__count">@group.Rows.Count</span>
+                                </td>
+                            </tr>
+                            foreach (var s in group.Rows)
+                            {
                             var rfId = $"reserve-for-{s.RowId}";
                             <tr>
                                 <td class="text-muted fw-semibold">@s.Position<input type="hidden" name="rowId" value="@s.RowId" /></td>
@@ -357,6 +376,7 @@
                                 <td><input class="form-control form-control-sm" type="number" step="0.01" name="pointsAdjustment" value="@PointsFormatHelper.FormatForInput(s.PointsAdjustment)" title="+/- Punkte" /></td>
                                 <td class="text-center"><input class="form-check-input" type="checkbox" name="deleteRowIds" value="@s.RowId" title="Zum Löschen markieren" /></td>
                             </tr>
+                            }
                         }
                         @* Leerzeile zum Anlegen — Name eintragen genügt, der Rest ist optional *@
                         <tr class="league-page-add-row">
@@ -545,7 +565,7 @@
                                     <div class="small d-flex flex-column gap-1">
                                         @foreach (var assignment in reserveAssignments)
                                         {
-                                            <span class="badge text-bg-info text-start">@assignment.ReserveDriver → @assignment.MainDriver</span>
+                                            <span class="badge bg-secondary text-start">@assignment.ReserveDriver → @assignment.MainDriver</span>
                                         }
                                     </div>
                                 }
