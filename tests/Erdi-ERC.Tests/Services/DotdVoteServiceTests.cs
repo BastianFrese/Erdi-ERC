@@ -3,6 +3,7 @@ using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -166,6 +167,61 @@ public class DotdVoteServiceTests
     }
 
     [Fact]
+    public async Task Zweite_Wahl_wird_abgelehnt()
+    {
+        using var ctx = new SqliteTestContext();
+        SeedLeague(ctx, "pro", "ERC | Wiener");
+        var (service, _) = Create(ctx);
+
+        var first = await service.OpenAsync("pro", null);
+        var second = await service.OpenAsync("pro", null);
+
+        Assert.True(first.Ok);
+        Assert.False(second.Ok);
+        Assert.Equal("Es läuft bereits eine Wahl für Pro.", second.Error);
+    }
+
+    [Fact]
+    public async Task Gleichstand_geht_alphabetisch_an_den_Anzeigenamen()
+    {
+        using var ctx = new SqliteTestContext();
+        SeedLeague(ctx, "pro", "ERC | Wiener", "ERC | Müller");
+        var (service, _) = Create(ctx);
+        await service.OpenAsync("pro", null);
+        await service.RegisterVoteAsync("tw-1", "wiener");
+        await service.RegisterVoteAsync("tw-2", "müller");
+
+        await service.CloseAsync();
+        var snapshot = await service.GetSnapshotAsync();
+
+        Assert.Equal("Müller", snapshot.Winner!.Name);
+        Assert.Equal(50, snapshot.Winner.Percent);
+    }
+
+    [Fact]
+    public async Task Schliessen_laesst_Ballots_bei_DB_Fehler_stehen()
+    {
+        using var ctx = new SqliteTestContext();
+        SeedLeague(ctx, "pro", "ERC | Wiener");
+        var (seedService, _) = Create(ctx);
+        await seedService.OpenAsync("pro", null);
+        await seedService.RegisterVoteAsync("tw-1", "wiener");
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(ctx.Db.Database.GetDbConnection())
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution)
+            .AddInterceptors(new FailOnSaveInterceptor())
+            .Options;
+        using var failingDb = new AppDbContext(options);
+        var failingService = new DotdVoteService(
+            failingDb, new DotdRuntimeState(), NullLogger<DotdVoteService>.Instance);
+
+        await Assert.ThrowsAnyAsync<Exception>(() => failingService.CloseAsync());
+
+        Assert.Equal(1, ctx.Db.DotdBallots.Count());
+    }
+
+    [Fact]
     public async Task Verwerfen_loescht_Wahl_und_Ballots()
     {
         using var ctx = new SqliteTestContext();
@@ -178,5 +234,15 @@ public class DotdVoteServiceTests
         Assert.Empty(ctx.Db.DotdVotes);
         Assert.Empty(ctx.Db.DotdBallots);
         Assert.False(await service.HasOpenVoteAsync());
+    }
+
+    /// <summary>Simuliert einen DB-Fehler genau beim Speichern der geschlossenen Wahl.</summary>
+    private sealed class FailOnSaveInterceptor : SaveChangesInterceptor
+    {
+        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData,
+            InterceptionResult<int> result,
+            CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("simulierter DB-Fehler");
     }
 }

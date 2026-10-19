@@ -28,6 +28,25 @@ public class DriverNameMatcherTests
     }
 
     [Fact]
+    public void Match_findet_einen_Namensbestandteil()
+    {
+        var r = DriverNameMatcher.Match(
+            "wiener", new[] { "ERC | Max Wiener", "ERC | Max Berger" });
+
+        Assert.Equal("ERC | Max Wiener", r.Driver);
+        Assert.False(r.Ambiguous);
+    }
+
+    [Fact]
+    public void Match_findet_ein_eindeutiges_Teilwort()
+    {
+        var r = DriverNameMatcher.Match("wien", new[] { "ERC | Wiener", "ERC | Müller" });
+
+        Assert.Equal("ERC | Wiener", r.Driver);
+        Assert.False(r.Ambiguous);
+    }
+
+    [Fact]
     public void Match_toleriert_einen_tippfehler()
     {
         var r = DriverNameMatcher.Match("wienr", new[] { "ERC | Wiener" });

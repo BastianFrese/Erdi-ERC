@@ -43,8 +43,8 @@
                 <form asp-action="Open" method="post" class="row g-3">
                     @Html.AntiForgeryToken()
                     <div class="col-md-6">
-                        <label class="adm-form-label">Liga</label>
-                        <select class="form-select form-select-sm" name="leagueId" required>
+                        <label class="adm-form-label" for="dotd-league">Liga</label>
+                        <select id="dotd-league" class="form-select form-select-sm" name="leagueId" required>
                             @foreach (var league in Model.Leagues.Where(l => !l.IsArchived))
                             {
                                 <option value="@league.Id">@league.Name</option>

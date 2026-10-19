@@ -186,10 +186,14 @@ public sealed class DotdVoteService : IDotdVoteService
             vote.WinnerVotes = winnerDriver is null ? null : winnerVotes;
             vote.FinalSharesJson = JsonSerializer.Serialize(finalBars);
 
+            // Ergebnis und Ballot-Löschung gehören zusammen: Schlägt das Speichern
+            // fehl, dürfen die Stimmen nicht schon weg sein.
+            await using var transaction = await _db.Database.BeginTransactionAsync(ct);
             await _db.DotdBallots
                 .Where(b => b.VoteId == voteId)
                 .ExecuteDeleteAsync(ct);
             await _db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
 
             var percent = total > 0
                 ? (int)Math.Round(winnerVotes * 100.0 / total, MidpointRounding.AwayFromZero)
@@ -231,17 +235,20 @@ public sealed class DotdVoteService : IDotdVoteService
                 return new DotdActionResult(false, "Keine offene Wahl.", null, null);
             }
 
+            var vote = await _db.DotdVotes.AsTracking()
+                .FirstOrDefaultAsync(v => v.Id == voteId, ct);
+
+            // Löschen von Wahl und Stimmen in einer Transaktion — kein halber Zustand.
+            await using var transaction = await _db.Database.BeginTransactionAsync(ct);
             await _db.DotdBallots
                 .Where(b => b.VoteId == voteId)
                 .ExecuteDeleteAsync(ct);
-
-            var vote = await _db.DotdVotes.AsTracking()
-                .FirstOrDefaultAsync(v => v.Id == voteId, ct);
             if (vote is not null)
             {
                 _db.DotdVotes.Remove(vote);
                 await _db.SaveChangesAsync(ct);
             }
+            await transaction.CommitAsync(ct);
 
             _state.ClearActive();
             _state.LastSnapshot = null;

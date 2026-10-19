@@ -36,6 +36,21 @@ public class TwitchIrcParserTests
         => Assert.Equal(expected, TwitchIrcParser.ExtractVoteTarget(text));
 
     [Fact]
+    public void ParsePrivMsg_faellt_ohne_Tags_auf_den_Login_zurueck()
+    {
+        const string line =
+            ":wienerfan!wienerfan@wienerfan.tmi.twitch.tv PRIVMSG #erdi10 :!vote wiener";
+
+        var m = TwitchIrcParser.ParsePrivMsg(line);
+
+        Assert.NotNull(m);
+        Assert.Equal("wienerfan", m!.Login);
+        Assert.Equal("wienerfan", m.DisplayName);
+        Assert.Equal(string.Empty, m.UserId);
+        Assert.Equal("!vote wiener", m.Text);
+    }
+
+    [Fact]
     public void IsPing_erkennt_keepalive()
         => Assert.True(TwitchIrcParser.IsPing("PING :tmi.twitch.tv"));
 }
