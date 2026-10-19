@@ -1,4 +1,5 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Erdi_ERC.Options;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,7 @@ namespace Erdi_ERC.Services
             var scored = tags
                 .Select(x =>
                 {
-                    var dist = Levenshtein(x.t.GamerTag, q);
+                    var dist = DriverNameMatcher.Levenshtein(x.t.GamerTag, q);
                     var exact = string.Equals(x.t.GamerTag, q, StringComparison.OrdinalIgnoreCase);
                     return new DriverNameSuggestion(
                         x.t.DiscordId,
@@ -261,37 +262,6 @@ namespace Erdi_ERC.Services
             foreach (var a in achievements) { a.Driver = newName; changed++; }
 
             return changed;
-        }
-
-        private static int Levenshtein(string a, string b)
-        {
-            a ??= string.Empty;
-            b ??= string.Empty;
-            if (a.Length == 0) return b.Length;
-            if (b.Length == 0) return a.Length;
-
-            // case-insensitiver Vergleich
-            a = a.ToLowerInvariant();
-            b = b.ToLowerInvariant();
-
-            var prev = new int[b.Length + 1];
-            var curr = new int[b.Length + 1];
-            for (int j = 0; j <= b.Length; j++) prev[j] = j;
-
-            for (int i = 1; i <= a.Length; i++)
-            {
-                curr[0] = i;
-                for (int j = 1; j <= b.Length; j++)
-                {
-                    var cost = a[i - 1] == b[j - 1] ? 0 : 1;
-                    curr[j] = Math.Min(
-                        Math.Min(curr[j - 1] + 1, prev[j] + 1),
-                        prev[j - 1] + cost);
-                }
-                (prev, curr) = (curr, prev);
-            }
-
-            return prev[b.Length];
         }
 
         public async Task<IReadOnlyList<UnlinkedDriver>> GetUnlinkedDriversAsync(CancellationToken ct = default)
