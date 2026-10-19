@@ -1,7 +1,7 @@
 ---
 datum: 2026-10-20
 tags: [entwicklung, design, feature, streaming, dotd]
-status: entwurf
+status: erledigt
 ---
 
 # Driver of the Day — Chat-Voting pro Liga
