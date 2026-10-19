@@ -95,15 +95,18 @@
     border-color:color-mix(in srgb, var(--accent) 62%, transparent);
 }
 
+/* Schriftfarbe = Kontrastfarbe der Füllung, nicht die Füllung selbst.
+   Vorher stand hier --btn-fg:var(--best) bzw. var(--slow) — grün auf grün
+   und gelb auf gelb, also unsichtbarer Text auf jedem gefüllten Button. */
 .btn-success {
     --btn-bg:linear-gradient(180deg,var(--best),var(--best));
-    --btn-bd:var(--rule-strong); --btn-fg:var(--best);
+    --btn-bd:var(--rule-strong); --btn-fg:var(--on-best);
     font-weight:700;
 
 }
 .btn-warning {
     --btn-bg:linear-gradient(180deg,var(--slow),var(--slow));
-    --btn-bd:var(--rule-strong); --btn-fg:var(--slow);
+    --btn-bd:var(--rule-strong); --btn-fg:var(--on-slow);
     font-weight:700;
 
 }
@@ -112,12 +115,16 @@
     --btn-bd:var(--rule-strong);
 
 }
+/* "Info" ist im System keine Fläche — die Klasse trägt nur noch ihre
+   Bedeutung (auswählbarer Vorschlag), keine blaue Füllung. */
 .btn-info {
-    --btn-bg:linear-gradient(180deg,var(--wet),var(--wet));
-    --btn-bd:var(--rule-strong); --btn-fg:var(--wet);
+    --btn-bg:transparent;
+    --btn-bd:var(--rule-strong); --btn-fg:var(--ink-2);
     font-weight:700;
 
 }
+.btn-info:hover { --btn-fg:var(--ink); --btn-bd:var(--ink-2); }
+.btn-info.active { --btn-bg:var(--accent-soft); --btn-fg:var(--ink); --btn-bd:var(--accent); }
 .btn-ghost {
     --btn-bg:transparent; --btn-bd:transparent;
     color:var(--ink-2)!important;
@@ -161,7 +168,8 @@ select option:focus,
 .form-select option:checked,
 .form-select option:focus,
 .form-select option:hover {
-    background:var(--wet) !important;
+    /* Markierte Zeile neutral heben: Blau ist die Wet-Flagge, keine Auswahlfarbe. */
+    background:var(--rule-strong) !important;
     color:var(--ink) !important;
 }
 
@@ -225,7 +233,7 @@ select option:focus,
     padding:.35rem;
     border:1px solid var(--stroke-1);
     border-radius:12px;
-    background:linear-gradient(180deg, var(--kerb), var(--wet));
+    background:var(--tarmac);
 
 }
 .erdi-select__menu--portal {

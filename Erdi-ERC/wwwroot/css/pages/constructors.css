@@ -189,9 +189,11 @@
     color: var(--on-slow);
 }
 .f1-pos-badge--p2 {
-    background: linear-gradient(135deg, var(--ink-2), var(--wet));
+    /* Silber bleibt Silber: der Verlauf lief vorher in die Wet-Flagge und
+       machte den P2-Badge blau statt grau. */
+    background: linear-gradient(135deg, var(--ink), var(--ink-2));
     border-color: var(--ink-2);
-    color: var(--on-wet);
+    color: var(--track);
 }
 .f1-pos-badge--p3 {
     background: linear-gradient(135deg, var(--slow), var(--slow));
