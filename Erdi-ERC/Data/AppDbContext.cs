@@ -60,6 +60,10 @@ namespace Erdi_ERC.Data
         public DbSet<PendingRaceFinish> PendingRaceFinishes => Set<PendingRaceFinish>();
         public DbSet<TelemetrySenderKey> TelemetrySenderKeys => Set<TelemetrySenderKey>();
 
+        // ── Driver of the Day (Twitch-Chat-Voting) ───────────────────────────────────
+        public DbSet<DotdVote> DotdVotes => Set<DotdVote>();
+        public DbSet<DotdBallot> DotdBallots => Set<DotdBallot>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -584,6 +588,22 @@ namespace Erdi_ERC.Data
                     .WithMany()
                     .HasForeignKey(x => x.LeagueId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Driver of the Day: eine Stimme pro Wahl und Twitch-Nutzer; die
+            // häufigste Abfrage beim Öffnen/Schließen ist die offene Wahl.
+            modelBuilder.Entity<DotdBallot>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.HasIndex(x => new { x.VoteId, x.VoterKey }).IsUnique();
+                // Overlay fragt alle 2 s die letzte Stimme ab; bei vielen Wählern
+                // soll das kein Full Scan über alle Ballots sein.
+                b.HasIndex(x => new { x.VoteId, x.VotedAt });
+            });
+            modelBuilder.Entity<DotdVote>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.HasIndex(x => x.ClosedAt);
             });
         }
     }

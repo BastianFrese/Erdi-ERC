@@ -1,0 +1,192 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Driver of the Day</title>
+    <link rel="stylesheet" href="~/css/site.bundled.min.css" asp-append-version="true" />
+</head>
+<body class="dotd-overlay">
+    <main class="dotd" id="dotd">
+        <div class="dotd__league" id="league"></div>
+        <h1 class="dotd__title">Driver of the Day</h1>
+        <p class="dotd__hint" id="hint">Vote im Chat: <strong>!vote name</strong></p>
+        <div class="dotd__bars" id="bars"></div>
+        <div class="dotd__winner" id="winner" hidden></div>
+        <div class="dotd__idle" id="idle" hidden>Keine Abstimmung aktiv</div>
+        <div class="dotd__toast" id="toast" hidden></div>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+
+            var POLL_MS = 2000;
+            var NOISE_MS = 400;
+            var NOISE_AMPLITUDE = 4;
+            var EASE = 0.08;
+
+            var leagueEl = document.getElementById('league');
+            var hintEl = document.getElementById('hint');
+            var barsEl = document.getElementById('bars');
+            var winnerEl = document.getElementById('winner');
+            var idleEl = document.getElementById('idle');
+            var toastEl = document.getElementById('toast');
+
+            var mode = 'none';
+            var noiseAt = 0;
+            var bars = new Map();
+            var lastVoteKey = null;
+            var toastTimer = null;
+
+            function showToast(text) {
+                toastEl.textContent = text;
+                toastEl.hidden = false;
+                toastEl.classList.add('is-visible');
+
+                if (toastTimer) {
+                    window.clearTimeout(toastTimer);
+                }
+
+                toastTimer = window.setTimeout(function () {
+                    toastEl.classList.remove('is-visible');
+                    toastTimer = window.setTimeout(function () {
+                        toastEl.hidden = true;
+                    }, 300);
+                }, 3000);
+            }
+
+            function ensureBar(name, order) {
+                var bar = bars.get(name);
+                if (bar) {
+                    bar.row.style.order = String(order);
+                    return bar;
+                }
+
+                var row = document.createElement('div');
+                row.className = 'dotd-bar';
+                row.style.order = String(order);
+
+                var fill = document.createElement('div');
+                fill.className = 'dotd-bar__fill';
+
+                var label = document.createElement('div');
+                label.className = 'dotd-bar__name';
+                label.textContent = name;
+
+                row.appendChild(fill);
+                row.appendChild(label);
+                barsEl.appendChild(row);
+
+                bar = { row: row, fill: fill, target: 0, shown: 0, jitter: 0 };
+                bars.set(name, bar);
+                return bar;
+            }
+
+            function removeMissing(names) {
+                var seen = new Set(names);
+                bars.forEach(function (bar, name) {
+                    if (!seen.has(name)) {
+                        bar.row.remove();
+                        bars.delete(name);
+                    }
+                });
+            }
+
+            function hideAll() {
+                barsEl.hidden = true;
+                hintEl.hidden = true;
+                winnerEl.hidden = true;
+                idleEl.hidden = false;
+            }
+
+            function apply(data) {
+                mode = data.state || 'none';
+                leagueEl.textContent = data.league || '';
+
+                if (mode === 'none') {
+                    hideAll();
+                    removeMissing([]);
+                    return;
+                }
+
+                idleEl.hidden = true;
+                barsEl.hidden = false;
+                winnerEl.hidden = mode !== 'closed';
+
+                var names = [];
+                var list = data.bars || [];
+                for (var i = 0; i < list.length; i++) {
+                    var entry = list[i];
+                    var bar = ensureBar(entry.name, i);
+                    bar.target = Math.max(0, Math.min(100, entry.share || 0));
+                    names.push(entry.name);
+                }
+                removeMissing(names);
+
+                if (mode === 'open') {
+                    hintEl.hidden = false;
+                    if (data.lastVote) {
+                        var key = data.lastVote.at + '|' + data.lastVote.driver;
+                        if (lastVoteKey !== null && key !== lastVoteKey) {
+                            var who = data.lastVote.voter
+                                ? String.fromCharCode(64) + data.lastVote.voter
+                                : '';
+                            showToast(who
+                                ? who + '\nDeine Stimme wurde gezählt'
+                                : 'Deine Stimme wurde gezählt');
+                        }
+                        lastVoteKey = key;
+                    }
+                } else {
+                    hintEl.hidden = true;
+                    if (data.winner) {
+                        winnerEl.textContent = '\u{1F3C6} ' + data.winner.name
+                            + ' · ' + data.winner.percent + ' %';
+                    } else {
+                        winnerEl.textContent = 'Keine Stimmen';
+                    }
+                }
+            }
+
+            function tick(ts) {
+                if (ts - noiseAt > NOISE_MS) {
+                    noiseAt = ts;
+                    bars.forEach(function (bar) {
+                        bar.jitter = (Math.random() * 2 - 1) * NOISE_AMPLITUDE;
+                    });
+                }
+
+                bars.forEach(function (bar) {
+                    var goal = mode === 'open' ? bar.target + bar.jitter : bar.target;
+                    bar.shown += (goal - bar.shown) * EASE;
+                    bar.fill.style.width = Math.max(0, Math.min(100, bar.shown)) + '%';
+                });
+
+                window.requestAnimationFrame(tick);
+            }
+
+            async function poll() {
+                try {
+                    var response = await fetch('/overlay/dotd/data', { cache: 'no-store' });
+                    if (response.ok) {
+                        apply(await response.json());
+                    }
+                } catch (error) {
+                    // Twitch/OBS bleibt auf dem letzten Frame stehen; der nächste
+                    // Poll versucht es erneut.
+                }
+            }
+
+            hideAll();
+            poll();
+            window.setInterval(poll, POLL_MS);
+            window.requestAnimationFrame(tick);
+        })();
+    </script>
+</body>
+</html>

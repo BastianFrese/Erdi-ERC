@@ -92,6 +92,10 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ITrollService, TrollService>();
 builder.Services.AddScoped<OverallConstructorsService>();
 builder.Services.AddScoped<ProfileHistoryService>();
+// Driver of the Day: gemeinsamer Zustand prozessweit, Fachlogik pro Request.
+builder.Services.AddSingleton<DotdRuntimeState>();
+builder.Services.AddScoped<IDotdVoteService, DotdVoteService>();
+builder.Services.AddHostedService<TwitchChatReaderService>();
 // Telemetrie-Ingest: per-Fahrer-API-Keys + Review-Inbox (Pending-Rennergebnisse).
 builder.Services.AddScoped<ITelemetryKeyService, TelemetryKeyService>();
 builder.Services.AddScoped<ITelemetryIngestService, TelemetryIngestService>();
@@ -117,6 +121,7 @@ builder.Services.Configure<F1ScoringOptions>(builder.Configuration.GetSection(F1
 builder.Services.Configure<LeagueDivisionOptions>(builder.Configuration.GetSection(LeagueDivisionOptions.SectionName));
 builder.Services.Configure<RateLimitingOptions>(builder.Configuration.GetSection(RateLimitingOptions.SectionName));
 builder.Services.Configure<SerilogFileOptions>(builder.Configuration.GetSection(SerilogFileOptions.SectionName));
+builder.Services.Configure<DotdOptions>(builder.Configuration.GetSection(DotdOptions.SectionName));
 builder.Services.AddHealthChecks();
 
 // Output-Cache: für rein öffentliche, nicht user-spezifische Endpunkte (Highlights, BG-Music, etc.).
