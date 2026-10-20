@@ -61,6 +61,9 @@ aufgebaut. Quelle: `Erdi-ERC/Services/DotdVoteService.cs`.
   auch nach einem Neuladen oder App-Neustart.
 - Bei DB-Ausfall liefert der Endpunkt den letzten Stand mit `"stale": true`,
   damit das Overlay im Stream nicht leer wird.
+- Bei jeder neuen Stimme erscheint für 3 s ein Toast mit dem **zuletzt
+  wählenden** Nutzer (`@Name` + „Deine Stimme wurde gezählt"). Bewusst einer pro
+  Poll — eine Einblendung pro Stimme wäre bei 120 Wählern Namens-Spam.
 
 Quelle: `Erdi-ERC/Views/Overlay/DriverOfDay.cshtml`,
 `Erdi-ERC/Helpers/DotdShareBuilder.cs`, `Erdi-ERC/Services/DotdVoteService.cs`.
@@ -108,6 +111,24 @@ Bestätigungen können daher ausfallen. Ohne Token bleibt es beim reinen Lesen.
 Außerhalb von Production bleibt der Leser aus. Für einen lokalen Test:
 `"Dotd": { "ConnectOutsideProduction": true }`. Quelle:
 `Erdi-ERC/Services/TwitchChatReaderService.cs`, `Erdi-ERC/Options/DotdOptions.cs`.
+
+> [!warning] Twitch beantwortet einen **mehrzeiligen Handshake-Block**
+> (`CAP REQ` + `PASS` + `NICK` + `JOIN` in einer WebSocket-Nachricht) mit
+> `CAP NAK`. Die Verbindung sieht dann gesund aus, liest aber nichts. Die
+> Befehle werden deshalb einzeln mit kurzer Pause gesendet (Commit `d7404be`).
+
+## Skalierung (120 Wähler)
+
+Gemessen am 2026-10-20 gegen `erditest` über den Dev-Endpunkt
+`GET /overlay/dotd/demo/burst?count=120`: **120 Stimmen in 318–441 ms**
+(2,65–3,68 ms pro Stimme), 8 Balken, keine Zahlen im JSON. Die
+Overlay-Abfrage nutzt den Index `(VoteId, VotedAt)`; die Stimmen laufen
+sequenziell durch das Singleton-Gate. Test:
+`Hundertzwanzig_Stimmen_werden_sequenziell_verarbeitet` (Suite 716/716).
+
+Eine persönliche Chat-Bestätigung für alle 120 ist mit einem normalen
+Twitch-Account nicht möglich (~20 Nachrichten/30 s); der Bot antwortet
+höchstens alle 2 s. Deshalb zeigt das Overlay nur den letzten Wähler.
 
 ## Deploy
 
