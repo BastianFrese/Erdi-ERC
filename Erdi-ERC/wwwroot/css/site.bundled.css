@@ -8718,6 +8718,29 @@ letter-spacing: .12em;
 text-transform: uppercase;
 color: var(--ink-3);
 }
+/* Kurze Bestätigung oberhalb des Panels, sobald eine Stimme gezählt wurde. */
+.dotd__toast {
+position: absolute;
+left: 0;
+bottom: calc(100% + 10px);
+padding: 8px 14px;
+background: color-mix(in srgb, var(--best) 18%, var(--track));
+border-left: 3px solid var(--best);
+color: var(--ink);
+font-family: var(--ff-cond);
+font-size: clamp(.85rem, 1vw, 1rem);
+font-weight: 700;
+letter-spacing: .03em;
+white-space: nowrap;
+opacity: 0;
+transform: translateY(6px);
+transition: opacity .25s ease, transform .25s ease;
+pointer-events: none;
+}
+.dotd__toast.is-visible {
+opacity: 1;
+transform: translateY(0);
+}
 /* =====================================================================
 99 · RESPONSIVE — die letzte Schicht
 =====================================================================

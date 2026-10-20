@@ -273,12 +273,24 @@ public sealed class DotdVoteService : IDotdVoteService
                 if (_state.ActiveVoteId is int voteId)
                 {
                     var counts = await LoadCountsAsync(voteId, ct);
+                    var lastVote = await _db.DotdBallots.AsNoTracking()
+                        .Where(b => b.VoteId == voteId)
+                        .OrderByDescending(b => b.VotedAt)
+                        .ThenByDescending(b => b.Id)
+                        .Select(b => new { b.Driver, b.VotedAt })
+                        .FirstOrDefaultAsync(ct);
+
                     var snapshot = new DotdSnapshot(
                         "open",
                         false,
                         _state.ActiveLeagueName ?? string.Empty,
                         DotdShareBuilder.BuildOpenBars(counts),
-                        null);
+                        null,
+                        lastVote is null
+                            ? null
+                            : new DotdVoteEvent(
+                                DriverNameHelper.Display(lastVote.Driver),
+                                lastVote.VotedAt));
                     _state.LastSnapshot = snapshot;
                     return snapshot;
                 }

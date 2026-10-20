@@ -105,6 +105,23 @@ public class DotdVoteServiceTests
     }
 
     [Fact]
+    public async Task Snapshot_nennt_die_letzte_Stimme_ohne_Zahlen()
+    {
+        using var ctx = new SqliteTestContext();
+        SeedLeague(ctx, "pro", "ERC | Wiener");
+        var (service, _) = Create(ctx);
+        await service.OpenAsync("pro", null);
+        await service.RegisterVoteAsync("tw-1", "wiener");
+
+        var snapshot = await service.GetSnapshotAsync();
+
+        Assert.Equal("Wiener", snapshot.LastVote!.Driver);
+        var json = System.Text.Json.JsonSerializer.Serialize(snapshot);
+        Assert.DoesNotContain("votes", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("count", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Stimme_nach_dem_Schliessen_zaehlt_nicht()
     {
         using var ctx = new SqliteTestContext();

@@ -18,6 +18,7 @@
         <div class="dotd__bars" id="bars"></div>
         <div class="dotd__winner" id="winner" hidden></div>
         <div class="dotd__idle" id="idle" hidden>Keine Abstimmung aktiv</div>
+        <div class="dotd__toast" id="toast" hidden></div>
     </main>
 
     <script>
@@ -34,10 +35,30 @@
             var barsEl = document.getElementById('bars');
             var winnerEl = document.getElementById('winner');
             var idleEl = document.getElementById('idle');
+            var toastEl = document.getElementById('toast');
 
             var mode = 'none';
             var noiseAt = 0;
             var bars = new Map();
+            var lastVoteKey = null;
+            var toastTimer = null;
+
+            function showToast(text) {
+                toastEl.textContent = text;
+                toastEl.hidden = false;
+                toastEl.classList.add('is-visible');
+
+                if (toastTimer) {
+                    window.clearTimeout(toastTimer);
+                }
+
+                toastTimer = window.setTimeout(function () {
+                    toastEl.classList.remove('is-visible');
+                    toastTimer = window.setTimeout(function () {
+                        toastEl.hidden = true;
+                    }, 300);
+                }, 2500);
+            }
 
             function ensureBar(name, order) {
                 var bar = bars.get(name);
@@ -109,6 +130,13 @@
 
                 if (mode === 'open') {
                     hintEl.hidden = false;
+                    if (data.lastVote) {
+                        var key = data.lastVote.at + '|' + data.lastVote.driver;
+                        if (lastVoteKey !== null && key !== lastVoteKey) {
+                            showToast('Vote für ' + data.lastVote.driver + ' gezählt');
+                        }
+                        lastVoteKey = key;
+                    }
                 } else {
                     hintEl.hidden = true;
                     if (data.winner) {

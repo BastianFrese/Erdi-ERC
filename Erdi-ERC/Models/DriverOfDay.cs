@@ -65,13 +65,17 @@ public sealed record DotdBar(string Name, int Share);
 
 public sealed record DotdWinner(string Name, int Percent);
 
+/// <summary>Zuletzt gezählte Stimme — für die kurze Einblendung im Overlay.</summary>
+public sealed record DotdVoteEvent(string Driver, DateTime At);
+
 /// <summary>Antwort des Overlay-Endpunkts. <c>State</c>: <c>open</c>, <c>closed</c>, <c>none</c>.</summary>
 public sealed record DotdSnapshot(
     string State,
     bool Stale,
     string League,
     IReadOnlyList<DotdBar> Bars,
-    DotdWinner? Winner);
+    DotdWinner? Winner,
+    DotdVoteEvent? LastVote = null);
 
 public sealed record DotdCountRow(string Driver, int Votes);
 
