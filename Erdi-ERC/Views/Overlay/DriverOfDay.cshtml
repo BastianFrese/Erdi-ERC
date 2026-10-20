@@ -57,7 +57,7 @@
                     toastTimer = window.setTimeout(function () {
                         toastEl.hidden = true;
                     }, 300);
-                }, 2500);
+                }, 3000);
             }
 
             function ensureBar(name, order) {
@@ -134,9 +134,11 @@
                         var key = data.lastVote.at + '|' + data.lastVote.driver;
                         if (lastVoteKey !== null && key !== lastVoteKey) {
                             var who = data.lastVote.voter
-                                ? String.fromCharCode(64) + data.lastVote.voter + ' — '
+                                ? String.fromCharCode(64) + data.lastVote.voter
                                 : '';
-                            showToast(who + 'deine Stimme wurde gezählt');
+                            showToast(who
+                                ? who + '\nDeine Stimme wurde gezählt'
+                                : 'Deine Stimme wurde gezählt');
                         }
                         lastVoteKey = key;
                     }
