@@ -79,11 +79,31 @@ Wahl und Ballots hart und schreibt nur einen Audit-Eintrag (`DotdVoteVoid`).
 
 ## Chat-Leser
 
-Ein `BackgroundService` liest den öffentlichen Chat anonym über
-IRC-over-WebSocket (`wss://irc-ws.chat.twitch.tv:443`, Kanal aus
-`Application:TwitchChannel`). Er antwortet nur auf `PING` mit `PONG` und
-verbindet bei Abbruch nach 5 s neu. Es gibt **keine Chat-Antworten** — dafür
-wäre ein Twitch-OAuth-Token nötig.
+Ein `BackgroundService` liest den öffentlichen Chat über IRC-over-WebSocket
+(`wss://irc-ws.chat.twitch.tv:443`, Kanal aus `Application:TwitchChannel`).
+Ohne Bot-Token ist der Zugriff anonym und nur lesend; er antwortet dann nur auf
+`PING` mit `PONG` und verbindet bei Abbruch nach 5 s neu.
+
+### Chat-Bestätigung (optional)
+
+Mit einem Bot-Token schreibt der Leser nach einer gezählten Stimme:
+
+```
+@Nutzer Vote für Wiener gezählt.
+```
+
+Konfiguration (in Production über Umgebungsvariablen, nie committen):
+
+```json
+"Dotd": {
+  "BotUsername": "leutnant_kampfwiener",
+  "BotOAuthToken": "oauth:…"
+}
+```
+
+Der Token braucht die Scopes `chat:read` und `chat:edit`. Der Bot antwortet
+höchstens alle 2 Sekunden (Twitch-Limit für normale Accounts); einzelne
+Bestätigungen können daher ausfallen. Ohne Token bleibt es beim reinen Lesen.
 
 Außerhalb von Production bleibt der Leser aus. Für einen lokalen Test:
 `"Dotd": { "ConnectOutsideProduction": true }`. Quelle:

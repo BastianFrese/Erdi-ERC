@@ -29,7 +29,7 @@ auf `erdi-ws` (LXC 1000). Keine neuen NuGet-Pakete.
 | Stimmrecht | Jeder Twitch-Nutzer eine Stimme; Umentscheiden erlaubt; nicht sub-only |
 | Balken live | Ja, aber **ohne Zahlen** und mit ständigem Random-Vor-und-Zurück |
 | Auflösung | Ja, nach dem Schließen |
-| Chat-Antworten | Nein (anonymes IRC kann nur lesen) |
+| Chat-Antworten | Nein im ursprünglichen Entwurf; **nachgerüstet** als optionale Bestätigung mit Bot-Token (siehe Nachtrag) |
 
 ## Nicht-Ziele
 
@@ -309,5 +309,14 @@ Streamlabs. Controller-/Service-Logik läuft über den vorhandenen
 - **Overlay-Optik**: nutzt die vorhandene Race-Control-Sprache, keine neue Marke.
   Feinlayout (Abstände, Typografie, Animation) wird bei der Umsetzung nach
   `Docs/design-state.md` festgelegt.
-- **Bot-Antworten** sind bewusst nicht enthalten; dafür wäre ein Twitch-OAuth-Token
-  samt Refresh-Logik nötig.
+- **Bot-Antworten** waren im ersten Entwurf nicht enthalten; dafür wäre ein
+  Twitch-OAuth-Token nötig. Siehe Nachtrag.
+
+## Nachtrag 2026-10-20 — Chat-Bestätigung
+
+Nach der ersten Umsetzung ergänzt: Ist `Dotd:BotUsername` und
+`Dotd:BotOAuthToken` gesetzt, verbindet sich der Leser als Bot (Scopes
+`chat:read`, `chat:edit`) und schreibt nach einer gezählten Stimme
+`@Nutzer Vote für <Fahrer> gezählt.` Ohne Token bleibt der anonyme Lesezugriff.
+Bestätigungen sind auf eine alle 2 Sekunden begrenzt. Details in
+`Docs/Features/driver-of-the-day.md`.

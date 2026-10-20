@@ -46,7 +46,7 @@ public class DotdVoteServiceTests
         var (service, _) = Create(ctx);
 
         Assert.True((await service.OpenAsync("pro", "admin-1")).Ok);
-        Assert.True(await service.RegisterVoteAsync("tw-1", "wiener"));
+        Assert.NotNull(await service.RegisterVoteAsync("tw-1", "wiener"));
 
         var active = await service.GetActiveAsync();
         Assert.NotNull(active);
@@ -78,7 +78,7 @@ public class DotdVoteServiceTests
         var (service, _) = Create(ctx);
         await service.OpenAsync("pro", null);
 
-        Assert.False(await service.RegisterVoteAsync("tw-1", "max"));
+        Assert.Null(await service.RegisterVoteAsync("tw-1", "max"));
         Assert.Empty(ctx.Db.DotdBallots);
         Assert.Contains(service.RecentRejections, r => r.ChatText.Contains("max"));
     }
@@ -113,7 +113,7 @@ public class DotdVoteServiceTests
         await service.OpenAsync("pro", null);
         await service.CloseAsync();
 
-        Assert.False(await service.RegisterVoteAsync("tw-1", "wiener"));
+        Assert.Null(await service.RegisterVoteAsync("tw-1", "wiener"));
         Assert.Empty(ctx.Db.DotdBallots);
     }
 
@@ -130,7 +130,7 @@ public class DotdVoteServiceTests
         var second = new DotdVoteService(
             ctx.NewContext(), secondState, NullLogger<DotdVoteService>.Instance);
 
-        Assert.True(await second.RegisterVoteAsync("tw-2", "müller"));
+        Assert.NotNull(await second.RegisterVoteAsync("tw-2", "müller"));
         var active = await second.GetActiveAsync();
         Assert.Equal(2, active!.TotalVotes);
     }
@@ -147,7 +147,7 @@ public class DotdVoteServiceTests
         standing.Driver = "ERC | Wiener2";
         ctx.Db.SaveChanges();
 
-        Assert.True(await service.RegisterVoteAsync("tw-1", "wiener"));
+        Assert.NotNull(await service.RegisterVoteAsync("tw-1", "wiener"));
     }
 
     [Fact]

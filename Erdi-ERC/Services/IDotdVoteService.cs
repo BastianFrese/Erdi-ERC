@@ -16,9 +16,9 @@ public interface IDotdVoteService
 
     Task<DotdActionResult> DiscardAsync(CancellationToken ct = default);
 
-    /// <summary>Verarbeitet eine Chat-Nachricht. Gibt false zurück, wenn keine Wahl
-    /// offen ist, der Name unbekannt oder mehrdeutig ist.</summary>
-    Task<bool> RegisterVoteAsync(string voterKey, string chatText, CancellationToken ct = default);
+    /// <summary>Verarbeitet eine Chat-Nachricht. Gibt den vollen Fahrernamen zurück,
+    /// wenn die Stimme gezählt wurde, sonst null (keine Wahl, unbekannt oder mehrdeutig).</summary>
+    Task<string?> RegisterVoteAsync(string voterKey, string chatText, CancellationToken ct = default);
 
     Task<DotdSnapshot> GetSnapshotAsync(CancellationToken ct = default);
 

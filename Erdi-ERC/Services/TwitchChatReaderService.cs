@@ -23,6 +23,22 @@ public sealed class TwitchChatReaderService : BackgroundService
     private readonly IHostEnvironment _environment;
     private readonly ILogger<TwitchChatReaderService> _logger;
 
+    // Twitch erlaubt einem normalen Account ~20 Nachrichten pro 30 s. Zwei Sekunden
+    // Abstand halten den Bot darunter; einzelne Bestätigungen fallen dann aus.
+    private DateTime _lastReplyAt = DateTime.MinValue;
+
+    private bool TryReserveReply()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastReplyAt < TimeSpan.FromSeconds(2))
+        {
+            return false;
+        }
+
+        _lastReplyAt = now;
+        return true;
+    }
+
     public TwitchChatReaderService(
         IServiceScopeFactory scopes,
         IOptions<ApplicationOptions> app,
@@ -79,15 +95,28 @@ public sealed class TwitchChatReaderService : BackgroundService
         await socket.ConnectAsync(TwitchIrcUri, ct);
 
         var channel = _app.TwitchChannel.Trim().TrimStart('#');
-        var nickname = $"justinfan{Random.Shared.Next(10000, 99999)}";
+        var canWrite = _options.CanWrite;
+        var nickname = canWrite
+            ? _options.BotUsername.Trim()
+            : $"justinfan{Random.Shared.Next(10000, 99999)}";
+
+        var token = _options.BotOAuthToken.Trim();
+        if (token.StartsWith("oauth:", StringComparison.OrdinalIgnoreCase))
+        {
+            token = token[6..];
+        }
+
         await SendAsync(socket,
             $"CAP REQ :twitch.tv/tags\r\n" +
-            $"PASS SCHMOOPIIE\r\n" +
+            $"PASS {(canWrite ? $"oauth:{token}" : "SCHMOOPIIE")}\r\n" +
             $"NICK {nickname}\r\n" +
             $"JOIN #{channel}\r\n",
             ct);
 
-        _logger.LogInformation("Twitch-Chat verbunden: #{Channel}", channel);
+        _logger.LogInformation(
+            "Twitch-Chat verbunden: #{Channel} ({Mode})",
+            channel,
+            canWrite ? "Bot mit Schreibrecht" : "anonym, nur lesen");
 
         var buffer = new byte[8192];
         var pending = new StringBuilder();
@@ -127,7 +156,18 @@ public sealed class TwitchChatReaderService : BackgroundService
                 var voterKey = string.IsNullOrWhiteSpace(message.UserId)
                     ? message.Login
                     : message.UserId;
-                await voteService.RegisterVoteAsync(voterKey, target, ct);
+                var matched = await voteService.RegisterVoteAsync(voterKey, target, ct);
+
+                if (matched is not null && canWrite && TryReserveReply())
+                {
+                    var who = string.IsNullOrWhiteSpace(message.DisplayName)
+                        ? message.Login
+                        : message.DisplayName;
+                    await SendAsync(socket,
+                        $"PRIVMSG #{channel} :@{who} Vote für " +
+                        $"{DriverNameHelper.Display(matched)} gezählt.\r\n",
+                        ct);
+                }
             }
         }
     }

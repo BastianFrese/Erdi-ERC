@@ -106,7 +106,7 @@ public sealed class DotdVoteService : IDotdVoteService
         }
     }
 
-    public async Task<bool> RegisterVoteAsync(
+    public async Task<string?> RegisterVoteAsync(
         string voterKey, string chatText, CancellationToken ct = default)
     {
         await _state.Gate.WaitAsync(ct);
@@ -115,14 +115,14 @@ public sealed class DotdVoteService : IDotdVoteService
             await EnsureLoadedAsync(ct);
             if (_state.ActiveVoteId is not int voteId)
             {
-                return false;
+                return null;
             }
 
             var match = DriverNameMatcher.Match(chatText, _state.Candidates);
             if (match.Driver is null)
             {
                 _state.AddRejection(chatText);
-                return false;
+                return null;
             }
 
             var ballot = await _db.DotdBallots.AsTracking()
@@ -146,7 +146,7 @@ public sealed class DotdVoteService : IDotdVoteService
             }
 
             await _db.SaveChangesAsync(ct);
-            return true;
+            return match.Driver;
         }
         finally
         {
