@@ -111,11 +111,12 @@ public class DotdVoteServiceTests
         SeedLeague(ctx, "pro", "ERC | Wiener");
         var (service, _) = Create(ctx);
         await service.OpenAsync("pro", null);
-        await service.RegisterVoteAsync("tw-1", "wiener");
+        await service.RegisterVoteAsync("tw-1", "wiener", "WienerFan");
 
         var snapshot = await service.GetSnapshotAsync();
 
         Assert.Equal("Wiener", snapshot.LastVote!.Driver);
+        Assert.Equal("WienerFan", snapshot.LastVote.Voter);
         var json = System.Text.Json.JsonSerializer.Serialize(snapshot);
         Assert.DoesNotContain("votes", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("count", json, StringComparison.OrdinalIgnoreCase);

@@ -56,6 +56,11 @@ public class DotdBallot
     [MaxLength(160)]
     public string Driver { get; set; } = string.Empty;
 
+    /// <summary>Twitch-Anzeigename für die Overlay-Bestätigung. Wird mit den
+    /// Ballots beim Schließen gelöscht.</summary>
+    [MaxLength(128)]
+    public string? VoterDisplay { get; set; }
+
     public DateTime VotedAt { get; set; }
 }
 
@@ -66,7 +71,7 @@ public sealed record DotdBar(string Name, int Share);
 public sealed record DotdWinner(string Name, int Percent);
 
 /// <summary>Zuletzt gezählte Stimme — für die kurze Einblendung im Overlay.</summary>
-public sealed record DotdVoteEvent(string Driver, DateTime At);
+public sealed record DotdVoteEvent(string Driver, string Voter, DateTime At);
 
 /// <summary>Antwort des Overlay-Endpunkts. <c>State</c>: <c>open</c>, <c>closed</c>, <c>none</c>.</summary>
 public sealed record DotdSnapshot(

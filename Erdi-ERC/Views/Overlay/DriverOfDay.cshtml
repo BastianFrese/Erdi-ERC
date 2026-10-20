@@ -133,7 +133,10 @@
                     if (data.lastVote) {
                         var key = data.lastVote.at + '|' + data.lastVote.driver;
                         if (lastVoteKey !== null && key !== lastVoteKey) {
-                            showToast('Vote für ' + data.lastVote.driver + ' gezählt');
+                            var who = data.lastVote.voter
+                                ? String.fromCharCode(64) + data.lastVote.voter + ' — '
+                                : '';
+                            showToast(who + 'deine Stimme wurde gezählt');
                         }
                         lastVoteKey = key;
                     }

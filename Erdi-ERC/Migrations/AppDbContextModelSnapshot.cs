@@ -617,6 +617,10 @@ namespace Erdi_ERC.Migrations
                     b.Property<DateTime>("VotedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("VoterDisplay")
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
                     b.Property<string>("VoterKey")
                         .IsRequired()
                         .HasMaxLength(32)

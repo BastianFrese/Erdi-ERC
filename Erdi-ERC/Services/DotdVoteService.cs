@@ -107,7 +107,10 @@ public sealed class DotdVoteService : IDotdVoteService
     }
 
     public async Task<string?> RegisterVoteAsync(
-        string voterKey, string chatText, CancellationToken ct = default)
+        string voterKey,
+        string chatText,
+        string? voterDisplay = null,
+        CancellationToken ct = default)
     {
         await _state.Gate.WaitAsync(ct);
         try
@@ -136,12 +139,14 @@ public sealed class DotdVoteService : IDotdVoteService
                     VoteId = voteId,
                     VoterKey = voterKey,
                     Driver = match.Driver,
+                    VoterDisplay = voterDisplay,
                     VotedAt = DateTime.UtcNow
                 });
             }
             else
             {
                 ballot.Driver = match.Driver;
+                ballot.VoterDisplay = voterDisplay;
                 ballot.VotedAt = DateTime.UtcNow;
             }
 
@@ -277,7 +282,7 @@ public sealed class DotdVoteService : IDotdVoteService
                         .Where(b => b.VoteId == voteId)
                         .OrderByDescending(b => b.VotedAt)
                         .ThenByDescending(b => b.Id)
-                        .Select(b => new { b.Driver, b.VotedAt })
+                        .Select(b => new { b.Driver, b.VoterDisplay, b.VotedAt })
                         .FirstOrDefaultAsync(ct);
 
                     var snapshot = new DotdSnapshot(
@@ -290,6 +295,7 @@ public sealed class DotdVoteService : IDotdVoteService
                             ? null
                             : new DotdVoteEvent(
                                 DriverNameHelper.Display(lastVote.Driver),
+                                lastVote.VoterDisplay ?? string.Empty,
                                 lastVote.VotedAt));
                     _state.LastSnapshot = snapshot;
                     return snapshot;

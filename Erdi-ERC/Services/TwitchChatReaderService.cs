@@ -171,7 +171,8 @@ public sealed class TwitchChatReaderService : BackgroundService
                 var voterKey = string.IsNullOrWhiteSpace(message.UserId)
                     ? message.Login
                     : message.UserId;
-                var matched = await voteService.RegisterVoteAsync(voterKey, target, ct);
+                var matched = await voteService.RegisterVoteAsync(
+                    voterKey, target, voterDisplay: message.DisplayName, ct: ct);
 
                 if (matched is not null && canWrite && TryReserveReply())
                 {

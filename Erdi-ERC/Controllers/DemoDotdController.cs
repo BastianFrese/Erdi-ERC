@@ -82,7 +82,8 @@ public class DemoDotdController : Controller
         {
             for (var vote = 0; vote < Weights[i]; vote++)
             {
-                await _dotd.RegisterVoteAsync($"demo-{i}-{vote}", drivers[i], ct);
+                await _dotd.RegisterVoteAsync(
+                    $"demo-{i}-{vote}", drivers[i], "Demo", ct);
                 total++;
             }
         }
