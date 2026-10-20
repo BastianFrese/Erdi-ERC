@@ -106,12 +106,15 @@ public sealed class TwitchChatReaderService : BackgroundService
             token = token[6..];
         }
 
-        await SendAsync(socket,
-            $"CAP REQ :twitch.tv/tags\r\n" +
-            $"PASS {(canWrite ? $"oauth:{token}" : "SCHMOOPIIE")}\r\n" +
-            $"NICK {nickname}\r\n" +
-            $"JOIN #{channel}\r\n",
-            ct);
+        // Twitch verarbeitet einen mehrzeiligen CAP-Block nicht zuverlässig
+        // (CAP NAK, danach keine JOIN-Bestätigung). Jede Zeile einzeln senden,
+        // mit kurzer Pause — so kommt die 366-Bestätigung und der Chat an.
+        await SendAsync(socket, $"PASS {(canWrite ? $"oauth:{token}" : "SCHMOOPIIE")}\r\n", ct);
+        await SendAsync(socket, $"NICK {nickname}\r\n", ct);
+        await Task.Delay(250, ct);
+        await SendAsync(socket, "CAP REQ :twitch.tv/tags\r\n", ct);
+        await Task.Delay(250, ct);
+        await SendAsync(socket, $"JOIN #{channel}\r\n", ct);
 
         _logger.LogInformation(
             "Twitch-Chat verbunden: #{Channel} ({Mode})",
@@ -139,11 +142,23 @@ public sealed class TwitchChatReaderService : BackgroundService
                     continue;
                 }
 
+                // JOIN-Bestätigung (366) und Fehlermeldungen sichtbar machen —
+                // sonst sieht eine falsche Kanal-Konfiguration wie eine gesunde
+                // Verbindung aus, die einfach keine Stimmen liefert.
+                if (line.Contains(" 366 ", StringComparison.Ordinal)
+                    || line.Contains("NOTICE", StringComparison.Ordinal))
+                {
+                    _logger.LogInformation("Twitch-IRC: {Line}", line);
+                }
+
                 var message = TwitchIrcParser.ParsePrivMsg(line);
                 if (message is null)
                 {
                     continue;
                 }
+
+                _logger.LogInformation(
+                    "Twitch-Chat {Login}: {Text}", message.Login, message.Text);
 
                 var target = TwitchIrcParser.ExtractVoteTarget(message.Text);
                 if (target is null)
