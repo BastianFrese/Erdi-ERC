@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Erdi_ERC.Data;
 using Erdi_ERC.Helpers;
+using Erdi_ERC.Models;
 using Erdi_ERC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,30 +42,10 @@ public class DemoDotdController : Controller
             return NotFound();
         }
 
-        var league = await _db.Leagues.AsNoTracking()
-            .Where(l => !l.IsArchived
-                        && _db.DriverStandings.Any(s => s.LeagueId == l.Id))
-            .OrderBy(l => l.SortOrder)
-            .ThenBy(l => l.Name)
-            .FirstOrDefaultAsync(ct);
-
+        var (league, drivers) = await LoadLeagueAsync(8, ct);
         if (league is null)
         {
             return Content("Keine Liga mit Fahrern in der Dev-DB gefunden.");
-        }
-
-        var drivers = await _db.DriverStandings.AsNoTracking()
-            .Where(s => s.LeagueId == league.Id)
-            .OrderBy(s => s.Position)
-            .ThenBy(s => s.Driver)
-            .Select(s => s.Driver)
-            .Distinct()
-            .Take(8)
-            .ToListAsync(ct);
-
-        if (drivers.Count == 0)
-        {
-            return Content($"Liga {league.Name} hat keine Fahrer.");
         }
 
         if (await _dotd.GetActiveAsync(ct) is not null)
@@ -98,6 +80,59 @@ public class DemoDotdController : Controller
         });
     }
 
+    /// <summary>
+    /// Lasttest: öffnet eine frische Wahl und registriert <paramref name="count"/>
+    /// Stimmen (Standard 120) über die echte Service-/DB-Kette.
+    /// </summary>
+    [HttpGet("burst")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> Burst(int count = 120, CancellationToken ct = default)
+    {
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        count = Math.Clamp(count, 1, 1000);
+
+        var (league, drivers) = await LoadLeagueAsync(40, ct);
+        if (league is null || drivers.Count == 0)
+        {
+            return Content("Keine Liga mit Fahrern in der Dev-DB gefunden.");
+        }
+
+        if (await _dotd.GetActiveAsync(ct) is not null)
+        {
+            await _dotd.DiscardAsync(ct);
+        }
+
+        var open = await _dotd.OpenAsync(league.Id, "demo", ct);
+        if (!open.Ok)
+        {
+            return Content(open.Error ?? "Wahl konnte nicht geöffnet werden.");
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        for (var i = 0; i < count; i++)
+        {
+            await _dotd.RegisterVoteAsync(
+                $"burst-{i}", drivers[i % drivers.Count], $"Zuschauer{i + 1}", ct);
+        }
+        stopwatch.Stop();
+
+        return Json(new
+        {
+            ok = true,
+            league = league.Name,
+            votes = count,
+            drivers = drivers.Count,
+            elapsedMs = stopwatch.ElapsedMilliseconds,
+            perVoteMs = Math.Round(
+                stopwatch.Elapsed.TotalMilliseconds / count, 2),
+            overlay = "/overlay/dotd"
+        });
+    }
+
     /// <summary>Schließt die Demo-Wahl und zeigt die Auflösung.</summary>
     [HttpGet("close")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -110,5 +145,32 @@ public class DemoDotdController : Controller
 
         var result = await _dotd.CloseAsync(ct);
         return Json(new { ok = result.Ok, error = result.Error, details = result.Details });
+    }
+
+    private async Task<(League? League, List<string> Drivers)> LoadLeagueAsync(
+        int take, CancellationToken ct)
+    {
+        var league = await _db.Leagues.AsNoTracking()
+            .Where(l => !l.IsArchived
+                        && _db.DriverStandings.Any(s => s.LeagueId == l.Id))
+            .OrderBy(l => l.SortOrder)
+            .ThenBy(l => l.Name)
+            .FirstOrDefaultAsync(ct);
+
+        if (league is null)
+        {
+            return (null, new List<string>());
+        }
+
+        var drivers = await _db.DriverStandings.AsNoTracking()
+            .Where(s => s.LeagueId == league.Id)
+            .OrderBy(s => s.Position)
+            .ThenBy(s => s.Driver)
+            .Select(s => s.Driver)
+            .Distinct()
+            .Take(take)
+            .ToListAsync(ct);
+
+        return (league, drivers);
     }
 }

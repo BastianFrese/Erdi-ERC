@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Erdi_ERC.Data;
 using Erdi_ERC.Models;
 using Erdi_ERC.Services;
@@ -237,6 +238,33 @@ public class DotdVoteServiceTests
         await Assert.ThrowsAnyAsync<Exception>(() => failingService.CloseAsync());
 
         Assert.Equal(1, ctx.Db.DotdBallots.Count());
+    }
+
+    [Fact]
+    public async Task Hundertzwanzig_Stimmen_werden_sequenziell_verarbeitet()
+    {
+        using var ctx = new SqliteTestContext();
+        var drivers = Enumerable.Range(0, 20)
+            .Select(i => $"ERC | Fahrer{i:00}")
+            .ToArray();
+        SeedLeague(ctx, "pro", drivers);
+        var (service, _) = Create(ctx);
+        Assert.True((await service.OpenAsync("pro", null)).Ok);
+
+        var stopwatch = Stopwatch.StartNew();
+        for (var i = 0; i < 120; i++)
+        {
+            Assert.NotNull(await service.RegisterVoteAsync(
+                $"tw-{i}", drivers[i % drivers.Length], $"Zuschauer{i}"));
+        }
+        stopwatch.Stop();
+
+        var active = await service.GetActiveAsync();
+        Assert.Equal(120, active!.TotalVotes);
+        Assert.Equal(20, active.Counts.Count);
+        Assert.True(
+            stopwatch.Elapsed < TimeSpan.FromSeconds(10),
+            $"120 Stimmen dauerten {stopwatch.Elapsed}.");
     }
 
     [Fact]

@@ -596,6 +596,9 @@ namespace Erdi_ERC.Data
             {
                 b.HasKey(x => x.Id);
                 b.HasIndex(x => new { x.VoteId, x.VoterKey }).IsUnique();
+                // Overlay fragt alle 2 s die letzte Stimme ab; bei vielen Wählern
+                // soll das kein Full Scan über alle Ballots sein.
+                b.HasIndex(x => new { x.VoteId, x.VotedAt });
             });
             modelBuilder.Entity<DotdVote>(b =>
             {

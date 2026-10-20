@@ -628,6 +628,8 @@ namespace Erdi_ERC.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("VoteId", "VotedAt");
+
                     b.HasIndex("VoteId", "VoterKey")
                         .IsUnique();
 
