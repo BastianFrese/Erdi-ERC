@@ -38,6 +38,10 @@ public class WaitlistEntry
     [MaxLength(16)]
     public string Season { get; set; } = string.Empty;
 
+    /// <summary>Selbst angegebenes Alter zum Bewerbungszeitpunkt (siehe <see cref="Application.Age"/>).</summary>
+    [Range(13, 99)]
+    public int? Age { get; set; }
+
     /// <summary>1-indexed Reihenfolge pro (Liga, Season).</summary>
     public int Position { get; set; }
 

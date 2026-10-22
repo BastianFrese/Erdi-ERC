@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace Erdi_ERC.Controllers
@@ -19,6 +20,7 @@ namespace Erdi_ERC.Controllers
         private readonly IStaticDataCache _staticCache;
         private readonly IDiscordGuildService _discordGuildService;
         private readonly IApplicationTargetingService _targeting;
+        private readonly IDiscordJoinService _discordJoin;
         private readonly Erdi_ERC.Options.DriverMatchingOptions _driverMatching;
         private readonly ILogger<ApplicationController> _logger;
 
@@ -27,6 +29,7 @@ namespace Erdi_ERC.Controllers
             IStaticDataCache staticCache,
             IDiscordGuildService discordGuildService,
             IApplicationTargetingService targeting,
+            IDiscordJoinService discordJoin,
             Microsoft.Extensions.Options.IOptions<Erdi_ERC.Options.DriverMatchingOptions> driverMatching,
             ILogger<ApplicationController> logger)
         {
@@ -34,6 +37,7 @@ namespace Erdi_ERC.Controllers
             _staticCache = staticCache;
             _discordGuildService = discordGuildService;
             _targeting = targeting;
+            _discordJoin = discordJoin;
             _driverMatching = driverMatching.Value;
             _logger = logger;
         }
@@ -138,6 +142,7 @@ namespace Erdi_ERC.Controllers
                 Platform: input.Platform,
                 TargetLeagueId: input.TargetLeagueId,
                 Role: input.Role,
+                Age: input.Age,
                 Motivation: string.IsNullOrWhiteSpace(input.Motivation) ? null : input.Motivation.Trim(),
                 DiscordJoinWarning: warning,
                 DiscordJoinWarningDetail: warningDetail);
@@ -151,6 +156,20 @@ namespace Erdi_ERC.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 return View("Apply", input);
+            }
+
+            // Bot holt den Bewerber in beide Server. Bewusst nach dem Speichern und
+            // fail-open: ein Discord-Problem darf die eingereichte Bewerbung nicht kippen.
+            if (result.Outcome is SubmitOutcome.Submitted or SubmitOutcome.Waitlisted)
+            {
+                try
+                {
+                    await _discordJoin.EnsureJoinedAsync(discordId, accessToken, HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Discord auto-join nach Bewerbung fehlgeschlagen");
+                }
             }
 
             TempData["SubmitResultType"] = result.Outcome.ToString();
@@ -250,6 +269,11 @@ namespace Erdi_ERC.Controllers
         public string Platform { get; set; } = string.Empty;
         public string TargetLeagueId { get; set; } = string.Empty;
         public string Role { get; set; } = "Stammfahrer";
+
+        [Required(ErrorMessage = "Bitte gib dein Alter an.")]
+        [Range(13, 99, ErrorMessage = "Bitte gib dein Alter zwischen 13 und 99 an.")]
+        public int? Age { get; set; }
+
         public string? Motivation { get; set; }
     }
 }

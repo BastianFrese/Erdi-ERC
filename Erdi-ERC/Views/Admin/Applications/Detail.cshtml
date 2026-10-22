@@ -53,6 +53,7 @@
                     <dt>Rolle</dt>                 <dd>@app.Role</dd>
                     <dt>Gamer-Tag</dt>             <dd>@app.GamerTag</dd>
                     <dt>Plattform</dt>             <dd>@app.Platform</dd>
+                    <dt>Alter</dt>                 <dd>@(app.Age?.ToString() ?? "—")</dd>
                     <dt>Eingereicht</dt>           <dd>@app.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
                     @if (app.DecidedAt is not null)
                     {

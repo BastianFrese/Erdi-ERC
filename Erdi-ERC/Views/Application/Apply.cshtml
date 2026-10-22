@@ -75,7 +75,8 @@
                     <span class="app-form__hint">Wird automatisch aus deinem Discord-Login übernommen.</span>
                 </div>
 
-                @* Row 2: GamerTag + Platform *@
+                @* Row 2: GamerTag + Platform + Alter *@
+                <div class="app-form__grid app-form__grid--three app-form__grid--full">
                 <div class="app-form__field">
                     <label class="app-form__label" for="GamerTag">EA-Gamer-Tag <span class="required">*</span></label>
                     <input id="GamerTag" name="GamerTag" class="app-form__input" type="text"
@@ -93,6 +94,15 @@
                             <option value="@p" selected="@(string.Equals(Model.Platform, p, StringComparison.OrdinalIgnoreCase))">@p</option>
                         }
                     </select>
+                </div>
+
+                <div class="app-form__field">
+                    <label class="app-form__label" for="Age">Alter <span class="required">*</span></label>
+                    <input id="Age" name="Age" class="app-form__input" type="number" inputmode="numeric"
+                           value="@Model.Age" required min="13" max="99" step="1"
+                           placeholder="z. B. 24" />
+                    <span class="app-form__hint">Dein Alter in Jahren.</span>
+                </div>
                 </div>
 
                 @* Row 3: Liga-Karten (full width) *@

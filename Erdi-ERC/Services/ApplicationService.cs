@@ -102,6 +102,7 @@ namespace Erdi_ERC.Services
                 TargetLeagueId = league.Id,
                 Season = season,
                 Role = cmd.Role,
+                Age = cmd.Age,
                 Motivation = cmd.Motivation,
                 Status = (int)ApplicationStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
@@ -154,6 +155,7 @@ namespace Erdi_ERC.Services
                 Platform = cmd.Platform,
                 LeagueId = league.Id,
                 Season = season,
+                Age = cmd.Age,
                 Position = position,
                 CreatedAt = DateTime.UtcNow,
             };
@@ -423,6 +425,7 @@ namespace Erdi_ERC.Services
                 Platform = entry.Platform,
                 TargetLeagueId = entry.LeagueId,
                 Role = "Stammfahrer",
+                Age = entry.Age,
                 Motivation = null,
                 Status = (int)ApplicationStatus.Pending,
                 CreatedAt = DateTime.UtcNow,

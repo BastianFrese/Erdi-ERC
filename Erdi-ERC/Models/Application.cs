@@ -44,6 +44,11 @@ public class Application
     [MaxLength(32)]
     public string Role { get; set; } = string.Empty;
 
+    /// <summary>Selbst angegebenes Alter zum Bewerbungszeitpunkt. Null bei Bewerbungen
+    /// von vor dem 2026-10-22.</summary>
+    [Range(13, 99)]
+    public int? Age { get; set; }
+
     [MaxLength(2000)]
     public string? Motivation { get; set; }
 

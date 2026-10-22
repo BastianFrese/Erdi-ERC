@@ -37,6 +37,7 @@ public class ApplicationControllerTests
             cache,
             guildSvc ?? FakeDiscordGuildService.FullyJoined(),
             new ApplicationTargetingService(ctx.Db, cache),
+            new NoopDiscordJoinService(),
             Microsoft.Extensions.Options.Options.Create(new DriverMatchingOptions()),
             logger);
 
@@ -361,6 +362,11 @@ public class ApplicationControllerTests
     {
         public Task LogAsync(string action, string entityType, string entityId, string details) => Task.CompletedTask;
         public Task LogAndSaveAsync(string action, string entityType, string entityId, string details) => Task.CompletedTask;
+    }
+    private sealed class NoopDiscordJoinService : IDiscordJoinService
+    {
+        public Task<DiscordJoinResult> EnsureJoinedAsync(string discordId, string? accessToken, CancellationToken ct = default)
+            => Task.FromResult(DiscordJoinResult.Skipped("Test"));
     }
     private sealed class NoopWebhook : IWebhookAutomationService
     {

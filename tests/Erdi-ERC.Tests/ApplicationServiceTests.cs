@@ -56,6 +56,7 @@ public class ApplicationServiceTests
             Platform: "PC",
             TargetLeagueId: leagueId,
             Role: role,
+            Age: 24,
             Motivation: motivation,
             DiscordJoinWarning: warn,
             DiscordJoinWarningDetail: warnDetail);

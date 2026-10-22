@@ -84,6 +84,7 @@ builder.Services.AddScoped<ISetupAccessService, SetupAccessService>();
 builder.Services.AddScoped<ITrackSetupAccessPolicy, TrackSetupAccessPolicy>();
 builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
 builder.Services.AddScoped<IDiscordGuildService, DiscordGuildService>();
+builder.Services.AddScoped<IDiscordJoinService, DiscordJoinService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IApplicationTargetingService, ApplicationTargetingService>();
 builder.Services.AddScoped<ICommunityContentService, CommunityContentService>();
@@ -457,6 +458,10 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("identify");
     options.Scope.Add("guilds");
     options.Scope.Add("guilds.members.read");
+    // Nötig, damit der Bot den Bewerber nach dem Absenden selbst in die Server holen darf.
+    // Bestehende Sitzungen haben den Scope nicht — sie bekommen ihn erst beim nächsten Login,
+    // bis dahin überspringt DiscordJoinService den Beitritt.
+    options.Scope.Add("guilds.join");
     options.CallbackPath = "/signin-discord";
     // Correlation-Cookie muss über den Proxy-Redirect mitgenommen werden
     options.CorrelationCookie.SameSite = SameSiteMode.Lax;

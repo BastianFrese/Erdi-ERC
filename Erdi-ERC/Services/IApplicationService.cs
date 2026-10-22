@@ -159,6 +159,7 @@ namespace Erdi_ERC.Services
         string Platform,
         string TargetLeagueId,
         string Role,
+        int? Age,
         string? Motivation,
         bool DiscordJoinWarning,
         string? DiscordJoinWarningDetail);

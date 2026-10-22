@@ -7935,6 +7935,10 @@ display: grid;
 grid-template-columns: 1fr 1fr;
 gap: 1.25rem 1.5rem;
 }
+/* Drei gleichrangige Felder (Gamer-Tag, Plattform, Alter). */
+.app-form__grid--three {
+grid-template-columns: repeat(3, 1fr);
+}
 .app-form__grid--full {
 grid-column: 1 / -1;
 }
@@ -8361,7 +8365,8 @@ width: 100%;
 .app-form {
 padding: 1.25rem 1rem;
 }
-.app-form__grid {
+.app-form__grid,
+.app-form__grid--three {
 grid-template-columns: 1fr;
 gap: 1rem;
 }
