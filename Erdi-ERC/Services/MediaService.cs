@@ -291,6 +291,20 @@ namespace Erdi_ERC.Services
                 await workbook.CopyToAsync(fs);
             }
 
+            // Nur ersetzen, wenn die neue Datei lesbar ist (siehe AdminController.UploadEwigeListe).
+            try
+            {
+                using var probe = new ClosedXML.Excel.XLWorkbook(tempPath);
+                _ = probe.Worksheets.Count;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                System.IO.File.Delete(tempPath);
+                _log.LogWarning(ex, "[EwigeListe] Upload verworfen: '{Name}' ist keine lesbare Arbeitsmappe",
+                    workbook.FileName);
+                return false;
+            }
+
             if (System.IO.File.Exists(targetPath))
                 System.IO.File.Delete(targetPath);
 

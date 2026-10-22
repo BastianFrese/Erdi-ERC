@@ -20,9 +20,11 @@ namespace Erdi_ERC.Controllers
         private readonly ISiteSettingsService _siteSettings;
         private readonly IOutputCacheStore _outputCache;
         private readonly IDotdVoteService _dotd;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(AppDbContext db, IAdminAuditService audit, IStreamScheduleQueryService streamSchedules,
-            ISiteSettingsService siteSettings, IOutputCacheStore outputCache, IDotdVoteService dotd)
+            ISiteSettingsService siteSettings, IOutputCacheStore outputCache, IDotdVoteService dotd,
+            ILogger<AdminController> logger)
         {
             _db = db;
             _audit = audit;
@@ -30,6 +32,7 @@ namespace Erdi_ERC.Controllers
             _siteSettings = siteSettings;
             _outputCache = outputCache;
             _dotd = dotd;
+            _logger = logger;
         }
 
         // ---- Dashboard / Main Übersicht ----
@@ -154,8 +157,32 @@ namespace Erdi_ERC.Controllers
             var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
             var path = EwigeWorkbookHelper.GetPath(env);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
-            await workbook.CopyToAsync(stream);
+
+            // Erst in eine Temp-Datei schreiben und prüfen, ob ClosedXML sie öffnen kann.
+            // Die bisherige Arbeitsmappe wird nur ersetzt, wenn die neue lesbar ist — sonst
+            // zerstört ein kaputter Upload die Ewige Liste für alle Seitenaufrufe.
+            var tempPath = path + ".tmp";
+            await using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
+            {
+                await workbook.CopyToAsync(stream);
+            }
+
+            try
+            {
+                using var probe = new ClosedXML.Excel.XLWorkbook(tempPath);
+                _ = probe.Worksheets.Count;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                System.IO.File.Delete(tempPath);
+                _logger.LogWarning(ex, "[EwigeListe] Upload verworfen: '{Name}' ist keine lesbare Arbeitsmappe",
+                    workbook.FileName);
+                TempData["AdminMessage"] = "Die Datei ist keine lesbare .xlsx-Arbeitsmappe. " +
+                    "Die bisherige Ewige Liste bleibt unverändert.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            System.IO.File.Move(tempPath, path, overwrite: true);
 
             await _audit.LogAsync("UploadEwigeListe", "EwigeListe", "active.xlsx", $"Size={workbook.Length}");
             TempData["AdminMessage"] = "Ewige Liste erfolgreich aktualisiert.";

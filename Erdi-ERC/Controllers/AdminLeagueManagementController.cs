@@ -16,13 +16,15 @@ namespace Erdi_ERC.Controllers
         private readonly IStatsService _statsService;
         private readonly IAdminAuditService _audit;
         private readonly IStaticDataCache _staticCache;
+        private readonly ILogger<AdminLeagueManagementController> _logger;
 
-        public AdminLeagueManagementController(AppDbContext db, IStatsService statsService, IAdminAuditService audit, IStaticDataCache staticCache)
+        public AdminLeagueManagementController(AppDbContext db, IStatsService statsService, IAdminAuditService audit, IStaticDataCache staticCache, ILogger<AdminLeagueManagementController> logger)
         {
             _db = db;
             _statsService = statsService;
             _audit = audit;
             _staticCache = staticCache;
+            _logger = logger;
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -603,9 +605,7 @@ namespace Erdi_ERC.Controllers
             Directory.CreateDirectory(targetDir);
             var workbookPath = EwigeWorkbookHelper.GetPath(env);
 
-            using var workbook = System.IO.File.Exists(workbookPath)
-                ? new ClosedXML.Excel.XLWorkbook(workbookPath)
-                : new ClosedXML.Excel.XLWorkbook();
+            using var workbook = LoadOrCreateWorkbook(workbookPath);
 
             var driverSheetName = BuildWorksheetName($"{archivedName} - Fahrer");
             var teamSheetName = BuildWorksheetName($"{archivedName} - Teams");
@@ -696,7 +696,39 @@ namespace Erdi_ERC.Controllers
 
             driverSheet.Columns().AdjustToContents();
             teamSheet.Columns().AdjustToContents();
-            workbook.SaveAs(workbookPath);
+
+            // Nie in die laufende Datei schreiben: SaveAs direkt auf active.xlsx hinterlässt
+            // bei Abbruch eine halbe Arbeitsmappe (Vorfall 29.07.: zwei Sheets deklariert,
+            // ihre Parts fehlen, danach wirft jeder Seitenaufruf ArgumentOutOfRangeException).
+            var tempPath = workbookPath + ".tmp";
+            var backupPath = workbookPath + ".bak";
+            workbook.SaveAs(tempPath);
+            if (System.IO.File.Exists(workbookPath))
+            {
+                System.IO.File.Copy(workbookPath, backupPath, overwrite: true);
+            }
+            System.IO.File.Move(tempPath, workbookPath, overwrite: true);
+        }
+
+        /// <summary>
+        /// Lädt die bestehende Arbeitsmappe oder legt eine neue an. Eine beschädigte Datei
+        /// bricht hier laut ab — wer sie lädt und speichert, schreibt den Schaden sonst fort.
+        /// </summary>
+        private ClosedXML.Excel.XLWorkbook LoadOrCreateWorkbook(string workbookPath)
+        {
+            try
+            {
+                return System.IO.File.Exists(workbookPath)
+                    ? new ClosedXML.Excel.XLWorkbook(workbookPath)
+                    : new ClosedXML.Excel.XLWorkbook();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "[EwigeListe] Arbeitsmappe '{Path}' ist nicht ladbar", workbookPath);
+                throw new InvalidOperationException(
+                    "Die Ewige-Liste-Arbeitsmappe ist beschädigt und kann nicht fortgeschrieben werden. " +
+                    "Bitte unter Admin eine intakte .xlsx hochladen.", ex);
+            }
         }
     }
 }
