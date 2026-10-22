@@ -143,11 +143,11 @@ public static class RaceFlagHelper
     public static string Resolve(string? trackText)
     {
         if (string.IsNullOrWhiteSpace(trackText)) return Empty;
-        var text = trackText.Trim();
+        var text = Fold(trackText);
 
         foreach (var alias in Aliases)
         {
-            if (text.Contains(alias.Key, System.StringComparison.OrdinalIgnoreCase)
+            if (text.Contains(Fold(alias.Key), System.StringComparison.OrdinalIgnoreCase)
                 && CountryFlags.TryGetValue(alias.Value, out var flag))
             {
                 return flag;
@@ -156,14 +156,113 @@ public static class RaceFlagHelper
 
         foreach (var track in F1RaceCatalog.Tracks)
         {
-            if (text.Contains(track.Country, System.StringComparison.OrdinalIgnoreCase)
-                || text.Contains(track.Key, System.StringComparison.OrdinalIgnoreCase))
+            if (text.Contains(Fold(track.Country), System.StringComparison.OrdinalIgnoreCase)
+                || text.Contains(Fold(track.Key), System.StringComparison.OrdinalIgnoreCase))
             {
                 if (CountryFlags.TryGetValue(track.Country, out var flag)) return flag;
             }
         }
 
         return Unknown;
+    }
+
+    /// <summary>
+    /// Normalisiert Freitext für Vergleiche: Diakritika raus (é→e, ü→u, ó→o), klein.
+    /// Ohne das findet „Formula 1 Gran Premio de la Ciudad de México" weder „mexico"
+    /// noch „Mexiko" — der Streckenname kommt so aus der Renn-CSV.
+    /// </summary>
+    public static string Fold(string text)
+    {
+        var decomposed = text.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder(decomposed.Length);
+        foreach (var c in decomposed)
+        {
+            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c)
+                != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+        return sb.ToString().ToLowerInvariant();
+    }
+
+    /// <summary>ISO-2-Code der Strecken-Nation fürs Header-Flaggenbild, z. B. „mx". Leer, wenn unbekannt.</summary>
+    public static string TrackFlagIso2(string? track)
+    {
+        if (string.IsNullOrWhiteSpace(track)) return "";
+        var iso2 = Fold(track) switch
+        {
+            var t when t.Contains("australi") => "au",
+            var t when t.Contains("bahrain") || t.Contains("bhr") => "bh",
+            var t when t.Contains("saudi") || t.Contains("jeddah") || t.Contains("ksa") => "sa",
+            var t when t.Contains("japan") || t.Contains("suzuka") || t.Contains("jpn") => "jp",
+            var t when t.Contains("china") || t.Contains("shanghai") => "cn",
+            var t when t.Contains("miami") => "us",
+            var t when t.Contains("imola") || t.Contains("emilia") => "it",
+            var t when t.Contains("monaco") => "mc",
+            var t when t.Contains("kanada") || t.Contains("canada") || t.Contains("can") => "ca",
+            var t when t.Contains("spanien") || t.Contains("spain") || t.Contains("barcelona") => "es",
+            // Kein nacktes "aut": das trifft jedes „Autódromo" (Mexiko, Imola, Interlagos).
+            var t when t.Contains("osterreich") || t.Contains("austria") || t.Contains("red bull ring") => "at",
+            var t when t.Contains("silverstone") || t.Contains("grossbritannien") || t.Contains("ukm") || t.Contains("britain") => "gb",
+            var t when t.Contains("ungarn") || t.Contains("hungary") || t.Contains("budapest") => "hu",
+            var t when t.Contains("belgien") || t.Contains("belgium") || t.Contains("spa") || t.Contains("bel") => "be",
+            var t when t.Contains("niederland") || t.Contains("netherlands") || t.Contains("zandvoort") || t.Contains("ned") => "nl",
+            var t when t.Contains("italien") || t.Contains("italy") || t.Contains("monza") || t.Contains("ita") => "it",
+            var t when t.Contains("aserbaidschan") || t.Contains("azerbaijan") || t.Contains("baku") => "az",
+            var t when t.Contains("singapur") || t.Contains("singapore") => "sg",
+            var t when t.Contains("austin") || t.Contains("cota") || t.Contains("usa") => "us",
+            var t when t.Contains("mexiko") || t.Contains("mexico") || t.Contains("mex") => "mx",
+            var t when t.Contains("brasili") || t.Contains("brazil") || t.Contains("sao paulo") || t.Contains("interlagos") => "br",
+            var t when t.Contains("las vegas") => "us",
+            var t when t.Contains("katar") || t.Contains("qatar") || t.Contains("losail") => "qa",
+            var t when t.Contains("abu dhabi") || t.Contains("yas marina") => "ae",
+            _ => ""
+        };
+
+        // Kein Treffer im Raster: über die Alias-/Katalog-Auflösung nachsehen.
+        // „Autódromo Hermanos Rodríguez" trägt kein „mex" im Text, ist aber Mexiko.
+        if (iso2.Length > 0) return iso2;
+        return ResolveCountryIso2(ResolveTrack(track)?.Country) ?? "";
+    }
+
+    /// <summary>Kürzel der Strecke für die Ergebnistabelle, z. B. „MEX".</summary>
+    public static string TrackAbbr(string? track)
+    {
+        if (string.IsNullOrWhiteSpace(track)) return "";
+        var abbr = Fold(track) switch
+        {
+            var t when t.Contains("australi") => "AUS",
+            var t when t.Contains("bahrain") || t.Contains("bhr") => "BHR",
+            var t when t.Contains("saudi") || t.Contains("jeddah") || t.Contains("ksa") => "KSA",
+            var t when t.Contains("japan") || t.Contains("suzuka") || t.Contains("jpn") => "JPN",
+            var t when t.Contains("china") || t.Contains("shanghai") => "CHN",
+            var t when t.Contains("miami") => "MIA",
+            var t when t.Contains("imola") || t.Contains("emilia") => "Imola",
+            var t when t.Contains("monaco") => "MON",
+            var t when t.Contains("kanada") || t.Contains("canada") || t.Contains("can") => "CAN",
+            var t when t.Contains("spanien") || t.Contains("spain") || t.Contains("barcelona") => "ESP",
+            var t when t.Contains("osterreich") || t.Contains("austria") || t.Contains("red bull ring") => "AUT",
+            var t when t.Contains("silverstone") || t.Contains("grossbritannien") || t.Contains("ukm") || t.Contains("britain") => "GBR",
+            var t when t.Contains("ungarn") || t.Contains("hungary") || t.Contains("budapest") => "HUN",
+            var t when t.Contains("belgien") || t.Contains("belgium") || t.Contains("spa") || t.Contains("bel") => "BEL",
+            var t when t.Contains("niederland") || t.Contains("netherlands") || t.Contains("zandvoort") || t.Contains("ned") => "NED",
+            var t when t.Contains("italien") || t.Contains("italy") || t.Contains("monza") || t.Contains("ita") => "Monza",
+            var t when t.Contains("aserbaidschan") || t.Contains("azerbaijan") || t.Contains("baku") => "AZE",
+            var t when t.Contains("singapur") || t.Contains("singapore") => "SGP",
+            var t when t.Contains("austin") || t.Contains("cota") || t.Contains("usa") => "USA",
+            var t when t.Contains("mexiko") || t.Contains("mexico") || t.Contains("mex") => "MEX",
+            var t when t.Contains("brasili") || t.Contains("brazil") || t.Contains("sao paulo") || t.Contains("interlagos") => "BRA",
+            var t when t.Contains("las vegas") => "LVG",
+            var t when t.Contains("katar") || t.Contains("qatar") || t.Contains("losail") => "QAT",
+            var t when t.Contains("abu dhabi") || t.Contains("yas marina") => "ABU",
+            _ => ""
+        };
+
+        if (abbr.Length > 0) return abbr;
+        var code = ResolveCountryCode(ResolveTrack(track)?.Country);
+        if (code is not null) return code;
+        return track.Length >= 3 ? track[..3].ToUpperInvariant() : track.ToUpperInvariant();
     }
 
     /// <summary>
@@ -245,16 +344,16 @@ public static class RaceFlagHelper
     public static F1Track? ResolveTrack(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        var t = text.Trim();
+        var t = Fold(text);
         var oic = System.StringComparison.OrdinalIgnoreCase;
 
         var direct = System.Linq.Enumerable.FirstOrDefault(F1RaceCatalog.Tracks,
-            x => t.Contains(x.Key, oic) || x.Name.Contains(t, oic) || t.Contains(x.Name, oic));
+            x => t.Contains(Fold(x.Key), oic) || Fold(x.Name).Contains(t, oic) || t.Contains(Fold(x.Name), oic));
         if (direct != null) return direct;
 
         foreach (var alias in Aliases)
         {
-            if (t.Contains(alias.Key, oic))
+            if (t.Contains(Fold(alias.Key), oic))
             {
                 var byAlias = System.Linq.Enumerable.FirstOrDefault(F1RaceCatalog.Tracks,
                     x => x.Country.Equals(alias.Value, oic));
@@ -262,6 +361,6 @@ public static class RaceFlagHelper
             }
         }
 
-        return System.Linq.Enumerable.FirstOrDefault(F1RaceCatalog.Tracks, x => t.Contains(x.Country, oic));
+        return System.Linq.Enumerable.FirstOrDefault(F1RaceCatalog.Tracks, x => t.Contains(Fold(x.Country), oic));
     }
 }
