@@ -126,12 +126,14 @@ z-index: keine Token-Ebene (offen).
 
 | Datum | Entscheidung | Grund | Verworfen |
 |---|---|---|---|
+| 2026-10-20 | "Bewerbung" als Button rechts statt als siebter Nav-Link | Auf dem Handy wurde genau dieser Punkt zuerst nach "Mehr" verschoben — der einzige Aufruf, der sichtbar bleiben muss. Der Streifen behält sechs Hauptpunkte | Siebter Link in der Reihe lassen (rutscht auf schmalen Schirmen weg) |
 | 2026-10-18 | Fahrerlisten nach Stamm / Ersatz / Gast gruppieren, DNF-Liste als aufklappbare Gruppen | Kader wächst; flache Listen kosten Scrollen und Suchzeit | Filterfeld im Dropdown (JS, mehr Aufwand) |
 
 ### 13. Changelog
 
 | Datum | Einheit | Dateien | Tokens | Geprüft durch |
 |---|---|---|---|---|
+| 2026-10-20 | "Bewerbung" aus der Nav-Reihe in `.strip__status` verschoben: primärer Button (`btn-primary`) neben Login, Login dafür auf `btn-ghost`. Damit sechs Hauptpunkte statt sieben; auf schmalen Schirmen rutschte "Bewerbung" vorher als erster Punkt nach "Mehr" | `Views/Shared/_Layout.cshtml`, `wwwroot/js/site.js` (nur Kommentar) | keine | `dotnet build` 0 Fehler; im Browser (Dev-Server, Chromium) bei 1440 / 390 / 320 px geprüft: kein Überlauf, Header auf dem Handy dreizeilig |
 | 2026-10-18 | Bestenliste (EditLeague) in zwei Blöcke geteilt: Stammfahrer / Ersatzfahrer, je mit Anzahl; Pillen-Kopf zeigt beide Zahlen | `Views/Admin/EditLeague.cshtml`, `06-pages-and-admin.css` | keine | `dotnet build` 0 Fehler, 679/679 Tests; **nicht im Browser geprüft** |
 | 2026-10-18 | Fahrerlisten im Renn-Eintrag gruppiert: `optgroup` in den 22 Positions-Dropdowns, DNF-Liste als drei aufklappbare Gruppen, Reserve-Zuordnung ebenfalls aufklappbar (`<details>`, offen nur bei vorhandener Vorbelegung) | `Views/Admin/EnterRace.cshtml`, `wwwroot/css/site/06-pages-and-admin.css` (+ Bundle) | keine neuen Tokens; Klassen `field-group*` | `dotnet build` 0 Fehler, 679/679 Tests; **nicht im Browser geprüft** (Admin-Login + DB nötig) |
 | 2026-10-18 | Ausgangsaufnahme | – | – | Dateien gelesen, `git log` |

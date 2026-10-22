@@ -291,7 +291,7 @@
 /* ---------------------------------------------------------------------------
    Navigation: was nicht mehr passt, wandert nach "Mehr".
 
-   Auf schmalen Schirmen passen die sieben Hauptpunkte nicht mehr in die Reihe.
+   Auf schmalen Schirmen passen die sechs Hauptpunkte nicht mehr in die Reihe.
    Sie war deshalb seitlich wischbar — man musste erst wischen, um "Kalender"
    oder "Bewerbung" ueberhaupt zu sehen. Hier wird stattdessen gemessen: die
    Hauptpunkte stellen sich der Reihe nach auf, und alles ab dem ersten, der

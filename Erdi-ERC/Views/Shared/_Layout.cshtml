@@ -280,10 +280,12 @@
                 </a>
                 <a class="@IsActive("Community", "Events", "EventDetail")" asp-controller="Community" asp-action="Events">Events</a>
                 <a class="@IsActive("Races", "RaceCalendar")" asp-controller="Races" asp-action="RaceCalendar">Kalender</a>
-                <a class="@IsActive("Application", "Apply", "Submitted", "MyApplication")" asp-controller="Application" asp-action="Apply">Bewerbung</a>
                 @* Die Neben-Seiten lagen frueher in Bootstrap-Aufklappmenues der
-                   alten Navigationsleiste. Der flache Streifen traegt sieben
-                   Hauptziele; der Rest haengt hier. aria-expanded beschreibt
+                   alten Navigationsleiste. Der flache Streifen traegt sechs
+                   Hauptziele; der Rest haengt hier. "Bewerbung" ist kein Nav-Link
+                   mehr, sondern steht als Button rechts in .strip__status: in der
+                   Reihe war es der siebte Punkt und rutschte auf schmalen Schirmen
+                   als erstes in den Aufklapper. aria-expanded beschreibt
                    einen reinen Aufklapper — kein role="menu": das verlangt
                    Pfeiltasten-Navigation, und hier fuehrt Tab durch die Links. *@
                 <button type="button" class="strip__more-btn" id="moreBtn"
@@ -322,6 +324,11 @@
                         title="Design umschalten">
                     <i class="bi bi-sun" aria-hidden="true"></i>
                 </button>
+                @* Der eine primaere Aufruf der Seite. Steht bewusst neben dem
+                   Login und nicht in der Nav-Reihe: dort war "Bewerbung" der
+                   siebte Punkt und wurde auf schmalen Schirmen zuerst nach
+                   "Mehr" verschoben. *@
+                <a class="btn btn-sm btn-primary" asp-controller="Application" asp-action="Apply">Bewerbung</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <a asp-controller="Profile" asp-action="Index"
@@ -333,7 +340,7 @@
                 }
                 else
                 {
-                    <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">Login</a>
+                    <a class="btn btn-sm btn-ghost" asp-controller="Account" asp-action="Login">Login</a>
                 }
             </div>
         </div>
