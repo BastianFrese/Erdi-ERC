@@ -10,7 +10,11 @@
         <strong>Hinweis: Discord-Beitritt</strong>
         <p>
             Laut deinem Login bist du noch nicht im @(string.Join(" und ", missing))-Discord.
-            Damit wir deine Bewerbung schnell bearbeiten können, tritt bitte jetzt bei:
+            <strong>Du musst nichts weiter tun:</strong> sobald du die Bewerbung absendest,
+            holt dich unser Bot automatisch in die fehlenden Server.
+        </p>
+        <p>
+            Klappt das nicht, kannst du auch direkt beitreten:
         </p>
         <ul class="app-discord-warn__links">
             @if (!Model.JoinedCommunity && !string.IsNullOrWhiteSpace(Model.CommunityInviteUrl))
@@ -26,6 +30,6 @@
                 </a></li>
             }
         </ul>
-        <small>Du kannst die Bewerbung trotzdem absenden – wir kontaktieren dich alternativ per Discord-Nachricht.</small>
+        <small>Der automatische Beitritt funktioniert nur mit deiner aktuellen Discord-Anmeldung. Wir kontaktieren dich zusätzlich per Discord-Nachricht.</small>
     </div>
 </div>
