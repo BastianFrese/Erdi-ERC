@@ -65,6 +65,10 @@ builder.Services.AddHttpClient("WebhookAutomation", c =>
     c.Timeout = TimeSpan.FromSeconds(10);
 });
 // Named Client für Discord-OAuth/Member-Lookups (Bewerbung & Setup-Tier).
+builder.Services.AddHttpClient("TwitchApi", c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddHttpClient("DiscordApi", c =>
 {
     c.Timeout = TimeSpan.FromSeconds(10);
@@ -97,6 +101,8 @@ builder.Services.AddScoped<ProfileHistoryService>();
 builder.Services.AddSingleton<DotdRuntimeState>();
 builder.Services.AddScoped<IDotdVoteService, DotdVoteService>();
 builder.Services.AddHostedService<TwitchChatReaderService>();
+// Hält den Bot dauerhaft online und setzt Stream-/Clip-Karten (nur in Production).
+builder.Services.AddHostedService<DiscordBotHostedService>();
 // Telemetrie-Ingest: per-Fahrer-API-Keys + Review-Inbox (Pending-Rennergebnisse).
 builder.Services.AddScoped<ITelemetryKeyService, TelemetryKeyService>();
 builder.Services.AddScoped<ITelemetryIngestService, TelemetryIngestService>();
