@@ -81,4 +81,72 @@ public class HomeIndexDataServiceTests
             g => Assert.Equal("Früh", g.Title),
             g => Assert.Equal("Spät", g.Title));
     }
+
+    /// <summary>Die Startseiten-Einblendung zeigt die letzte abgeschlossene DOTD-Wahl
+    /// samt Stimmenanteil und der Wahl-Id als Merker; ohne Wahl bleibt sie ganz weg.</summary>
+    [Fact]
+    public async Task GetAsync_liefertLetztenFahrerDesTages()
+    {
+        using var ctx = new SqliteTestContext();
+        var vote = new DotdVote
+        {
+            LeagueId = "pro",
+            LeagueName = "Pro Liga",
+            StartedAt = DateTime.UtcNow.AddHours(-2),
+            ClosedAt = DateTime.UtcNow.AddHours(-1),
+            WinnerDriver = "ERC | michi582015",
+            WinnerVotes = 3,
+            TotalVotes = 4
+        };
+        ctx.Db.DotdVotes.Add(vote);
+        ctx.Db.SaveChanges();
+
+        var data = await BuildService(ctx).GetAsync();
+
+        var dotd = Assert.IsType<HomeDotd>(data.LastDotd);
+        Assert.Equal(vote.Id, dotd.Id);
+        Assert.Equal("Pro Liga", dotd.League);
+        Assert.Equal("michi582015", dotd.Winner);
+        Assert.Equal(75, dotd.Percent);
+    }
+
+    [Fact]
+    public async Task GetAsync_offeneWahl_zeigtDenLetztenSiegerTrotzdem()
+    {
+        using var ctx = new SqliteTestContext();
+        var geschlossen = new DotdVote
+        {
+            LeagueId = "pro",
+            LeagueName = "Pro Liga",
+            StartedAt = DateTime.UtcNow.AddHours(-3),
+            ClosedAt = DateTime.UtcNow.AddHours(-2),
+            WinnerDriver = "Luke-Berger",
+            WinnerVotes = 1,
+            TotalVotes = 2
+        };
+        ctx.Db.DotdVotes.AddRange(geschlossen, new DotdVote
+        {
+            LeagueId = "pro",
+            LeagueName = "Pro Liga",
+            StartedAt = DateTime.UtcNow.AddMinutes(-10)
+        });
+        ctx.Db.SaveChanges();
+
+        var data = await BuildService(ctx).GetAsync();
+
+        var dotd = Assert.IsType<HomeDotd>(data.LastDotd);
+        Assert.Equal(geschlossen.Id, dotd.Id);
+        Assert.Equal("Luke-Berger", dotd.Winner);
+        Assert.Equal(50, dotd.Percent);
+    }
+
+    [Fact]
+    public async Task GetAsync_ohneWahl_keineDotdTafel()
+    {
+        using var ctx = new SqliteTestContext();
+
+        var data = await BuildService(ctx).GetAsync();
+
+        Assert.Null(data.LastDotd);
+    }
 }

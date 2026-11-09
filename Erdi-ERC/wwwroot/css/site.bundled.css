@@ -4675,6 +4675,12 @@ transform-origin:left;animation:setupIntroProgress 7.4s linear .6s both;
 @keyframes setupIntroSweep    { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @keyframes setupIntroRow      { from { opacity:0;transform:translateX(-22px); } to { opacity:1;transform:none; } }
 @keyframes setupIntroProgress { from { transform:scaleX(1); } to { transform:scaleX(0); } }
+/* Widerrufs-/Consent-Overlay vor exklusiven Setups.
+Stand vorher inline im Partial und wurde dort beim Entfernen der Schatten
+abgeschnitten (offenes <style> => Rest der Seite wurde als CSS-Text geschluckt,
+keine Skripte mehr => Overlay ließ sich nicht mehr schließen). */
+.exclusive-consent-overlay { position:fixed;inset:0;padding:1rem;background:color-mix(in srgb, var(--track) 60%, transparent);display:flex;align-items:center;justify-content:center;z-index:9999 }
+.exclusive-consent-card { background:var(--surface-1);padding:1.25rem;border-radius:8px;max-width:680px;width:100%;max-height:90vh;overflow:auto }
 .community-shell {
 display: flex;
 flex-direction: column;
@@ -5871,6 +5877,57 @@ font-family: var(--ff-cond); font-size: var(--fs-xl); font-weight: 700;
 font-variant-numeric: var(--num); letter-spacing: .01em;
 }
 .rc-session__cta { margin-top: var(--sp-3); display: inline-flex; }
+/* --- Fahrer-des-Tages-Einblendung --------------------------------------
+Sitzt unten rechts wie der Design-Hinweis (.design-notice) und wird nur
+einmal je Wahl gezeigt: home-index.js merkt sich die Wahl-Id unter
+"erc.dotd.pop.v1". Bewusst kein Vollbild und keine Fokusfalle — die
+Einblendung sagt etwas, sie verlangt keine Antwort.
+display statt opacity beim Verstecken: so liegt sie von Anfang an nicht
+im Bild und verschiebt nichts (CLS). */
+.dotd-pop {
+position: fixed;
+right: var(--gutter);
+bottom: var(--sp-4);
+z-index: 1032;                 /* ueber dem Design-Hinweis (1030), unter dem Streifen (1040) */
+width: min(340px, calc(100vw - 2 * var(--gutter)));
+display: none;
+}
+.dotd-pop.is-open {
+display: block;
+animation: dotdPopIn .32s ease-out both;
+}
+.dotd-pop__card {
+display: flex; flex-direction: column; align-items: flex-start; gap: .5rem;
+padding: 1rem 1.1rem 1.1rem;
+background: var(--tarmac);
+border: 1px solid var(--rule);
+border-left: 3px solid var(--accent);
+border-radius: var(--r-3);
+}
+.dotd-pop__head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; width: 100%; }
+.dotd-pop__eyebrow {
+display: inline-flex; align-items: center; gap: .4rem;
+font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em;
+text-transform: uppercase; color: var(--ink-2);
+}
+.dotd-pop__close {
+background: none; border: 0; padding: .15rem; line-height: 1;
+color: var(--ink-2); cursor: pointer;
+}
+.dotd-pop__close:hover { color: var(--ink); }
+.dotd-pop__title {
+margin: 0; font-family: var(--ff-cond); font-size: var(--fs-xl);
+font-weight: 700; line-height: 1.15; color: var(--ink);
+}
+.dotd-pop__meta { margin: 0; display: flex; flex-direction: column; gap: .1rem; font-size: var(--fs-s); color: var(--ink-2); }
+.dotd-pop__share { color: var(--accent); font-weight: 600; font-variant-numeric: var(--num); }
+@keyframes dotdPopIn {
+from { opacity: 0; transform: translateY(.6rem); }
+to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+.dotd-pop.is-open { animation: none; }
+}
 /* =====================================================================
 PAGE · RESULTS
 Broadcast-Card-Tabelle + Race-Control-Filter-Bar.

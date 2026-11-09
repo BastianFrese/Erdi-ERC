@@ -85,6 +85,7 @@
 
             <div class="f1-hero__actions">
                 <a class="f1-btn f1-btn--primary" asp-controller="Stats" asp-action="Erdi10"><i class="f1-icon" data-lucide="flag"></i> Zum Racing Hub</a>
+                <a class="f1-btn f1-btn--outline" href="https://download.erdi-erc.de/" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="download"></i> Launcher laden</a>
                 <a class="f1-btn f1-btn--outline" href="https://twitch.tv/erdi10" target="_blank" rel="noopener"><i class="f1-icon" data-lucide="twitch"></i> Auf Twitch</a>
                 <button type="button" class="f1-btn f1-btn--ghost" id="introVideoReplay"><i class="f1-icon" data-lucide="circle-play"></i> Intro</button>
             </div>
@@ -478,6 +479,34 @@
 }
 
 @section BodyOverlays {
+    @* ============== Fahrer-des-Tages-Einblendung ==============
+       Sitzt unten rechts wie der Design-Hinweis, wird aber nur einmal je Wahl
+       gezeigt (home-index.js merkt sich die Wahl-Id). Bewusst kein Vollbild und
+       keine Fokusfalle: die Einblendung sagt etwas, sie verlangt keine Antwort. *@
+    @{
+        var dotdPop = ViewBag.LastDotd as Erdi_ERC.Services.HomeDotd;
+    }
+    @if (dotdPop != null)
+    {
+        <aside class="dotd-pop" id="dotdPop" role="status"
+               data-dotd-key="@dotdPop.Id" aria-labelledby="dotdPopTitle">
+            <div class="dotd-pop__card">
+                <div class="dotd-pop__head">
+                    <span class="dotd-pop__eyebrow"><i class="f1-icon" data-lucide="star"></i> Fahrer des Tages</span>
+                    <button type="button" class="dotd-pop__close" data-dotd-pop-close aria-label="Einblendung schliessen">
+                        <i class="f1-icon" data-lucide="x"></i>
+                    </button>
+                </div>
+                <h2 class="dotd-pop__title" id="dotdPopTitle">@dotdPop.Winner</h2>
+                <p class="dotd-pop__meta">
+                    <span class="dotd-pop__league">@dotdPop.League</span>
+                    <span class="dotd-pop__share">@dotdPop.Percent&nbsp;% der Stimmen</span>
+                </p>
+                <button type="button" class="f1-btn f1-btn--primary" data-dotd-pop-close>Alles klar</button>
+            </div>
+        </aside>
+    }
+
     @* ============== Intro Video Overlay ============== *@
     <div id="introVideoOverlay" class="f1-intro-overlay" aria-hidden="true">
         <div class="f1-intro-overlay__card">

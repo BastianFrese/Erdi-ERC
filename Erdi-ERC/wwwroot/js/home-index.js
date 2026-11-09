@@ -343,3 +343,32 @@
     window.setInterval(renderCountdown, 1000);
     document.addEventListener('erc:visible', renderCountdown);
 })();
+
+// --- Fahrer-des-Tages-Einblendung -----------------------------------------
+// Erscheint einmal je Wahl (Merker = Wahl-Id aus data-dotd-key), unten rechts.
+// Kein Vollbild und keine Fokusfalle: die Einblendung verlangt keine Antwort.
+(() => {
+    const pop = document.getElementById('dotdPop');
+    if (!pop) return;
+
+    const STORAGE_KEY = 'erc.dotd.pop.v1';
+    const key = pop.dataset.dotdKey || '';
+    if (!key) return;
+
+    let gesehen = null;
+    try { gesehen = localStorage.getItem(STORAGE_KEY); } catch (e) { /* privater Modus */ }
+    if (gesehen === key) return;
+
+    const schliessen = () => {
+        pop.classList.remove('is-open');
+        try { localStorage.setItem(STORAGE_KEY, key); } catch (e) { /* dann eben jedes Mal */ }
+    };
+
+    setTimeout(() => pop.classList.add('is-open'), 1200);
+
+    pop.querySelectorAll('[data-dotd-pop-close]').forEach(btn =>
+        btn.addEventListener('click', schliessen));
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && pop.classList.contains('is-open')) schliessen();
+    });
+})();

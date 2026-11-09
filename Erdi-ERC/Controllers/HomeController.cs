@@ -55,6 +55,7 @@ namespace Erdi_ERC.Controllers
             ViewBag.ActiveGiveaways = data.ActiveGiveaways;
             ViewBag.LeaguePreview = data.LeaguePreview;
             ViewBag.LastWinners = data.LastWinners;
+            ViewBag.LastDotd = data.LastDotd;
 
             return View();
         }

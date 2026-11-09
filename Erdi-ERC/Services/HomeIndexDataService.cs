@@ -18,6 +18,11 @@ namespace Erdi_ERC.Services
         bool IsReserveWinner, string? ReserveForDriver, string? ReserveForInRace,
         bool IsGuestWinner, string? GuestForMain);
 
+    /// <summary>Letzter Fahrer des Tages für die Einblendung auf der Startseite.
+    /// <see cref="Id"/> ist der Schlüssel der Einblendung: bei jeder neuen Wahl ein anderer,
+    /// damit ein neuer Sieger wieder aufpoppt, der alte nicht.</summary>
+    public sealed record HomeDotd(int Id, string League, string? Winner, int Percent);
+
     /// <summary>Alle ViewBag-Daten von <c>HomeController.Index</c> in einem Objekt.</summary>
     public sealed record HomeIndexData(
         int LeagueCount, int DriverCount, int RaceCount, int UpcomingCount,
@@ -26,7 +31,8 @@ namespace Erdi_ERC.Services
         List<CommunityNewsPost> CommunityNews,
         List<Giveaway> ActiveGiveaways,
         List<HomeLeaguePreview> LeaguePreview,
-        List<HomeLastWinner> LastWinners);
+        List<HomeLastWinner> LastWinners,
+        HomeDotd? LastDotd);
 
     /// <summary>
     /// Lädt alle Daten der Startseite in einem Objekt und cached es 60 s (Key
@@ -182,10 +188,31 @@ namespace Erdi_ERC.Services
 
             var lastWinners = await BuildLastWinnersAsync(ct);
 
+            // Letzter Fahrer des Tages für die Einblendung. Bewusst direkt aus der Tabelle
+            // statt aus dem Wahl-Snapshot: der Snapshot liefert während einer laufenden Wahl
+            // keinen Sieger — und genau dann sind die Leute auf der Seite. Gezeigt wird
+            // immer die letzte abgeschlossene Wahl, egal ob gerade eine neue läuft.
+            var letzteDotd = await _db.DotdVotes.AsNoTracking()
+                .Where(v => v.ClosedAt != null && v.WinnerDriver != null)
+                .OrderByDescending(v => v.ClosedAt)
+                .ThenByDescending(v => v.Id)
+                .Select(v => new { v.Id, v.LeagueName, v.WinnerDriver, v.WinnerVotes, v.TotalVotes })
+                .FirstOrDefaultAsync(ct);
+
+            var lastDotd = letzteDotd is null
+                ? null
+                : new HomeDotd(
+                    letzteDotd.Id,
+                    letzteDotd.LeagueName,
+                    DriverNameHelper.Display(letzteDotd.WinnerDriver),
+                    letzteDotd is { WinnerVotes: int w, TotalVotes: int t } && t > 0
+                        ? (int)Math.Round(w * 100.0 / t, MidpointRounding.AwayFromZero)
+                        : 0);
+
             return new HomeIndexData(
                 leagueCount, driverCount, raceCount, upcomingCount,
                 nextUpcomingEvent, nextStream, hasTrackSetups,
-                overallTop3, communityNews, activeGiveaways, leaguePreview, lastWinners);
+                overallTop3, communityNews, activeGiveaways, leaguePreview, lastWinners, lastDotd);
         }
 
         // --- Last Winners -------------------------------------------------
