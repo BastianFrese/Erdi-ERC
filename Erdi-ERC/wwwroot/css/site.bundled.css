@@ -5878,55 +5878,46 @@ font-variant-numeric: var(--num); letter-spacing: .01em;
 }
 .rc-session__cta { margin-top: var(--sp-3); display: inline-flex; }
 /* --- Fahrer-des-Tages-Einblendung --------------------------------------
-Sitzt unten rechts wie der Design-Hinweis (.design-notice) und wird nur
-einmal je Wahl gezeigt: home-index.js merkt sich die Wahl-Id unter
-"erc.dotd.pop.v1". Bewusst kein Vollbild und keine Fokusfalle — die
-Einblendung sagt etwas, sie verlangt keine Antwort.
-display statt opacity beim Verstecken: so liegt sie von Anfang an nicht
-im Bild und verschiebt nichts (CLS). */
-.dotd-pop {
-position: fixed;
-right: var(--gutter);
-bottom: var(--sp-4);
-z-index: 1032;                 /* ueber dem Design-Hinweis (1030), unter dem Streifen (1040) */
-width: min(340px, calc(100vw - 2 * var(--gutter)));
-display: none;
-}
-.dotd-pop.is-open {
-display: block;
-animation: dotdPopIn .32s ease-out both;
-}
-.dotd-pop__card {
-display: flex; flex-direction: column; align-items: flex-start; gap: .5rem;
-padding: 1rem 1.1rem 1.1rem;
+Vollbild-Popup, Shell = .f1-intro-overlay aus diesem File. Erscheint
+einmal je Wahl: home-index.js merkt sich die Wahl-Id unter
+"erc.dotd.pop.v1". Die Fahrerkarte selbst kommt per fetch aus
+/Profile/Card — solange sie laedt, steht ein Platzhalter im Slot. */
+.dotd-pop__shell {
+max-width: 760px;
 background: var(--tarmac);
-border: 1px solid var(--rule);
-border-left: 3px solid var(--accent);
-border-radius: var(--r-3);
 }
-.dotd-pop__head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; width: 100%; }
+.dotd-pop__body {
+display: flex;
+align-items: flex-start;
+gap: clamp(1rem, 3vw, 2rem);
+padding: clamp(1.25rem, 3vw, 2rem);
+max-height: min(84vh, 820px);
+overflow: auto;
+}
+.dotd-pop__info {
+flex: 1 1 auto;
+min-width: 0;
+display: flex;
+flex-direction: column;
+gap: .55rem;
+}
 .dotd-pop__eyebrow {
 display: inline-flex; align-items: center; gap: .4rem;
 font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em;
 text-transform: uppercase; color: var(--ink-2);
 }
-.dotd-pop__close {
-background: none; border: 0; padding: .15rem; line-height: 1;
-color: var(--ink-2); cursor: pointer;
-}
-.dotd-pop__close:hover { color: var(--ink); }
 .dotd-pop__title {
 margin: 0; font-family: var(--ff-cond); font-size: var(--fs-xl);
-font-weight: 700; line-height: 1.15; color: var(--ink);
+font-weight: 700; line-height: 1.1; color: var(--ink);
 }
 .dotd-pop__meta { margin: 0; display: flex; flex-direction: column; gap: .1rem; font-size: var(--fs-s); color: var(--ink-2); }
 .dotd-pop__share { color: var(--accent); font-weight: 600; font-variant-numeric: var(--num); }
-@keyframes dotdPopIn {
-from { opacity: 0; transform: translateY(.6rem); }
-to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-.dotd-pop.is-open { animation: none; }
+.dotd-pop__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .4rem; }
+.dotd-pop__card-slot { flex: 0 0 auto; display: flex; justify-content: center; }
+.dotd-pop__loading { margin: 0; padding: 1rem; font-size: var(--fs-s); color: var(--ink-2); }
+@media (max-width: 719px) {
+.dotd-pop__body { flex-direction: column-reverse; align-items: stretch; }
+.dotd-pop__card-slot { overflow-x: auto; }
 }
 /* =====================================================================
 PAGE · RESULTS

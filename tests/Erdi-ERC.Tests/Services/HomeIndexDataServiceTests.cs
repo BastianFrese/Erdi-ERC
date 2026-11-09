@@ -106,7 +106,9 @@ public class HomeIndexDataServiceTests
         var dotd = Assert.IsType<HomeDotd>(data.LastDotd);
         Assert.Equal(vote.Id, dotd.Id);
         Assert.Equal("Pro Liga", dotd.League);
-        Assert.Equal("michi582015", dotd.Winner);
+        // Der volle Name bleibt stehen — er ist der Schlüssel für den Profil-Lookup
+        // der Fahrerkarte; gekürzt wird erst in der View (DriverNameHelper.Display).
+        Assert.Equal("ERC | michi582015", dotd.Winner);
         Assert.Equal(75, dotd.Percent);
     }
 

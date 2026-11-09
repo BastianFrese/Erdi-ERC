@@ -455,6 +455,8 @@
 
 @section Scripts {
     <script src="~/js/home-index.min.js" asp-append-version="true"></script>
+    @* Fahrerkarte im DOTD-Popup: skaliert die Fusszeile nach dem Einhaengen. *@
+    <script src="~/js/driver-card-fit.min.js" asp-append-version="true" defer></script>
     <script>
     (() => {
         // -------- Stagger-Grids per IntersectionObserver --------
@@ -480,31 +482,43 @@
 
 @section BodyOverlays {
     @* ============== Fahrer-des-Tages-Einblendung ==============
-       Sitzt unten rechts wie der Design-Hinweis, wird aber nur einmal je Wahl
-       gezeigt (home-index.js merkt sich die Wahl-Id). Bewusst kein Vollbild und
-       keine Fokusfalle: die Einblendung sagt etwas, sie verlangt keine Antwort. *@
+       Vollbild-Popup mit der Fahrerkarte des Siegers, einmal je Wahl
+       (home-index.js merkt sich die Wahl-Id). Die Karte wird per fetch aus
+       /Profile/Card nachgeladen — sie kostet eine All-Ligen-Aggregation, die
+       nicht bei jedem Startseiten-Aufruf mitlaufen soll. *@
     @{
         var dotdPop = ViewBag.LastDotd as Erdi_ERC.Services.HomeDotd;
     }
     @if (dotdPop != null)
     {
-        <aside class="dotd-pop" id="dotdPop" role="status"
-               data-dotd-key="@dotdPop.Id" aria-labelledby="dotdPopTitle">
-            <div class="dotd-pop__card">
-                <div class="dotd-pop__head">
-                    <span class="dotd-pop__eyebrow"><i class="f1-icon" data-lucide="star"></i> Fahrer des Tages</span>
-                    <button type="button" class="dotd-pop__close" data-dotd-pop-close aria-label="Einblendung schliessen">
-                        <i class="f1-icon" data-lucide="x"></i>
-                    </button>
+        <div class="f1-intro-overlay dotd-pop" id="dotdPop" aria-hidden="true"
+             data-dotd-key="@dotdPop.Id" data-dotd-driver="@dotdPop.Winner"
+             data-dotd-card-url="@Url.Action("Card", "Profile")">
+            <div class="f1-intro-overlay__card dotd-pop__shell" role="dialog" aria-modal="true"
+                 aria-labelledby="dotdPopTitle">
+                <button type="button" class="f1-intro-overlay__close" data-dotd-pop-close aria-label="Einblendung schliessen">
+                    <i class="f1-icon" data-lucide="x"></i>
+                </button>
+                <div class="dotd-pop__body">
+                    <div class="dotd-pop__info">
+                        <span class="dotd-pop__eyebrow"><i class="f1-icon" data-lucide="star"></i> Fahrer des Tages</span>
+                        <h2 class="dotd-pop__title" id="dotdPopTitle">@DriverNameHelper.Display(dotdPop.Winner)</h2>
+                        <p class="dotd-pop__meta">
+                            <span class="dotd-pop__league">@dotdPop.League</span>
+                            <span class="dotd-pop__share">@dotdPop.Percent&nbsp;% der Stimmen</span>
+                        </p>
+                        <div class="dotd-pop__actions">
+                            <a class="f1-btn f1-btn--ghost"
+                               asp-controller="Profile" asp-action="ByDriverName" asp-route-driverName="@dotdPop.Winner">Zum Profil</a>
+                            <button type="button" class="f1-btn f1-btn--primary" data-dotd-pop-close>Alles klar</button>
+                        </div>
+                    </div>
+                    <div class="dotd-pop__card-slot" id="dotdPopCardSlot">
+                        <p class="dotd-pop__loading">Fahrerkarte wird geladen&nbsp;&hellip;</p>
+                    </div>
                 </div>
-                <h2 class="dotd-pop__title" id="dotdPopTitle">@dotdPop.Winner</h2>
-                <p class="dotd-pop__meta">
-                    <span class="dotd-pop__league">@dotdPop.League</span>
-                    <span class="dotd-pop__share">@dotdPop.Percent&nbsp;% der Stimmen</span>
-                </p>
-                <button type="button" class="f1-btn f1-btn--primary" data-dotd-pop-close>Alles klar</button>
             </div>
-        </aside>
+        </div>
     }
 
     @* ============== Intro Video Overlay ============== *@

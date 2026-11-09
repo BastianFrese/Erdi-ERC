@@ -20,7 +20,8 @@ namespace Erdi_ERC.Services
 
     /// <summary>Letzter Fahrer des Tages für die Einblendung auf der Startseite.
     /// <see cref="Id"/> ist der Schlüssel der Einblendung: bei jeder neuen Wahl ein anderer,
-    /// damit ein neuer Sieger wieder aufpoppt, der alte nicht.</summary>
+    /// damit ein neuer Sieger wieder aufpoppt, der alte nicht. <see cref="Winner"/> ist der
+    /// volle gespeicherte Name (für Profil-Lookup); gekürzt wird erst in der View.</summary>
     public sealed record HomeDotd(int Id, string League, string? Winner, int Percent);
 
     /// <summary>Alle ViewBag-Daten von <c>HomeController.Index</c> in einem Objekt.</summary>
@@ -204,7 +205,7 @@ namespace Erdi_ERC.Services
                 : new HomeDotd(
                     letzteDotd.Id,
                     letzteDotd.LeagueName,
-                    DriverNameHelper.Display(letzteDotd.WinnerDriver),
+                    letzteDotd.WinnerDriver,
                     letzteDotd is { WinnerVotes: int w, TotalVotes: int t } && t > 0
                         ? (int)Math.Round(w * 100.0 / t, MidpointRounding.AwayFromZero)
                         : 0);

@@ -47,4 +47,8 @@
     clearTimeout(t);
     t = setTimeout(fitAll, 150);
   });
+
+  // Karten, die erst spaeter ins DOM kommen (z. B. per fetch im DOTD-Popup),
+  // melden sich hier selbst an — der DOMContentLoaded-Lauf kennt sie nicht.
+  window.ercCardFit = boot;
 }());

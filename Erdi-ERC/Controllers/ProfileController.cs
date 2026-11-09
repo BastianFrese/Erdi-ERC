@@ -50,6 +50,44 @@ namespace Erdi_ERC.Controllers
             var profile = await _profiles.GetByDiscordIdAsync(discordId);
             if (profile is null) return NotFound();
 
+            var detail = await BuildDetailAsync(profile);
+            ApplyCardViewBag(profile);
+
+            var isOwnProfile = string.Equals(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, profile.DiscordId, StringComparison.Ordinal);
+            ViewBag.CanEditEaName = isOwnProfile;
+
+            ViewBag.ProfileWall = await _db.ProfileWallMessages
+                .Where(x => x.ProfileDiscordId == profile.DiscordId)
+                .OrderByDescending(x => x.CreatedAt)
+                .Take(20)
+                .ToListAsync();
+            return View(detail);
+        }
+
+        /// <summary>
+        /// Nur die Fahrerkarte als Fragment — die Startseiten-Einblendung lädt sie per fetch
+        /// nach, statt für jeden Besucher die volle Profilseite zu rendern.
+        /// </summary>
+        [HttpGet("/Profile/Card")]
+        public async Task<IActionResult> Card(string driverName)
+        {
+            if (string.IsNullOrWhiteSpace(driverName)) return BadRequest();
+
+            var profile = await _profiles.FindByDriverNameAsync(driverName.Trim());
+            if (profile is null) return NotFound();
+
+            var detail = await BuildDetailAsync(profile);
+            ApplyCardViewBag(profile);
+            return PartialView("_DriverCard", detail);
+        }
+
+        /// <summary>
+        /// Stats + Achievements eines Fahrers. Die All-Ligen-Aggregation kommt gecacht aus
+        /// dem <see cref="ProfileHistoryService"/>; nur die Achievements werden je Aufruf
+        /// gerechnet (sie hängen an den Admin-Definitionen).
+        /// </summary>
+        private async Task<DriverDetailViewModel> BuildDetailAsync(DriverProfile profile)
+        {
             // Aliase = alle Namen, unter denen der Fahrer in Standings/Finishes stehen kann
             // (GamerTags, DisplayName, DiscordName) — zentral im DriverAliasHelper, damit die
             // Liste nicht pro Aufrufer auseinanderläuft. Ohne den DiscordName hat ein Fahrer,
@@ -57,8 +95,6 @@ namespace Erdi_ERC.Controllers
             // Stats, im Profil aber keine.
             var aliases = DriverAliasHelper.Build(profile);
 
-            // Teure All-Ligen-Aggregation kommt gecacht aus dem ProfileHistoryService;
-            // die View selbst bleibt live (user-spezifisches HTML).
             var detail = await _history.GetHistoryAsync(aliases)
                 ?? new DriverDetailViewModel
                 {
@@ -73,18 +109,13 @@ namespace Erdi_ERC.Controllers
             // Achievement-Definitionen sind quasi-statisch (Admin pflegt sie selten) → aus Cache.
             var defs = await _staticCache.GetActiveAchievementDefinitionsAsync();
             detail.Achievements = DriverAchievementsHelper.Compute(detail, custom, defs.ToList()).ToList();
+            return detail;
+        }
 
+        private void ApplyCardViewBag(DriverProfile profile)
+        {
             ViewBag.Profile = profile;
             ViewBag.NumberColor = _profiles.ResolveDriverNumberColor(profile);
-            var isOwnProfile = string.Equals(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, profile.DiscordId, StringComparison.Ordinal);
-            ViewBag.CanEditEaName = isOwnProfile;
-
-            ViewBag.ProfileWall = await _db.ProfileWallMessages
-                .Where(x => x.ProfileDiscordId == profile.DiscordId)
-                .OrderByDescending(x => x.CreatedAt)
-                .Take(20)
-                .ToListAsync();
-            return View(detail);
         }
 
         [Authorize]

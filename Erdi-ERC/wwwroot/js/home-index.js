@@ -344,9 +344,11 @@
     document.addEventListener('erc:visible', renderCountdown);
 })();
 
-// --- Fahrer-des-Tages-Einblendung -----------------------------------------
-// Erscheint einmal je Wahl (Merker = Wahl-Id aus data-dotd-key), unten rechts.
-// Kein Vollbild und keine Fokusfalle: die Einblendung verlangt keine Antwort.
+// --- Fahrer-des-Tages-Popup ------------------------------------------------
+// Vollbild-Popup mit der Fahrerkarte des letzten Siegers, einmal je Wahl
+// (Merker = Wahl-Id aus data-dotd-key). Die Karte kommt per fetch aus
+// /Profile/Card: sie kostet eine All-Ligen-Aggregation, die nicht bei jedem
+// Startseiten-Aufruf mitlaufen soll.
 (() => {
     const pop = document.getElementById('dotdPop');
     if (!pop) return;
@@ -359,16 +361,50 @@
     try { gesehen = localStorage.getItem(STORAGE_KEY); } catch (e) { /* privater Modus */ }
     if (gesehen === key) return;
 
+    const slot = document.getElementById('dotdPopCardSlot');
+    const driver = pop.dataset.dotdDriver || '';
+    const cardUrl = pop.dataset.dotdCardUrl || '';
+    let geladen = false;
+
     const schliessen = () => {
-        pop.classList.remove('is-open');
+        pop.style.display = 'none';
+        pop.setAttribute('aria-hidden', 'true');
         try { localStorage.setItem(STORAGE_KEY, key); } catch (e) { /* dann eben jedes Mal */ }
     };
 
-    setTimeout(() => pop.classList.add('is-open'), 1200);
+    const karteLaden = () => {
+        if (geladen || !slot || !driver || !cardUrl) return;
+        geladen = true;
+
+        fetch(cardUrl + '?driverName=' + encodeURIComponent(driver))
+            .then(r => r.ok ? r.text() : Promise.reject(r.status))
+            .then(html => {
+                slot.innerHTML = html;
+                if (window.ercRenderLucide) window.ercRenderLucide();
+                // Erst nach dem naechsten Layout messen: direkt nach innerHTML sind die
+                // Zellen noch 0 px breit, der Autofit wuerde nichts verkleinern.
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    if (window.ercCardFit) window.ercCardFit();
+                }));
+            })
+            .catch(() => {
+                slot.innerHTML = '<p class="dotd-pop__loading">Fahrerkarte nicht verfuegbar.</p>';
+            });
+    };
+
+    setTimeout(() => {
+        pop.style.display = 'flex';
+        pop.setAttribute('aria-hidden', 'false');
+        karteLaden();
+        const knopf = pop.querySelector('[data-dotd-pop-close]');
+        if (knopf) knopf.focus();
+    }, 1200);
 
     pop.querySelectorAll('[data-dotd-pop-close]').forEach(btn =>
         btn.addEventListener('click', schliessen));
+    // Klick auf den dunklen Rand schliesst ebenfalls.
+    pop.addEventListener('click', e => { if (e.target === pop) schliessen(); });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && pop.classList.contains('is-open')) schliessen();
+        if (e.key === 'Escape' && pop.style.display === 'flex') schliessen();
     });
 })();

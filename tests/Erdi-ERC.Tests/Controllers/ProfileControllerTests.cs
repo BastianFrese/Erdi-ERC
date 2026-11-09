@@ -110,8 +110,44 @@ public class ProfileControllerTests
         Assert.Single(vm.Races);
     }
 
-    private sealed class NoopAudit : IAdminAuditService
+    /// <summary>Die Fahrerkarte als Fragment — die Startseiten-Einblendung lädt sie
+    /// per fetch nach. Sie muss denselben Namens-Lookup nehmen wie das Profil.</summary>
+    [Fact]
+    public async Task Card_liefertFahrerkarteFuerVollenNamen()
     {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.DriverProfiles.Add(new DriverProfile
+        {
+            DiscordId = "42",
+            DiscordName = "max",
+            DisplayName = "ERC | Max",
+            GamerTags =
+            {
+                new DriverGamerTag { DiscordId = "42", Platform = "EA", GamerTag = "ERC | Max", IsPrimary = true }
+            }
+        });
+        ctx.Db.SaveChanges();
+        SeedLeague(ctx, "div-main", "ERC | Max", points: 75, position: 1);
+
+        var result = await CreateController(ctx).Card("ERC | Max");
+
+        var partial = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_DriverCard", partial.ViewName);
+        var vm = Assert.IsType<DriverDetailViewModel>(partial.Model);
+        Assert.Equal(75, vm.TotalPoints);
+    }
+
+    [Fact]
+    public async Task Card_unbekannterFahrer_istNotFound()
+    {
+        using var ctx = new SqliteTestContext();
+
+        var result = await CreateController(ctx).Card("gibtsnicht");
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    private sealed class NoopAudit : IAdminAuditService    {
         public Task LogAsync(string action, string entityType, string entityId, string details) => Task.CompletedTask;
         public Task LogAndSaveAsync(string action, string entityType, string entityId, string details) => Task.CompletedTask;
     }
