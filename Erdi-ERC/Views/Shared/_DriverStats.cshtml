@@ -1,0 +1,67 @@
+@model Erdi_ERC.Models.DriverDetailViewModel
+@using Erdi_ERC.Helpers
+@using Erdi_ERC.Models.UiComponents
+@*
+    Saison-Kennzahlen eines Fahrers als eigenes Fragment — Startseiten-Popup
+    (Fahrer des Tages) lädt es per fetch nach. Inhalt = die Kennzahlen der
+    Profilseite: vier Kacheln, Konstanz und Formkurve.
+
+    Bewusst ohne eigenes Skript: der Fortschrittsbalken bekommt seine Breite
+    direkt gesetzt, statt wie im Profil animiert einzulaufen — das Popup lädt
+    das Fragment erst nach dem Öffnen, die IntersectionObserver-Logik der
+    Profilseite kennt es nicht.
+*@
+@{
+    var totalRaces = Model.Races.Count;
+    var finishedRaces = Model.Races.Count(r => r.Position > 0);
+    var dnfRaces = Model.Races.Count(r => r.Position <= 0);
+    var top10Races = Model.Races.Count(r => r.Position is >= 1 and <= 10);
+    var winRate = finishedRaces > 0 ? (int)Math.Round(100.0 * Model.Wins / finishedRaces) : 0;
+    var reliability = totalRaces > 0 ? (int)Math.Round(100.0 * finishedRaces / totalRaces) : 0;
+    var recentRaces = Model.Races.OrderByDescending(r => r.Date).Take(8).ToList();
+}
+
+@if (totalRaces == 0)
+{
+    <p class="dotd-stats__empty">Noch kein Rennen in der Wertung.</p>
+}
+else
+{
+    <div class="f1-stat-grid dotd-stats__tiles">
+        <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "trophy",     Label = "Siege",        Value = Model.Wins.ToString(),  Sub = $"{winRate}% Win-Rate" })" />
+        <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "medal",      Label = "Podien",       Value = Model.Podiums.ToString() })" />
+        <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "zap",        Label = "Fastest Laps", Value = Model.FastestLaps.ToString() })" />
+        <partial name="_F1StatTile" model="@(new F1StatTileVm { IconLucide = "circle-dot", Label = "Punkte",       Value = PointsFormatHelper.Format(Model.TotalPoints) })" />
+    </div>
+
+    <div class="dotd-stats__block">
+        <div class="dotd-stats__label">Konstanz</div>
+        <div class="dotd-stats__bar" role="img" aria-label="@reliability Prozent Zuverlässigkeit">
+            <span style="width:@reliability%"></span>
+        </div>
+        <div class="dotd-stats__meta">
+            @finishedRaces Finishes &middot; @dnfRaces DNF/DNS &middot; @reliability&nbsp;%
+            <span class="dotd-stats__sep">&middot;</span>
+            Top&nbsp;10: @top10Races
+        </div>
+    </div>
+
+    @if (recentRaces.Count > 0)
+    {
+        <div class="dotd-stats__block">
+            <div class="dotd-stats__label">Formkurve &middot; letzte @recentRaces.Count Rennen</div>
+            <div class="dotd-stats__form">
+                @foreach (var r in recentRaces)
+                {
+                    var cls = r.Position == 1 ? "bg-warning text-dark"
+                            : r.Position == 2 ? "bg-light text-dark"
+                            : r.Position == 3 ? "bg-secondary"
+                            : r.Position is >= 4 and <= 10 ? "bg-info text-dark"
+                            : "bg-danger";
+                    var label = r.Position > 0 ? $"P{r.Position}" : "DNF";
+                    <span class="badge @cls" title="@r.Track &middot; @r.Date.ToString("dd.MM.yyyy")">@label</span>
+                }
+            </div>
+        </div>
+    }
+}

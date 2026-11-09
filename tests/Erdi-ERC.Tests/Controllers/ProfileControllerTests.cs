@@ -147,6 +147,33 @@ public class ProfileControllerTests
         Assert.IsType<NotFoundResult>(result);
     }
 
+    /// <summary>Die Kennzahlen des Popups kommen aus demselben Aufbau wie das Profil.</summary>
+    [Fact]
+    public async Task Stats_liefertKennzahlenFuerVollenNamen()
+    {
+        using var ctx = new SqliteTestContext();
+        ctx.Db.DriverProfiles.Add(new DriverProfile
+        {
+            DiscordId = "42",
+            DiscordName = "max",
+            DisplayName = "ERC | Max",
+            GamerTags =
+            {
+                new DriverGamerTag { DiscordId = "42", Platform = "EA", GamerTag = "ERC | Max", IsPrimary = true }
+            }
+        });
+        ctx.Db.SaveChanges();
+        SeedLeague(ctx, "div-main", "ERC | Max", points: 75, position: 1);
+
+        var result = await CreateController(ctx).Stats("ERC | Max");
+
+        var partial = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_DriverStats", partial.ViewName);
+        var vm = Assert.IsType<DriverDetailViewModel>(partial.Model);
+        Assert.Equal(1, vm.Wins);
+        Assert.Equal(75, vm.TotalPoints);
+    }
+
     private sealed class NoopAudit : IAdminAuditService    {
         public Task LogAsync(string action, string entityType, string entityId, string details) => Task.CompletedTask;
         public Task LogAndSaveAsync(string action, string entityType, string entityId, string details) => Task.CompletedTask;

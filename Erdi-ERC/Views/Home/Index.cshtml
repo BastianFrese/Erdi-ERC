@@ -493,7 +493,8 @@
     {
         <div class="f1-intro-overlay dotd-pop" id="dotdPop" aria-hidden="true"
              data-dotd-key="@dotdPop.Id" data-dotd-driver="@dotdPop.Winner"
-             data-dotd-card-url="@Url.Action("Card", "Profile")">
+             data-dotd-card-url="@Url.Action("Card", "Profile")"
+             data-dotd-stats-url="@Url.Action("Stats", "Profile")">
             <div class="f1-intro-overlay__card dotd-pop__shell" role="dialog" aria-modal="true"
                  aria-labelledby="dotdPopTitle">
                 <button type="button" class="f1-intro-overlay__close" data-dotd-pop-close aria-label="Einblendung schliessen">
@@ -516,6 +517,7 @@
                     <div class="dotd-pop__card-slot" id="dotdPopCardSlot">
                         <p class="dotd-pop__loading">Fahrerkarte wird geladen&nbsp;&hellip;</p>
                     </div>
+                    <div class="dotd-pop__stats-slot" id="dotdPopStatsSlot"></div>
                 </div>
             </div>
         </div>

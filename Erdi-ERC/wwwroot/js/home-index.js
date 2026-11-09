@@ -362,8 +362,10 @@
     if (gesehen === key) return;
 
     const slot = document.getElementById('dotdPopCardSlot');
+    const statsSlot = document.getElementById('dotdPopStatsSlot');
     const driver = pop.dataset.dotdDriver || '';
     const cardUrl = pop.dataset.dotdCardUrl || '';
+    const statsUrl = pop.dataset.dotdStatsUrl || '';
     let geladen = false;
 
     const schliessen = () => {
@@ -372,24 +374,30 @@
         try { localStorage.setItem(STORAGE_KEY, key); } catch (e) { /* dann eben jedes Mal */ }
     };
 
+    const holen = (url, ziel) => {
+        if (!ziel || !url) return Promise.resolve();
+        return fetch(url + '?driverName=' + encodeURIComponent(driver))
+            .then(r => r.ok ? r.text() : Promise.reject(r.status))
+            .then(html => { ziel.innerHTML = html; })
+            .catch(() => {
+                ziel.innerHTML = '<p class="dotd-pop__loading">Nicht verfuegbar.</p>';
+            });
+    };
+
     const karteLaden = () => {
-        if (geladen || !slot || !driver || !cardUrl) return;
+        if (geladen || !driver) return;
         geladen = true;
 
-        fetch(cardUrl + '?driverName=' + encodeURIComponent(driver))
-            .then(r => r.ok ? r.text() : Promise.reject(r.status))
-            .then(html => {
-                slot.innerHTML = html;
-                if (window.ercRenderLucide) window.ercRenderLucide();
-                // Erst nach dem naechsten Layout messen: direkt nach innerHTML sind die
-                // Zellen noch 0 px breit, der Autofit wuerde nichts verkleinern.
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    if (window.ercCardFit) window.ercCardFit();
-                }));
-            })
-            .catch(() => {
-                slot.innerHTML = '<p class="dotd-pop__loading">Fahrerkarte nicht verfuegbar.</p>';
-            });
+        holen(cardUrl, slot).then(() => {
+            if (window.ercRenderLucide) window.ercRenderLucide();
+            // Erst nach dem naechsten Layout messen: direkt nach innerHTML sind die
+            // Zellen noch 0 px breit, der Autofit wuerde nichts verkleinern.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (window.ercCardFit) window.ercCardFit();
+            }));
+        });
+
+        holen(statsUrl, statsSlot);
     };
 
     setTimeout(() => {

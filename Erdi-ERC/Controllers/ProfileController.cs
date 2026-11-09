@@ -82,6 +82,21 @@ namespace Erdi_ERC.Controllers
         }
 
         /// <summary>
+        /// Nur die Saison-Kennzahlen als Fragment — das Startseiten-Popup lädt sie
+        /// zusammen mit der Fahrerkarte nach.
+        /// </summary>
+        [HttpGet("/Profile/Stats")]
+        public async Task<IActionResult> Stats(string driverName)
+        {
+            if (string.IsNullOrWhiteSpace(driverName)) return BadRequest();
+
+            var profile = await _profiles.FindByDriverNameAsync(driverName.Trim());
+            if (profile is null) return NotFound();
+
+            return PartialView("_DriverStats", await BuildDetailAsync(profile));
+        }
+
+        /// <summary>
         /// Stats + Achievements eines Fahrers. Die All-Ligen-Aggregation kommt gecacht aus
         /// dem <see cref="ProfileHistoryService"/>; nur die Achievements werden je Aufruf
         /// gerechnet (sie hängen an den Admin-Definitionen).

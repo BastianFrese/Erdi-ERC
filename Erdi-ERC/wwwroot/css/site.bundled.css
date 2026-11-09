@@ -5879,27 +5879,28 @@ font-variant-numeric: var(--num); letter-spacing: .01em;
 .rc-session__cta { margin-top: var(--sp-3); display: inline-flex; }
 /* --- Fahrer-des-Tages-Einblendung --------------------------------------
 Vollbild-Popup, Shell = .f1-intro-overlay aus diesem File. Erscheint
-einmal je Wahl: home-index.js merkt sich die Wahl-Id unter
-"erc.dotd.pop.v1". Die Fahrerkarte selbst kommt per fetch aus
-/Profile/Card — solange sie laedt, steht ein Platzhalter im Slot. */
+einmal je Wahl (home-index.js merkt sich die Wahl-Id unter
+"erc.dotd.pop.v1"). Fahrerkarte und Saison-Kennzahlen kommen per fetch
+aus /Profile/Card und /Profile/Stats.
+Raster: links Rang + Kennzahlen, rechts die Karte ueber beide Zeilen.
+Unter 720 px steht alles untereinander, die Karte zuerst. */
 .dotd-pop__shell {
-max-width: 760px;
+max-width: 820px;
 background: var(--tarmac);
 }
 .dotd-pop__body {
-display: flex;
-align-items: flex-start;
-gap: clamp(1rem, 3vw, 2rem);
+display: grid;
+grid-template-columns: minmax(0, 1fr) 360px;
+align-items: start;
+gap: clamp(1rem, 2.5vw, 1.75rem);
 padding: clamp(1.25rem, 3vw, 2rem);
-max-height: min(84vh, 820px);
+max-height: min(86vh, 860px);
 overflow: auto;
 }
 .dotd-pop__info {
-flex: 1 1 auto;
+grid-column: 1; grid-row: 1;
+display: flex; flex-direction: column; gap: .55rem;
 min-width: 0;
-display: flex;
-flex-direction: column;
-gap: .55rem;
 }
 .dotd-pop__eyebrow {
 display: inline-flex; align-items: center; gap: .4rem;
@@ -5913,11 +5914,30 @@ font-weight: 700; line-height: 1.1; color: var(--ink);
 .dotd-pop__meta { margin: 0; display: flex; flex-direction: column; gap: .1rem; font-size: var(--fs-s); color: var(--ink-2); }
 .dotd-pop__share { color: var(--accent); font-weight: 600; font-variant-numeric: var(--num); }
 .dotd-pop__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .4rem; }
-.dotd-pop__card-slot { flex: 0 0 auto; display: flex; justify-content: center; }
+.dotd-pop__card-slot { grid-column: 2; grid-row: 1 / span 2; display: flex; justify-content: center; }
+.dotd-pop__stats-slot { grid-column: 1; grid-row: 2; min-width: 0; }
 .dotd-pop__loading { margin: 0; padding: 1rem; font-size: var(--fs-s); color: var(--ink-2); }
+/* Kennzahlen-Fragment (_DriverStats): Kacheln 2x2, damit sie in die
+schmale linke Spalte passen; Balken ohne Animation. */
+.dotd-stats__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.dotd-stats__block { margin-top: .9rem; }
+.dotd-stats__label {
+font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em;
+text-transform: uppercase; color: var(--ink-2); margin-bottom: .35rem;
+}
+.dotd-stats__bar {
+height: 8px; border-radius: 4px; overflow: hidden;
+background: var(--stroke-1);
+}
+.dotd-stats__bar > span { display: block; height: 100%; background: var(--accent); }
+.dotd-stats__meta { margin-top: .35rem; font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: var(--num); }
+.dotd-stats__form { display: flex; flex-wrap: wrap; gap: .3rem; }
+.dotd-stats__empty { margin: 0; font-size: var(--fs-s); color: var(--ink-2); }
 @media (max-width: 719px) {
-.dotd-pop__body { flex-direction: column-reverse; align-items: stretch; }
-.dotd-pop__card-slot { overflow-x: auto; }
+.dotd-pop__body { grid-template-columns: minmax(0, 1fr); }
+.dotd-pop__info { grid-row: 1; }
+.dotd-pop__card-slot { grid-column: 1; grid-row: 2; overflow-x: auto; }
+.dotd-pop__stats-slot { grid-column: 1; grid-row: 3; }
 }
 /* =====================================================================
 PAGE · RESULTS
