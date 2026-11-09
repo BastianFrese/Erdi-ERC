@@ -267,6 +267,7 @@ else
         })" />
 
         <div class="row g-3">
+            @{ var consentOverlayRendered = false; }
             @foreach (var setup in visibleSetups)
             {
                 // Einmaliger Parse pro Karte (ersetzt 4 separate JsonDocument.Parse-Durchläufe).
@@ -399,8 +400,10 @@ else
                                     </form>
                                 }
 
-                                @if (needsConsent)
+                                @* Ein Overlay für die ganze Seite genügt: die Zustimmung wird am Profil gespeichert, nicht pro Setup. *@
+                                @if (needsConsent && !consentOverlayRendered)
                                 {
+                                    consentOverlayRendered = true;
                                     <partial name="_ExclusiveSetupConsentPartial" model="setup.Id" />
                                 }
 

@@ -767,4 +767,28 @@ public class DesignContractTests
             "Einblende-Zustand ohne Aufheber — der Inhalt bleibt unsichtbar:\n  " +
             string.Join("\n  ", beanstandet.Distinct()));
     }
+    /// <summary>
+    /// Ein <style> in einer View wird als Rohtext gelesen: fehlt das schliessende Tag,
+    /// schluckt der Browser den REST der Seite (inkl. aller Skripte am Body-Ende).
+    /// Genau so ist die Widerrufs-Zustimmung kaputtgegangen: Overlay erschien,
+    /// Abbrechen tat nichts, weil kein JavaScript mehr lud.
+    /// </summary>
+    [Fact]
+    public void JedeViewSchliesstIhreStyleBloecke()
+    {
+        var offen = new List<string>();
+        foreach (var view in Directory.EnumerateFiles(Path.Combine(RepoRoot, "Erdi-ERC", "Views"),
+                                                      "*.cshtml", SearchOption.AllDirectories))
+        {
+            var inhalt = Lies(view);
+            var auf  = Regex.Matches(inhalt, @"<style").Count;
+            var zu   = Regex.Matches(inhalt, "</style>").Count;
+            if (auf != zu)
+                offen.Add($"{Path.GetRelativePath(RepoRoot, view)}: {auf}x <style>, {zu}x </style>");
+        }
+
+        Assert.True(offen.Count == 0,
+            "Unbalancierte <style>-Bloecke — der Browser schluckt alles danach als CSS-Text:\n  " +
+            string.Join("\n  ", offen));
+    }
 }
