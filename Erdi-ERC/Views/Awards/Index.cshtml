@@ -1,0 +1,248 @@
+@model Erdi_ERC.Models.SeasonAwardsPageViewModel
+@using Erdi_ERC.Helpers
+@{
+    ViewData["Title"] = "Season Awards";
+    var hasOpen = Model.OpenLeagues.Any();
+    var hasResults = Model.Results.Any();
+}
+
+<partial name="_F1PageHero" model="@(new F1PageHeroVm {
+    Title     = "Season",
+    Highlight = "Awards",
+    Lead      = "Die Community nominiert die Fahrer der Saison. Nominieren ist Abstimmen — eine Stimme pro Award und Liga, änderbar bis der Admin schließt.",
+})" />
+
+@if (TempData["AwardMessage"] is string message)
+{
+    <div class="alert alert-info reveal" role="status">@message</div>
+}
+
+@if (!hasOpen && !hasResults)
+{
+    <section class="f1-section reveal">
+        <div class="empty-state community-empty-state">
+            <span class="icon-chip is-cyan"><i class="bi bi-trophy"></i></span>
+            <div class="empty-state__title">Noch keine Season Awards</div>
+            <p class="empty-state__lead">Sobald die Admins die Awards der Saison anlegen, kannst du hier nominieren.</p>
+        </div>
+    </section>
+}
+
+@* ── Laufende Abstimmungen ───────────────────────────────────────────── *@
+@if (hasOpen)
+{
+    @foreach (var block in Model.OpenLeagues)
+    {
+        <section class="f1-section reveal">
+            <partial name="_F1Section" model="@(new F1SectionVm {
+                Chip  = "Nominierung",
+                Title = block.League.Name,
+            })" />
+
+            <div class="row g-3">
+                @foreach (var card in block.Awards)
+                {
+                    var main = card.Roster.Where(r => !r.IsReserve).ToList();
+                    var reserves = card.Roster.Where(r => r.IsReserve).ToList();
+                    <div class="col-lg-6">
+                        <div class="community-card h-100" id="award-@card.Award.Id-@block.League.Id">
+                            <div class="community-card__body d-flex flex-column gap-3">
+                                <div>
+                                    <div class="community-card__meta mb-1">
+                                        @if (!string.IsNullOrWhiteSpace(card.Award.Season))
+                                        {
+                                            <span class="badge bg-secondary">Saison @card.Award.Season</span>
+                                        }
+                                        <span class="text-mute small">@block.League.Name</span>
+                                    </div>
+                                    <div class="community-card__title mb-1">@card.Award.Name</div>
+                                    @if (!string.IsNullOrWhiteSpace(card.Award.Description))
+                                    {
+                                        <p class="community-card__text mb-0">@card.Award.Description</p>
+                                    }
+                                </div>
+
+                                @if (Model.IsAuthenticated)
+                                {
+                                    <form asp-controller="Awards" asp-action="Nominate" method="post" class="d-flex flex-column gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="awardId" value="@card.Award.Id" />
+                                        <input type="hidden" name="leagueId" value="@block.League.Id" />
+
+                                        <label class="form-label small text-mute mb-0" for="driver-@card.Award.Id-@block.League.Id">
+                                            Dein Fahrer für diesen Award
+                                        </label>
+                                        <select class="form-select form-select-sm" name="driver" required
+                                                id="driver-@card.Award.Id-@block.League.Id">
+                                            <option value="">Fahrer wählen …</option>
+                                            @if (main.Any())
+                                            {
+                                                <optgroup label="Stammfahrer">
+                                                    @foreach (var entry in main)
+                                                    {
+                                                        <option value="@entry.Driver" selected="@(card.MyDriver == entry.Driver)">
+                                                            @DriverNameHelper.Display(entry.Driver)@(string.IsNullOrWhiteSpace(entry.Team) ? "" : $" · {entry.Team}")
+                                                        </option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                            @if (reserves.Any())
+                                            {
+                                                <optgroup label="Ersatzfahrer">
+                                                    @foreach (var entry in reserves)
+                                                    {
+                                                        <option value="@entry.Driver" selected="@(card.MyDriver == entry.Driver)">
+                                                            @DriverNameHelper.Display(entry.Driver)@(string.IsNullOrWhiteSpace(entry.Team) ? "" : $" · {entry.Team}")
+                                                        </option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                        </select>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                @(card.MyDriver is null ? "Stimme abgeben" : "Stimme ändern")
+                                            </button>
+                                            @if (card.MyDriver is not null)
+                                            {
+                                                <span class="text-mute small">
+                                                    Deine Stimme: <strong>@DriverNameHelper.Display(card.MyDriver)</strong>
+                                                </span>
+                                            }
+                                        </div>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info mb-0">Bitte einloggen, um zu nominieren.</div>
+                                }
+
+                                <p class="text-mute small mb-0">
+                                    Stimmenzahlen werden erst nach dem Schließen bekannt gegeben.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+}
+
+@* ── Gewinner ────────────────────────────────────────────────────────── *@
+@if (hasResults)
+{
+    <section class="f1-section reveal">
+        <partial name="_F1Section" model="@(new F1SectionVm {
+            Chip  = "Bekanntgabe",
+            Title = "Gewinner"
+        })" />
+
+        @foreach (var result in Model.Results)
+        {
+            <div class="community-card mb-3">
+                <div class="community-card__body d-flex flex-column gap-3">
+                    <div>
+                        <div class="community-card__meta mb-1">
+                            @if (!string.IsNullOrWhiteSpace(result.Award.Season))
+                            {
+                                <span class="badge bg-secondary">Saison @result.Award.Season</span>
+                            }
+                            <span class="text-mute small">
+                                @(result.Award.ClosedAt?.ToLocalTime().ToString("dd.MM.yyyy") ?? "geschlossen")
+                                · @result.TotalVotes @(result.TotalVotes == 1 ? "Stimme" : "Stimmen")
+                            </span>
+                        </div>
+                        <div class="community-card__title mb-1">@result.Award.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(result.Award.Description))
+                        {
+                            <p class="community-card__text mb-0">@result.Award.Description</p>
+                        }
+                    </div>
+
+                    @if (result.Winners.Count == 0)
+                    {
+                        <p class="text-mute small mb-0">Keine Stimmen abgegeben.</p>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var winner in result.Winners)
+                            {
+                                var leagueName = Model.LeagueNames.TryGetValue(winner.LeagueId, out var n) ? n : winner.LeagueId;
+                                var profileUrl = Url.Action("ByDriverName", "Profile", new { driverName = winner.Driver });
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="award-winner">
+                                        <div class="award-winner__head">
+                                            <span class="badge bg-secondary">@leagueName</span>
+                                            <a class="award-winner__name" href="@profileUrl">@DriverNameHelper.Display(winner.Driver)</a>
+                                        </div>
+                                        <div class="award-winner__votes">
+                                            @winner.Votes @(winner.Votes == 1 ? "Stimme" : "Stimmen")
+                                            @if (winner.Tied)
+                                            {
+                                                <span class="award-winner__tied">· Gleichstand</span>
+                                            }
+                                        </div>
+                                        <div class="award-winner__frame"
+                                             data-award-card
+                                             data-card-url="@Url.Action("Card", "Profile")"
+                                             data-driver="@winner.Driver">
+                                            <a class="btn btn-outline-light btn-sm" href="@profileUrl">Fahrerkarte öffnen</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // Fahrerkarten der Gewinner: erst laden, wenn sie sichtbar werden.
+        // /Profile/Card kostet eine All-Ligen-Aggregation — 15 Karten beim Seitenaufbau
+        // wären 15 solche Abfragen, auch wenn niemand die Sektion erreicht.
+        (function () {
+            var slots = document.querySelectorAll('[data-award-card]');
+            if (!slots.length) return;
+
+            function laden(slot) {
+                var url = slot.dataset.cardUrl + '?driverName=' + encodeURIComponent(slot.dataset.driver || '');
+                fetch(url)
+                    .then(function (r) { return r.ok ? r.text() : Promise.reject(r.status); })
+                    .then(function (html) {
+                        slot.innerHTML = html;
+                        if (window.ercRenderLucide) window.ercRenderLucide();
+                        // Erst nach dem nächsten Layout messen (Autofit braucht Breiten).
+                        requestAnimationFrame(function () {
+                            requestAnimationFrame(function () {
+                                if (window.ercCardFit) window.ercCardFit();
+                            });
+                        });
+                    })
+                    .catch(function () {
+                        // Kein Profil zur Karte (z. B. Fahrer ohne Discord-Profil):
+                        // Platz ganz ausblenden statt 384 px Leerraum stehen zu lassen.
+                        slot.style.display = 'none';
+                    });
+            }
+
+            if ('IntersectionObserver' in window) {
+                var io = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (!entry.isIntersecting) return;
+                        io.unobserve(entry.target);
+                        laden(entry.target);
+                    });
+                }, { rootMargin: '200px' });
+                slots.forEach(function (slot) { io.observe(slot); });
+            } else {
+                slots.forEach(laden);
+            }
+        })();
+    </script>
+}

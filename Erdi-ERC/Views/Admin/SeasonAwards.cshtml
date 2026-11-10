@@ -1,0 +1,234 @@
+@model Erdi_ERC.Models.AdminSeasonAwardsViewModel
+@using Erdi_ERC.Helpers
+@{
+    ViewData["Title"] = "Season Awards";
+    var openCount = Model.Awards.Count(a => !a.IsClosed);
+    var closedCount = Model.Awards.Count - openCount;
+}
+
+<div class="adm-dashboard">
+
+    @* KPI *@
+    <section class="adm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="adm-kpi-card" style="--kpi-color:#c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-trophy"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.Awards.Count</div>
+                <div class="adm-kpi-card__label">Awards gesamt</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#4caf6d;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-broadcast"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@openCount</div>
+                <div class="adm-kpi-card__label">Offen</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#8a8a93;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-lock-fill"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@closedCount</div>
+                <div class="adm-kpi-card__label">Geschlossen</div>
+            </div>
+        </div>
+        <div class="adm-kpi-card" style="--kpi-color:#4cc9ff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-check2-square"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@Model.TotalVotes</div>
+                <div class="adm-kpi-card__label">Stimmen</div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- Neuen Award anlegen ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-plus-circle-fill me-2" style="color:#c78cff;"></i>Neuen Award anlegen
+            </span>
+        </div>
+        <div class="adm-panel__body">
+            <form asp-action="SaveSeasonAward" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="0" />
+
+                <div class="col-md-5">
+                    <label class="adm-form-label">Name *</label>
+                    <input class="form-control form-control-sm" name="name" required maxlength="120"
+                           placeholder="z.B. Überraschung des Jahres" />
+                </div>
+                <div class="col-md-2">
+                    <label class="adm-form-label">Saison</label>
+                    <input class="form-control form-control-sm" name="season" maxlength="16"
+                           placeholder="@DateTime.UtcNow.Year" />
+                </div>
+                <div class="col-md-5">
+                    <label class="adm-form-label">Beschreibung (optional)</label>
+                    <input class="form-control form-control-sm" name="description" maxlength="480"
+                           placeholder="Wofür wird der Award vergeben?" />
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Award anlegen
+                    </button>
+                    <span class="text-mute small ms-2">
+                        Ein Award gilt für alle Ligen — jede Liga bekommt ihr eigenes Voting.
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ---- Bestehende Awards ---- *@
+    <div class="adm-panel">
+        <div class="adm-panel__head">
+            <span class="adm-panel__head-title">
+                <i class="bi bi-trophy me-2" style="color:#c78cff;"></i>Bestehende Awards
+            </span>
+            <span class="adm-badge">@Model.Awards.Count</span>
+        </div>
+
+        @if (Model.Awards.Count == 0)
+        {
+            <div class="adm-panel__body">
+                <div class="adm-empty">
+                    <i class="bi bi-trophy adm-empty__icon"></i>
+                    <span>Noch keine Awards vorhanden.</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="adm-item-list">
+                @foreach (var award in Model.Awards)
+                {
+                    var tally = Model.Tallies.TryGetValue(award.Id, out var rows) ? rows : new List<Erdi_ERC.Models.AdminSeasonAwardTallyRow>();
+                    var votes = tally.Sum(r => r.Votes);
+                    <div class="adm-item-row">
+                        <div class="adm-item-row__main">
+                            <div class="adm-item-row__body">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="adm-item-row__title">@award.Name</span>
+                                    @if (award.IsClosed)
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--gray">Geschlossen</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-status-badge adm-status-badge--green">Offen</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(award.Season))
+                                    {
+                                        <span class="adm-status-badge">Saison @award.Season</span>
+                                    }
+                                </div>
+                                <div class="adm-item-row__meta">
+                                    <span><i class="bi bi-check2-square me-1"></i>@votes @(votes == 1 ? "Stimme" : "Stimmen")</span>
+                                    @if (award.ClosedAt is DateTime closedAt)
+                                    {
+                                        <span><i class="bi bi-lock me-1"></i>geschlossen @closedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(award.Description))
+                                {
+                                    <div style="font-size:.78rem;color:var(--ink-3);white-space:pre-wrap;margin-top:.2rem;">@award.Description</div>
+                                }
+
+                                @if (tally.Count > 0)
+                                {
+                                    <details class="mt-2">
+                                        <summary class="small text-mute" style="cursor:pointer;">Stimmenverteilung</summary>
+                                        <div class="mt-2 d-flex flex-column gap-1">
+                                            @foreach (var row in tally)
+                                            {
+                                                var leagueName = Model.LeagueNames.TryGetValue(row.LeagueId, out var n) ? n : row.LeagueId;
+                                                <div class="d-flex justify-content-between align-items-center gap-2" style="font-size:.8rem;">
+                                                    <span>
+                                                        <span class="badge bg-secondary">@leagueName</span>
+                                                        @DriverNameHelper.Display(row.Driver)
+                                                    </span>
+                                                    <span class="text-mute">@row.Votes</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+
+                            <div class="adm-item-row__actions">
+                                <button class="btn btn-xs btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#edit-award-@award.Id"
+                                        title="Bearbeiten">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                @if (award.IsClosed)
+                                {
+                                    <form asp-action="ReopenSeasonAward" method="post" class="d-inline"
+                                          onsubmit="return confirm('„@award.Name&quot; wieder öffnen? Die Stimmen sind noch vorhanden.');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@award.Id" />
+                                        <button class="btn btn-xs btn-outline-success" type="submit" title="Wieder öffnen">
+                                            <i class="bi bi-unlock"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="CloseSeasonAward" method="post" class="d-inline"
+                                          onsubmit="return confirm('„@award.Name&quot; jetzt schließen und die Gewinner bekannt geben?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@award.Id" />
+                                        <button class="btn btn-xs btn-outline-warning" type="submit" title="Schließen (Gewinner bekannt geben)">
+                                            <i class="bi bi-lock"></i>
+                                        </button>
+                                    </form>
+                                }
+                                <form asp-action="DeleteSeasonAward" method="post" class="d-inline"
+                                      onsubmit="return confirm('„@award.Name&quot; endgültig löschen? Die Stimmen gehen verloren.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@award.Id" />
+                                    <button class="btn btn-xs btn-outline-danger" type="submit" title="Löschen">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        @* Edit-Panel *@
+                        <div class="collapse adm-item-row__edit" id="edit-award-@award.Id">
+                            <div class="mb-3">
+                                <form asp-action="SaveSeasonAward" method="post" class="row g-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@award.Id" />
+
+                                    <div class="col-md-6">
+                                        <label class="adm-form-label">Name</label>
+                                        <input class="form-control form-control-sm" name="name" required maxlength="120" value="@award.Name" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="adm-form-label">Saison</label>
+                                        <input class="form-control form-control-sm" name="season" maxlength="16" value="@award.Season" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="adm-form-label">Beschreibung</label>
+                                        <input class="form-control form-control-sm" name="description" maxlength="480" value="@award.Description" />
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-sm btn-success" type="submit">
+                                            <i class="bi bi-check-lg me-1"></i>Speichern
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <p class="text-mute small mt-3">
+        Öffentliche Seite: <a href="/awards" target="_blank" rel="noopener">/awards</a>
+    </p>
+
+</div>

@@ -185,3 +185,60 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+/* ── Season Awards: Gewinner ──────────────────────────────────────
+   Die Fahrerkarte ist 360×640 fest; im Gewinner-Raster steht sie
+   verkleinert. Der Rahmen reserviert die skalierte Größe, damit die
+   Karte vor dem Nachladen keinen Sprung verursacht. */
+.award-winner {
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: .85rem;
+    height: 100%;
+}
+
+.award-winner__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .5rem;
+    margin-bottom: .25rem;
+}
+
+.award-winner__name {
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.award-winner__name:hover,
+.award-winner__name:focus-visible {
+    text-decoration: underline;
+}
+
+.award-winner__votes {
+    color: var(--ink-3);
+    font-size: .8rem;
+    margin-bottom: .5rem;
+}
+
+.award-winner__tied {
+    color: var(--wet);
+}
+
+.award-winner__frame {
+    width: 216px;
+    height: 384px;
+    margin-inline: auto;
+    overflow: hidden;
+}
+
+.award-winner__frame > .erc-card {
+    transform: scale(.6);
+    transform-origin: top left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .award-winner__frame > .erc-card {
+        transition: none;
+    }
+}

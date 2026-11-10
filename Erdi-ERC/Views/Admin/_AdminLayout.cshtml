@@ -29,7 +29,8 @@
     bool canComStreams     = HasAnyPerm(AdminPermissions.CommunityStreams,    AdminPermissions.Community);
     bool canComStewarding = HasAnyPerm(AdminPermissions.CommunityStewarding, AdminPermissions.Community);
     bool canComGiveaways  = HasAnyPerm(AdminPermissions.CommunityGiveaways,  AdminPermissions.Community);
-    bool canCommunity     = canComHub || canComEvents || canComStreams || canComStewarding || canComGiveaways;
+    bool canComAwards     = HasAnyPerm(AdminPermissions.CommunityAwards,     AdminPermissions.Community);
+    bool canCommunity     = canComHub || canComEvents || canComStreams || canComStewarding || canComGiveaways || canComAwards;
 
     bool canDrvAchievements = HasAnyPerm(AdminPermissions.DriversAchievements, AdminPermissions.Drivers);
     bool canDrvDefinitions  = HasAnyPerm(AdminPermissions.DriversDefinitions,  AdminPermissions.Drivers);
@@ -160,6 +161,12 @@
                     {
                         <a class="@Nav("AdminCommunity","Giveaways")" asp-controller="AdminCommunity" asp-action="Giveaways">
                             <i class="bi bi-gift-fill"></i> Giveaways
+                        </a>
+                    }
+                    @if (canComAwards)
+                    {
+                        <a class="@Nav("AdminCommunity","SeasonAwards")" asp-controller="AdminCommunity" asp-action="SeasonAwards">
+                            <i class="bi bi-trophy"></i> Season Awards
                         </a>
                     }
                     @if (canComHub)

@@ -443,6 +443,151 @@ namespace Erdi_ERC.Controllers
             return RedirectToAction(nameof(Giveaways));
         }
 
+        // ── Season Awards ──────────────────────────────────────────────────────────
+
+        [HttpGet]
+        [Authorize(Policy = "Admin.Community.Awards")]
+        public async Task<IActionResult> SeasonAwards()
+        {
+            var awards = await _db.SeasonAwards
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+            var awardIds = awards.Select(a => a.Id).ToList();
+            var nominations = await _db.SeasonAwardNominations
+                .Where(n => awardIds.Contains(n.AwardId))
+                .ToListAsync();
+            var leagueNames = await _db.Leagues
+                .Select(l => new { l.Id, l.Name })
+                .ToDictionaryAsync(x => x.Id, x => x.Name, StringComparer.Ordinal);
+
+            var vm = new AdminSeasonAwardsViewModel
+            {
+                Awards = awards,
+                LeagueNames = leagueNames,
+                Tallies = awards.ToDictionary(
+                    a => a.Id,
+                    a => nominations
+                        .Where(n => n.AwardId == a.Id)
+                        .GroupBy(n => new { n.LeagueId, n.Driver })
+                        .Select(g => new AdminSeasonAwardTallyRow(g.Key.LeagueId, g.Key.Driver, g.Count()))
+                        .OrderByDescending(r => r.Votes)
+                        .ThenBy(r => r.Driver)
+                        .ToList())
+            };
+
+            return View("~/Views/Admin/SeasonAwards.cshtml", vm);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Admin.Community.Awards")]
+        public async Task<IActionResult> SaveSeasonAward(int? id, string name, string? description, string? season)
+        {
+            var normalizedName = name?.Trim() ?? string.Empty;
+            if (normalizedName.Length == 0)
+            {
+                TempData["AdminMessage"] = "Ein Name ist für den Award erforderlich.";
+                return RedirectToAction(nameof(SeasonAwards));
+            }
+
+            // Die Spalten sind begrenzt; das maxlength im Formular gilt nur im Browser.
+            static string Cut(string? value, int max)
+            {
+                var trimmed = value?.Trim() ?? string.Empty;
+                return trimmed.Length > max ? trimmed[..max] : trimmed;
+            }
+
+            SeasonAward? entity = id.HasValue && id.Value > 0
+                ? await _db.SeasonAwards.AsTracking().FirstOrDefaultAsync(x => x.Id == id.Value)
+                : null;
+            var isNew = entity is null;
+            if (entity is null)
+            {
+                entity = new SeasonAward();
+                _db.SeasonAwards.Add(entity);
+            }
+
+            entity.Name = Cut(normalizedName, 120);
+            entity.Description = Cut(description, 480);
+            entity.Season = Cut(season, 16);
+
+            await _db.SaveChangesAsync();
+            if (isNew)
+            {
+                await _audit.LogAndSaveAsync("SaveSeasonAward", "SeasonAward", entity.Id.ToString(),
+                    $"Name={entity.Name}, Season={entity.Season}");
+            }
+
+            TempData["AdminMessage"] = "Season Award gespeichert.";
+            return RedirectToAction(nameof(SeasonAwards));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Admin.Community.Awards")]
+        public async Task<IActionResult> CloseSeasonAward(int id)
+        {
+            var entity = await _db.SeasonAwards.AsTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (entity is null)
+            {
+                TempData["AdminMessage"] = "Award nicht gefunden.";
+                return RedirectToAction(nameof(SeasonAwards));
+            }
+
+            if (!entity.IsClosed)
+            {
+                entity.IsClosed = true;
+                entity.ClosedAt = DateTime.UtcNow;
+                entity.ClosedByDiscordId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                await _db.SaveChangesAsync();
+                await _audit.LogAndSaveAsync("CloseSeasonAward", "SeasonAward", entity.Id.ToString(),
+                    $"Name={entity.Name}");
+            }
+
+            TempData["AdminMessage"] = $"„{entity.Name}\" geschlossen — die Gewinner stehen jetzt auf der Awards-Seite.";
+            return RedirectToAction(nameof(SeasonAwards));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Admin.Community.Awards")]
+        public async Task<IActionResult> ReopenSeasonAward(int id)
+        {
+            var entity = await _db.SeasonAwards.AsTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (entity is null)
+            {
+                TempData["AdminMessage"] = "Award nicht gefunden.";
+                return RedirectToAction(nameof(SeasonAwards));
+            }
+
+            entity.IsClosed = false;
+            entity.ClosedAt = null;
+            entity.ClosedByDiscordId = null;
+            await _db.SaveChangesAsync();
+            await _audit.LogAndSaveAsync("ReopenSeasonAward", "SeasonAward", entity.Id.ToString(),
+                $"Name={entity.Name}");
+
+            TempData["AdminMessage"] = $"„{entity.Name}\" wieder geöffnet.";
+            return RedirectToAction(nameof(SeasonAwards));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Admin.Community.Awards")]
+        public async Task<IActionResult> DeleteSeasonAward(int id)
+        {
+            var entity = await _db.SeasonAwards.AsTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (entity is null)
+            {
+                TempData["AdminMessage"] = "Award nicht gefunden.";
+                return RedirectToAction(nameof(SeasonAwards));
+            }
+
+            // Die Stimmen sind über die Navigation mit Cascade konfiguriert (AppDbContext).
+            _db.SeasonAwards.Remove(entity);
+            await _db.SaveChangesAsync();
+            await _audit.LogAndSaveAsync("DeleteSeasonAward", "SeasonAward", id.ToString(), $"Name={entity.Name}");
+
+            TempData["AdminMessage"] = "Season Award gelöscht.";
+            return RedirectToAction(nameof(SeasonAwards));
+        }
+
         [HttpGet]
         [Authorize(Policy = "Admin.Community.Streams")]
         public async Task<IActionResult> StreamSchedules()

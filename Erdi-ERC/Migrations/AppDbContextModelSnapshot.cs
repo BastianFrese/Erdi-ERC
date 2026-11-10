@@ -1733,6 +1733,88 @@ namespace Erdi_ERC.Migrations
                     b.ToTable("RegelwerkDocuments");
                 });
 
+            modelBuilder.Entity("Erdi_ERC.Models.SeasonAward", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ClosedByDiscordId")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(480)
+                        .HasColumnType("varchar(480)");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("Season")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SeasonAwards");
+                });
+
+            modelBuilder.Entity("Erdi_ERC.Models.SeasonAwardNomination", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AwardId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DiscordId")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("DiscordName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("Driver")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("LeagueId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AwardId", "LeagueId", "DiscordId")
+                        .IsUnique();
+
+                    b.ToTable("SeasonAwardNominations");
+                });
+
             modelBuilder.Entity("Erdi_ERC.Models.SetupAccessRoleMapping", b =>
                 {
                     b.Property<int>("Id")
@@ -2365,6 +2447,15 @@ namespace Erdi_ERC.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Erdi_ERC.Models.SeasonAwardNomination", b =>
+                {
+                    b.HasOne("Erdi_ERC.Models.SeasonAward", null)
+                        .WithMany("Nominations")
+                        .HasForeignKey("AwardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Erdi_ERC.Models.WaitlistEntry", b =>
                 {
                     b.HasOne("Erdi_ERC.Models.League", "League")
@@ -2431,6 +2522,11 @@ namespace Erdi_ERC.Migrations
             modelBuilder.Entity("Erdi_ERC.Models.RealLifeEvent", b =>
                 {
                     b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("Erdi_ERC.Models.SeasonAward", b =>
+                {
+                    b.Navigation("Nominations");
                 });
 #pragma warning restore 612, 618
         }

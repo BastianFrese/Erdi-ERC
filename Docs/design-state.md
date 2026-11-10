@@ -90,6 +90,7 @@ z-index: keine Token-Ebene (offen).
 | `/Stats/...` | `Views/Stats/*` | Ewige Liste, Fahrerkarten |
 | `/Admin/...` | `Views/Admin/*` | Bewerbungen, Rennen eintragen, Community |
 | `/Community/Events` | `Views/Community/Events.cshtml` | Events mit Galerie |
+| `/awards` | `Views/Awards/Index.cshtml` | Season Awards: Nominierung je Liga, nach dem Schließen Gewinner mit Fahrerkarte |
 
 ### 8. Geschützte Haken (nicht umbenennen)
 
@@ -133,6 +134,7 @@ z-index: keine Token-Ebene (offen).
 
 | Datum | Einheit | Dateien | Tokens | Geprüft durch |
 |---|---|---|---|---|
+| 2026-11-10 | Season Awards: öffentliche Seite `/awards` (Karte je Liga und Award, Fahrer-`select` mit Stamm/Ersatz-Gruppen, kein Live-Zähler) und Admin-Seite (KPI + Anlegen + Stimmenverteilung). Gewinner zeigt die Fahrerkarte über `/Profile/Card`, per IntersectionObserver erst beim Scrollen geladen, im Rahmen auf 60 % skaliert. Neue Klassen `.award-winner*` in `site.community.css` (bereits im Bundle, kein csproj-Eingriff) | `Views/Awards/Index.cshtml`, `Views/Admin/SeasonAwards.cshtml`, `wwwroot/css/site.community.css`, `Views/Shared/_Layout.cshtml`, `Views/Admin/_AdminLayout.cshtml` | keine neuen Tokens | `dotnet build` 0 Fehler; `dotnet test` (siehe Sitzung); **nicht im Browser geprüft** (Login + DB nötig) |
 | 2026-10-23 | Bewerbungsformular: Hinweisbox „Discord-Beitritt" sagt jetzt, dass der Bot beim Absenden automatisch in die fehlenden Server holt; die Einladungs-Buttons bleiben als Rückfallweg, wenn der automatische Beitritt scheitert. Nur Text geändert, Struktur und Klassen unverändert | `Views/Application/_DiscordJoinWarning.cshtml` | keine | `dotnet build` 0 Fehler; **nicht im Browser geprüft** (Box erscheint nur für Nutzer, die nicht auf beiden Servern sind) |
 | 2026-10-22 | Bewerbungsformular: Feld **Alter** (`type=number`, 13–99, Pflicht) als drittes Feld neben Gamer-Tag und Plattform; neue Regel `.app-form__grid--three` (3 Spalten, unter 768 px einspaltig wie das übrige Raster) | `Views/Application/Apply.cshtml`, `wwwroot/css/pages/applications.css` (+ Bundle) | keine neuen Tokens; eine Layout-Regel | `dotnet build` 0 Fehler, 726/726 Tests; **nicht im Browser geprüft** (Login + laufende DB nötig) |
 | 2026-10-20 | "Bewerbung" aus der Nav-Reihe in `.strip__status` verschoben: primärer Button (`btn-primary`) neben Login, Login dafür auf `btn-ghost`. Damit sechs Hauptpunkte statt sieben; auf schmalen Schirmen rutschte "Bewerbung" vorher als erster Punkt nach "Mehr" | `Views/Shared/_Layout.cshtml`, `wwwroot/js/site.js` (nur Kommentar) | keine | `dotnet build` 0 Fehler; im Browser (Dev-Server, Chromium) bei 1440 / 390 / 320 px geprüft: kein Überlauf, Header auf dem Handy dreizeilig |

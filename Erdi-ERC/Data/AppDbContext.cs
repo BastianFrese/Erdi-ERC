@@ -64,6 +64,10 @@ namespace Erdi_ERC.Data
         public DbSet<DotdVote> DotdVotes => Set<DotdVote>();
         public DbSet<DotdBallot> DotdBallots => Set<DotdBallot>();
 
+        // Season Awards: Admin legt Awards an, User nominieren je Award und Liga einen Fahrer.
+        public DbSet<SeasonAward> SeasonAwards => Set<SeasonAward>();
+        public DbSet<SeasonAwardNomination> SeasonAwardNominations => Set<SeasonAwardNomination>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -604,6 +608,34 @@ namespace Erdi_ERC.Data
             {
                 b.HasKey(x => x.Id);
                 b.HasIndex(x => x.ClosedAt);
+            });
+
+            modelBuilder.Entity<SeasonAward>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).HasMaxLength(120).IsRequired();
+                b.Property(x => x.Description).HasMaxLength(480);
+                b.Property(x => x.Season).HasMaxLength(16).IsRequired();
+                b.Property(x => x.ClosedByDiscordId).HasMaxLength(32);
+
+                b.HasMany(x => x.Nominations)
+                    .WithOne()
+                    .HasForeignKey(x => x.AwardId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<SeasonAwardNomination>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.LeagueId).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Driver).HasMaxLength(128).IsRequired();
+                b.Property(x => x.DiscordId).HasMaxLength(32).IsRequired();
+                b.Property(x => x.DiscordName).HasMaxLength(128).IsRequired();
+
+                // Eine Stimme pro (Award, Liga, User). Der Upsert im Controller hält sich
+                // daran; der Index macht es zur Datenbank-Wahrheit (zwei gleichzeitige
+                // Klicks dürfen keine Doppelstimme erzeugen).
+                b.HasIndex(x => new { x.AwardId, x.LeagueId, x.DiscordId }).IsUnique();
             });
         }
     }
