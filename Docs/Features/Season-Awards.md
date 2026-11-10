@@ -76,7 +76,13 @@ war die einzige offene Migration. Rollback-Referenz: die beiden Tabellen sind ne
 Rückweg = `DROP TABLE SeasonAwardNominations, SeasonAwards;` (enthält damals keine
 Bestandsdaten).
 
-Der **Code ist noch nicht deployt**. Reihenfolge laut
-`Docs/Features/production-deploy.md`: erst `systemctl stop erdi-erc`, dann robocopy,
-dann `systemctl start` — ein Copy über den laufenden Dienst beendet ihn.
+Der **Code ist deployt** (10.11.2026, 16:31): Release-Publish, `systemctl stop`,
+robocopy nach `T:\`, `systemctl start` — Reihenfolge laut
+`Docs/Features/production-deploy.md` (ein Copy über den laufenden Dienst beendet ihn).
+`app.env`, `appsettings.json` und `appsettings.Production.json` waren vorher/nachher
+byte-identisch (SHA-1 verglichen). Live-Check: `/awards` 200, `/`, `/Races/AllRaces`,
+`/Stats/EwigeListe`, `/Community/CommunityVotes` 200; null `[ERR]`-Zeilen im Log nach
+dem Restart. Admin-Route leitet ohne Login auf Discord (302).
+
+Noch offen: anderen Admins das Recht `community.awards` geben (Superadmin hat es).
 `database update` gegen `erdierc` bleibt verboten (`Docs/MIGRATION-SAFETY.md`).
