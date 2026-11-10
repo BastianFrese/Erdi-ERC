@@ -45,6 +45,14 @@
             </div>
             <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
         </a>
+        <a class="adm-kpi-card text-decoration-none" asp-controller="AdminCommunity" asp-action="SeasonAwards" style="--kpi-color:#c78cff;">
+            <div class="adm-kpi-card__icon"><i class="bi bi-trophy"></i></div>
+            <div class="adm-kpi-card__body">
+                <div class="adm-kpi-card__value">@ViewBag.AwardVoters</div>
+                <div class="adm-kpi-card__label">Awards-Wähler</div>
+            </div>
+            <i class="bi bi-arrow-right adm-kpi-card__arrow"></i>
+        </a>
     </section>
 
     @* ══════════════════════════════════════════════════════════════════

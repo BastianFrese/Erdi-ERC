@@ -50,6 +50,13 @@ namespace Erdi_ERC.Controllers
             ViewBag.TotalRaces = await _db.RaceResults.CountAsync();
             ViewBag.TotalDrivers = await _db.DriverStandings.Select(s => s.Driver).Distinct().CountAsync();
             ViewBag.AuditCount24h = await _db.AdminAuditLogs.CountAsync(x => x.CreatedAt >= DateTime.UtcNow.AddHours(-24));
+
+            // Season Awards: wie viele Leute (verschiedene Discord-Ids) insgesamt gevotet
+            // haben. Distinct, weil ein User je Liga und Award eine eigene Zeile hat.
+            ViewBag.AwardVoters = await _db.SeasonAwardNominations
+                .Select(n => n.DiscordId)
+                .Distinct()
+                .CountAsync();
             ViewBag.NextStream = await _streamSchedules.GetNextStreamScheduleAsync();
             ViewBag.RecentEaNameChanges = await _db.AdminAuditLogs
                 .Where(x => x.Action == "UpdateEaName")
