@@ -1,6 +1,8 @@
 using Erdi_ERC.Data;
+using Erdi_ERC.Helpers;
 using Erdi_ERC.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Erdi_ERC.Services;
 
@@ -40,17 +42,23 @@ public class TelemetryIngestService : ITelemetryIngestService
     private readonly ITelemetryKeyService _keyService;
     private readonly IAdminAuditService _audit;
     private readonly IWebhookAutomationService _webhookAuto;
+    private readonly IPendingRacePromotionService? _promotion;
+    private readonly IConfiguration? _config;
 
     public TelemetryIngestService(
         AppDbContext db,
         ITelemetryKeyService keyService,
         IAdminAuditService audit,
-        IWebhookAutomationService webhookAuto)
+        IWebhookAutomationService webhookAuto,
+        IPendingRacePromotionService? promotion = null,
+        IConfiguration? config = null)
     {
         _db = db;
         _keyService = keyService;
         _audit = audit;
         _webhookAuto = webhookAuto;
+        _promotion = promotion;
+        _config = config;
     }
 
     public async Task<TelemetryIngestResult> IngestAsync(string? json, string? apiKey, CancellationToken ct = default)
@@ -152,6 +160,57 @@ public class TelemetryIngestService : ITelemetryIngestService
             ["DriverCount"] = pending.Finishes.Count.ToString(),
             ["PendingId"] = pending.Id.ToString(),
         });
+
+        var autoPromote = _config?.GetValue<bool>("Telemetry:AutoPromote") ?? false;
+        // „Direkt auf der Seite": nur wenn aktiviert (Production-Opt-in) und Liga eindeutig
+        // aufgelöst werden kann; sonst bleibt der Entwurf in der Review-Inbox.
+        if (autoPromote
+            && _promotion is not null
+            && !string.IsNullOrWhiteSpace(result.League)
+            && !string.IsNullOrWhiteSpace(result.Track)
+            && result.Date.HasValue)
+        {
+            var league = await _db.Leagues
+                .FirstOrDefaultAsync(l => l.Id == result.League || l.Name == result.League, ct);
+            if (league is not null)
+            {
+                try
+                {
+                    var completedLaps = result.Finishes
+                        .Where(f => !f.IsDnf)
+                        .Select(f => f.NumLaps)
+                        .DefaultIfEmpty()
+                        .Max();
+
+                    var pointsPercent = RacePointsFactor.DeriveFromDistance(result.TotalLaps, completedLaps);
+
+                    var edits = pending.Finishes.Select(f => new PendingRaceFinishEdit(
+                        f.Position, f.Driver, f.IsDnf, f.RaceTimeMs, f.QualifyingPosition, f.FastestLap)).ToList();
+
+                    var promo = await _promotion.PromoteAsync(
+                        pending.Id,
+                        league.Id,
+                        result.Track!,
+                        result.Date.Value,
+                        result.Season ?? pending.SourceSeason,
+                        edits,
+                        result.FastestLap,
+                        senderKey!.DiscordId,
+                        pointsPercent,
+                        ct);
+
+                    if (promo.Ok)
+                    {
+                        pending.ReviewNote = "Automatisch übernommen (Telemetrie-Ingest).";
+                        await _db.SaveChangesAsync(ct);
+                    }
+                }
+                catch
+                {
+                    // Bei jedem Fehler bleibt der Entwurf in der Review-Inbox.
+                }
+            }
+        }
 
         return new TelemetryIngestResult(pending.Id, StatusCodes.Status201Created, null);
     }
