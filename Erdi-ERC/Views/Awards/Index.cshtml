@@ -28,51 +28,56 @@
     </section>
 }
 
-@* ── Laufende Abstimmungen ───────────────────────────────────────────── *@
+@* ── Laufende Abstimmungen — alle Karten in einem Formular ───────────── *@
 @if (hasOpen)
 {
-    @foreach (var block in Model.OpenLeagues)
-    {
-        <section class="f1-section reveal">
-            <partial name="_F1Section" model="@(new F1SectionVm {
-                Chip  = "Nominierung",
-                Title = block.League.Name,
-            })" />
+    @* Sammel-Formular: ein Klick speichert alle gewählten Awards. Ein leeres
+       Select bleibt unverändert — so lässt sich in Etappen abstimmen. *@
+    <form asp-controller="Awards" asp-action="Nominate" method="post" id="award-batch-form">
+        @Html.AntiForgeryToken()
 
-            <div class="row g-3">
-                @foreach (var card in block.Awards)
-                {
-                    var main = card.Roster.Where(r => !r.IsReserve).ToList();
-                    var reserves = card.Roster.Where(r => r.IsReserve).ToList();
-                    <div class="col-lg-6">
-                        <div class="community-card h-100" id="award-@card.Award.Id-@block.League.Id">
-                            <div class="community-card__body d-flex flex-column gap-3">
-                                <div>
-                                    <div class="community-card__meta mb-1">
-                                        @if (!string.IsNullOrWhiteSpace(card.Award.Season))
+        @foreach (var block in Model.OpenLeagues)
+        {
+            <section class="f1-section reveal">
+                <partial name="_F1Section" model="@(new F1SectionVm {
+                    Chip  = "Nominierung",
+                    Title = block.League.Name,
+                })" />
+
+                <div class="row g-3">
+                    @foreach (var card in block.Awards)
+                    {
+                        var main = card.Roster.Where(r => !r.IsReserve).ToList();
+                        var reserves = card.Roster.Where(r => r.IsReserve).ToList();
+                        <div class="col-lg-6">
+                            <div class="community-card h-100" id="award-@card.Award.Id-@block.League.Id">
+                                <div class="community-card__body d-flex flex-column gap-3">
+                                    <div>
+                                        <div class="community-card__meta mb-1">
+                                            @if (!string.IsNullOrWhiteSpace(card.Award.Season))
+                                            {
+                                                <span class="badge bg-secondary">Saison @card.Award.Season</span>
+                                            }
+                                            <span class="text-mute small">@block.League.Name</span>
+                                        </div>
+                                        <div class="community-card__title mb-1">@card.Award.Name</div>
+                                        @if (!string.IsNullOrWhiteSpace(card.Award.Description))
                                         {
-                                            <span class="badge bg-secondary">Saison @card.Award.Season</span>
+                                            <p class="community-card__text mb-0">@card.Award.Description</p>
                                         }
-                                        <span class="text-mute small">@block.League.Name</span>
                                     </div>
-                                    <div class="community-card__title mb-1">@card.Award.Name</div>
-                                    @if (!string.IsNullOrWhiteSpace(card.Award.Description))
-                                    {
-                                        <p class="community-card__text mb-0">@card.Award.Description</p>
-                                    }
-                                </div>
 
-                                @if (Model.IsAuthenticated)
-                                {
-                                    <form asp-controller="Awards" asp-action="Nominate" method="post" class="d-flex flex-column gap-2">
-                                        @Html.AntiForgeryToken()
+                                    @if (Model.IsAuthenticated)
+                                    {
+                                        @* awardId/leagueId/driver laufen als drei gleich lange
+                                           Listen zum Controller — pro Karte genau ein Tripel. *@
                                         <input type="hidden" name="awardId" value="@card.Award.Id" />
                                         <input type="hidden" name="leagueId" value="@block.League.Id" />
 
                                         <label class="form-label small text-mute mb-0" for="driver-@card.Award.Id-@block.League.Id">
                                             Dein Fahrer für diesen Award
                                         </label>
-                                        <select class="form-select form-select-sm" name="driver" required
+                                        <select class="form-select form-select-sm" name="driver"
                                                 id="driver-@card.Award.Id-@block.League.Id">
                                             <option value="">Fahrer wählen …</option>
                                             @if (main.Any())
@@ -99,34 +104,39 @@
                                             }
                                         </select>
 
-                                        <div class="d-flex align-items-center gap-2">
-                                            <button type="submit" class="btn btn-primary btn-sm">
-                                                @(card.MyDriver is null ? "Stimme abgeben" : "Stimme ändern")
-                                            </button>
-                                            @if (card.MyDriver is not null)
-                                            {
-                                                <span class="text-mute small">
-                                                    Deine Stimme: <strong>@DriverNameHelper.Display(card.MyDriver)</strong>
-                                                </span>
-                                            }
-                                        </div>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <div class="alert alert-info mb-0">Bitte einloggen, um zu nominieren.</div>
-                                }
+                                        @if (card.MyDriver is not null)
+                                        {
+                                            <span class="text-mute small">
+                                                Deine Stimme: <strong>@DriverNameHelper.Display(card.MyDriver)</strong>
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info mb-0">Bitte einloggen, um zu nominieren.</div>
+                                    }
 
-                                <p class="text-mute small mb-0">
-                                    Stimmenzahlen werden erst nach dem Schließen bekannt gegeben.
-                                </p>
+                                    <p class="text-mute small mb-0">
+                                        Stimmenzahlen werden erst nach dem Schließen bekannt gegeben.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
+                    }
+                </div>
+            </section>
+        }
+
+        @if (Model.IsAuthenticated)
+        {
+            <div class="f1-section reveal">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <button type="submit" class="btn btn-primary">Alle Stimmen speichern</button>
+                    <span class="text-mute small">Awards ohne Auswahl behalten deine bisherige Stimme.</span>
+                </div>
             </div>
-        </section>
-    }
+        }
+    </form>
 }
 
 @* ── Gewinner ────────────────────────────────────────────────────────── *@
