@@ -249,6 +249,25 @@ namespace Erdi_ERC.Services
                 var app = await _db.Applications.AsTracking().FirstOrDefaultAsync(a => a.Id == applicationId, ct);
                 if (app is null) return AcceptRejectResult.NotFound();
 
+                // Kapazitäts-Re-Check (V2-Mitigation): verhindert, dass bei parallelen
+                // Accepts die Liga über die Stammplatz-Kapazität wächst.
+                if (!IsReserveRole(app.Role))
+                {
+                    var league = await _db.Leagues.AsNoTracking().FirstOrDefaultAsync(l => l.Id == app.TargetLeagueId, ct);
+                    if (league?.Capacity.HasValue == true)
+                    {
+                        var occupied = await _db.DriverStandings
+                            .Where(s => s.LeagueId == app.TargetLeagueId && !s.IsReserveDriver)
+                            .CountAsync(ct);
+                        if (occupied >= league.Capacity.Value)
+                        {
+                            await tx.RollbackAsync(ct);
+                            return AcceptRejectResult.CapacityExceeded(
+                                $"Liga '{app.TargetLeagueId}' ist mit {occupied}/{league.Capacity.Value} Stammplätzen voll.");
+                        }
+                    }
+                }
+
                 // 1. DriverProfile + 2. DriverGamerTag upsert
                 var profile = await UpsertProfileAndTagAsync(
                     app.DiscordId, app.DiscordName, app.GamerTag, app.Platform, adminDiscordId, ct);

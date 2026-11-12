@@ -227,7 +227,7 @@ namespace Erdi_ERC.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, bool countsTowardOverall = true, bool acceptsApplications = false)
+        public async Task<IActionResult> UpdateLeague(string id, string name, string? description, int sortOrder = 0, int? capacity = null, int? dropWorstResults = null, string? currentSeason = null, string? nextSeason = null, bool applicationsOpenForNextSeason = false, bool countsTowardOverall = true, bool acceptsApplications = false)
         {
             var league = await _db.Leagues.AsTracking().FirstOrDefaultAsync(l => l.Id == id);
             if (league is null) return NotFound();
@@ -244,6 +244,10 @@ namespace Erdi_ERC.Controllers
             league.DropWorstResults = dropWorstResults.HasValue && dropWorstResults.Value > 0 ? Math.Min(dropWorstResults.Value, 99) : (int?)null;
             // Aktuelle Saison (leer = alle Rennen zählen).
             league.CurrentSeason = string.IsNullOrWhiteSpace(currentSeason) ? null : currentSeason.Trim();
+            // Nächste Saison (leer = keine Vorausbewerbung). Steuert Finish-Source of Truth für Saison-Bewerbungen.
+            league.NextSeason = string.IsNullOrWhiteSpace(nextSeason) ? null : nextSeason.Trim();
+            // Opt-in: Bewerbungen für die nächste Saison annehmen.
+            league.ApplicationsOpenForNextSeason = applicationsOpenForNextSeason && !string.IsNullOrWhiteSpace(league.NextSeason);
             // Opt-in Liga-übergreifende Constructors-Meisterschaft (Default true).
             league.CountsTowardOverall = countsTowardOverall;
             // Checkbox: unchecked wird nicht mitgesendet → false.
@@ -306,6 +310,14 @@ namespace Erdi_ERC.Controllers
                     ArchivedName = league.ArchivedName,
                     IsArchived = league.IsArchived,
                     ArchivedAt = league.ArchivedAt,
+                    CurrentSeason = league.CurrentSeason,
+                    NextSeason = league.NextSeason,
+                    ApplicationsOpenForNextSeason = league.ApplicationsOpenForNextSeason,
+                    Capacity = league.Capacity,
+                    DropWorstResults = league.DropWorstResults,
+                    SortOrder = league.SortOrder,
+                    CountsTowardOverall = league.CountsTowardOverall,
+                    AcceptsApplications = league.AcceptsApplications,
                 });
                 await _db.SaveChangesAsync();
 
@@ -700,7 +712,10 @@ namespace Erdi_ERC.Controllers
             // Nie in die laufende Datei schreiben: SaveAs direkt auf active.xlsx hinterlässt
             // bei Abbruch eine halbe Arbeitsmappe (Vorfall 29.07.: zwei Sheets deklariert,
             // ihre Parts fehlen, danach wirft jeder Seitenaufruf ArgumentOutOfRangeException).
-            var tempPath = workbookPath + ".tmp";
+            // ClosedXML leitet das Speicherformat aus der Dateiendung ab; ".tmp" wird
+            // deshalb abgelehnt ("Extension 'tmp' is not supported"). Temporär mit
+            // .xlsx-Endung schreiben, danach auf den echten Pfad verschieben.
+            var tempPath = workbookPath + ".tmp.xlsx";
             var backupPath = workbookPath + ".bak";
             workbook.SaveAs(tempPath);
             if (System.IO.File.Exists(workbookPath))

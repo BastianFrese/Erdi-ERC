@@ -93,6 +93,10 @@ namespace Erdi_ERC.Controllers
             {
                 TempData["AdminMessage"] = "Bewerbung nicht gefunden.";
             }
+            else if (result.Outcome == AcceptRejectOutcome.CapacityExceeded)
+            {
+                TempData["AdminMessage"] = result.Error ?? "Stammplätze sind voll.";
+            }
             else
             {
                 TempData["AdminMessage"] = "Bewerbung angenommen.";

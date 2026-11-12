@@ -141,6 +141,10 @@
                     <label class="form-label">Aktuelle Saison <span class="text-muted small">(Tabelle)</span></label>
                     <input class="form-control" type="text" name="currentSeason" value="@Model.CurrentSeason" maxlength="32" placeholder="z.B. 2026" title="Ist sie gesetzt, zählt die Tabelle nur Rennen dieser Saison. Leer = alle Rennen." />
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label">Nächste Saison <span class="text-muted small">(Bewerbung)</span></label>
+                    <input class="form-control" type="text" name="nextSeason" value="@Model.NextSeason" maxlength="32" placeholder="z.B. 2027" title="Ziel-Saison für Bewerbungen, bevor die aktuelle Saison endet. Leer = keine Vorausbewerbung." />
+                </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="countsTowardOverall" value="true" id="leagueCountsOverall" @(Model.CountsTowardOverall ? "checked" : "") />
@@ -153,10 +157,26 @@
                         <label class="form-check-label" for="leagueAcceptsApplications">Bewerbungen offen <span class="text-muted small">(Liga erscheint im Bewerbungsformular)</span></label>
                     </div>
                 </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="applicationsOpenForNextSeason" value="true" id="leagueApplicationsOpenForNextSeason" @(Model.ApplicationsOpenForNextSeason ? "checked" : "") />
+                        <label class="form-check-label" for="leagueApplicationsOpenForNextSeason">Vorausbewerbungen <span class="text-muted small">(nimmt Bewerbungen für die nächste Saison an)</span></label>
+                    </div>
+                </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" type="submit">Speichern</button>
                 </div>
             </form>
+
+            @if (string.IsNullOrWhiteSpace(Model.CurrentSeason) || string.IsNullOrWhiteSpace(Model.NextSeason))
+            {
+                <div class="alert alert-warning mt-3 mb-0">
+                    Saison-Konfiguration unvollständig:
+                    @if (string.IsNullOrWhiteSpace(Model.CurrentSeason)) { <text>aktuelle Saison fehlt; </text> }
+                    @if (string.IsNullOrWhiteSpace(Model.NextSeason)) { <text>nächste Saison fehlt; </text> }
+                    <a href="/AdminApplications/LeagueSeasons/@Model.Id" class="alert-link">Saison-Verwaltung öffnen</a>.
+                </div>
+            }
 
             <hr />
 

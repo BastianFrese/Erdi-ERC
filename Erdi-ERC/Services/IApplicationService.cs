@@ -202,12 +202,16 @@ namespace Erdi_ERC.Services
 
         public static AcceptRejectResult NotFound() =>
             new(AcceptRejectOutcome.NotFound, null, "Bewerbung nicht gefunden.");
+
+        public static AcceptRejectResult CapacityExceeded(string err) =>
+            new(AcceptRejectOutcome.CapacityExceeded, null, err);
     }
 
     public enum AcceptRejectOutcome
     {
         Ok = 0,
         NotFound = 1,
+        CapacityExceeded = 2,
     }
 
     /// <summary>Ergebnis einer Waitlist-Promotion.</summary>
