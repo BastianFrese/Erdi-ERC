@@ -4,6 +4,7 @@ using Erdi_ERC.Services;
 using Erdi_ERC.Tests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Erdi_ERC.Tests.Services;
@@ -27,11 +28,22 @@ public class TelemetryIngestServiceTests
             => Task.FromResult((true, (string?)null));
     }
 
-    private static TelemetryIngestService Build(SqliteTestContext ctx, out RecordingWebhook webhook)
+    private static TelemetryIngestService Build(SqliteTestContext ctx, out RecordingWebhook webhook, bool autoPromote = false, IPendingRacePromotionService? promotion = null)
     {
         var audit = new AdminAuditService(ctx.Db, new HttpContextAccessor());
         webhook = new RecordingWebhook();
-        return new TelemetryIngestService(ctx.Db, new TelemetryKeyService(ctx.Db, audit), audit, webhook);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Telemetry:AutoPromote"] = autoPromote.ToString() })
+            .Build();
+        return new TelemetryIngestService(ctx.Db, new TelemetryKeyService(ctx.Db, audit), audit, webhook, promotion, config);
+    }
+
+    private sealed class AlwaysOkPromotion : IPendingRacePromotionService
+    {
+        public Task<PromotePendingRaceResult> PromoteAsync(int pendingId, string leagueId, string track, DateTime date, string? season, IReadOnlyList<PendingRaceFinishEdit> editedFinishes, string? fastestLapDriver, string? actorDiscordId, int pointsPercent = RacePointsFactor.Full, CancellationToken ct = default)
+            => Task.FromResult(new PromotePendingRaceResult(true, null, 999));
+        public Task<(bool Ok, string? Error)> RejectAsync(int pendingId, string? note, string? actorDiscordId, CancellationToken ct = default)
+            => Task.FromResult((true, (string?)null));
     }
 
     /// <summary>Seedet Profil + Liga + Standing und gibt den Klartext-Key des Senders zurück.</summary>
@@ -272,5 +284,35 @@ public class TelemetryIngestServiceTests
         var svc = Build(ctx, out _);
         var leagues = await svc.MemberLeaguesAsync("unbekannt");
         Assert.Empty(leagues);
+    }
+
+    [Fact]
+    public async Task Ingest_autoPromoteEnabled_exactLeague_setsPromoteNote()
+    {
+        using var ctx = new SqliteTestContext();
+        var key = await SeedSenderAsync(ctx);
+
+        var svc = Build(ctx, out _, autoPromote: true, promotion: new AlwaysOkPromotion());
+        var payload = @"{ ""track"": ""Spa"", ""league"": ""ProLiga"", ""date"": ""2026-06-01T10:00:00Z"", ""finishes"": [ { ""position"": 1, ""driver"": ""Max Mustermann"" }, { ""position"": 2, ""driver"": ""Anna Beispiel"" } ] }";
+        var result = await svc.IngestAsync(payload, key);
+
+        Assert.True(result.IsSuccess);
+        var pending = await ctx.NewContext().PendingRaceResults.SingleAsync();
+        Assert.Equal("Automatisch übernommen (Telemetrie-Ingest).", pending.ReviewNote);
+    }
+
+    [Fact]
+    public async Task Ingest_autoPromoteDisabled_staysPending()
+    {
+        using var ctx = new SqliteTestContext();
+        var key = await SeedSenderAsync(ctx);
+
+        var svc = Build(ctx, out _);
+        var payload = @"{ ""track"": ""Spa"", ""league"": ""ProLiga"", ""date"": ""2026-06-01T10:00:00Z"", ""finishes"": [ { ""position"": 1, ""driver"": ""Max Mustermann"" } ] }";
+        var result = await svc.IngestAsync(payload, key);
+
+        Assert.True(result.IsSuccess);
+        var pending = await ctx.NewContext().PendingRaceResults.SingleAsync();
+        Assert.Equal((int)PendingRaceStatus.Pending, pending.Status);
     }
 }
