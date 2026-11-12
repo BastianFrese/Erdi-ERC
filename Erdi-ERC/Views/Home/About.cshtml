@@ -367,12 +367,12 @@ else
                         </div>
                     </div>
                 }
-                else if (!string.IsNullOrEmpty(p.ShortBio))
+                else if (!string.IsNullOrEmpty(p?.ShortBio))
                 {
                     <div class="abp-card">
                         <div class="abp-card__head"><i class="bi bi-file-earmark-person-fill"></i> Über mich</div>
                         <div class="abp-card__body">
-                            <p class="abp-bio">@p.ShortBio</p>
+                            <p class="abp-bio">@(p?.ShortBio)</p>
                         </div>
                     </div>
                 }
@@ -380,21 +380,21 @@ else
 
             @* Sidebar facts *@
             <div class="abp-fact-list">
-                @if (!string.IsNullOrEmpty(p.FavoriteTrack))
+                @if (!string.IsNullOrEmpty(p?.FavoriteTrack))
                 {
                     <div class="abp-fact">
                         <div class="abp-fact__label"><i class="bi bi-geo-alt-fill"></i> Lieblingsstrecke</div>
                         <div class="abp-fact__value">@p.FavoriteTrack</div>
                     </div>
                 }
-                @if (!string.IsNullOrEmpty(p.FavoriteCar))
+                @if (!string.IsNullOrEmpty(p?.FavoriteCar))
                 {
                     <div class="abp-fact">
                         <div class="abp-fact__label"><i class="bi bi-car-front-fill"></i> Lieblingsauto</div>
                         <div class="abp-fact__value">@p.FavoriteCar</div>
                     </div>
                 }
-                @if (!string.IsNullOrEmpty(p.RacingNumber))
+                @if (!string.IsNullOrEmpty(p?.RacingNumber))
                 {
                     <div class="abp-fact">
                         <div class="abp-fact__label"><i class="bi bi-hash"></i> Rennnummer</div>
@@ -403,7 +403,7 @@ else
                 }
                 <div class="abp-fact">
                     <div class="abp-fact__label"><i class="bi bi-calendar3"></i> Mitglied seit</div>
-                    <div class="abp-fact__value">@p.CreatedAt.ToString("MMMM yyyy")</div>
+                    <div class="abp-fact__value">@(p?.CreatedAt.ToString("MMMM yyyy"))</div>
                 </div>
             </div>
 

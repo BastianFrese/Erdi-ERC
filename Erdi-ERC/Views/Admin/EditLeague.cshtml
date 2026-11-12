@@ -168,7 +168,7 @@
                 </div>
             </form>
 
-            @if (string.IsNullOrWhiteSpace(Model.CurrentSeason) || string.IsNullOrWhiteSpace(Model.NextSeason))
+            @if (string.IsNullOrWhiteSpace(Model.CurrentSeason) || (Model.ApplicationsOpenForNextSeason && string.IsNullOrWhiteSpace(Model.NextSeason)))
             {
                 <div class="alert alert-warning mt-3 mb-0">
                     Saison-Konfiguration unvollständig:

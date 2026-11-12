@@ -106,89 +106,122 @@ namespace Erdi_ERC.Controllers
             return View(vm);
         }
 
-        /// <summary>Sprungmarke der Award-Karte (Award + Liga), damit der Nutzer nach dem
-        /// Absenden an genau der Karte landet, an der er war.</summary>
-        private string Anchor(int awardId, string? leagueId = null)
-            => Url.Action(nameof(Index)) + "#award-" + awardId
-               + (string.IsNullOrWhiteSpace(leagueId) ? string.Empty : "-" + leagueId);
-
+        /// <summary>
+        /// Sammel-Abgabe: die Seite sendet drei gleich lange Listen (awardId, leagueId,
+        /// driver) — ein Tripel je Award-Karte. Leere Selects werden übersprungen, damit
+        /// Teilabstimmen möglich ist und eine offene Karte ihre alte Stimme nicht löscht.
+        /// Jede Zeile wird einzeln geprüft; ungültige Zeilen fallen raus, gültige werden
+        /// gespeichert. Ein einzelnes Feldpaar bindet ebenfalls hierher (Kompatibilität).
+        /// </summary>
         [Authorize]
         [HttpPost("/awards/nominate")]
         [ValidateAntiForgeryToken]
         [EnableRateLimiting("forms")]
-        public async Task<IActionResult> Nominate(int awardId, string leagueId, string driver)
+        public async Task<IActionResult> Nominate(List<int>? awardId, List<string>? leagueId, List<string>? driver)
         {
             var discordId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(discordId)) return Forbid();
 
-            var award = await _db.SeasonAwards.AsNoTracking().FirstOrDefaultAsync(a => a.Id == awardId);
-            if (award is null)
+            var sentAwardIds = awardId ?? new List<int>();
+            var sentLeagueIds = leagueId ?? new List<string>();
+            var sentDrivers = driver ?? new List<string>();
+
+            var rows = new List<AwardVoteRow>();
+            var count = Math.Min(sentAwardIds.Count, Math.Min(sentLeagueIds.Count, sentDrivers.Count));
+            for (var i = 0; i < count; i++)
             {
-                TempData["AwardMessage"] = "Diesen Award gibt es nicht (mehr).";
+                // Unverändert lassen = kein Fahrer gewählt.
+                var tidyDriver = sentDrivers[i]?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(tidyDriver)) continue;
+                rows.Add(new AwardVoteRow(sentAwardIds[i], sentLeagueIds[i]?.Trim() ?? string.Empty, tidyDriver));
+            }
+
+            if (rows.Count == 0)
+            {
+                TempData["AwardMessage"] = "Keine Auswahl getroffen — es wurde nichts gespeichert.";
                 return RedirectToAction(nameof(Index));
             }
 
-            if (award.IsClosed)
-            {
-                TempData["AwardMessage"] = $"„{award.Name}\" ist bereits geschlossen — die Gewinner stehen unten.";
-                return Redirect(Anchor(awardId, leagueId));
-            }
+            // Alles, was die Prüfungen brauchen, in je einer Abfrage.
+            var wantedAwardIds = rows.Select(r => r.AwardId).Distinct().ToList();
+            var wantedLeagueIds = rows.Select(r => r.LeagueId).Distinct(StringComparer.Ordinal).ToList();
 
-            var league = await _db.Leagues.AsNoTracking()
-                .FirstOrDefaultAsync(l => l.Id == leagueId);
-            if (league is null || league.IsArchived)
-            {
-                TempData["AwardMessage"] = "Diese Liga nimmt nicht mehr an den Awards teil.";
-                return Redirect(Anchor(awardId, leagueId));
-            }
+            var awards = await _db.SeasonAwards.AsNoTracking()
+                .Where(a => wantedAwardIds.Contains(a.Id))
+                .ToDictionaryAsync(a => a.Id);
+            var leagues = await _db.Leagues.AsNoTracking()
+                .Where(l => wantedLeagueIds.Contains(l.Id))
+                .ToDictionaryAsync(l => l.Id, StringComparer.Ordinal);
+            var roster = (await _db.DriverStandings.AsNoTracking()
+                    .Where(s => wantedLeagueIds.Contains(s.LeagueId))
+                    .Select(s => new { s.LeagueId, s.Driver })
+                    .ToListAsync())
+                .Select(s => (s.LeagueId, s.Driver))
+                .ToHashSet();
 
-            var normalizedDriver = driver?.Trim() ?? string.Empty;
-            if (normalizedDriver.Length == 0)
-            {
-                TempData["AwardMessage"] = "Bitte einen Fahrer auswählen.";
-                return Redirect(Anchor(awardId, leagueId));
-            }
-
-            // Nur Fahrer aus dem Kader dieser Liga — der Wert kommt aus dem Select, aber
-            // ein manipulierter POST darf keinen beliebigen Namen in die Auswertung schreiben.
-            var inRoster = await _db.DriverStandings
-                .AnyAsync(s => s.LeagueId == league.Id && s.Driver == normalizedDriver);
-            if (!inRoster)
-            {
-                TempData["AwardMessage"] = "Dieser Fahrer steht nicht im Kader der Liga.";
-                return Redirect(Anchor(awardId, leagueId));
-            }
+            // AsTracking: der Context läuft global mit NoTrackingWithIdentityResolution (Program.cs).
+            var mine = await _db.SeasonAwardNominations.AsTracking()
+                .Where(n => n.DiscordId == discordId
+                            && wantedAwardIds.Contains(n.AwardId)
+                            && wantedLeagueIds.Contains(n.LeagueId))
+                .ToListAsync();
 
             var displayName = User.Identity?.Name ?? "Community User";
+            var saved = 0;
+            var skipped = 0;
+            string? skipReason = null;
 
-            // Umentscheiden überschreibt die eigene Stimme (AsTracking: der Context läuft
-            // global mit NoTrackingWithIdentityResolution, siehe Program.cs).
-            var existing = await _db.SeasonAwardNominations.AsTracking()
-                .FirstOrDefaultAsync(n => n.AwardId == awardId
-                                          && n.LeagueId == league.Id
-                                          && n.DiscordId == discordId);
-            if (existing is null)
+            void Skip(string reason)
             {
-                _db.SeasonAwardNominations.Add(new SeasonAwardNomination
-                {
-                    AwardId = awardId,
-                    LeagueId = league.Id,
-                    Driver = normalizedDriver,
-                    DiscordId = discordId,
-                    DiscordName = displayName,
-                    CreatedAt = DateTime.UtcNow
-                });
+                skipped++;
+                skipReason ??= reason;
             }
-            else
+
+            foreach (var row in rows)
             {
-                existing.Driver = normalizedDriver;
+                if (!awards.TryGetValue(row.AwardId, out var award)) { Skip("Award nicht gefunden"); continue; }
+                if (award.IsClosed) { Skip("Award bereits geschlossen"); continue; }
+                if (!leagues.TryGetValue(row.LeagueId, out var league) || league.IsArchived)
+                { Skip("Liga nimmt nicht mehr teil"); continue; }
+
+                // Nur Fahrer aus dem Kader dieser Liga — der Wert kommt aus dem Select, aber
+                // ein manipulierter POST darf keinen beliebigen Namen in die Auswertung schreiben.
+                if (row.Driver.Length > 128 || !roster.Contains((league.Id, row.Driver)))
+                { Skip("Fahrer nicht im Kader"); continue; }
+
+                // Umentscheiden überschreibt die eigene Stimme.
+                var existing = mine.FirstOrDefault(n => n.AwardId == award.Id && n.LeagueId == league.Id);
+                if (existing is null)
+                {
+                    existing = new SeasonAwardNomination
+                    {
+                        AwardId = award.Id,
+                        LeagueId = league.Id,
+                        DiscordId = discordId
+                    };
+                    _db.SeasonAwardNominations.Add(existing);
+                    mine.Add(existing);
+                }
+
+                existing.Driver = row.Driver;
                 existing.DiscordName = displayName;
                 existing.CreatedAt = DateTime.UtcNow;
+                saved++;
             }
 
-            await _db.SaveChangesAsync();
-            TempData["AwardMessage"] = $"Stimme für „{award.Name}\" gespeichert.";
-            return Redirect(Anchor(awardId, leagueId));
+            if (saved > 0) await _db.SaveChangesAsync();
+
+            var message = saved == 0
+                ? "Nichts gespeichert — keine der gewählten Kombinationen war gültig."
+                : $"{saved} {(saved == 1 ? "Stimme" : "Stimmen")} gespeichert.";
+            if (skipped > 0)
+                message += $" {skipped} nicht übernommen ({skipReason}).";
+
+            TempData["AwardMessage"] = message;
+            return RedirectToAction(nameof(Index));
         }
+
+        /// <summary>Eine abgeschickte Award-Zeile (Award + Liga + Fahrer).</summary>
+        private readonly record struct AwardVoteRow(int AwardId, string LeagueId, string Driver);
     }
 }

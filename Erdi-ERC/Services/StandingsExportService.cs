@@ -23,7 +23,7 @@ public sealed record StandingsExportFahrer(
     string Id, string Url, string Name, string? Discord,
     string? Ingame, string? Plattform,
     string Team, string? TeamLogo,
-    string Liga, string LigaName,
+    string Liga, string? LigaName,
     int Position, int? Nummer,
     bool IstReserve, string? ReserveFuer,
     StandingsExportSaison Saison);
@@ -232,7 +232,7 @@ public class StandingsExportService : IStandingsExportService
                 Team: string.Empty,
                 TeamLogo: null,
                 Liga: string.Empty,
-                LigaName: string.Empty,
+                LigaName: null,
                 Position: 0,
                 Nummer: null,
                 IstReserve: false,
