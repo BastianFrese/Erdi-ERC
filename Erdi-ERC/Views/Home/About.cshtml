@@ -280,11 +280,11 @@
 }
 else
 {
-    <div class="container" style="padding-top:@(string.IsNullOrEmpty(p?.BannerUrl) || !p.ShowBanner ? "6rem" : "0"); padding-bottom:3rem;">
+    <div class="container" style="padding-top:@(p is null || string.IsNullOrEmpty(p.BannerUrl) || !p.ShowBanner ? "6rem" : "0"); padding-bottom:3rem;">
 
         @* ── Identity row ──────────────────────────────────────────────── *@
-        <div class="abp-identity @(!p.ShowBanner ? "abp-identity--no-banner" : "")">
-            @if (!string.IsNullOrEmpty(p.AvatarUrl))
+        <div class="abp-identity @(!(p?.ShowBanner ?? false) ? "abp-identity--no-banner" : "")">
+            @if (!string.IsNullOrEmpty(p?.AvatarUrl))
             {
                 var avatarPic = new PictureVm {
                     Src = @p.AvatarUrl,
@@ -300,50 +300,50 @@ else
             }
             <div class="abp-identity__info">
                 <div class="abp-name">
-                    @p.DisplayName
-                    @if (!string.IsNullOrEmpty(p.RacingNumber))
+                    @(p?.DisplayName)
+                    @if (!string.IsNullOrEmpty(p?.RacingNumber))
                     {
                         <span class="abp-number-badge">#@p.RacingNumber</span>
                     }
                 </div>
-                @if (!string.IsNullOrEmpty(p.Tagline))
+                @if (!string.IsNullOrEmpty(p?.Tagline))
                 {
                     <div class="abp-tagline">@p.Tagline</div>
                 }
 
                 @* Social Buttons *@
                 <div class="abp-socials">
-                    @if (!string.IsNullOrEmpty(p.DiscordUsername))
+                    @if (!string.IsNullOrEmpty(p?.DiscordUsername))
                     {
                         <span class="abp-social-btn" style="color:#5865f2;border-color:color-mix(in srgb, var(--wet) 30%, transparent);">
                             <i class="bi bi-discord"></i> @p.DiscordUsername
                         </span>
                     }
-                    @if (!string.IsNullOrEmpty(p.TwitchUrl))
+                    @if (!string.IsNullOrEmpty(p?.TwitchUrl))
                     {
                         <a class="abp-social-btn" href="@p.TwitchUrl" target="_blank" rel="noopener" style="color:var(--fast);">
                             <i class="bi bi-twitch"></i> Twitch
                         </a>
                     }
-                    @if (!string.IsNullOrEmpty(p.YouTubeUrl))
+                    @if (!string.IsNullOrEmpty(p?.YouTubeUrl))
                     {
                         <a class="abp-social-btn" href="@p.YouTubeUrl" target="_blank" rel="noopener" style="color:var(--flag);">
                             <i class="bi bi-youtube"></i> YouTube
                         </a>
                     }
-                    @if (!string.IsNullOrEmpty(p.InstagramUrl))
+                    @if (!string.IsNullOrEmpty(p?.InstagramUrl))
                     {
                         <a class="abp-social-btn" href="@p.InstagramUrl" target="_blank" rel="noopener" style="color:var(--flag);">
                             <i class="bi bi-instagram"></i> Instagram
                         </a>
                     }
-                    @if (!string.IsNullOrEmpty(p.TwitterUrl))
+                    @if (!string.IsNullOrEmpty(p?.TwitterUrl))
                     {
                         <a class="abp-social-btn" href="@p.TwitterUrl" target="_blank" rel="noopener">
                             <i class="bi bi-twitter-x"></i> X
                         </a>
                     }
-                    @if (!string.IsNullOrEmpty(p.SteamUrl))
+                    @if (!string.IsNullOrEmpty(p?.SteamUrl))
                     {
                         <a class="abp-social-btn" href="@p.SteamUrl" target="_blank" rel="noopener" style="color:var(--wet);">
                             <i class="bi bi-steam"></i> Steam
@@ -358,7 +358,7 @@ else
 
             @* Main bio *@
             <div>
-                @if (!string.IsNullOrEmpty(p.Bio))
+                @if (!string.IsNullOrEmpty(p?.Bio))
                 {
                     <div class="abp-card">
                         <div class="abp-card__head"><i class="bi bi-file-earmark-person-fill"></i> Über mich</div>

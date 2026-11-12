@@ -63,8 +63,8 @@
             <div class="erc-photo">
                 @{
                     var photoPic = new PictureVm {
-                        Src = @photo,
-                        Alt = @Model?.Driver,
+                        Src = photo ?? string.Empty,
+                        Alt = Model?.Driver ?? string.Empty,
                         Loading = "lazy",
                         Decoding = "async"
                     };

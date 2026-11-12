@@ -111,8 +111,8 @@ else
                                             aria-label="@(ev.Title) vergrößern">
                                         @{
                                             var previewPic = new PictureVm {
-                                                Src = @previewImage,
-                                                Alt = @ev.Title,
+                                                Src = previewImage ?? string.Empty,
+                                                Alt = ev?.Title ?? string.Empty,
                                                 Loading = "lazy",
                                                 Decoding = "async",
                                                 Sizes = "(max-width: 768px) 100vw, 320px"
@@ -126,16 +126,16 @@ else
                             <div class="event-timeline__content">
                                 <div class="event-timeline__head">
                                     <div>
-                                        <h3 class="event-timeline__title">@ev.Title</h3>
+                                        <h3 class="event-timeline__title">@(ev?.Title)</h3>
                                         <div class="text-mute small">
-                                            <i class="bi bi-calendar3"></i> @ev.Date.ToString("dd.MM.yyyy HH:mm")
-                                            @if (!string.IsNullOrWhiteSpace(ev.Location))
+                                            <i class="bi bi-calendar3"></i> @(ev?.Date.ToString("dd.MM.yyyy HH:mm"))
+                                            @if (!string.IsNullOrWhiteSpace(ev?.Location))
                                             {
                                                 <span> · <i class="bi bi-geo-alt-fill"></i> @ev.Location</span>
                                             }
                                         </div>
                                     </div>
-                                    @if (ev.IsUpcoming)
+                                    @if (ev?.IsUpcoming == true)
                                     {
                                         <span class="status-pill is-live">Upcoming</span>
                                     }
@@ -145,15 +145,15 @@ else
                                     }
                                 </div>
 
-                                <p class="text-mute mb-3">@ev.Description</p>
+                                <p class="text-mute mb-3">@(ev?.Description)</p>
 
                                 @if (video is { } embed)
                                 {
                                     <div class="ratio ratio-16x9 event-timeline__media mb-3" style="max-width:400px;">
-                                        <iframe src="@embed.Url" title="@VideoEmbedHelper.DisplayName(embed.Platform)-Video zu @ev.Title" allowfullscreen loading="lazy"></iframe>
+                                        <iframe src="@embed.Url" title="@VideoEmbedHelper.DisplayName(embed.Platform)-Video zu @(ev?.Title)" allowfullscreen loading="lazy"></iframe>
                                     </div>
                                 }
-                                else if (VideoEmbedHelper.SafeLinkOrNull(ev.YouTubeUrl) is { } videoLink
+                                else if (VideoEmbedHelper.SafeLinkOrNull(ev?.YouTubeUrl) is { } videoLink
                                          && VideoEmbedHelper.DetectPlatform(videoLink) is { } platform)
                                 {
                                     @* Bekannter Anbieter, aber nicht einbettbar (z. B. eine Kanal-URL):
@@ -165,7 +165,7 @@ else
                                     </a>
                                 }
 
-                                <a class="f1-btn f1-btn--ghost" asp-controller="Community" asp-action="EventDetail" asp-route-id="@ev.Id">
+                                <a class="f1-btn f1-btn--ghost" asp-controller="Community" asp-action="EventDetail" asp-route-id="@(ev?.Id)">
                                     Mehr anzeigen
                                 </a>
                             </div>
@@ -204,7 +204,7 @@ else
                            position:fixed. Die Lightbox portiert das Overlay beim Öffnen ohnehin an
                            <body> (event-lightbox.js). *@
                         <div class="event-lightbox" data-lightbox hidden aria-modal="true" role="dialog"
-                             aria-label="Galerie zu @(ev.Title)">
+                             aria-label="Galerie zu @(ev?.Title)">
                             <button type="button" class="event-lightbox__close" data-lightbox-close aria-label="Schließen">×</button>
                             @if (galleryImages.Count > 1)
                             {

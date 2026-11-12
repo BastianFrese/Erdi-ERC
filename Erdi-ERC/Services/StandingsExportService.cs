@@ -232,7 +232,7 @@ public class StandingsExportService : IStandingsExportService
                 Team: string.Empty,
                 TeamLogo: null,
                 Liga: string.Empty,
-                LigaName: null,
+                LigaName: string.Empty,
                 Position: 0,
                 Nummer: null,
                 IstReserve: false,
