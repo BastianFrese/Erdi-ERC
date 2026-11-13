@@ -5668,7 +5668,9 @@ display: none;
 align-items: center;
 justify-content: center;
 background: color-mix(in srgb, var(--track) 86%, transparent);
-z-index: var(--z-modal);
+/* Zahl statt Token: --z-modal war nirgends definiert, z-index fiel auf auto
+und der Sticky-Header (1040) fing die Klicks auf das Schliessen-X ab. */
+z-index: 1080;
 padding: clamp(1rem, 4vw, 2rem);
 animation: f1FadeIn .35s var(--ease-launch);
 }
